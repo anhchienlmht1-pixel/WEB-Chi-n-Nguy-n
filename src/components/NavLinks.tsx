@@ -23,7 +23,7 @@ export function NavLinks() {
             href={item.href}
             className={clsx(
               "rounded-full px-3.5 py-1.5 transition-colors",
-              active ? "bg-teal-50 text-teal-700" : "text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+              active ? "bg-brand-50 text-brand-700" : "text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
             )}
           >
             {item.label}

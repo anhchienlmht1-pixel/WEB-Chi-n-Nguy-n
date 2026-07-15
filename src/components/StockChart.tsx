@@ -90,7 +90,7 @@ export function StockChart({ symbol }: { symbol: string }) {
             onClick={() => setRange(r)}
             className={clsx(
               "rounded-full px-3 py-1 text-xs font-semibold transition-colors",
-              r === range ? "bg-teal-600 text-white" : "text-neutral-500 hover:bg-neutral-100"
+              r === range ? "bg-brand-600 text-white" : "text-neutral-500 hover:bg-neutral-100"
             )}
           >
             {r}

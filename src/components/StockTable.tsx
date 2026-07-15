@@ -122,9 +122,9 @@ export function StockTable({
                 const meta = findStock(q.symbol);
                 const state = priceState(q.price, q.refPrice, q.ceilingPrice, q.floorPrice);
                 return (
-                  <tr key={q.symbol} className="border-b border-neutral-100 transition-colors last:border-0 hover:bg-teal-50/40">
+                  <tr key={q.symbol} className="border-b border-neutral-100 transition-colors last:border-0 hover:bg-brand-50/40">
                     <td className="px-4 py-3">
-                      <Link href={`/co-phieu/${q.symbol}`} className="font-semibold text-neutral-900 hover:text-teal-700">
+                      <Link href={`/co-phieu/${q.symbol}`} className="font-semibold text-neutral-900 hover:text-brand-700">
                         {q.symbol}
                       </Link>
                       {meta && <div className="text-xs text-neutral-400 truncate max-w-[180px]">{meta.name}</div>}
@@ -195,7 +195,7 @@ function Th({
         align === "right" && "text-right"
       )}
     >
-      <span className={clsx("inline-flex items-center gap-0.5", align === "right" && "flex-row-reverse", isActive && "text-teal-700")}>
+      <span className={clsx("inline-flex items-center gap-0.5", align === "right" && "flex-row-reverse", isActive && "text-brand-700")}>
         {children}
         {isActive && (dir === 1 ? <ChevronUp size={12} /> : <ChevronDown size={12} />)}
       </span>

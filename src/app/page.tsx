@@ -20,7 +20,7 @@ export default function HomePage() {
       <section>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-bold text-neutral-900">Cổ phiếu tiêu biểu</h2>
-          <a href="/bang-gia" className="text-sm font-semibold text-teal-700 hover:text-teal-800">
+          <a href="/bang-gia" className="text-sm font-semibold text-brand-700 hover:text-brand-800">
             Xem toàn bộ bảng giá →
           </a>
         </div>

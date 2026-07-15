@@ -31,7 +31,7 @@ export default function BangGiaPage() {
               onClick={() => setFilter(f.value)}
               className={clsx(
                 "rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors",
-                filter === f.value ? "bg-teal-600 text-white" : "text-neutral-500 hover:bg-neutral-100"
+                filter === f.value ? "bg-brand-600 text-white" : "text-neutral-500 hover:bg-neutral-100"
               )}
             >
               {f.label}

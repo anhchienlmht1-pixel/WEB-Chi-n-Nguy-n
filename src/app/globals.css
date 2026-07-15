@@ -10,6 +10,19 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Brand scale generated from #27857A */
+  --color-brand-50: #f4f9f8;
+  --color-brand-100: #e9f3f2;
+  --color-brand-200: #c9e1de;
+  --color-brand-300: #9ec8c3;
+  --color-brand-400: #68aaa2;
+  --color-brand-500: #41948a;
+  --color-brand-600: #27857a;
+  --color-brand-700: #217168;
+  --color-brand-800: #1b5a53;
+  --color-brand-900: #14453f;
+  --color-brand-950: #0f332e;
 }
 
 body {

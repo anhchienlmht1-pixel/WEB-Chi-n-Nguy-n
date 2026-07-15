@@ -71,7 +71,7 @@ function MoversCard({
             <li key={q.symbol}>
               <Link
                 href={`/co-phieu/${q.symbol}`}
-                className="flex items-center justify-between rounded-lg px-1.5 py-2.5 text-sm transition-colors hover:bg-teal-50/50"
+                className="flex items-center justify-between rounded-lg px-1.5 py-2.5 text-sm transition-colors hover:bg-brand-50/50"
               >
                 <div>
                   <span className="font-semibold text-neutral-900">{q.symbol}</span>

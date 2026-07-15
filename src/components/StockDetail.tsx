@@ -31,7 +31,7 @@ export function StockDetail({ symbol }: { symbol: string }) {
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold text-neutral-900">{symbol}</h1>
               {meta && (
-                <span className="rounded-full bg-teal-50 px-2.5 py-0.5 text-xs font-semibold text-teal-700">
+                <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-semibold text-brand-700">
                   {meta.exchange}
                 </span>
               )}

@@ -30,7 +30,7 @@ export function SearchBox() {
 
   return (
     <div ref={containerRef} className="relative w-full max-w-xs">
-      <div className="flex items-center gap-2 rounded-full border border-neutral-200 bg-neutral-100/70 px-3.5 py-2 transition-colors focus-within:border-teal-300 focus-within:bg-white focus-within:ring-2 focus-within:ring-teal-500/20">
+      <div className="flex items-center gap-2 rounded-full border border-neutral-200 bg-neutral-100/70 px-3.5 py-2 transition-colors focus-within:border-brand-300 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-500/20">
         <Search size={16} className="text-neutral-400" />
         <input
           value={query}
@@ -52,7 +52,7 @@ export function SearchBox() {
             <button
               key={r.symbol}
               onClick={() => goTo(r.symbol)}
-              className="flex w-full items-center justify-between px-3.5 py-2.5 text-left text-sm hover:bg-teal-50/60"
+              className="flex w-full items-center justify-between px-3.5 py-2.5 text-left text-sm hover:bg-brand-50/60"
             >
               <span className="font-semibold text-neutral-900">{r.symbol}</span>
               <span className="truncate text-xs text-neutral-500 ml-2">{r.name}</span>
