@@ -29,10 +29,10 @@ export default function RootLayout({
       lang="vi"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#f7f9f8] text-neutral-900">
+      <body className="min-h-full flex flex-col bg-[#0a0d0c] text-neutral-50">
         <Header />
         <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6">{children}</main>
-        <footer className="border-t border-neutral-200 bg-white py-5 text-center text-xs text-neutral-400">
+        <footer className="border-t border-neutral-800 bg-neutral-950 py-5 text-center text-xs text-neutral-500">
           Dữ liệu được tổng hợp tự động từ nguồn công khai, chỉ mang tính chất tham khảo, không phải khuyến nghị đầu tư.
         </footer>
       </body>

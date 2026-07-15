@@ -37,18 +37,19 @@ export function priceState(
 
 // Vietnamese market convention: red = up (tăng), green = down (giảm),
 // yellow = unchanged (tham chiếu), magenta = ceiling (trần), cyan = floor (sàn).
+// Shades are tuned for contrast on a dark background.
 export const PRICE_COLOR: Record<PriceState, string> = {
-  ceiling: "text-fuchsia-500",
+  ceiling: "text-fuchsia-400",
   floor: "text-sky-400",
-  up: "text-rose-500",
-  down: "text-emerald-500",
-  ref: "text-amber-400",
+  up: "text-rose-400",
+  down: "text-emerald-400",
+  ref: "text-amber-300",
 };
 
 export const PRICE_BG: Record<PriceState, string> = {
-  ceiling: "bg-fuchsia-500/10",
+  ceiling: "bg-fuchsia-400/10",
   floor: "bg-sky-400/10",
-  up: "bg-rose-500/5",
-  down: "bg-emerald-500/5",
-  ref: "bg-amber-400/5",
+  up: "bg-rose-400/10",
+  down: "bg-emerald-400/10",
+  ref: "bg-amber-300/10",
 };
