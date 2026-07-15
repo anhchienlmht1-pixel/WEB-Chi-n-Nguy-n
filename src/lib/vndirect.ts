@@ -33,11 +33,20 @@ export async function fetchCandles(
   )}&from=${from}&to=${to}`;
 
   const res = await fetch(url, {
-    headers: { "User-Agent": "Mozilla/5.0 (compatible; StockBoard/1.0)" },
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      Accept: "application/json, text/plain, */*",
+      "Accept-Language": "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7",
+      Referer: "https://dchart.vndirect.com.vn/",
+      Origin: "https://dchart.vndirect.com.vn",
+    },
     next: { revalidate: 15 },
   });
 
   if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    console.error(`[vndirect] HTTP ${res.status} for ${symbol}: ${body.slice(0, 300)}`);
     throw new Error(`VNDirect dchart trả về lỗi HTTP ${res.status} cho ${symbol}`);
   }
 
