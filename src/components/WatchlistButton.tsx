@@ -24,7 +24,7 @@ export function WatchlistButton({ symbol, className }: { symbol: string; classNa
     >
       <Star
         size={16}
-        className={active ? "fill-amber-400 text-amber-400" : "text-neutral-600"}
+        className={active ? "fill-amber-400 text-amber-400" : "text-neutral-300 dark:text-neutral-600"}
       />
     </button>
   );

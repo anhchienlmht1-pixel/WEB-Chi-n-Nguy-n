@@ -37,19 +37,19 @@ export function priceState(
 
 // Site convention (per owner preference): green = up (tăng), red = down (giảm),
 // yellow = unchanged (tham chiếu), magenta = ceiling (trần), cyan = floor (sàn).
-// Shades are tuned for contrast on a dark background.
+// Each pairs a darker shade for light backgrounds with a lighter shade for dark ones.
 export const PRICE_COLOR: Record<PriceState, string> = {
-  ceiling: "text-fuchsia-400",
-  floor: "text-sky-400",
-  up: "text-emerald-400",
-  down: "text-rose-400",
-  ref: "text-amber-300",
+  ceiling: "text-fuchsia-600 dark:text-fuchsia-400",
+  floor: "text-sky-600 dark:text-sky-400",
+  up: "text-emerald-600 dark:text-emerald-400",
+  down: "text-rose-600 dark:text-rose-400",
+  ref: "text-amber-600 dark:text-amber-300",
 };
 
 export const PRICE_BG: Record<PriceState, string> = {
-  ceiling: "bg-fuchsia-400/10",
-  floor: "bg-sky-400/10",
-  up: "bg-emerald-400/10",
-  down: "bg-rose-400/10",
-  ref: "bg-amber-300/10",
+  ceiling: "bg-fuchsia-500/10",
+  floor: "bg-sky-500/10",
+  up: "bg-emerald-500/10",
+  down: "bg-rose-500/10",
+  ref: "bg-amber-500/10",
 };

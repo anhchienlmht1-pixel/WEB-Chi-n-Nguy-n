@@ -30,8 +30,8 @@ export function SearchBox() {
 
   return (
     <div ref={containerRef} className="relative w-full max-w-xs">
-      <div className="flex items-center gap-2 rounded-full border border-neutral-800 bg-neutral-900 px-3.5 py-2 transition-colors focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/25">
-        <Search size={16} className="text-neutral-500" />
+      <div className="flex items-center gap-2 rounded-full border border-neutral-200 bg-neutral-100 px-3.5 py-2 transition-colors focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/25 dark:border-neutral-800 dark:bg-neutral-900">
+        <Search size={16} className="text-neutral-400 dark:text-neutral-500" />
         <input
           value={query}
           onChange={(e) => {
@@ -43,18 +43,18 @@ export function SearchBox() {
             if (e.key === "Enter" && results.length > 0) goTo(results[0].symbol);
           }}
           placeholder="Tìm mã CK, tên công ty..."
-          className="w-full bg-transparent text-sm text-neutral-100 outline-none placeholder:text-neutral-500"
+          className="w-full bg-transparent text-sm text-neutral-900 outline-none placeholder:text-neutral-400 dark:text-neutral-100 dark:placeholder:text-neutral-500"
         />
       </div>
       {open && results.length > 0 && (
-        <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900 shadow-xl shadow-black/40">
+        <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-xl shadow-neutral-900/10 dark:border-neutral-800 dark:bg-neutral-900 dark:shadow-black/40">
           {results.map((r) => (
             <button
               key={r.symbol}
               onClick={() => goTo(r.symbol)}
-              className="flex w-full items-center justify-between px-3.5 py-2.5 text-left text-sm hover:bg-brand-500/10"
+              className="flex w-full items-center justify-between px-3.5 py-2.5 text-left text-sm hover:bg-brand-50 dark:hover:bg-brand-500/10"
             >
-              <span className="font-semibold text-neutral-100">{r.symbol}</span>
+              <span className="font-semibold text-neutral-900 dark:text-neutral-100">{r.symbol}</span>
               <span className="truncate text-xs text-neutral-500 ml-2">{r.name}</span>
             </button>
           ))}

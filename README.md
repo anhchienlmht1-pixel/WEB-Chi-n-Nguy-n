@@ -9,6 +9,7 @@ Web xem giá chứng khoán Việt Nam theo phong cách sstock.vn: tổng quan t
 - **Chi tiết cổ phiếu**: biểu đồ TradingView thời gian thực (nhúng trực tiếp từ tradingview.com), giá mở/cao/thấp/khối lượng, giá trần/sàn/tham chiếu tính theo biên độ dao động của từng sàn.
 - **Tìm kiếm** mã CK / tên công ty.
 - **Danh mục theo dõi**: lưu trên trình duyệt (localStorage), không cần đăng nhập.
+- **Giao diện Sáng/Tối**: nút chuyển đổi ở header, lưu lựa chọn trên trình duyệt, không nháy màn hình khi tải lại trang.
 
 ## Nguồn dữ liệu
 
@@ -36,10 +37,11 @@ src/
     co-phieu/[symbol]/       Chi tiết cổ phiếu
     danh-muc/                Danh mục theo dõi
     api/                     Route handlers proxy dữ liệu VNDirect
-  components/                Header, bảng giá, TradingViewChart, sparkline, ô tìm kiếm...
+  components/                Header, ThemeToggle, bảng giá, TradingViewChart, sparkline, ô tìm kiếm...
   lib/
     vndirect.ts               Client gọi API VNDirect (server-only)
     market.ts                 Quy tắc trần/sàn và màu sắc theo sàn
     symbols.ts                Danh sách mã cổ phiếu tĩnh
     watchlist.ts               Hook quản lý danh mục theo dõi (localStorage)
+    theme.tsx                  ThemeProvider + hook đổi giao diện Sáng/Tối
 ```

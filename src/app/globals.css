@@ -1,6 +1,13 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
+  --background: #ffffff;
+  --foreground: #14181a;
+}
+
+.dark {
   --background: #0a0d0c;
   --foreground: #f2f5f4;
 }
@@ -31,5 +38,9 @@ body {
 }
 
 .glow-radial {
+  background: radial-gradient(60% 60% at 50% 0%, rgba(39, 133, 122, 0.14) 0%, rgba(39, 133, 122, 0) 70%);
+}
+
+.dark .glow-radial {
   background: radial-gradient(60% 60% at 50% 0%, rgba(39, 133, 122, 0.35) 0%, rgba(39, 133, 122, 0) 70%);
 }

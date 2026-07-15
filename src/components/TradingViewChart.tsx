@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useTheme } from "@/lib/theme";
 
 /**
  * Embeds TradingView's official "Advanced Real-Time Chart" widget. The
@@ -10,6 +11,7 @@ import { useEffect, useRef } from "react";
  */
 export function TradingViewChart({ tvSymbol }: { tvSymbol: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { theme } = useTheme();
 
   useEffect(() => {
     const container = containerRef.current;
@@ -26,11 +28,11 @@ export function TradingViewChart({ tvSymbol }: { tvSymbol: string }) {
       symbol: tvSymbol,
       interval: "D",
       timezone: "Asia/Ho_Chi_Minh",
-      theme: "dark",
+      theme,
       style: "1",
       locale: "vi_VN",
-      backgroundColor: "rgba(10, 13, 12, 1)",
-      gridColor: "rgba(31, 37, 35, 0.4)",
+      backgroundColor: theme === "dark" ? "rgba(10, 13, 12, 1)" : "rgba(255, 255, 255, 1)",
+      gridColor: theme === "dark" ? "rgba(31, 37, 35, 0.4)" : "rgba(230, 230, 230, 0.6)",
       hide_top_toolbar: false,
       hide_legend: false,
       allow_symbol_change: false,
@@ -41,10 +43,10 @@ export function TradingViewChart({ tvSymbol }: { tvSymbol: string }) {
     return () => {
       container.innerHTML = "";
     };
-  }, [tvSymbol]);
+  }, [tvSymbol, theme]);
 
   return (
-    <div className="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-2 shadow-lg shadow-black/20">
+    <div className="rounded-2xl border border-neutral-200 bg-white p-2 shadow-sm shadow-neutral-900/[0.02] dark:border-neutral-800 dark:bg-neutral-900/60 dark:shadow-lg dark:shadow-black/20">
       <div className="tradingview-widget-container h-[480px] w-full" ref={containerRef} />
     </div>
   );

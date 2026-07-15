@@ -23,7 +23,10 @@ export function TopMovers() {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {[0, 1].map((i) => (
-          <div key={i} className="h-64 rounded-2xl border border-neutral-800 bg-neutral-900/60 animate-pulse" />
+          <div
+            key={i}
+            className="h-64 animate-pulse rounded-2xl border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900/60"
+          />
         ))}
       </div>
     );
@@ -31,7 +34,7 @@ export function TopMovers() {
 
   if (error || !data || data.quotes.length === 0) {
     return (
-      <div className="rounded-2xl border border-red-900/60 bg-red-950/30 p-4 text-sm text-red-300">
+      <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">
         Không thể tải danh sách tăng/giảm mạnh nhất.
       </div>
     );
@@ -59,30 +62,32 @@ function MoversCard({
   positive: boolean;
 }) {
   return (
-    <div className="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-5 shadow-lg shadow-black/20">
-      <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-neutral-300">
-        <span className={clsx("h-1.5 w-1.5 rounded-full", positive ? "bg-emerald-400" : "bg-rose-400")} />
+    <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm shadow-neutral-900/[0.02] dark:border-neutral-800 dark:bg-neutral-900/60 dark:shadow-lg dark:shadow-black/20">
+      <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
+        <span className={clsx("h-1.5 w-1.5 rounded-full", positive ? "bg-emerald-500" : "bg-rose-500")} />
         {title}
       </h3>
-      <ul className="divide-y divide-neutral-800">
+      <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
         {items.map((q) => {
           const meta = findStock(q.symbol);
           return (
             <li key={q.symbol}>
               <Link
                 href={`/co-phieu/${q.symbol}`}
-                className="flex items-center justify-between rounded-lg px-1.5 py-2.5 text-sm transition-colors hover:bg-brand-500/10"
+                className="flex items-center justify-between rounded-lg px-1.5 py-2.5 text-sm transition-colors hover:bg-brand-50 dark:hover:bg-brand-500/10"
               >
                 <div>
-                  <span className="font-semibold text-neutral-100">{q.symbol}</span>
-                  {meta && <span className="ml-2 text-xs text-neutral-500">{meta.exchange}</span>}
+                  <span className="font-semibold text-neutral-900 dark:text-neutral-100">{q.symbol}</span>
+                  {meta && <span className="ml-2 text-xs text-neutral-400 dark:text-neutral-500">{meta.exchange}</span>}
                 </div>
                 <div className="text-right">
-                  <div className="tabular-nums font-medium text-neutral-100">{formatPrice(q.price)}</div>
+                  <div className="tabular-nums font-medium text-neutral-900 dark:text-neutral-100">
+                    {formatPrice(q.price)}
+                  </div>
                   <div
                     className={clsx(
                       "tabular-nums text-xs font-medium",
-                      positive ? "text-emerald-400" : "text-rose-400"
+                      positive ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
                     )}
                   >
                     {formatPercent(q.changePercent)}
