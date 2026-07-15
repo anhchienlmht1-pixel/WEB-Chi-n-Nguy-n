@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { MarketIndexCards } from "@/components/MarketIndexCard";
-import { TopMovers } from "@/components/TopMovers";
-import { StockTable } from "@/components/StockTable";
-import { DEFAULT_BOARD_SYMBOLS } from "@/lib/symbols";
+import { TradingViewMarketOverview } from "@/components/TradingViewMarketOverview";
+import { STOCKS, INDEX_TABS, tvSymbol } from "@/lib/symbols";
+
+const FEATURED_TABS = [
+  {
+    title: "Tiêu biểu",
+    symbols: STOCKS.slice(0, 12).map((s) => ({ s: tvSymbol(s), d: s.name })),
+  },
+];
 
 export default function HomePage() {
-  const watchSample = DEFAULT_BOARD_SYMBOLS.slice(0, 10);
-
   return (
     <div className="flex flex-col gap-10">
       <section className="relative overflow-hidden rounded-3xl border border-neutral-200 bg-neutral-50 px-6 py-14 dark:border-neutral-800 dark:bg-neutral-900/40 sm:px-10 sm:py-20">
@@ -36,11 +39,7 @@ export default function HomePage() {
 
       <section>
         <h2 className="mb-4 text-xl font-bold text-neutral-900 dark:text-neutral-50">Tổng quan thị trường</h2>
-        <MarketIndexCards />
-      </section>
-
-      <section>
-        <TopMovers />
+        <TradingViewMarketOverview tabs={INDEX_TABS} height={220} />
       </section>
 
       <section>
@@ -53,7 +52,7 @@ export default function HomePage() {
             Xem toàn bộ bảng giá →
           </Link>
         </div>
-        <StockTable symbols={watchSample} />
+        <TradingViewMarketOverview tabs={FEATURED_TABS} height={420} />
       </section>
     </div>
   );
