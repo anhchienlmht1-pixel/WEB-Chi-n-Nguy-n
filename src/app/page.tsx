@@ -39,7 +39,7 @@ export default function HomePage() {
 
       <section>
         <h2 className="mb-4 text-xl font-bold text-neutral-900 dark:text-neutral-50">Tổng quan thị trường</h2>
-        <TradingViewMarketOverview tabs={INDEX_TABS} height={220} />
+        <TradingViewMarketOverview tabs={INDEX_TABS} height={320} />
       </section>
 
       <section>
@@ -52,7 +52,7 @@ export default function HomePage() {
             Xem toàn bộ bảng giá →
           </Link>
         </div>
-        <TradingViewMarketOverview tabs={FEATURED_TABS} height={420} />
+        <TradingViewMarketOverview tabs={FEATURED_TABS} height={640} />
       </section>
     </div>
   );

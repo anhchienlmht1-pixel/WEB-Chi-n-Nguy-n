@@ -43,7 +43,7 @@ export default function DanhMucPage() {
               </button>
             ))}
           </div>
-          <TradingViewMarketOverview tabs={tabs} height={Math.max(220, symbols.length * 46)} />
+          <TradingViewMarketOverview tabs={tabs} height={Math.max(320, symbols.length * 56)} />
         </>
       )}
     </div>

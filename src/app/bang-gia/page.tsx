@@ -10,7 +10,7 @@ export default function BangGiaPage() {
       <p className="text-xs text-neutral-500">
         Dữ liệu trực tiếp từ TradingView. Chọn sàn HOSE / HNX / UPCOM ở các tab bên trong bảng.
       </p>
-      <TradingViewMarketOverview tabs={TABS} height={600} />
+      <TradingViewMarketOverview tabs={TABS} height={900} />
     </div>
   );
 }
