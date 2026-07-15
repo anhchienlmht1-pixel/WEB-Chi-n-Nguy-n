@@ -25,24 +25,24 @@ export function StockDetail({ symbol }: { symbol: string }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="rounded-xl border border-neutral-200 bg-white p-5">
+      <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm shadow-neutral-900/[0.02]">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold text-neutral-900">{symbol}</h1>
               {meta && (
-                <span className="rounded bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-500">
+                <span className="rounded-full bg-teal-50 px-2.5 py-0.5 text-xs font-semibold text-teal-700">
                   {meta.exchange}
                 </span>
               )}
               <WatchlistButton symbol={symbol} />
             </div>
-            <p className="mt-1 text-sm text-neutral-500">
+            <p className="mt-1.5 text-sm text-neutral-500">
               {meta ? `${meta.name} · ${meta.industry}` : "Không có thông tin công ty"}
             </p>
           </div>
 
-          {isLoading && <div className="h-12 w-40 animate-pulse rounded bg-neutral-100" />}
+          {isLoading && <div className="h-12 w-40 animate-pulse rounded-lg bg-neutral-100" />}
           {error && <div className="text-sm text-red-600">Không thể tải giá cho {symbol}.</div>}
           {quote && (
             <StockPriceHeader quote={quote} />
@@ -50,7 +50,7 @@ export function StockDetail({ symbol }: { symbol: string }) {
         </div>
 
         {quote && (
-          <div className="mt-4 grid grid-cols-2 gap-3 border-t border-neutral-100 pt-4 text-sm sm:grid-cols-4">
+          <div className="mt-5 grid grid-cols-2 gap-4 border-t border-neutral-100 pt-5 text-sm sm:grid-cols-4">
             <Stat label="Mở cửa" value={formatPrice(quote.open)} />
             <Stat label="Cao nhất" value={formatPrice(quote.high)} />
             <Stat label="Thấp nhất" value={formatPrice(quote.low)} />

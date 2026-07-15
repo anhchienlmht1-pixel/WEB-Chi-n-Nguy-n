@@ -23,7 +23,7 @@ export function TopMovers() {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {[0, 1].map((i) => (
-          <div key={i} className="h-64 rounded-xl border border-neutral-200 bg-white animate-pulse" />
+          <div key={i} className="h-64 rounded-2xl border border-neutral-200 bg-white animate-pulse" />
         ))}
       </div>
     );
@@ -31,7 +31,7 @@ export function TopMovers() {
 
   if (error || !data || data.quotes.length === 0) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+      <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
         Không thể tải danh sách tăng/giảm mạnh nhất.
       </div>
     );
@@ -59,8 +59,11 @@ function MoversCard({
   positive: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-neutral-200 bg-white p-4">
-      <h3 className="mb-3 text-sm font-semibold text-neutral-700">{title}</h3>
+    <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm shadow-neutral-900/[0.02]">
+      <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-neutral-700">
+        <span className={clsx("h-1.5 w-1.5 rounded-full", positive ? "bg-rose-500" : "bg-emerald-500")} />
+        {title}
+      </h3>
       <ul className="divide-y divide-neutral-100">
         {items.map((q) => {
           const meta = findStock(q.symbol);
@@ -68,7 +71,7 @@ function MoversCard({
             <li key={q.symbol}>
               <Link
                 href={`/co-phieu/${q.symbol}`}
-                className="flex items-center justify-between py-2 text-sm hover:bg-neutral-50 -mx-1 px-1 rounded"
+                className="flex items-center justify-between rounded-lg px-1.5 py-2.5 text-sm transition-colors hover:bg-teal-50/50"
               >
                 <div>
                   <span className="font-semibold text-neutral-900">{q.symbol}</span>
@@ -78,7 +81,7 @@ function MoversCard({
                   <div className="tabular-nums font-medium text-neutral-900">{formatPrice(q.price)}</div>
                   <div
                     className={clsx(
-                      "tabular-nums text-xs",
+                      "tabular-nums text-xs font-medium",
                       positive ? "text-rose-500" : "text-emerald-500"
                     )}
                   >

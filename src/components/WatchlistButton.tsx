@@ -17,7 +17,10 @@ export function WatchlistButton({ symbol, className }: { symbol: string; classNa
         e.stopPropagation();
         toggle(symbol);
       }}
-      className={clsx("inline-flex items-center justify-center rounded p-1 hover:bg-neutral-100", className)}
+      className={clsx(
+        "inline-flex items-center justify-center rounded-full p-1.5 transition-colors hover:bg-amber-50",
+        className
+      )}
     >
       <Star
         size={16}

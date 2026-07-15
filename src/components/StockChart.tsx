@@ -82,15 +82,15 @@ export function StockChart({ symbol }: { symbol: string }) {
   }, [data]);
 
   return (
-    <div className="rounded-xl border border-neutral-200 bg-white p-4">
-      <div className="mb-3 flex items-center gap-1">
+    <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm shadow-neutral-900/[0.02]">
+      <div className="mb-4 flex items-center gap-1">
         {RANGES.map((r) => (
           <button
             key={r}
             onClick={() => setRange(r)}
             className={clsx(
-              "rounded-md px-2.5 py-1 text-xs font-medium",
-              r === range ? "bg-neutral-900 text-white" : "text-neutral-500 hover:bg-neutral-100"
+              "rounded-full px-3 py-1 text-xs font-semibold transition-colors",
+              r === range ? "bg-teal-600 text-white" : "text-neutral-500 hover:bg-neutral-100"
             )}
           >
             {r}
@@ -98,11 +98,11 @@ export function StockChart({ symbol }: { symbol: string }) {
         ))}
       </div>
       {error && (
-        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+        <div className="rounded-xl bg-red-50 p-3 text-sm text-red-700">
           Không thể tải dữ liệu biểu đồ cho {symbol}.
         </div>
       )}
-      {isLoading && <div className="h-[380px] animate-pulse rounded-lg bg-neutral-100" />}
+      {isLoading && <div className="h-[380px] animate-pulse rounded-xl bg-neutral-100" />}
       <div ref={containerRef} className={isLoading ? "hidden" : ""} />
     </div>
   );

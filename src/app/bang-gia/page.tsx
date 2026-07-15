@@ -21,17 +21,17 @@ export default function BangGiaPage() {
   }, [filter]);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-neutral-800">Bảng giá cổ phiếu</h1>
-        <div className="flex items-center gap-1 rounded-lg border border-neutral-200 bg-white p-1">
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-xl font-bold text-neutral-900">Bảng giá cổ phiếu</h1>
+        <div className="flex items-center gap-1 rounded-full border border-neutral-200 bg-white p-1 shadow-sm shadow-neutral-900/[0.02]">
           {FILTERS.map((f) => (
             <button
               key={f.value}
               onClick={() => setFilter(f.value)}
               className={clsx(
-                "rounded-md px-3 py-1 text-sm font-medium",
-                filter === f.value ? "bg-neutral-900 text-white" : "text-neutral-500 hover:bg-neutral-100"
+                "rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors",
+                filter === f.value ? "bg-teal-600 text-white" : "text-neutral-500 hover:bg-neutral-100"
               )}
             >
               {f.label}

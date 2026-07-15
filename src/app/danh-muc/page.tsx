@@ -8,7 +8,7 @@ export default function DanhMucPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-lg font-semibold text-neutral-800">Danh mục theo dõi</h1>
+      <h1 className="text-xl font-bold text-neutral-900">Danh mục theo dõi</h1>
       <p className="text-sm text-neutral-500">
         Danh sách được lưu trên trình duyệt của bạn. Bấm biểu tượng ngôi sao ở bảng giá để thêm mã vào đây.
       </p>

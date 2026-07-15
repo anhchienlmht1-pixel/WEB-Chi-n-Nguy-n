@@ -7,9 +7,9 @@ export default function HomePage() {
   const watchSample = DEFAULT_BOARD_SYMBOLS.slice(0, 10);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       <section>
-        <h1 className="mb-3 text-lg font-semibold text-neutral-800">Tổng quan thị trường</h1>
+        <h1 className="mb-4 text-xl font-bold text-neutral-900">Tổng quan thị trường</h1>
         <MarketIndexCards />
       </section>
 
@@ -18,9 +18,9 @@ export default function HomePage() {
       </section>
 
       <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-neutral-800">Cổ phiếu tiêu biểu</h2>
-          <a href="/bang-gia" className="text-sm font-medium text-rose-600 hover:underline">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-neutral-900">Cổ phiếu tiêu biểu</h2>
+          <a href="/bang-gia" className="text-sm font-semibold text-teal-700 hover:text-teal-800">
             Xem toàn bộ bảng giá →
           </a>
         </div>
