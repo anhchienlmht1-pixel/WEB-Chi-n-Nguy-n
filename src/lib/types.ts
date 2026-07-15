@@ -31,14 +31,12 @@ export interface StockQuote {
   updatedAt: number;
 }
 
-export type IndexCode = "VNINDEX" | "HNXINDEX" | "UPCOMINDEX";
+export interface TvSymbolEntry {
+  s: string;
+  d: string;
+}
 
-export interface IndexQuote {
-  code: IndexCode;
-  name: string;
-  value: number;
-  change: number;
-  changePercent: number;
-  volume: number;
-  history: { time: number; value: number }[];
+export interface TvTab {
+  title: string;
+  symbols: TvSymbolEntry[];
 }

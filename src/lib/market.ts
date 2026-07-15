@@ -45,11 +45,3 @@ export const PRICE_COLOR: Record<PriceState, string> = {
   down: "text-rose-600 dark:text-rose-400",
   ref: "text-amber-600 dark:text-amber-300",
 };
-
-export const PRICE_BG: Record<PriceState, string> = {
-  ceiling: "bg-fuchsia-500/10",
-  floor: "bg-sky-500/10",
-  up: "bg-emerald-500/10",
-  down: "bg-rose-500/10",
-  ref: "bg-amber-500/10",
-};
