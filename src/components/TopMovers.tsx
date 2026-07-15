@@ -61,7 +61,7 @@ function MoversCard({
   return (
     <div className="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-5 shadow-lg shadow-black/20">
       <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-neutral-300">
-        <span className={clsx("h-1.5 w-1.5 rounded-full", positive ? "bg-rose-400" : "bg-emerald-400")} />
+        <span className={clsx("h-1.5 w-1.5 rounded-full", positive ? "bg-emerald-400" : "bg-rose-400")} />
         {title}
       </h3>
       <ul className="divide-y divide-neutral-800">
@@ -82,7 +82,7 @@ function MoversCard({
                   <div
                     className={clsx(
                       "tabular-nums text-xs font-medium",
-                      positive ? "text-rose-400" : "text-emerald-400"
+                      positive ? "text-emerald-400" : "text-rose-400"
                     )}
                   >
                     {formatPercent(q.changePercent)}

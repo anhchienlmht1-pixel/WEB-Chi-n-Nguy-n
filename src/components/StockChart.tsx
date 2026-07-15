@@ -53,12 +53,12 @@ export function StockChart({ symbol }: { symbol: string }) {
     });
 
     const series = chart.addSeries(CandlestickSeries, {
-      upColor: "#fb7185",
-      downColor: "#34d399",
-      borderUpColor: "#fb7185",
-      borderDownColor: "#34d399",
-      wickUpColor: "#fb7185",
-      wickDownColor: "#34d399",
+      upColor: "#34d399",
+      downColor: "#fb7185",
+      borderUpColor: "#34d399",
+      borderDownColor: "#fb7185",
+      wickUpColor: "#34d399",
+      wickDownColor: "#fb7185",
     });
 
     chartRef.current = chart;

@@ -40,7 +40,7 @@ export default function BangGiaPage() {
         </div>
       </div>
       <p className="text-xs text-neutral-500">
-        Đỏ: tăng giá · Xanh lá: giảm giá · Vàng: giá tham chiếu · Tím: giá trần · Xanh lam: giá sàn.
+        Xanh lá: tăng giá · Đỏ: giảm giá · Vàng: giá tham chiếu · Tím: giá trần · Xanh lam: giá sàn.
       </p>
       <StockTable symbols={symbols} />
     </div>

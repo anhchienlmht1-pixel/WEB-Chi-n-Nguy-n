@@ -5,7 +5,7 @@ Web xem giá chứng khoán Việt Nam theo phong cách sstock.vn: tổng quan t
 ## Tính năng
 
 - **Tổng quan thị trường**: VN-Index, HNX-Index, UPCOM-Index kèm biểu đồ mini, danh sách mã tăng/giảm mạnh nhất.
-- **Bảng giá**: danh sách cổ phiếu theo sàn (HOSE/HNX/UPCOM), có thể sắp xếp theo giá/%/khối lượng, tô màu theo quy ước thị trường Việt Nam (đỏ = tăng, xanh lá = giảm, vàng = giá tham chiếu, tím = giá trần, xanh lam = giá sàn).
+- **Bảng giá**: danh sách cổ phiếu theo sàn (HOSE/HNX/UPCOM), có thể sắp xếp theo giá/%/khối lượng, tô màu theo quy ước riêng của trang (xanh lá = tăng, đỏ = giảm, vàng = giá tham chiếu, tím = giá trần, xanh lam = giá sàn).
 - **Chi tiết cổ phiếu**: biểu đồ nến lịch sử (1M/3M/6M/1Y/2Y), giá mở/cao/thấp/khối lượng, giá trần/sàn/tham chiếu tính theo biên độ dao động của từng sàn.
 - **Tìm kiếm** mã CK / tên công ty.
 - **Danh mục theo dõi**: lưu trên trình duyệt (localStorage), không cần đăng nhập.

@@ -23,7 +23,7 @@ export function Sparkline({ data, width = 128, height = 40, positive }: Props) {
   const linePoints = coords.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
   const areaPoints = `0,${height} ${linePoints} ${width},${height}`;
 
-  const stroke = positive ? "#fb7185" : "#34d399";
+  const stroke = positive ? "#34d399" : "#fb7185";
   const gradientId = `spark-${positive ? "up" : "down"}`;
 
   return (

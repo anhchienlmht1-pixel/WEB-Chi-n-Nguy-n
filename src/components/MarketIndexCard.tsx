@@ -55,7 +55,7 @@ export function MarketIndexCards() {
                 <div
                   className={clsx(
                     "mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-sm font-semibold tabular-nums",
-                    positive ? "bg-rose-400/10 text-rose-400" : "bg-emerald-400/10 text-emerald-400"
+                    positive ? "bg-emerald-400/10 text-emerald-400" : "bg-rose-400/10 text-rose-400"
                   )}
                 >
                   {positive ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
