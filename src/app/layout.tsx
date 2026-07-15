@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "VStock — Bảng giá chứng khoán Việt Nam",
+  title: "Chiến Nguyễn Invest — Bảng giá chứng khoán Việt Nam",
   description:
     "Theo dõi VN-Index, HNX-Index, UPCOM-Index và bảng giá cổ phiếu Việt Nam theo thời gian thực.",
 };

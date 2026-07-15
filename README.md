@@ -1,4 +1,4 @@
-# VStock
+# Chiến Nguyễn Invest
 
 Web xem giá chứng khoán Việt Nam theo phong cách sstock.vn: tổng quan thị trường, bảng giá, biểu đồ giá và danh mục theo dõi cá nhân. Xây bằng Next.js (App Router) + TypeScript + Tailwind CSS.
 

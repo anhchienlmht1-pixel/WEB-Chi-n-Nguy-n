@@ -11,7 +11,9 @@ export function Header() {
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-600 text-white">
             <TrendingUp size={18} strokeWidth={2.5} />
           </span>
-          <span className="text-lg font-bold tracking-tight text-neutral-900">VStock</span>
+          <span className="text-lg font-bold tracking-tight text-neutral-900 whitespace-nowrap">
+            Chiến Nguyễn Invest
+          </span>
         </Link>
         <NavLinks />
         <div className="ml-auto">
