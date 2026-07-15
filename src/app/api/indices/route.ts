@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
-import { fetchCandles, daysAgo, nowSeconds } from "@/lib/vndirect";
+import { fetchCandlesTrying, daysAgo, nowSeconds } from "@/lib/vndirect";
 import { IndexCode, IndexQuote } from "@/lib/types";
 
-const INDICES: { code: IndexCode; name: string }[] = [
-  { code: "VNINDEX", name: "VN-Index" },
-  { code: "HNXINDEX", name: "HNX-Index" },
-  { code: "UPCOMINDEX", name: "UPCOM-Index" },
+const INDICES: { code: IndexCode; name: string; candidates: string[] }[] = [
+  { code: "VNINDEX", name: "VN-Index", candidates: ["VNINDEX"] },
+  { code: "HNXINDEX", name: "HNX-Index", candidates: ["HNXINDEX", "HNX-INDEX", "HNX"] },
+  { code: "UPCOMINDEX", name: "UPCOM-Index", candidates: ["UPCOMINDEX", "UPCOM-INDEX", "UPCOM"] },
 ];
 
-async function indexFor(code: IndexCode, name: string): Promise<IndexQuote | null> {
-  const candles = await fetchCandles(code, "D", daysAgo(30), nowSeconds());
+async function indexFor(code: IndexCode, name: string, candidates: string[]): Promise<IndexQuote | null> {
+  const candles = await fetchCandlesTrying(candidates, "D", daysAgo(30), nowSeconds());
   if (candles.length === 0) return null;
 
   const last = candles[candles.length - 1];
@@ -28,7 +28,7 @@ async function indexFor(code: IndexCode, name: string): Promise<IndexQuote | nul
 
 export async function GET() {
   const results = await Promise.allSettled(
-    INDICES.map((idx) => indexFor(idx.code, idx.name))
+    INDICES.map((idx) => indexFor(idx.code, idx.name, idx.candidates))
   );
 
   const indices: IndexQuote[] = [];

@@ -77,6 +77,31 @@ export async function fetchCandles(
   );
 }
 
+/**
+ * Tries each candidate symbol in order and returns the first one that
+ * returns non-empty data. Some VNDirect index codes aren't consistently
+ * documented (e.g. HNX-Index/UPCOM-Index naming), so this avoids hard
+ * failure when one spelling doesn't match what dchart expects.
+ */
+export async function fetchCandlesTrying(
+  candidates: string[],
+  resolution: Resolution,
+  from: number,
+  to: number
+): Promise<Candle[]> {
+  let lastError: unknown;
+  for (const symbol of candidates) {
+    try {
+      const candles = await fetchCandles(symbol, resolution, from, to);
+      if (candles.length > 0) return candles;
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  if (lastError) throw lastError;
+  return [];
+}
+
 export function daysAgo(days: number): number {
   return Math.floor(Date.now() / 1000) - days * 86400;
 }
