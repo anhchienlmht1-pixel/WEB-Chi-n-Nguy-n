@@ -132,8 +132,13 @@ export function StockChart({ symbol }: { symbol: string }) {
           Không thể tải dữ liệu biểu đồ cho {symbol}.
         </div>
       )}
+      {!error && !isLoading && data && data.candles.length === 0 && (
+        <div className="rounded-xl bg-amber-950/20 p-3 text-sm text-amber-300">
+          Không có dữ liệu biểu đồ cho {symbol} trong khung thời gian này.
+        </div>
+      )}
       {isLoading && <div className="h-[380px] animate-pulse rounded-xl bg-neutral-800" />}
-      <div ref={containerRef} className={isLoading ? "hidden" : ""} />
+      <div ref={containerRef} className={isLoading || (data && data.candles.length === 0) ? "hidden" : ""} />
     </div>
   );
 }
