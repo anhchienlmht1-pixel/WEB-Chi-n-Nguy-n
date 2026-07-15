@@ -7,7 +7,7 @@ import { StockQuote } from "@/lib/types";
 import { findStock } from "@/lib/symbols";
 import { priceState, PRICE_COLOR } from "@/lib/market";
 import { formatChange, formatPercent, formatPrice, formatVolume } from "@/lib/format";
-import { StockChart } from "./StockChart";
+import { TradingViewChart } from "./TradingViewChart";
 import { WatchlistButton } from "./WatchlistButton";
 
 interface Response {
@@ -44,7 +44,9 @@ export function StockDetail({ symbol }: { symbol: string }) {
           </div>
 
           {isLoading && <div className="h-12 w-40 animate-pulse rounded-lg bg-neutral-800" />}
-          {error && <div className="text-sm text-red-400">Không thể tải giá cho {symbol}.</div>}
+          {!isLoading && (error || data?.failed.includes(symbol)) && (
+            <div className="text-sm text-red-400">Không thể tải giá cho {symbol}.</div>
+          )}
           {quote && (
             <StockPriceHeader quote={quote} />
           )}
@@ -63,7 +65,7 @@ export function StockDetail({ symbol }: { symbol: string }) {
         )}
       </div>
 
-      <StockChart symbol={symbol} />
+      <TradingViewChart tvSymbol={`${meta?.exchange ?? "HOSE"}:${symbol}`} />
     </div>
   );
 }
