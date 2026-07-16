@@ -31,6 +31,16 @@ export interface StockQuote {
   updatedAt: number;
 }
 
+// One reporting period's worth of financial ratios, keyed by Vietcap's
+// field codes (roe, roa, npl, casaRatio, ...). Not every symbol has every
+// field — banks have CASA/NIM/NPL, non-banks don't — so this stays a loose
+// bag of whatever the source actually returned for that period.
+export interface RatioPoint {
+  period: string; // e.g. "Q1 2026" or "2025"
+  periodType: "quarter" | "year";
+  values: Record<string, number | null>;
+}
+
 export type IndexCode = "VNINDEX" | "HNXINDEX" | "UPCOMINDEX";
 
 export interface IndexQuote {

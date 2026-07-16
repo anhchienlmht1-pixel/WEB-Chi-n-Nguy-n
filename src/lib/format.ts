@@ -26,3 +26,16 @@ export function formatIndexValue(value: number): string {
   if (!Number.isFinite(value)) return "--";
   return value.toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
+
+// Financial ratio APIs (Vietcap included) store percentages as decimals
+// (0.18 = 18%), matching the convention already seen in the user's own
+// source spreadsheet for the same metrics.
+export function formatRatioPercent(value: number | null): string {
+  if (value === null || !Number.isFinite(value)) return "--";
+  return `${(value * 100).toFixed(2)}%`;
+}
+
+export function formatRatioNumber(value: number | null): string {
+  if (value === null || !Number.isFinite(value)) return "--";
+  return value.toFixed(2);
+}
