@@ -7,7 +7,7 @@ import { StockQuote } from "@/lib/types";
 import { findStock } from "@/lib/symbols";
 import { priceState, PRICE_COLOR } from "@/lib/market";
 import { formatChange, formatPercent, formatPrice, formatVolume } from "@/lib/format";
-import { TradingViewChart } from "./TradingViewChart";
+import { StockChart } from "./StockChart";
 import { WatchlistButton } from "./WatchlistButton";
 
 interface Response {
@@ -73,7 +73,7 @@ export function StockDetail({ symbol }: { symbol: string }) {
         )}
       </div>
 
-      <TradingViewChart tvSymbol={`${meta?.exchange ?? "HOSE"}:${symbol}`} />
+      <StockChart symbol={symbol} />
     </div>
   );
 }
