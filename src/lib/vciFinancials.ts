@@ -122,10 +122,19 @@ export async function fetchVciRatios(symbol: string): Promise<RatioPoint[]> {
   }
 
   const parsed = rows.map(toRatioPoint);
-  const points = parsed
+  let points = parsed
     .filter((p): p is RatioPoint & { sortKey: number } => p !== null)
     .sort((a, b) => a.sortKey - b.sortKey)
     .map(({ period, periodType, values }) => ({ period, periodType, values }));
+
+  // The API mixes yearly-aggregate rows in with quarterly ones, which
+  // otherwise sort in between quarters (a "2025" annual row landing
+  // between "Q4 2024" and "Q1 2025"). Drop the redundant annual rows
+  // whenever quarterly data is available; fall back to yearly for
+  // symbols/periods where only annual data exists.
+  if (points.some((p) => p.periodType === "quarter")) {
+    points = points.filter((p) => p.periodType === "quarter");
+  }
 
   if (points.length === 0) {
     // Every row failed period extraction (year/quarter/report_period all

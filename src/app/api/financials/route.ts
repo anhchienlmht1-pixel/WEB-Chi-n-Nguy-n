@@ -3,9 +3,9 @@ import { fetchVciRatios } from "@/lib/vciFinancials";
 
 export const maxDuration = 30;
 
-// Most recent N quarters/years shown — enough for QoQ/YoY context without
-// an unbounded table.
-const MAX_PERIODS = 8;
+// Safety cap only — full history back to whatever Vietcap has (typically
+// since listing), not a rolling recent-quarters window.
+const MAX_PERIODS = 200;
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);

@@ -19,6 +19,10 @@ interface Response {
 // profitability/valuation ones instead of showing nothing.
 const CHART_PRIORITY = ["roe", "roa", "netInterestMargin", "npl", "casaRatio", "cir", "pe", "pb"];
 
+// The table shows full history (scrollable), but a bar chart with 40+
+// slivers is unreadable — cap the charted window to a recent stretch.
+const CHART_WINDOW = 20;
+
 export function FinancialRatios({ symbol }: { symbol: string }) {
   const { data, error, isLoading } = useSWR<Response>(`/api/financials?symbol=${symbol}`, fetcher, {
     revalidateOnFocus: false,
@@ -33,7 +37,8 @@ export function FinancialRatios({ symbol }: { symbol: string }) {
   const chartFields = CHART_PRIORITY.map((key) => visibleFields.find((f) => f.key === key))
     .filter((f): f is (typeof visibleFields)[number] => f !== undefined)
     .slice(0, 4);
-  const periods = points.map((p) => p.period);
+  const chartPoints = points.slice(-CHART_WINDOW);
+  const chartPeriods = chartPoints.map((p) => p.period);
 
   return (
     <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm shadow-neutral-900/[0.02] dark:border-neutral-800 dark:bg-neutral-900/60 dark:shadow-lg dark:shadow-black/20">
@@ -65,8 +70,8 @@ export function FinancialRatios({ symbol }: { symbol: string }) {
             <RatioBarChart
               key={field.key}
               label={field.label}
-              periods={periods}
-              values={points.map((p) => p.values[field.key])}
+              periods={chartPeriods}
+              values={chartPoints.map((p) => p.values[field.key])}
               percent={field.percent}
             />
           ))}
