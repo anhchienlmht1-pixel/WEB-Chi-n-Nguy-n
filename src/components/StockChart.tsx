@@ -20,7 +20,7 @@ interface Response {
   candles: Candle[];
 }
 
-const HISTORY_RANGES = ["1M", "3M", "6M", "1Y", "2Y"] as const;
+const HISTORY_RANGES = ["1M", "3M", "6M", "1Y", "2Y", "Tất cả"] as const;
 const VIEWS = ["Trong ngày", ...HISTORY_RANGES] as const;
 type View = (typeof VIEWS)[number];
 
@@ -56,7 +56,7 @@ export function StockChart({ symbol, refPrice }: { symbol: string; refPrice?: nu
 
   const query = isIntraday
     ? `/api/candles?symbol=${symbol}&resolution=1`
-    : `/api/candles?symbol=${symbol}&resolution=D&range=${view}`;
+    : `/api/candles?symbol=${symbol}&resolution=D&range=${encodeURIComponent(view)}`;
 
   const { data, error, isLoading } = useSWR<Response>(query, fetcher, {
     refreshInterval: isIntraday ? INTRADAY_REFRESH_MS : HISTORY_REFRESH_MS,

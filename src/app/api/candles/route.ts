@@ -11,6 +11,10 @@ const RANGE_DAYS: Record<string, number> = {
 
 const INTRADAY_RESOLUTIONS = new Set<Resolution>(["1", "5", "15", "30", "60"]);
 
+// HOSE opened in 2000; using this as the "from" for an all-time range just
+// asks VNDirect for everything it has, however far back that goes.
+const ALL_TIME_FROM = Math.floor(new Date("2000-01-01T00:00:00+07:00").getTime() / 1000);
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const symbol = searchParams.get("symbol");
@@ -22,7 +26,11 @@ export async function GET(req: NextRequest) {
   }
 
   const isIntraday = INTRADAY_RESOLUTIONS.has(resolution);
-  const from = isIntraday ? startOfTodayVN() : daysAgo(RANGE_DAYS[range] ?? 90);
+  const from = isIntraday
+    ? startOfTodayVN()
+    : range === "Tất cả"
+      ? ALL_TIME_FROM
+      : daysAgo(RANGE_DAYS[range] ?? 90);
 
   try {
     const candles = await fetchCandles(symbol, resolution, from, nowSeconds());
