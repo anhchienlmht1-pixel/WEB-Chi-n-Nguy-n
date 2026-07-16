@@ -9,6 +9,7 @@ import PriceChart, { type ActiveIndicator, type ChartType, type DrawingTool, typ
 import ChartToolbar from "../components/ChartToolbar";
 import DrawingToolbar from "../components/DrawingToolbar";
 import IndicatorPicker from "../components/IndicatorPicker";
+import IndicatorSettings from "../components/IndicatorSettings";
 import WatchButton from "../components/WatchButton";
 import FinancialRatios from "../components/FinancialRatios";
 
@@ -26,6 +27,7 @@ export default function StockDetail() {
     { instanceId: "sma-default-50", defId: "sma", params: { period: 50 } },
   ]);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [editingInstanceId, setEditingInstanceId] = useState<string | null>(null);
   const [chartType, setChartType] = useState<ChartType>("candlestick");
   const [drawingTool, setDrawingTool] = useState<DrawingTool>(null);
   const chartRef = useRef<PriceChartHandle>(null);
@@ -58,7 +60,13 @@ export default function StockDetail() {
     setIndicators((prev) => prev.filter((i) => i.instanceId !== instanceId));
   }
 
+  function updateIndicatorParams(instanceId: string, params: Record<string, number>) {
+    setIndicators((prev) => prev.map((i) => (i.instanceId === instanceId ? { ...i, params } : i)));
+  }
+
   const activeDefIds = useMemo(() => new Set(indicators.map((i) => i.defId)), [indicators]);
+  const editingIndicator = indicators.find((i) => i.instanceId === editingInstanceId);
+  const editingDef = editingIndicator ? findIndicatorDef(editingIndicator.defId) : undefined;
 
   const quoteState = usePolling(() => fetchQuote(symbol), [symbol], 30000);
   // Always fetch the full daily history — the resolution tabs (Ngày/Tuần/
@@ -120,6 +128,15 @@ export default function StockDetail() {
             />
           )}
 
+          {editingIndicator && editingDef && (
+            <IndicatorSettings
+              def={editingDef}
+              initialParams={editingIndicator.params}
+              onApply={(params) => updateIndicatorParams(editingIndicator.instanceId, params)}
+              onClose={() => setEditingInstanceId(null)}
+            />
+          )}
+
           <div
             ref={chartWrapperRef}
             className="mb-4 overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40"
@@ -148,6 +165,16 @@ export default function StockDetail() {
                       {def.nameEn}
                       {Object.values(ind.params).length > 0 && (
                         <span className="text-slate-400 dark:text-slate-500">({Object.values(ind.params).join(",")})</span>
+                      )}
+                      {def.params.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setEditingInstanceId(ind.instanceId)}
+                          aria-label={`Cài đặt ${def.nameEn}`}
+                          className="rounded-full px-1 text-slate-400 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-100"
+                        >
+                          ⚙
+                        </button>
                       )}
                       <button
                         type="button"
