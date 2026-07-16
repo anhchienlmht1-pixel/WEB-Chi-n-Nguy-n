@@ -11,7 +11,12 @@ import { StockQuote } from "@/lib/types";
 export const maxDuration = 30;
 
 async function quoteFor(symbol: string): Promise<StockQuote | null> {
-  const dailyCandles = await fetchCandles(symbol, "D", daysAgo(10), nowSeconds());
+  // Independent requests — run them concurrently instead of one after the
+  // other so a symbol's quote never takes longer than the slower of the two.
+  const [dailyCandles, { candles: intraday }] = await Promise.all([
+    fetchCandles(symbol, "D", daysAgo(10), nowSeconds()),
+    fetchTodayIntraday(symbol),
+  ]);
   if (dailyCandles.length === 0) return null;
 
   // The reference price (tham chiếu) must be the last *fully closed*
@@ -24,8 +29,6 @@ async function quoteFor(symbol: string): Promise<StockQuote | null> {
   const priorDays = dailyCandles.filter((c) => c.time < todayStart);
   const refCandle = priorDays[priorDays.length - 1] ?? dailyCandles[dailyCandles.length - 1];
   const refPrice = refCandle.close;
-
-  const { candles: intraday } = await fetchTodayIntraday(symbol);
 
   let price: number;
   let open: number;
