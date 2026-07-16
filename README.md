@@ -1,9 +1,12 @@
 # StockDash — Trang web theo dõi chứng khoán
 
-Ứng dụng theo dõi giá cổ phiếu theo thời gian thực gồm 2 phần:
+Ứng dụng theo dõi giá cổ phiếu theo thời gian thực gồm 3 phần:
 
 - **`client/`** — React + TypeScript + Vite + Tailwind CSS, biểu đồ dùng `lightweight-charts`.
-- **`server/`** — Express (TypeScript) đóng vai trò proxy dữ liệu, tránh lỗi CORS và giấu API key khỏi trình duyệt.
+- **`server/`** — Express (TypeScript), dùng khi tự host (VPS, Render, Railway, Docker...).
+- **`api/`** — cùng logic đó viết dưới dạng Vercel Serverless Functions, dùng khi deploy trên Vercel (Vercel không chạy Express thường trú được).
+
+Cả hai đều dùng chung code trong `server/src/providers/` — sửa 1 nơi, cả 2 cách deploy đều cập nhật.
 
 ## Nguồn dữ liệu (pluggable — cắm bất kỳ API nào)
 
@@ -58,3 +61,15 @@ npm run dev         # http://localhost:5173 (proxy /api -> :4000)
 cd server && npm run build && npm start
 cd client && npm run build   # build tĩnh vào client/dist, deploy lên bất kỳ static host nào
 ```
+
+## Deploy lên Vercel
+
+Repo đã có sẵn `vercel.json` + thư mục `api/` (Serverless Functions) nên chỉ cần:
+
+1. Trong Vercel Dashboard → Project Settings → **General → Root Directory**: để trống / chọn thư mục **gốc của repo** (không phải `client`). Nếu để `client` làm root thì Vercel sẽ không thấy được thư mục `api/`, và bảng giá sẽ không tải được dữ liệu dù trang vẫn hiện ra.
+2. Project Settings → **Environment Variables**: thêm (tùy chọn, mặc định đã chạy được với `mock`):
+   - `DATA_PROVIDER` = `mock` / `yahoo` / `alphavantage` / `finnhub`
+   - `ALPHAVANTAGE_API_KEY`, `FINNHUB_API_KEY` nếu dùng provider tương ứng
+   - `WATCHLIST_SYMBOLS` nếu muốn đổi danh sách mã hiển thị ở trang tổng quan cho `yahoo`/`alphavantage`/`finnhub`
+3. Project Settings → **Deployment Protection**: nếu bật "Vercel Authentication" hoặc "Password Protection", người ngoài truy cập domain sẽ gặp lỗi 403. Tắt đi (hoặc thêm domain vào danh sách bypass) nếu muốn ai cũng xem được.
+4. Redeploy. Vercel sẽ tự nhận `api/*.ts` thành các endpoint `/api/health`, `/api/market/overview`, `/api/quote/:symbol`, `/api/history/:symbol`, `/api/search`, và build `client/` thành site tĩnh theo cấu hình trong `vercel.json`.
