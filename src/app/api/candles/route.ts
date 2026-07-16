@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchCandles, daysAgo, nowSeconds, startOfTodayVN, Resolution } from "@/lib/vndirect";
 
-// VNDirect's dchart can be slow for very long ranges (e.g. the all-time
-// weekly request); give the function more headroom than the default.
+// VNDirect's dchart can be slow for long ranges; give the function more
+// headroom than the default before Vercel kills it.
 export const maxDuration = 30;
 
 const RANGE_DAYS: Record<string, number> = {
@@ -11,13 +11,15 @@ const RANGE_DAYS: Record<string, number> = {
   "6M": 180,
   "1Y": 365,
   "2Y": 730,
+  // Not literally "since HOSE opened in 2000" — a 25-year daily request is
+  // slow enough to risk timing out, and most listed tickers don't go back
+  // that far anyway. 10 years covers the full history for the vast
+  // majority of symbols while staying well within the same order of
+  // magnitude as the 2Y request, which is known to work reliably.
+  "Tất cả": 3650,
 };
 
 const INTRADAY_RESOLUTIONS = new Set<Resolution>(["1", "5", "15", "30", "60"]);
-
-// HOSE opened in 2000; using this as the "from" for an all-time range just
-// asks VNDirect for everything it has, however far back that goes.
-const ALL_TIME_FROM = Math.floor(new Date("2000-01-01T00:00:00+07:00").getTime() / 1000);
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -30,11 +32,7 @@ export async function GET(req: NextRequest) {
   }
 
   const isIntraday = INTRADAY_RESOLUTIONS.has(resolution);
-  const from = isIntraday
-    ? startOfTodayVN()
-    : range === "Tất cả"
-      ? ALL_TIME_FROM
-      : daysAgo(RANGE_DAYS[range] ?? 90);
+  const from = isIntraday ? startOfTodayVN() : daysAgo(RANGE_DAYS[range] ?? 90);
 
   try {
     const candles = await fetchCandles(symbol, resolution, from, nowSeconds());

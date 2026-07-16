@@ -54,12 +54,9 @@ export function StockChart({ symbol, refPrice }: { symbol: string; refPrice?: nu
   const lastViewRef = useRef(view);
   const { theme } = useTheme();
 
-  // "Tất cả" spans ~25 years — daily bars for that range are slow to fetch
-  // and render, so fall back to weekly bars just for that view.
-  const historyResolution = view === "Tất cả" ? "W" : "D";
   const query = isIntraday
     ? `/api/candles?symbol=${symbol}&resolution=1`
-    : `/api/candles?symbol=${symbol}&resolution=${historyResolution}&range=${encodeURIComponent(view)}`;
+    : `/api/candles?symbol=${symbol}&resolution=D&range=${encodeURIComponent(view)}`;
 
   const { data, error, isLoading } = useSWR<Response>(query, fetcher, {
     refreshInterval: isIntraday ? INTRADAY_REFRESH_MS : HISTORY_REFRESH_MS,
@@ -184,6 +181,9 @@ export function StockChart({ symbol, refPrice }: { symbol: string; refPrice?: nu
       {error && (
         <div className="rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">
           Không thể tải dữ liệu biểu đồ cho {symbol}.
+          {error instanceof Error && error.message && (
+            <div className="mt-1 text-xs opacity-75">{error.message}</div>
+          )}
         </div>
       )}
       {!error && !isLoading && data && !hasCandles && (
