@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fetchCandlesTrying, daysAgo, nowSeconds } from "@/lib/vndirect";
+import { fetchCandlesTrying, daysAgo, nowSeconds, startOfTodayVN } from "@/lib/vndirect";
 import { IndexCode, IndexQuote } from "@/lib/types";
 
 const INDICES: { code: IndexCode; name: string; candidates: string[] }[] = [
@@ -12,15 +12,20 @@ async function indexFor(code: IndexCode, name: string, candidates: string[]): Pr
   const candles = await fetchCandlesTrying(candidates, "D", daysAgo(30), nowSeconds());
   if (candles.length === 0) return null;
 
+  // Same fix as /api/quotes: don't assume the last candle is today's live
+  // bar. Use the last candle strictly before today as the reference close,
+  // whatever the array's actual makeup turns out to be.
+  const todayStart = startOfTodayVN();
+  const priorDays = candles.filter((c) => c.time < todayStart);
+  const refCandle = priorDays[priorDays.length - 1] ?? candles[candles.length - 2] ?? candles[0];
   const last = candles[candles.length - 1];
-  const prev = candles.length > 1 ? candles[candles.length - 2] : last;
 
   return {
     code,
     name,
     value: last.close,
-    change: last.close - prev.close,
-    changePercent: prev.close ? ((last.close - prev.close) / prev.close) * 100 : 0,
+    change: last.close - refCandle.close,
+    changePercent: refCandle.close ? ((last.close - refCandle.close) / refCandle.close) * 100 : 0,
     volume: last.volume,
     history: candles.map((c) => ({ time: c.time, value: c.close })),
   };

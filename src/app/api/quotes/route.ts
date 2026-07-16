@@ -1,16 +1,59 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchCandles, daysAgo, nowSeconds } from "@/lib/vndirect";
+import { fetchCandles, daysAgo, nowSeconds, startOfTodayVN } from "@/lib/vndirect";
+import { fetchTodayIntraday } from "@/lib/intraday";
 import { ceilingPrice, floorPrice } from "@/lib/market";
 import { findStock } from "@/lib/symbols";
 import { StockQuote } from "@/lib/types";
 
-async function quoteFor(symbol: string): Promise<StockQuote | null> {
-  const candles = await fetchCandles(symbol, "D", daysAgo(10), nowSeconds());
-  if (candles.length === 0) return null;
+// Each symbol now does a daily fetch plus an intraday fetch (with a
+// fallback source), so a full board request needs more headroom than the
+// default serverless timeout.
+export const maxDuration = 30;
 
-  const last = candles[candles.length - 1];
-  const prev = candles.length > 1 ? candles[candles.length - 2] : last;
-  const refPrice = prev.close;
+async function quoteFor(symbol: string): Promise<StockQuote | null> {
+  const dailyCandles = await fetchCandles(symbol, "D", daysAgo(10), nowSeconds());
+  if (dailyCandles.length === 0) return null;
+
+  // The reference price (tham chiếu) must be the last *fully closed*
+  // trading day's close. Relying on "second-to-last daily candle" silently
+  // assumes the last one is today's live bar — if VNDirect's daily feed
+  // instead only finalizes today's bar after market close, that shifts
+  // both the reference price and the "current" price back by a day.
+  // Filtering by an explicit cutoff is correct either way.
+  const todayStart = startOfTodayVN();
+  const priorDays = dailyCandles.filter((c) => c.time < todayStart);
+  const refCandle = priorDays[priorDays.length - 1] ?? dailyCandles[dailyCandles.length - 1];
+  const refPrice = refCandle.close;
+
+  const { candles: intraday } = await fetchTodayIntraday(symbol);
+
+  let price: number;
+  let open: number;
+  let high: number;
+  let low: number;
+  let volume: number;
+  let updatedAt: number;
+
+  if (intraday.length > 0) {
+    const lastBar = intraday[intraday.length - 1];
+    price = lastBar.close;
+    open = intraday[0].open;
+    high = Math.max(...intraday.map((c) => c.high));
+    low = Math.min(...intraday.map((c) => c.low));
+    volume = intraday.reduce((sum, c) => sum + c.volume, 0);
+    updatedAt = lastBar.time;
+  } else {
+    // No intraday data yet (pre-market, or both sources unavailable) — fall
+    // back to the most recent daily bar so the page still shows something.
+    const lastDaily = dailyCandles[dailyCandles.length - 1];
+    price = lastDaily.close;
+    open = lastDaily.open;
+    high = lastDaily.high;
+    low = lastDaily.low;
+    volume = lastDaily.volume;
+    updatedAt = lastDaily.time;
+  }
+
   const exchange = findStock(symbol)?.exchange ?? "HOSE";
   const ceiling = ceilingPrice(refPrice, exchange);
   const floor = floorPrice(refPrice, exchange);
@@ -20,14 +63,14 @@ async function quoteFor(symbol: string): Promise<StockQuote | null> {
     refPrice,
     ceilingPrice: ceiling,
     floorPrice: floor,
-    price: last.close,
-    open: last.open,
-    high: last.high,
-    low: last.low,
-    change: last.close - refPrice,
-    changePercent: refPrice ? ((last.close - refPrice) / refPrice) * 100 : 0,
-    volume: last.volume,
-    updatedAt: last.time,
+    price,
+    open,
+    high,
+    low,
+    change: price - refPrice,
+    changePercent: refPrice ? ((price - refPrice) / refPrice) * 100 : 0,
+    volume,
+    updatedAt,
   };
 }
 
