@@ -1,14 +1,20 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { fetchQuote } from "../api/client";
+import { fetchHistory, fetchQuote } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
+import type { HistoryRange } from "../types";
 import { formatChange, formatMarketCap, formatPercent, formatPrice, formatVolume, trendClass } from "../utils/format";
-import TVChart from "../components/TVChart";
+import PriceChart from "../components/PriceChart";
+import RangeSelector from "../components/RangeSelector";
 import WatchButton from "../components/WatchButton";
 
 export default function StockDetail() {
   const { symbol = "" } = useParams();
+  const [range, setRange] = useState<HistoryRange>("3M");
 
   const quoteState = usePolling(() => fetchQuote(symbol), [symbol], 15000);
+  const historyState = usePolling(() => fetchHistory(symbol, range), [symbol, range]);
+
   const quote = quoteState.data;
 
   if (quoteState.error && !quote) {
@@ -31,9 +37,11 @@ export default function StockDetail() {
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
                   {quote.symbol}
                 </h1>
-                <span className="rounded-full border border-slate-300 px-2 py-0.5 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
-                  {quote.exchange}
-                </span>
+                {quote.exchange && (
+                  <span className="rounded-full border border-slate-300 px-2 py-0.5 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                    {quote.exchange}
+                  </span>
+                )}
                 <WatchButton symbol={quote.symbol} />
               </div>
               <p className="text-slate-500 dark:text-slate-400">{quote.name}</p>
@@ -49,8 +57,22 @@ export default function StockDetail() {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
-            <TVChart symbol={quote.symbol} exchange={quote.exchange} />
+          <div className="mb-4 flex justify-end">
+            <RangeSelector value={range} onChange={setRange} />
+          </div>
+
+          <div className="rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-900/40">
+            {historyState.data && historyState.data.points.length > 0 ? (
+              <PriceChart points={historyState.data.points} positive={quote.change >= 0} />
+            ) : (
+              <div className="flex h-[400px] items-center justify-center text-slate-400 dark:text-slate-500">
+                {historyState.loading
+                  ? "Đang tải biểu đồ..."
+                  : historyState.error
+                    ? `Lỗi tải biểu đồ: ${historyState.error}`
+                    : "Không có dữ liệu biểu đồ"}
+              </div>
+            )}
           </div>
 
           <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
@@ -63,7 +85,7 @@ export default function StockDetail() {
           </div>
 
           <p className="mt-6 text-xs text-slate-400 dark:text-slate-600">
-            Cập nhật lúc {new Date(quote.updatedAt).toLocaleTimeString("vi-VN")} — Biểu đồ: TradingView
+            Cập nhật lúc {new Date(quote.updatedAt).toLocaleTimeString("vi-VN")}
           </p>
         </>
       )}

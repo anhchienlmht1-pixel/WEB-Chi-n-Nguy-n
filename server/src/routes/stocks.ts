@@ -1,7 +1,8 @@
 import { Router, Request, Response, NextFunction } from "express";
 import NodeCache from "node-cache";
 import { getProvider } from "../providers/index.js";
-import { HistoryRange } from "../providers/types.js";
+import { HistoryRange, TopExchange } from "../providers/types.js";
+import { topTradedOf, VALID_EXCHANGES } from "../providers/topTraded.js";
 
 const router = Router();
 const cache = new NodeCache({ stdTTL: 20, checkperiod: 30 });
@@ -20,6 +21,20 @@ function cached<T>(key: string, ttl: number, loader: () => Promise<T>): Promise<
 function asyncHandler(fn: (req: Request, res: Response) => Promise<void>) {
   return (req: Request, res: Response, next: NextFunction) => fn(req, res).catch(next);
 }
+
+router.get(
+  "/market/top",
+  asyncHandler(async (req, res) => {
+    const provider = getProvider();
+    const exchange = String(req.query.exchange || "ALL").toUpperCase() as TopExchange;
+    if (!VALID_EXCHANGES.includes(exchange)) {
+      res.status(400).json({ error: `Sàn không hợp lệ. Dùng: ${VALID_EXCHANGES.join(", ")}` });
+      return;
+    }
+    const data = await cached(`top:${exchange}`, 30, () => topTradedOf(provider, exchange));
+    res.json({ provider: provider.id, exchange, items: data });
+  })
+);
 
 router.get(
   "/market/overview",

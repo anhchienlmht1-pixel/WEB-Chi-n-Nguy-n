@@ -1,12 +1,15 @@
 import { fetchMarketOverview } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import StockTable from "../components/StockTable";
+import TopTraded from "../components/TopTraded";
 
 export default function Dashboard() {
   const { data, error, loading } = usePolling(fetchMarketOverview, [], 15000);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
+      <TopTraded />
+
       <div className="mb-6 flex items-baseline justify-between">
         <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
           Tổng quan thị trường

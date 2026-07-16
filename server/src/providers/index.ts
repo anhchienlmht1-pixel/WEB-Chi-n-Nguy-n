@@ -1,5 +1,6 @@
 import { StockProvider } from "./types.js";
 import { mockProvider } from "./mockProvider.js";
+import { vnstockProvider } from "./vnstockProvider.js";
 import { tradingviewProvider } from "./tradingviewProvider.js";
 import { fireantProvider } from "./fireantProvider.js";
 import { vndirectProvider } from "./vndirectProvider.js";
@@ -9,6 +10,7 @@ import { finnhubProvider } from "./finnhubProvider.js";
 
 const PROVIDERS: Record<string, StockProvider> = {
   mock: mockProvider,
+  vnstock: vnstockProvider,
   tradingview: tradingviewProvider,
   fireant: fireantProvider,
   vndirect: vndirectProvider,
@@ -18,7 +20,7 @@ const PROVIDERS: Record<string, StockProvider> = {
 };
 
 export function getProvider(): StockProvider {
-  const id = (process.env.DATA_PROVIDER || "tradingview").toLowerCase();
+  const id = (process.env.DATA_PROVIDER || "vnstock").toLowerCase();
   const provider = PROVIDERS[id];
   if (!provider) {
     throw new Error(

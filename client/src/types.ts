@@ -15,6 +15,29 @@ export interface Quote {
   updatedAt: string;
 }
 
+export interface HistoryPoint {
+  time: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
+export type HistoryRange = "1D" | "1W" | "1M" | "3M" | "6M" | "1Y" | "5Y";
+
+export type TopExchange = "ALL" | "HOSE" | "HNX" | "UPCOM";
+
+export interface TopTradedItem {
+  symbol: string;
+  exchange: string;
+  name?: string;
+  price?: number;
+  changePercent?: number;
+  volume?: number;
+  value?: number;
+}
+
 export interface SearchResult {
   symbol: string;
   name: string;

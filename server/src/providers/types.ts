@@ -32,6 +32,19 @@ export interface SearchResult {
   exchange: string;
 }
 
+export type TopExchange = "ALL" | "HOSE" | "HNX" | "UPCOM";
+
+export interface TopTradedItem {
+  symbol: string;
+  exchange: string;
+  name?: string;
+  price?: number;
+  changePercent?: number;
+  volume?: number;
+  /** Trading value in VND */
+  value?: number;
+}
+
 export interface StockProvider {
   readonly id: string;
   getQuote(symbol: string): Promise<Quote>;
@@ -39,4 +52,6 @@ export interface StockProvider {
   getHistory(symbol: string, range: HistoryRange): Promise<HistoryPoint[]>;
   search(query: string): Promise<SearchResult[]>;
   getMarketOverview(): Promise<Quote[]>;
+  /** Top 10 most-traded stocks; optional — routes fall back to overview data. */
+  getTopTraded?(exchange: TopExchange): Promise<TopTradedItem[]>;
 }

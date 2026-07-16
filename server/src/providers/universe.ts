@@ -81,6 +81,16 @@ export const STOCK_UNIVERSE: StockSeed[] = [
   // Khác
   { symbol: "BVH", name: "Tập đoàn Bảo Việt", exchange: "HOSE", currency: "VND", basePrice: 42600 },
   { symbol: "GEX", name: "Gelex Group", exchange: "HOSE", currency: "VND", basePrice: 18900 },
+
+  // UPCOM
+  { symbol: "ACV", name: "Tổng Công ty Cảng hàng không Việt Nam", exchange: "UPCOM", currency: "VND", basePrice: 118000 },
+  { symbol: "VGI", name: "Viettel Global", exchange: "UPCOM", currency: "VND", basePrice: 68500 },
+  { symbol: "MCH", name: "Masan Consumer", exchange: "UPCOM", currency: "VND", basePrice: 205000 },
+  { symbol: "BSR", name: "Lọc hóa dầu Bình Sơn", exchange: "UPCOM", currency: "VND", basePrice: 22400 },
+  { symbol: "OIL", name: "PV OIL", exchange: "UPCOM", currency: "VND", basePrice: 13800 },
+  { symbol: "VEA", name: "VEAM Corp", exchange: "UPCOM", currency: "VND", basePrice: 39700 },
+  { symbol: "QNS", name: "Đường Quảng Ngãi", exchange: "UPCOM", currency: "VND", basePrice: 48200 },
+  { symbol: "FOX", name: "FPT Telecom", exchange: "UPCOM", currency: "VND", basePrice: 62300 },
 ];
 
 export function findSeed(symbol: string): StockSeed | undefined {

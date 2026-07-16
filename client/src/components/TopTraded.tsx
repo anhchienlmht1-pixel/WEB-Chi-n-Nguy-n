@@ -1,0 +1,119 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { fetchTopTraded } from "../api/client";
+import { usePolling } from "../hooks/usePolling";
+import type { TopExchange } from "../types";
+import { formatPercent, formatPrice, formatVolume, trendClass } from "../utils/format";
+
+const TABS: { key: TopExchange; label: string }[] = [
+  { key: "ALL", label: "Cả 3 sàn" },
+  { key: "HOSE", label: "HOSE" },
+  { key: "HNX", label: "HNX" },
+  { key: "UPCOM", label: "UPCOM" },
+];
+
+function formatValue(value?: number): string {
+  if (value == null) return "—";
+  if (value >= 1_000_000_000_000) return `${(value / 1_000_000_000_000).toFixed(2)} nghìn tỷ`;
+  if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)} tỷ`;
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)} tr`;
+  return new Intl.NumberFormat("vi-VN").format(Math.round(value));
+}
+
+export default function TopTraded() {
+  const [exchange, setExchange] = useState<TopExchange>("ALL");
+  const { data, error, loading } = usePolling(() => fetchTopTraded(exchange), [exchange], 30000);
+  const navigate = useNavigate();
+
+  return (
+    <section className="mb-8">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+          🔥 Top 10 giao dịch nhiều nhất
+        </h2>
+        <div className="flex gap-1 rounded-lg border border-slate-200 p-1 dark:border-slate-800">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setExchange(tab.key)}
+              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                exchange === tab.key
+                  ? "bg-emerald-500 text-slate-950"
+                  : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {loading && !data && (
+        <p className="text-slate-500 dark:text-slate-400">Đang tải...</p>
+      )}
+      {error && !data && (
+        <p className="text-sm text-red-500 dark:text-red-400">Lỗi tải top giao dịch: {error}</p>
+      )}
+      {data && data.items.length === 0 && (
+        <p className="text-slate-500 dark:text-slate-400">Chưa có dữ liệu cho sàn này.</p>
+      )}
+      {data && data.items.length > 0 && (
+        <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
+          <table className="w-full min-w-[640px] border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800">
+                <th className="px-4 py-2.5 font-medium">#</th>
+                <th className="px-4 py-2.5 font-medium">Mã</th>
+                <th className="px-4 py-2.5 font-medium">Sàn</th>
+                <th className="px-4 py-2.5 text-right font-medium">Giá</th>
+                <th className="px-4 py-2.5 text-right font-medium">%</th>
+                <th className="px-4 py-2.5 text-right font-medium">KL</th>
+                <th className="px-4 py-2.5 text-right font-medium">GT giao dịch</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.items.map((item, i) => (
+                <tr
+                  key={item.symbol}
+                  onClick={() => navigate(`/stock/${item.symbol}`)}
+                  className="cursor-pointer border-b border-slate-100 last:border-0 hover:bg-slate-50 dark:border-slate-900 dark:hover:bg-slate-900/60"
+                >
+                  <td className="px-4 py-2.5 text-slate-400 dark:text-slate-500">{i + 1}</td>
+                  <td className="px-4 py-2.5 font-semibold text-slate-900 dark:text-slate-100">
+                    {item.symbol}
+                    {item.name && (
+                      <span className="ml-2 hidden text-xs font-normal text-slate-400 sm:inline dark:text-slate-500">
+                        {item.name}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2.5">
+                    <span className="rounded-full border border-slate-200 px-2 py-0.5 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                      {item.exchange || "—"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5 text-right tabular-nums text-slate-900 dark:text-slate-100">
+                    {item.price != null ? formatPrice(item.price, "VND") : "—"}
+                  </td>
+                  <td
+                    className={`px-4 py-2.5 text-right tabular-nums ${
+                      item.changePercent != null ? trendClass(item.changePercent) : "text-slate-400"
+                    }`}
+                  >
+                    {item.changePercent != null ? formatPercent(item.changePercent) : "—"}
+                  </td>
+                  <td className="px-4 py-2.5 text-right tabular-nums text-slate-500 dark:text-slate-400">
+                    {item.volume != null ? formatVolume(item.volume) : "—"}
+                  </td>
+                  <td className="px-4 py-2.5 text-right tabular-nums text-slate-500 dark:text-slate-400">
+                    {formatValue(item.value)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}

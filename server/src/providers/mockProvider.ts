@@ -1,4 +1,12 @@
-import { StockProvider, Quote, HistoryPoint, HistoryRange, SearchResult } from "./types.js";
+import {
+  StockProvider,
+  Quote,
+  HistoryPoint,
+  HistoryRange,
+  SearchResult,
+  TopExchange,
+  TopTradedItem,
+} from "./types.js";
 import { STOCK_UNIVERSE, findSeed } from "./universe.js";
 
 function mulberry32(seed: number) {
@@ -137,5 +145,23 @@ export const mockProvider: StockProvider = {
 
   async getMarketOverview(): Promise<Quote[]> {
     return STOCK_UNIVERSE.map((s) => buildQuote(s.symbol));
+  },
+
+  async getTopTraded(exchange: TopExchange): Promise<TopTradedItem[]> {
+    return STOCK_UNIVERSE.filter((s) => exchange === "ALL" || s.exchange === exchange)
+      .map((s) => {
+        const q = buildQuote(s.symbol);
+        return {
+          symbol: q.symbol,
+          exchange: q.exchange,
+          name: q.name,
+          price: q.price,
+          changePercent: q.changePercent,
+          volume: q.volume,
+          value: q.price * q.volume,
+        };
+      })
+      .sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
+      .slice(0, 10);
   },
 };
