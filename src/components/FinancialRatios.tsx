@@ -6,11 +6,18 @@ import { fetcher } from "@/lib/fetcher";
 import { RatioPoint } from "@/lib/types";
 import { RATIO_FIELDS } from "@/lib/ratioFields";
 import { formatRatioNumber, formatRatioPercent } from "@/lib/format";
+import { RatioBarChart } from "./RatioBarChart";
 
 interface Response {
   symbol: string;
   points: RatioPoint[];
 }
+
+// Preferred headline metrics to chart, in priority order — whichever of
+// these actually have data for a given symbol get charted (up to 4), so
+// banks show CASA/NIM/NPL-style metrics and non-banks fall back to
+// profitability/valuation ones instead of showing nothing.
+const CHART_PRIORITY = ["roe", "roa", "netInterestMargin", "npl", "casaRatio", "cir", "pe", "pb"];
 
 export function FinancialRatios({ symbol }: { symbol: string }) {
   const { data, error, isLoading } = useSWR<Response>(`/api/financials?symbol=${symbol}`, fetcher, {
@@ -23,6 +30,10 @@ export function FinancialRatios({ symbol }: { symbol: string }) {
   // returned periods — different symbol types (bank vs. non-bank) populate
   // different subsets of RATIO_FIELDS.
   const visibleFields = RATIO_FIELDS.filter((field) => points.some((p) => p.values[field.key] !== null));
+  const chartFields = CHART_PRIORITY.map((key) => visibleFields.find((f) => f.key === key))
+    .filter((f): f is (typeof visibleFields)[number] => f !== undefined)
+    .slice(0, 4);
+  const periods = points.map((p) => p.period);
 
   return (
     <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm shadow-neutral-900/[0.02] dark:border-neutral-800 dark:bg-neutral-900/60 dark:shadow-lg dark:shadow-black/20">
@@ -45,6 +56,20 @@ export function FinancialRatios({ symbol }: { symbol: string }) {
       {!isLoading && !error && visibleFields.length === 0 && (
         <div className="rounded-xl bg-amber-50 p-3 text-sm text-amber-700 dark:bg-amber-950/20 dark:text-amber-300">
           Chưa có dữ liệu chỉ số tài chính cho {symbol}.
+        </div>
+      )}
+
+      {!isLoading && !error && chartFields.length > 0 && (
+        <div className="mb-6 grid grid-cols-1 gap-6 border-b border-neutral-100 pb-6 sm:grid-cols-2 dark:border-neutral-800">
+          {chartFields.map((field) => (
+            <RatioBarChart
+              key={field.key}
+              label={field.label}
+              periods={periods}
+              values={points.map((p) => p.values[field.key])}
+              percent={field.percent}
+            />
+          ))}
         </div>
       )}
 
