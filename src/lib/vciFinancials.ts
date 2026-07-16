@@ -49,14 +49,24 @@ function extractPeriodLabel(
   return null;
 }
 
+// Some finance APIs send numbers as strings to avoid float precision loss
+// in transit — accept both rather than assuming a bare `number`.
+function toNumber(raw: unknown): number | null {
+  if (typeof raw === "number") return Number.isFinite(raw) ? raw : null;
+  if (typeof raw === "string" && raw.trim() !== "") {
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
 function toRatioPoint(row: RawRatioRow): (RatioPoint & { sortKey: number }) | null {
   const periodInfo = extractPeriodLabel(row);
   if (!periodInfo) return null;
 
   const values: Record<string, number | null> = {};
   for (const field of RATIO_FIELDS) {
-    const raw = row[field.key];
-    values[field.key] = typeof raw === "number" && Number.isFinite(raw) ? raw : null;
+    values[field.key] = toNumber(row[field.key]);
   }
 
   return { period: periodInfo.period, periodType: periodInfo.periodType, values, sortKey: periodInfo.sortKey };
@@ -119,12 +129,15 @@ export async function fetchVciRatios(symbol: string): Promise<RatioPoint[]> {
 
   const hasAnyValue = points.some((p) => Object.values(p.values).some((v) => v !== null));
   if (!hasAnyValue) {
-    // Rows parsed fine but none of our guessed field keys (roe, roa,
-    // casaRatio, ...) matched anything real — show what keys the row
-    // actually has so the mapping can be corrected precisely.
-    const sampleKeys = Object.keys(rows[0]).join(", ");
+    // Field names matched but every value came back null even after
+    // string coercion — show the *raw* values (not just keys) for a
+    // sample of fields so the actual shape (nested object? different
+    // null-ish sentinel?) is visible instead of guessed at again.
+    const sample = ["roe", "pe", "casaRatio", "npl"]
+      .map((k) => `${k}=${JSON.stringify(rows[rows.length - 1][k])}`)
+      .join(", ");
     throw new Error(
-      `Nhận được ${rows.length} kỳ báo cáo từ Vietcap cho ${symbol} nhưng không khớp field nào đang dùng. Field thực tế: ${sampleKeys}`
+      `Nhận được ${rows.length} kỳ báo cáo từ Vietcap cho ${symbol}, field khớp tên nhưng giá trị rỗng. Mẫu giá trị thô: ${sample}`
     );
   }
 
