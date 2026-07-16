@@ -13,7 +13,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
   try {
     const provider = getProvider();
-    const data = await cached(`top:${exchange}`, 30, () => topTradedOf(provider, exchange));
+    const data = await cached(`top:${exchange}`, 60, () => topTradedOf(provider, exchange));
     res.status(200).json({ provider: provider.id, exchange, items: data });
   } catch (err) {
     sendError(res, err);

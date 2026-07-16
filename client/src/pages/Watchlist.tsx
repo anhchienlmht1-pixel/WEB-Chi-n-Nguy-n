@@ -15,7 +15,7 @@ export default function Watchlist() {
       .map((r) => r.value);
   }, [symbols]);
 
-  const { data, loading, error } = usePolling(fetcher, [symbols.join(",")], 15000);
+  const { data, loading, error } = usePolling(fetcher, [symbols.join(",")], 30000);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">

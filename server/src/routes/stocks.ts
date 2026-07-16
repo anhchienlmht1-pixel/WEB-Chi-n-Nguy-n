@@ -31,7 +31,7 @@ router.get(
       res.status(400).json({ error: `Sàn không hợp lệ. Dùng: ${VALID_EXCHANGES.join(", ")}` });
       return;
     }
-    const data = await cached(`top:${exchange}`, 30, () => topTradedOf(provider, exchange));
+    const data = await cached(`top:${exchange}`, 60, () => topTradedOf(provider, exchange));
     res.json({ provider: provider.id, exchange, items: data });
   })
 );
@@ -40,7 +40,7 @@ router.get(
   "/market/overview",
   asyncHandler(async (_req, res) => {
     const provider = getProvider();
-    const data = await cached("overview", 20, () => provider.getMarketOverview());
+    const data = await cached("overview", 30, () => provider.getMarketOverview());
     res.json({ provider: provider.id, quotes: data });
   })
 );
@@ -50,7 +50,7 @@ router.get(
   asyncHandler(async (req, res) => {
     const provider = getProvider();
     const symbol = String(req.params.symbol).toUpperCase();
-    const data = await cached(`quote:${symbol}`, 15, () => provider.getQuote(symbol));
+    const data = await cached(`quote:${symbol}`, 20, () => provider.getQuote(symbol));
     res.json(data);
   })
 );
@@ -65,7 +65,7 @@ router.get(
       res.status(400).json({ error: `Invalid range. Use one of: ${VALID_RANGES.join(", ")}` });
       return;
     }
-    const data = await cached(`history:${symbol}:${range}`, 60, () =>
+    const data = await cached(`history:${symbol}:${range}`, 120, () =>
       provider.getHistory(symbol, range)
     );
     res.json({ symbol, range, points: data });

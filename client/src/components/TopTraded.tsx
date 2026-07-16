@@ -22,7 +22,7 @@ function formatValue(value?: number): string {
 
 export default function TopTraded() {
   const [exchange, setExchange] = useState<TopExchange>("ALL");
-  const { data, error, loading } = usePolling(() => fetchTopTraded(exchange), [exchange], 30000);
+  const { data, error, loading } = usePolling(() => fetchTopTraded(exchange), [exchange], 60000);
   const navigate = useNavigate();
 
   return (

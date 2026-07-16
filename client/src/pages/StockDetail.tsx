@@ -12,7 +12,7 @@ export default function StockDetail() {
   const { symbol = "" } = useParams();
   const [range, setRange] = useState<HistoryRange>("3M");
 
-  const quoteState = usePolling(() => fetchQuote(symbol), [symbol], 15000);
+  const quoteState = usePolling(() => fetchQuote(symbol), [symbol], 30000);
   const historyState = usePolling(() => fetchHistory(symbol, range), [symbol, range]);
 
   const quote = quoteState.data;

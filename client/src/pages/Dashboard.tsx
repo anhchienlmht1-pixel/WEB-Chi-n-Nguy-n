@@ -4,7 +4,7 @@ import StockTable from "../components/StockTable";
 import TopTraded from "../components/TopTraded";
 
 export default function Dashboard() {
-  const { data, error, loading } = usePolling(fetchMarketOverview, [], 15000);
+  const { data, error, loading } = usePolling(fetchMarketOverview, [], 30000);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">

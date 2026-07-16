@@ -17,7 +17,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const provider = getProvider();
-    const data = await cached(`history:${symbol}:${range}`, 60, () =>
+    const data = await cached(`history:${symbol}:${range}`, 120, () =>
       provider.getHistory(symbol, range)
     );
     res.status(200).json({ symbol, range, points: data });

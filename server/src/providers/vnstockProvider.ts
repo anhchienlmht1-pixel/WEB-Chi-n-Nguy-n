@@ -10,8 +10,10 @@ import {
 import { STOCK_UNIVERSE, findSeed } from "./universe.js";
 
 // Data source used by the vnstock library (vnstocks.com): TCBS's public API
-// at apipubaws.tcbs.com.vn. No token required. Prices are in plain VND and
-// cover all three Vietnamese exchanges (HOSE / HNX / UPCOM).
+// at apipubaws.tcbs.com.vn. No token required, but it rate-limits aggressive
+// callers (HTTP 429) — so this provider is built around ONE cached screener
+// request for the whole board instead of one request per symbol, and only
+// falls back to per-symbol candle calls for small symbol sets.
 const BASE = "https://apipubaws.tcbs.com.vn";
 
 const HEADERS = {
@@ -19,14 +21,155 @@ const HEADERS = {
   "User-Agent": "Mozilla/5.0 (compatible; StockDash/1.0)",
 };
 
-async function fetchJson(url: string, init?: RequestInit): Promise<any> {
+function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+async function fetchJson(url: string, init?: RequestInit, attempt = 0): Promise<any> {
   const res = await fetch(url, { ...init, headers: { ...HEADERS, ...(init?.headers ?? {}) } });
+  if ((res.status === 429 || res.status >= 500) && attempt < 1) {
+    await sleep(1500);
+    return fetchJson(url, init, attempt + 1);
+  }
+  if (res.status === 429) {
+    throw Object.assign(
+      new Error("TCBS đang giới hạn tần suất truy cập (429) — vui lòng tải lại sau 1-2 phút"),
+      { status: 503 }
+    );
+  }
   if (!res.ok) {
     throw Object.assign(new Error(`TCBS (vnstock) trả lỗi ${res.status}`), { status: 502 });
   }
   return res.json();
 }
 
+async function mapLimit<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>
+): Promise<PromiseSettledResult<R>[]> {
+  const results: PromiseSettledResult<R>[] = new Array(items.length);
+  let next = 0;
+  async function worker() {
+    while (next < items.length) {
+      const i = next++;
+      try {
+        results[i] = { status: "fulfilled", value: await fn(items[i]) };
+      } catch (reason) {
+        results[i] = { status: "rejected", reason };
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
+}
+
+function num(v: unknown): number | undefined {
+  return typeof v === "number" && Number.isFinite(v) ? v : undefined;
+}
+
+const EXCHANGE_NAMES: Record<string, string> = {
+  HOSE: "HOSE",
+  HSX: "HOSE",
+  HNX: "HNX",
+  UPCOM: "UPCOM",
+  UPCoM: "UPCOM",
+};
+
+// ---------------------------------------------------------------------------
+// TCBS screener: one POST returns the whole market (~1700 tickers across
+// HOSE/HNX/UPCOM) with near-realtime price, % change, volume and trading
+// value. Cached in-module for 30s and de-duplicated while in flight, so the
+// board, top-10 and watchlist all share a single upstream call.
+// ---------------------------------------------------------------------------
+const SCREENER_TTL_MS = 30_000;
+let screenerCache: { at: number; rows: any[] } | null = null;
+let screenerInFlight: Promise<any[]> | null = null;
+
+async function fetchScreener(): Promise<any[]> {
+  if (screenerCache && Date.now() - screenerCache.at < SCREENER_TTL_MS) {
+    return screenerCache.rows;
+  }
+  if (screenerInFlight) return screenerInFlight;
+  screenerInFlight = (async () => {
+    try {
+      const data = await fetchJson(`${BASE}/ligo/v1/watchlist/preview?page=0&size=1700`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tcbsID: null,
+          filters: [{ key: "exchangeName", value: "HOSE,HNX,UPCOM", operator: "IN" }],
+        }),
+      });
+      const rows = data?.searchData?.pageContent;
+      if (!Array.isArray(rows) || rows.length === 0) {
+        throw Object.assign(new Error("TCBS screener không trả về dữ liệu"), { status: 502 });
+      }
+      screenerCache = { at: Date.now(), rows };
+      return rows;
+    } finally {
+      screenerInFlight = null;
+    }
+  })();
+  return screenerInFlight;
+}
+
+// Screener field names vary between TCBS versions — read defensively.
+function rowPrice(row: any): number | undefined {
+  return num(row.priceNearRealtime) ?? num(row.price) ?? num(row.closePrice);
+}
+
+function rowChangePercent(row: any): number | undefined {
+  return (
+    num(row.percentPriceChange) ??
+    num(row.pricePctChg1d) ??
+    num(row.priceChangePercent1Day) ??
+    num(row.pricePercentChange1Day)
+  );
+}
+
+function rowVolume(row: any): number | undefined {
+  return (
+    num(row.totalVolume) ??
+    num(row.volume) ??
+    num(row.totalTradingVolume) ??
+    num(row.avgTradingVolume5Day)
+  );
+}
+
+function quoteFromScreenerRow(symbol: string, row: any): Quote | null {
+  const price = rowPrice(row);
+  if (price == null || price <= 0) return null;
+  const pct = rowChangePercent(row);
+  const prevClose = pct != null && pct > -100 ? price / (1 + pct / 100) : price;
+  const seed = findSeed(symbol);
+  const marketCapBn = num(row.marketCap);
+  return {
+    symbol: symbol.toUpperCase(),
+    name: seed?.name ?? String(row.companyName ?? symbol),
+    exchange:
+      seed?.exchange ?? EXCHANGE_NAMES[String(row.exchangeName ?? "")] ?? String(row.exchangeName ?? ""),
+    currency: "VND",
+    price,
+    change: price - prevClose,
+    changePercent: pct ?? 0,
+    // The screener has no intraday OHLC; the detail page uses candle data
+    // from getQuote() instead, so these placeholders never surface there.
+    open: price,
+    high: price,
+    low: price,
+    prevClose,
+    volume: rowVolume(row) ?? 0,
+    marketCap: marketCapBn != null && marketCapBn > 0 ? marketCapBn * 1_000_000_000 : undefined,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Daily/weekly candles — same endpoint the vnstock library's TCBS source uses
+// for historical data. One request per symbol, so only used for the detail
+// page and small watchlists.
+// ---------------------------------------------------------------------------
 interface TcbsBar {
   open: number;
   high: number;
@@ -36,8 +179,6 @@ interface TcbsBar {
   tradingDate: string;
 }
 
-// Daily/weekly/monthly candles — same endpoint the vnstock library's TCBS
-// source uses for stock_historical_data().
 async function fetchBars(
   symbol: string,
   resolution: "D" | "W" | "M",
@@ -50,7 +191,6 @@ async function fetchBars(
     `?ticker=${encodeURIComponent(symbol.toUpperCase())}&type=stock&resolution=${resolution}&from=${from}&to=${to}`;
   const data = await fetchJson(url);
   const bars: TcbsBar[] = data?.data ?? [];
-  // Oldest-first as returned; guard anyway.
   return bars
     .filter((b) => b && b.close != null)
     .sort((a, b) => a.tradingDate.localeCompare(b.tradingDate));
@@ -92,60 +232,66 @@ const RANGE_TO_PARAMS: Record<HistoryRange, { resolution: "D" | "W" | "M"; days:
   "5Y": { resolution: "W", days: 365 * 5 },
 };
 
-const EXCHANGE_NAMES: Record<string, string> = {
-  HOSE: "HOSE",
-  HSX: "HOSE",
-  HNX: "HNX",
-  UPCOM: "UPCOM",
-  UPCoM: "UPCOM",
-};
-
-// TCBS stock screener (same endpoint behind vnstock's Screener) — used to
-// rank the whole market by trading value/volume across all three exchanges.
-async function fetchScreener(): Promise<any[]> {
-  const url = `${BASE}/ligo/v1/watchlist/preview?page=0&size=1700`;
-  const data = await fetchJson(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      tcbsID: null,
-      filters: [{ key: "exchangeName", value: "HOSE,HNX,UPCOM", operator: "IN" }],
-    }),
-  });
-  const rows = data?.searchData?.pageContent;
-  if (!Array.isArray(rows) || rows.length === 0) {
-    throw Object.assign(new Error("TCBS screener không trả về dữ liệu"), { status: 502 });
-  }
-  return rows;
-}
-
-function num(v: unknown): number | undefined {
-  return typeof v === "number" && Number.isFinite(v) ? v : undefined;
-}
-
 export const vnstockProvider: StockProvider = {
   id: "vnstock",
 
   async getQuote(symbol: string): Promise<Quote> {
-    const bars = await fetchBars(symbol, "D", 10);
-    return quoteFromBars(symbol, bars);
+    // Candles give real OHLC for the detail page; fall back to the (cached)
+    // screener row if the candle endpoint is having a bad moment.
+    try {
+      const bars = await fetchBars(symbol, "D", 10);
+      return quoteFromBars(symbol, bars);
+    } catch (err) {
+      try {
+        const rows = await fetchScreener();
+        const row = rows.find(
+          (r) => String(r.ticker ?? "").toUpperCase() === symbol.toUpperCase()
+        );
+        const quote = row && quoteFromScreenerRow(symbol, row);
+        if (quote) return quote;
+      } catch {
+        // keep the original error
+      }
+      throw err;
+    }
   },
 
   async getQuotes(symbols: string[]): Promise<Quote[]> {
     if (symbols.length === 0) return [];
-    const results = await Promise.allSettled(
-      symbols.map(async (s) => quoteFromBars(s, await fetchBars(s, "D", 10)))
-    );
-    const quotes = results
-      .filter((r): r is PromiseFulfilledResult<Quote> => r.status === "fulfilled")
-      .map((r) => r.value);
-    if (quotes.length === 0) {
+
+    // Primary path: single cached screener request covers everything.
+    let screenerError: unknown;
+    try {
+      const rows = await fetchScreener();
+      const rowMap = new Map(rows.map((r) => [String(r.ticker ?? "").toUpperCase(), r]));
+      const quotes: Quote[] = [];
+      for (const s of symbols) {
+        const row = rowMap.get(s.toUpperCase());
+        const quote = row ? quoteFromScreenerRow(s, row) : null;
+        if (quote) quotes.push(quote);
+      }
+      if (quotes.length > 0) return quotes;
+    } catch (err) {
+      screenerError = err;
+    }
+
+    // Fallback (small sets only, throttled): per-symbol candles. Refusing the
+    // fallback for large boards avoids re-triggering TCBS's rate limit.
+    if (symbols.length <= 20) {
+      const results = await mapLimit(symbols, 4, async (s) =>
+        quoteFromBars(s, await fetchBars(s, "D", 10))
+      );
+      const quotes = results
+        .filter((r): r is PromiseFulfilledResult<Quote> => r.status === "fulfilled")
+        .map((r) => r.value);
+      if (quotes.length > 0) return quotes;
       const firstFailure = results.find(
         (r): r is PromiseRejectedResult => r.status === "rejected"
       );
       throw firstFailure?.reason ?? new Error("Không lấy được dữ liệu nào từ TCBS (vnstock)");
     }
-    return quotes;
+
+    throw screenerError ?? new Error("Không lấy được dữ liệu nào từ TCBS (vnstock)");
   },
 
   async getHistory(symbol: string, range: HistoryRange): Promise<HistoryPoint[]> {
@@ -186,22 +332,22 @@ export const vnstockProvider: StockProvider = {
       .map((row) => {
         const symbol = String(row.ticker ?? "").toUpperCase();
         const ex = EXCHANGE_NAMES[String(row.exchangeName ?? "")] ?? String(row.exchangeName ?? "");
-        // Field names vary across screener versions — read defensively.
         const valueBnVnd = num(row.totalTradingValue); // reported in billion VND
-        const volume = num(row.totalVolume) ?? num(row.volume) ?? num(row.avgTradingVolume5Day);
-        const price = num(row.priceNearRealtime) ?? num(row.price) ?? num(row.closePrice);
-        const changePercent =
-          num(row.percentPriceChange) ??
-          num(row.pricePctChg1d) ??
-          num(row.priceChangePercent1Day);
+        const price = rowPrice(row);
+        const volume = rowVolume(row);
         return {
           symbol,
           exchange: ex,
           name: findSeed(symbol)?.name,
           price,
-          changePercent,
+          changePercent: rowChangePercent(row),
           volume,
-          value: valueBnVnd != null ? valueBnVnd * 1_000_000_000 : undefined,
+          value:
+            valueBnVnd != null
+              ? valueBnVnd * 1_000_000_000
+              : price != null && volume != null
+                ? price * volume
+                : undefined,
         };
       })
       .filter((item) => item.symbol && (exchange === "ALL" || item.exchange === exchange));
