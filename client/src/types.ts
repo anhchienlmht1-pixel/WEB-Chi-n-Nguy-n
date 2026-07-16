@@ -43,3 +43,20 @@ export interface SearchResult {
   name: string;
   exchange: string;
 }
+
+export interface FinancialLineItem {
+  id: string;
+  name: string;
+  nameEn: string;
+  unit: string;
+  levels: number;
+  values: (number | null)[];
+}
+
+export interface FinancialReport {
+  periods: string[];
+  items: FinancialLineItem[];
+}
+
+export type FinancialReportType = "KQKD" | "CDKT" | "LCTT" | "CSTC";
+export type FinancialPeriodType = "year" | "quarter";

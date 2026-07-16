@@ -3,11 +3,14 @@ import NodeCache from "node-cache";
 import { getProvider } from "../providers/index.js";
 import { HistoryRange, TopExchange } from "../providers/types.js";
 import { topTradedOf, VALID_EXCHANGES } from "../providers/topTraded.js";
+import { fetchKbsReport, KbsPeriodType, KbsReportType } from "../providers/kbsFinancials.js";
 
 const router = Router();
 const cache = new NodeCache({ stdTTL: 20, checkperiod: 30 });
 
 const VALID_RANGES: HistoryRange[] = ["1D", "1W", "1M", "3M", "6M", "1Y", "5Y"];
+const VALID_REPORT_TYPES: KbsReportType[] = ["KQKD", "CDKT", "LCTT", "CSTC"];
+const VALID_PERIOD_TYPES: KbsPeriodType[] = ["year", "quarter"];
 
 function cached<T>(key: string, ttl: number, loader: () => Promise<T>): Promise<T> {
   const hit = cache.get<T>(key);
@@ -69,6 +72,27 @@ router.get(
       provider.getHistory(symbol, range)
     );
     res.json({ symbol, range, points: data });
+  })
+);
+
+router.get(
+  "/financials/:symbol",
+  asyncHandler(async (req, res) => {
+    const symbol = String(req.params.symbol).toUpperCase();
+    const reportType = (req.query.type as KbsReportType) || "CSTC";
+    const periodType = (req.query.periodType as KbsPeriodType) || "year";
+    if (!VALID_REPORT_TYPES.includes(reportType)) {
+      res.status(400).json({ error: `Invalid type. Use one of: ${VALID_REPORT_TYPES.join(", ")}` });
+      return;
+    }
+    if (!VALID_PERIOD_TYPES.includes(periodType)) {
+      res.status(400).json({ error: `Invalid periodType. Use one of: ${VALID_PERIOD_TYPES.join(", ")}` });
+      return;
+    }
+    const data = await cached(`financials:${symbol}:${reportType}:${periodType}`, 3600, () =>
+      fetchKbsReport(symbol, reportType, periodType)
+    );
+    res.json(data);
   })
 );
 

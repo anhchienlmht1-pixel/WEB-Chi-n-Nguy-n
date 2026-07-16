@@ -4,13 +4,21 @@ import { fetchHistory, fetchQuote } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import type { HistoryRange } from "../types";
 import { formatChange, formatMarketCap, formatPercent, formatPrice, formatVolume, trendClass } from "../utils/format";
-import PriceChart from "../components/PriceChart";
+import PriceChart, { type IndicatorToggles } from "../components/PriceChart";
 import RangeSelector from "../components/RangeSelector";
 import WatchButton from "../components/WatchButton";
+import FinancialRatios from "../components/FinancialRatios";
+
+const INDICATOR_LABELS: [keyof IndicatorToggles, string][] = [
+  ["sma", "SMA 20/50"],
+  ["rsi", "RSI 14"],
+  ["macd", "MACD"],
+];
 
 export default function StockDetail() {
   const { symbol = "" } = useParams();
   const [range, setRange] = useState<HistoryRange>("3M");
+  const [indicators, setIndicators] = useState<IndicatorToggles>({ sma: true, rsi: false, macd: false });
 
   const quoteState = usePolling(() => fetchQuote(symbol), [symbol], 30000);
   const historyState = usePolling(() => fetchHistory(symbol, range), [symbol, range]);
@@ -57,13 +65,29 @@ export default function StockDetail() {
             </div>
           </div>
 
-          <div className="mb-4 flex justify-end">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap gap-1.5">
+              {INDICATOR_LABELS.map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setIndicators((prev) => ({ ...prev, [key]: !prev[key] }))}
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    indicators[key]
+                      ? "bg-emerald-500 text-slate-950"
+                      : "bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
             <RangeSelector value={range} onChange={setRange} />
           </div>
 
           <div className="rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-900/40">
             {historyState.data && historyState.data.points.length > 0 ? (
-              <PriceChart points={historyState.data.points} />
+              <PriceChart points={historyState.data.points} indicators={indicators} />
             ) : (
               <div className="flex h-[400px] items-center justify-center text-slate-400 dark:text-slate-500">
                 {historyState.loading
@@ -87,6 +111,10 @@ export default function StockDetail() {
           <p className="mt-6 text-xs text-slate-400 dark:text-slate-600">
             Cập nhật lúc {new Date(quote.updatedAt).toLocaleTimeString("vi-VN")}
           </p>
+
+          <div className="mt-6">
+            <FinancialRatios symbol={quote.symbol} />
+          </div>
         </>
       )}
     </div>

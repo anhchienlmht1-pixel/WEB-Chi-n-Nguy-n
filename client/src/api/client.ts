@@ -1,5 +1,8 @@
 import axios from "axios";
 import type {
+  FinancialPeriodType,
+  FinancialReport,
+  FinancialReportType,
   HistoryPoint,
   HistoryRange,
   Quote,
@@ -44,6 +47,17 @@ export async function fetchTopTraded(
   exchange: TopExchange
 ): Promise<{ provider: string; exchange: TopExchange; items: TopTradedItem[] }> {
   const { data } = await api.get("/market/top", { params: { exchange } });
+  return data;
+}
+
+export async function fetchFinancials(
+  symbol: string,
+  type: FinancialReportType,
+  periodType: FinancialPeriodType
+): Promise<FinancialReport> {
+  const { data } = await api.get(`/financials/${encodeURIComponent(symbol)}`, {
+    params: { type, periodType },
+  });
   return data;
 }
 
