@@ -152,9 +152,19 @@ export const fireantProvider: StockProvider = {
     const results = await Promise.allSettled(
       symbols.map(async (s) => buildQuote(s, await fetchHistoricalQuotes(s, 10)))
     );
-    return results
+    const quotes = results
       .filter((r): r is PromiseFulfilledResult<Quote> => r.status === "fulfilled")
       .map((r) => r.value);
+    // If literally everything failed it's a systemic problem (missing/expired
+    // token, FireAnt down) — surface the underlying error instead of silently
+    // rendering an empty board.
+    if (quotes.length === 0) {
+      const firstFailure = results.find(
+        (r): r is PromiseRejectedResult => r.status === "rejected"
+      );
+      throw firstFailure?.reason ?? new Error("Không lấy được dữ liệu nào từ FireAnt");
+    }
+    return quotes;
   },
 
   async getHistory(symbol: string, range: HistoryRange): Promise<HistoryPoint[]> {

@@ -17,8 +17,20 @@ export default function Dashboard() {
       </div>
 
       {loading && !data && <p className="text-slate-400">Đang tải dữ liệu...</p>}
-      {error && !data && <p className="text-red-400">Lỗi tải dữ liệu: {error}</p>}
-      {data && <StockTable quotes={data.quotes} />}
+      {error && !data && (
+        <div className="rounded-lg border border-red-900/60 bg-red-950/30 p-4">
+          <p className="font-medium text-red-400">Lỗi tải dữ liệu</p>
+          <p className="mt-1 text-sm text-red-300/90">{error}</p>
+          <p className="mt-2 text-xs text-slate-500">
+            Nếu dùng nguồn FireAnt: kiểm tra biến môi trường FIREANT_TOKEN trên server (Vercel →
+            Settings → Environment Variables), sau đó Redeploy.
+          </p>
+        </div>
+      )}
+      {data && data.quotes.length === 0 && (
+        <p className="text-slate-400">Không có mã nào để hiển thị.</p>
+      )}
+      {data && data.quotes.length > 0 && <StockTable quotes={data.quotes} />}
     </div>
   );
 }

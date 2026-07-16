@@ -1,7 +1,17 @@
 import axios from "axios";
 import type { HistoryPoint, HistoryRange, Quote, SearchResult } from "../types";
 
-const api = axios.create({ baseURL: "/api" });
+const api = axios.create({ baseURL: "/api", timeout: 30000 });
+
+// Prefer the server's JSON error message ({"error": "..."}) over axios's
+// generic "Request failed with status code 500" so users see what's wrong.
+api.interceptors.response.use(undefined, (error) => {
+  const serverMessage = error?.response?.data?.error;
+  if (typeof serverMessage === "string" && serverMessage) {
+    error.message = serverMessage;
+  }
+  return Promise.reject(error);
+});
 
 export async function fetchMarketOverview(): Promise<{ provider: string; quotes: Quote[] }> {
   const { data } = await api.get("/market/overview");
