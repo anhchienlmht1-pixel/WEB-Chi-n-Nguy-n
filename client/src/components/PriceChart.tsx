@@ -182,6 +182,9 @@ const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
       data: IndicatorLinePoint[];
     }
     interface RenderedIndicator {
+      category: "overlay" | "oscillator";
+      headerLabel: string;
+      paneIndex: number;
       lines: RenderedLine[];
     }
     const rendered: RenderedIndicator[] = [];
@@ -207,7 +210,9 @@ const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
         }
       }
       if (lines.length > 0) {
-        rendered.push({ lines });
+        const paramsStr = Object.values(active.params).join(", ");
+        const headerLabel = `${def.nameEn}${paramsStr ? ` (${paramsStr})` : ""}`;
+        rendered.push({ category: def.category, headerLabel, paneIndex: targetPane, lines });
         if (def.category === "oscillator") paneIndex++;
       }
     }
@@ -217,6 +222,28 @@ const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
     const pointsByTime = new Map(points.map((p) => [Math.floor(new Date(p.time).getTime() / 1000), p]));
 
     const legendEl = legendRef.current;
+
+    // Each oscillator pane (RSI/MACD/ADX/…) gets its own inline header —
+    // name, params and live values — instead of everything being crammed
+    // into the single top-left legend, matching a real charting terminal's
+    // per-pane legend convention. Pane DOM elements don't exist synchronously
+    // after addSeries (getHTMLElement() returns null until the chart has
+    // actually laid out), so this is deferred to the next animation frame.
+    const paneHeaderEls = new Map<RenderedIndicator, HTMLDivElement>();
+    let headersRafId = requestAnimationFrame(() => {
+      for (const ind of rendered) {
+        if (ind.category !== "oscillator") continue;
+        const paneEl = chart.panes()[ind.paneIndex]?.getHTMLElement();
+        if (!paneEl) continue;
+        if (getComputedStyle(paneEl).position === "static") paneEl.style.position = "relative";
+        const el = document.createElement("div");
+        el.className =
+          "pointer-events-none absolute left-2 top-1 z-10 flex flex-wrap items-baseline gap-x-2 rounded bg-white/70 px-1.5 py-0.5 text-[11px] tabular-nums backdrop-blur-sm dark:bg-slate-950/60";
+        paneEl.appendChild(el);
+        paneHeaderEls.set(ind, el);
+      }
+      renderDefault();
+    });
 
     function renderLegend(
       bar: HistoryPoint | undefined,
@@ -234,10 +261,19 @@ const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
         `<div class="text-[11px] tabular-nums text-slate-500 dark:text-slate-400">KL ${bar ? formatVolume(bar.volume) : "--"}</div>`
       );
       for (const ind of rendered) {
+        if (ind.category !== "overlay") continue;
         const parts = ind.lines.map((l) => `<span style="color:${l.color}">${l.label} ${fmt(valuesByLine.get(l.series))}</span>`).join(" ");
         rows.push(`<div class="flex flex-wrap gap-x-2 text-[11px] tabular-nums font-medium">${parts}</div>`);
       }
       legendEl.innerHTML = rows.join("");
+
+      for (const [ind, el] of paneHeaderEls) {
+        const parts = ind.lines
+          .map((l) => `<span style="color:${l.color}" class="font-medium">${l.label} ${fmt(valuesByLine.get(l.series))}</span>`)
+          .join(" ");
+        el.innerHTML =
+          `<span class="font-semibold text-slate-700 dark:text-slate-200">${ind.headerLabel}</span>` + (parts ? ` ${parts}` : "");
+      }
     }
 
     function lastOf(data: IndicatorLinePoint[]): number | undefined {
@@ -327,6 +363,7 @@ const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
     resizeObserver.observe(containerRef.current);
 
     return () => {
+      cancelAnimationFrame(headersRafId);
       resizeObserver.disconnect();
       chart.remove();
       chartRef.current = null;
