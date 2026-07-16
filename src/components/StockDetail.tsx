@@ -9,6 +9,7 @@ import { priceState, PRICE_COLOR } from "@/lib/market";
 import { formatChange, formatPercent, formatPrice, formatVolume } from "@/lib/format";
 import { WatchlistButton } from "./WatchlistButton";
 import { FinancialRatios } from "./FinancialRatios";
+import { StockChart } from "./StockChart";
 
 interface Response {
   quotes: StockQuote[];
@@ -72,6 +73,8 @@ export function StockDetail({ symbol }: { symbol: string }) {
           </div>
         )}
       </div>
+
+      <StockChart symbol={symbol} />
 
       <FinancialRatios symbol={symbol} />
     </div>
