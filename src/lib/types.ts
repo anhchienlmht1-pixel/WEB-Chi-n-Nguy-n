@@ -41,6 +41,15 @@ export interface RatioPoint {
   values: Record<string, number | null>;
 }
 
+// Headline income-statement absolute figures (billion VND), separate from
+// RatioPoint because they come from a different Vietcap endpoint.
+export interface StatementPoint {
+  period: string;
+  periodType: "quarter" | "year";
+  netInterestIncome: number | null;
+  profitAfterTax: number | null;
+}
+
 export type IndexCode = "VNINDEX" | "HNXINDEX" | "UPCOMINDEX";
 
 export interface IndexQuote {

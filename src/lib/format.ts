@@ -39,3 +39,19 @@ export function formatRatioNumber(value: number | null): string {
   if (value === null || !Number.isFinite(value)) return "--";
   return value.toFixed(2);
 }
+
+export function formatBillionVnd(value: number | null): string {
+  if (value === null || !Number.isFinite(value)) return "--";
+  return value.toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+export function formatVndPerShare(value: number | null): string {
+  if (value === null || !Number.isFinite(value)) return "--";
+  return Math.round(value).toLocaleString("vi-VN");
+}
+
+export function formatGrowthPercent(value: number | null): string {
+  if (value === null || !Number.isFinite(value)) return "--";
+  const sign = value > 0 ? "+" : "";
+  return `${sign}${(value * 100).toFixed(2)}%`;
+}
