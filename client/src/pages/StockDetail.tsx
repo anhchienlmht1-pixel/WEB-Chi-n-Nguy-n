@@ -4,31 +4,37 @@ import { fetchHistory, fetchQuote } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { formatChange, formatMarketCap, formatPercent, formatPrice, formatVolume, trendClass } from "../utils/format";
 import { aggregatePoints, type ChartResolution } from "../utils/aggregate";
-import PriceChart, { type IndicatorToggles } from "../components/PriceChart";
+import { findIndicatorDef, defaultParams } from "../utils/indicatorCatalog";
+import PriceChart, { type ActiveIndicator } from "../components/PriceChart";
 import ResolutionSelector from "../components/ResolutionSelector";
+import IndicatorPicker from "../components/IndicatorPicker";
 import WatchButton from "../components/WatchButton";
 import FinancialRatios from "../components/FinancialRatios";
 
-const MA_OPTIONS = [10, 20, 50, 200];
-const MA_COLORS: Record<number, string> = { 10: "#f43f5e", 20: "#f59e0b", 50: "#14b8a6", 200: "#7c3aed" };
+let nextInstanceId = 1;
+function makeInstance(defId: string): ActiveIndicator {
+  const def = findIndicatorDef(defId);
+  return { instanceId: `${defId}-${nextInstanceId++}`, defId, params: def ? defaultParams(def) : {} };
+}
 
 export default function StockDetail() {
   const { symbol = "" } = useParams();
   const [resolution, setResolution] = useState<ChartResolution>("D");
-  const [indicators, setIndicators] = useState<IndicatorToggles>({ maPeriods: [20, 50], rsi: false, macd: false });
+  const [indicators, setIndicators] = useState<ActiveIndicator[]>(() => [
+    { instanceId: "sma-default-20", defId: "sma", params: { period: 20 } },
+    { instanceId: "sma-default-50", defId: "sma", params: { period: 50 } },
+  ]);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
-  function toggleMa(period: number) {
-    setIndicators((prev) => ({
-      ...prev,
-      maPeriods: prev.maPeriods.includes(period)
-        ? prev.maPeriods.filter((p) => p !== period)
-        : [...prev.maPeriods, period].sort((a, b) => a - b),
-    }));
+  function addIndicator(defId: string) {
+    setIndicators((prev) => [...prev, makeInstance(defId)]);
   }
 
-  function toggleFlag(key: "rsi" | "macd") {
-    setIndicators((prev) => ({ ...prev, [key]: !prev[key] }));
+  function removeIndicator(instanceId: string) {
+    setIndicators((prev) => prev.filter((i) => i.instanceId !== instanceId));
   }
+
+  const activeDefIds = useMemo(() => new Set(indicators.map((i) => i.defId)), [indicators]);
 
   const quoteState = usePolling(() => fetchQuote(symbol), [symbol], 30000);
   // Always fetch the full daily history — the resolution tabs (Ngày/Tuần/
@@ -84,46 +90,51 @@ export default function StockDetail() {
 
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-1.5">
-              {MA_OPTIONS.map((period) => {
-                const active = indicators.maPeriods.includes(period);
+              {indicators.map((ind) => {
+                const def = findIndicatorDef(ind.defId);
+                if (!def) return null;
                 return (
-                  <button
-                    key={period}
-                    type="button"
-                    onClick={() => toggleMa(period)}
-                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-                      active
-                        ? "text-slate-950"
-                        : "bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
-                    }`}
-                    style={active ? { backgroundColor: MA_COLORS[period] } : undefined}
+                  <span
+                    key={ind.instanceId}
+                    className="flex items-center gap-1.5 rounded-full bg-slate-100 py-1 pl-3 pr-1.5 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300"
                   >
-                    MA{period}
-                  </button>
+                    {def.nameEn}
+                    {Object.values(ind.params).length > 0 && (
+                      <span className="text-slate-400 dark:text-slate-500">({Object.values(ind.params).join(",")})</span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => removeIndicator(ind.instanceId)}
+                      aria-label={`Bỏ ${def.nameEn}`}
+                      className="rounded-full px-1 text-slate-400 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-100"
+                    >
+                      ✕
+                    </button>
+                  </span>
                 );
               })}
-              <span className="mx-1 h-4 w-px bg-slate-200 dark:bg-slate-700" />
-              {(["rsi", "macd"] as const).map((key) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => toggleFlag(key)}
-                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-                    indicators[key]
-                      ? "bg-emerald-500 text-slate-950"
-                      : "bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
-                  }`}
-                >
-                  {key === "rsi" ? "RSI 14" : "MACD"}
-                </button>
-              ))}
+              <button
+                type="button"
+                onClick={() => setPickerOpen(true)}
+                className="rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-slate-950 hover:bg-emerald-400"
+              >
+                + Chỉ báo
+              </button>
             </div>
             <ResolutionSelector value={resolution} onChange={setResolution} />
           </div>
 
+          {pickerOpen && (
+            <IndicatorPicker
+              activeIds={activeDefIds}
+              onAdd={(defId) => addIndicator(defId)}
+              onClose={() => setPickerOpen(false)}
+            />
+          )}
+
           <div className="rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-900/40">
             {chartPoints.length > 0 ? (
-              <PriceChart points={chartPoints} indicators={indicators} />
+              <PriceChart points={chartPoints} activeIndicators={indicators} />
             ) : (
               <div className="flex h-[400px] items-center justify-center text-slate-400 dark:text-slate-500">
                 {historyState.loading
