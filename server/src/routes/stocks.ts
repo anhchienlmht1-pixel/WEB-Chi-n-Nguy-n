@@ -8,7 +8,7 @@ import { fetchKbsReport, KbsPeriodType, KbsReportType } from "../providers/kbsFi
 const router = Router();
 const cache = new NodeCache({ stdTTL: 20, checkperiod: 30 });
 
-const VALID_RANGES: HistoryRange[] = ["1D", "1W", "1M", "3M", "6M", "1Y", "5Y"];
+const VALID_RANGES: HistoryRange[] = ["1D", "1W", "1M", "3M", "6M", "1Y", "5Y", "MAX"];
 const VALID_REPORT_TYPES: KbsReportType[] = ["KQKD", "CDKT", "LCTT", "CSTC"];
 const VALID_PERIOD_TYPES: KbsPeriodType[] = ["year", "quarter"];
 

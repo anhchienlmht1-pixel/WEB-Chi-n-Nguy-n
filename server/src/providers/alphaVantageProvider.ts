@@ -29,7 +29,9 @@ async function fetchJson(params: Record<string, string>): Promise<any> {
 }
 
 function toOutputSize(range: HistoryRange): "compact" | "full" {
-  return range === "3M" || range === "6M" || range === "1Y" || range === "5Y" ? "full" : "compact";
+  return range === "3M" || range === "6M" || range === "1Y" || range === "5Y" || range === "MAX"
+    ? "full"
+    : "compact";
 }
 
 export const alphaVantageProvider: StockProvider = {

@@ -78,6 +78,7 @@ const RANGE_DAYS: Record<HistoryRange, number> = {
   "6M": 180,
   "1Y": 365,
   "5Y": 365 * 5,
+  MAX: 365 * 30,
 };
 
 function buildHistory(symbol: string, range: HistoryRange): HistoryPoint[] {

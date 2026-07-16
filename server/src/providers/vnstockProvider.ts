@@ -184,6 +184,10 @@ const RANGE_TO_COUNTBACK: Record<HistoryRange, number> = {
   "6M": 134,
   "1Y": 264,
   "5Y": 1310,
+  // VN exchanges only exist since ~2000 — 20000 bars comfortably covers any
+  // listing's full history since IPO; VCI just returns whatever it actually
+  // has, so an overshoot here is harmless.
+  MAX: 20000,
 };
 
 async function fetchHistoryBars(symbol: string, range: HistoryRange): Promise<HistoryPoint[]> {

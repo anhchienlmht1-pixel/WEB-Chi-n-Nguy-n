@@ -76,6 +76,7 @@ const RANGE_DAYS: Record<HistoryRange, number> = {
   "6M": 185,
   "1Y": 370,
   "5Y": 365 * 5,
+  MAX: 365 * 30, // capped again by fetchHistoricalQuotes' own `limit` (max 4000 rows)
 };
 
 async function fetchHistoricalQuotes(symbol: string, days: number): Promise<RawQuote[]> {

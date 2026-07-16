@@ -4,7 +4,7 @@ import type { HistoryRange } from "../../server/src/providers/types.js";
 import { cached } from "../_lib/cache.js";
 import { sendError } from "../_lib/errors.js";
 
-const VALID_RANGES: HistoryRange[] = ["1D", "1W", "1M", "3M", "6M", "1Y", "5Y"];
+const VALID_RANGES: HistoryRange[] = ["1D", "1W", "1M", "3M", "6M", "1Y", "5Y", "MAX"];
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const symbol = String(req.query.symbol ?? "").toUpperCase();

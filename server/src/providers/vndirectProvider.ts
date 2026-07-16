@@ -96,6 +96,8 @@ function toRangeParams(range: HistoryRange): { resolution: string; fromMs: numbe
       return { resolution: "D", fromMs: now - 365 * day };
     case "5Y":
       return { resolution: "W", fromMs: now - 5 * 365 * day };
+    case "MAX":
+      return { resolution: "W", fromMs: now - 30 * 365 * day };
   }
 }
 

@@ -24,7 +24,7 @@ export interface HistoryPoint {
   volume: number;
 }
 
-export type HistoryRange = "1D" | "1W" | "1M" | "3M" | "6M" | "1Y" | "5Y";
+export type HistoryRange = "1D" | "1W" | "1M" | "3M" | "6M" | "1Y" | "5Y" | "MAX";
 
 export interface SearchResult {
   symbol: string;

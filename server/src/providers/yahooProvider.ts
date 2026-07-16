@@ -30,6 +30,8 @@ function toRangeParams(range: HistoryRange): { range: string; interval: string }
       return { range: "1y", interval: "1wk" };
     case "5Y":
       return { range: "5y", interval: "1mo" };
+    case "MAX":
+      return { range: "max", interval: "1mo" };
   }
 }
 

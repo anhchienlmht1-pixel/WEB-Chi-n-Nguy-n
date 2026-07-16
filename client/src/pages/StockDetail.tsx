@@ -34,7 +34,7 @@ export default function StockDetail() {
   // Always fetch the full daily history — the resolution tabs (Ngày/Tuần/
   // Tháng) roll those daily bars up client-side, so switching resolution
   // changes what one candle represents instead of just the visible range.
-  const historyState = usePolling(() => fetchHistory(symbol, "5Y"), [symbol]);
+  const historyState = usePolling(() => fetchHistory(symbol, "MAX"), [symbol]);
 
   const quote = quoteState.data;
   const chartPoints = useMemo(

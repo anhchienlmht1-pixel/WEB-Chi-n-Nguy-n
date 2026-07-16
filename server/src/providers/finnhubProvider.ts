@@ -30,6 +30,7 @@ const RANGE_TO_SECONDS: Record<HistoryRange, { span: number; resolution: string 
   "6M": { span: 60 * 60 * 24 * 180, resolution: "D" },
   "1Y": { span: 60 * 60 * 24 * 365, resolution: "D" },
   "5Y": { span: 60 * 60 * 24 * 365 * 5, resolution: "W" },
+  MAX: { span: 60 * 60 * 24 * 365 * 30, resolution: "M" },
 };
 
 export const finnhubProvider: StockProvider = {
