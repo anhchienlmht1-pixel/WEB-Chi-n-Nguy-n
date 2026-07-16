@@ -63,7 +63,7 @@ export default function StockDetail() {
 
           <div className="rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-900/40">
             {historyState.data && historyState.data.points.length > 0 ? (
-              <PriceChart points={historyState.data.points} positive={quote.change >= 0} />
+              <PriceChart points={historyState.data.points} />
             ) : (
               <div className="flex h-[400px] items-center justify-center text-slate-400 dark:text-slate-500">
                 {historyState.loading

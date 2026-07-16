@@ -14,7 +14,7 @@ Cả hai đều dùng chung code trong `server/src/providers/` — sửa 1 nơi,
 
 | Provider | Giá trị `DATA_PROVIDER` | Cần xác thực | Ghi chú |
 |---|---|---|---|
-| vnstock (TCBS) | `vnstock` (mặc định) | Không | Cùng nguồn dữ liệu mà thư viện **vnstock** (vnstocks.com) sử dụng: API công khai của TCBS (`apipubaws.tcbs.com.vn`). Giá + biểu đồ + top giao dịch cả 3 sàn HOSE/HNX/UPCOM, không cần token. |
+| vnstock (VCI/Vietcap) | `vnstock` (mặc định) | Không | Đúng nguồn dữ liệu mặc định của thư viện **vnstock** (vnstocks.com): API của Chứng khoán Vietcap (`trading.vietcap.com.vn`). Các endpoint/tham số/cấu trúc phản hồi được **đối chiếu trực tiếp với mã nguồn vnstock 4.0.4 tải từ PyPI** (module `vnstock/explorer/vci`). Bảng giá batch 1 request, biểu đồ nến OHLCV, top giao dịch cả 3 sàn HOSE/HNX/UPCOM. Không cần token. |
 | TradingView | `tradingview` | Không | Scanner công khai của TradingView cho thị trường VN. |
 | FireAnt | `fireant` | Có — `FIREANT_TOKEN` | Dữ liệu thật từ FireAnt (fireant.vn). Cần token Bearer (xem cách lấy bên dưới). |
 | VNDirect | `vndirect` | Không | Dữ liệu thật từ VNDirect, không cần token. |
@@ -43,7 +43,12 @@ WATCHLIST_SYMBOLS=
 PORT=4000
 ```
 
-> Lưu ý: môi trường sandbox dùng để phát triển phiên bản này chặn toàn bộ kết nối mạng ra ngoài, nên các provider dữ liệu thật (`vnstock`/`tradingview`/`fireant`/`vndirect`/...) **chưa được gọi thử với dữ liệu thật ở đây** — chỉ `mock` được kiểm thử trực tiếp. Provider `vnstock` dùng 2 endpoint TCBS quen thuộc của thư viện vnstock: `stock-insight/v1/stock/bars-long-term` (giá + nến EOD) và `ligo/v1/watchlist/preview` (screener xếp hạng top giao dịch cả 3 sàn). Nếu screener lỗi, mục Top 10 tự rơi về xếp hạng theo danh sách mã có sẵn nên trang không bị vỡ. Sau khi deploy lên Vercel, nếu bảng giá lỗi, trang sẽ hiển thị thông báo lỗi cụ thể — đổi tạm `DATA_PROVIDER=vndirect` hoặc `mock` nếu cần trong lúc chờ sửa.
+> Provider `vnstock` dùng đúng 3 endpoint VCI mà thư viện vnstock gọi (đã đối chiếu với mã nguồn vnstock 4.0.4 trên PyPI):
+> - `POST /api/price/symbols/getList` — bảng giá batch (giá khớp, tham chiếu, cao/thấp, KL & GT giao dịch lũy kế) cho mọi mã trong 1 request;
+> - `POST /api/chart/OHLCChart/gap-chart` — dữ liệu nến OHLCV cho biểu đồ;
+> - `GET /api/price/symbols/getByGroup?group=HOSE|HNX|UPCOM` — danh sách mã từng sàn, phục vụ xếp hạng Top 10 toàn thị trường.
+>
+> Môi trường sandbox phát triển phiên bản này chặn mạng ra ngoài nên chưa gọi thử trực tiếp được (chỉ `mock` test được tại chỗ), nhưng cấu trúc request/response lấy nguyên văn từ thư viện vnstock nên độ tin cậy cao. Nếu có lỗi, trang hiển thị thông báo cụ thể — đổi tạm `DATA_PROVIDER=mock` trong lúc chờ sửa.
 
 ## Chạy local
 

@@ -9,16 +9,25 @@ import {
 } from "./types.js";
 import { STOCK_UNIVERSE, findSeed } from "./universe.js";
 
-// Data source used by the vnstock library (vnstocks.com): TCBS's public API
-// at apipubaws.tcbs.com.vn. No token required, but it rate-limits aggressive
-// callers (HTTP 429) — so this provider is built around ONE cached screener
-// request for the whole board instead of one request per symbol, and only
-// falls back to per-symbol candle calls for small symbol sets.
-const BASE = "https://apipubaws.tcbs.com.vn";
+// Same data source as the vnstock library (vnstocks.com): VCI / Vietcap
+// Securities' trading API. Endpoints, payloads and response shapes below were
+// verified against the actual vnstock 4.0.4 source (vnstock/explorer/vci/*)
+// downloaded from PyPI:
+//   - POST /api/price/symbols/getList        {"symbols":[...]}          → price board
+//   - POST /api/chart/OHLCChart/gap-chart    {timeFrame,symbols,to,countBack} → OHLCV
+//   - GET  /api/price/symbols/getByGroup?group=HOSE|HNX|UPCOM           → symbol lists
+// Prices are plain VND. No token required, but browser-like headers with
+// Referer/Origin trading.vietcap.com.vn are expected (mirrors the library).
+const TRADING = "https://trading.vietcap.com.vn/api";
 
 const HEADERS = {
-  Accept: "application/json",
-  "User-Agent": "Mozilla/5.0 (compatible; StockDash/1.0)",
+  Accept: "application/json, text/plain, */*",
+  "Accept-Language": "en-US,en;q=0.9,vi-VN;q=0.8,vi;q=0.7",
+  "Content-Type": "application/json",
+  Referer: "https://trading.vietcap.com.vn/",
+  Origin: "https://trading.vietcap.com.vn",
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
 };
 
 function sleep(ms: number): Promise<void> {
@@ -33,42 +42,21 @@ async function fetchJson(url: string, init?: RequestInit, attempt = 0): Promise<
   }
   if (res.status === 429) {
     throw Object.assign(
-      new Error("TCBS đang giới hạn tần suất truy cập (429) — vui lòng tải lại sau 1-2 phút"),
+      new Error("Vietcap (vnstock) đang giới hạn tần suất truy cập — vui lòng tải lại sau 1-2 phút"),
       { status: 503 }
     );
   }
   if (!res.ok) {
-    throw Object.assign(new Error(`TCBS (vnstock) trả lỗi ${res.status}`), { status: 502 });
+    throw Object.assign(new Error(`Vietcap (vnstock) trả lỗi ${res.status}`), { status: 502 });
   }
   return res.json();
-}
-
-async function mapLimit<T, R>(
-  items: T[],
-  limit: number,
-  fn: (item: T) => Promise<R>
-): Promise<PromiseSettledResult<R>[]> {
-  const results: PromiseSettledResult<R>[] = new Array(items.length);
-  let next = 0;
-  async function worker() {
-    while (next < items.length) {
-      const i = next++;
-      try {
-        results[i] = { status: "fulfilled", value: await fn(items[i]) };
-      } catch (reason) {
-        results[i] = { status: "rejected", reason };
-      }
-    }
-  }
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
-  return results;
 }
 
 function num(v: unknown): number | undefined {
   return typeof v === "number" && Number.isFinite(v) ? v : undefined;
 }
 
-const EXCHANGE_NAMES: Record<string, string> = {
+const BOARD_MAP: Record<string, string> = {
   HOSE: "HOSE",
   HSX: "HOSE",
   HNX: "HNX",
@@ -77,234 +65,185 @@ const EXCHANGE_NAMES: Record<string, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// TCBS screener: one POST returns the whole market (~1700 tickers across
-// HOSE/HNX/UPCOM) with near-realtime price, % change, volume and trading
-// value. Cached in-module for 30s and de-duplicated while in flight, so the
-// board, top-10 and watchlist all share a single upstream call.
+// Price board — one POST covers any number of symbols.
 // ---------------------------------------------------------------------------
-const SCREENER_TTL_MS = 30_000;
-let screenerCache: { at: number; rows: any[] } | null = null;
-let screenerInFlight: Promise<any[]> | null = null;
-
-async function fetchScreener(): Promise<any[]> {
-  if (screenerCache && Date.now() - screenerCache.at < SCREENER_TTL_MS) {
-    return screenerCache.rows;
+async function fetchPriceBoard(symbols: string[]): Promise<any[]> {
+  const data = await fetchJson(`${TRADING}/price/symbols/getList`, {
+    method: "POST",
+    body: JSON.stringify({ symbols: symbols.map((s) => s.toUpperCase()) }),
+  });
+  if (!Array.isArray(data)) {
+    throw Object.assign(new Error("Vietcap trả về dữ liệu bảng giá không hợp lệ"), { status: 502 });
   }
-  if (screenerInFlight) return screenerInFlight;
-  screenerInFlight = (async () => {
-    try {
-      const data = await fetchJson(`${BASE}/ligo/v1/watchlist/preview?page=0&size=1700`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tcbsID: null,
-          filters: [{ key: "exchangeName", value: "HOSE,HNX,UPCOM", operator: "IN" }],
-        }),
-      });
-      const rows = data?.searchData?.pageContent;
-      if (!Array.isArray(rows) || rows.length === 0) {
-        throw Object.assign(new Error("TCBS screener không trả về dữ liệu"), { status: 502 });
-      }
-      screenerCache = { at: Date.now(), rows };
-      return rows;
-    } finally {
-      screenerInFlight = null;
-    }
-  })();
-  return screenerInFlight;
+  return data;
 }
 
-// Screener field names vary between TCBS versions — read defensively.
-function rowPrice(row: any): number | undefined {
-  return num(row.priceNearRealtime) ?? num(row.price) ?? num(row.closePrice);
-}
+function quoteFromBoardItem(item: any): Quote | null {
+  const listing = item?.listingInfo ?? {};
+  const match = item?.matchPrice ?? {};
+  const symbol = String(listing.symbol ?? "").toUpperCase();
+  const price = num(match.matchPrice) ?? num(listing.refPrice);
+  if (!symbol || price == null || price <= 0) return null;
 
-function rowChangePercent(row: any): number | undefined {
-  return (
-    num(row.percentPriceChange) ??
-    num(row.pricePctChg1d) ??
-    num(row.priceChangePercent1Day) ??
-    num(row.pricePercentChange1Day)
-  );
-}
-
-function rowVolume(row: any): number | undefined {
-  return (
-    num(row.totalVolume) ??
-    num(row.volume) ??
-    num(row.totalTradingVolume) ??
-    num(row.avgTradingVolume5Day)
-  );
-}
-
-function quoteFromScreenerRow(symbol: string, row: any): Quote | null {
-  const price = rowPrice(row);
-  if (price == null || price <= 0) return null;
-  const pct = rowChangePercent(row);
-  const prevClose = pct != null && pct > -100 ? price / (1 + pct / 100) : price;
+  const prevClose = num(listing.refPrice) ?? price;
+  const volume = num(match.accumulatedVolume) ?? 0;
   const seed = findSeed(symbol);
-  const marketCapBn = num(row.marketCap);
   return {
-    symbol: symbol.toUpperCase(),
-    name: seed?.name ?? String(row.companyName ?? symbol),
-    exchange:
-      seed?.exchange ?? EXCHANGE_NAMES[String(row.exchangeName ?? "")] ?? String(row.exchangeName ?? ""),
+    symbol,
+    name: seed?.name ?? String(listing.organName ?? symbol),
+    exchange: seed?.exchange ?? BOARD_MAP[String(listing.board ?? "")] ?? String(listing.board ?? ""),
     currency: "VND",
     price,
     change: price - prevClose,
-    changePercent: pct ?? 0,
-    // The screener has no intraday OHLC; the detail page uses candle data
-    // from getQuote() instead, so these placeholders never surface there.
-    open: price,
-    high: price,
-    low: price,
+    changePercent: prevClose ? ((price - prevClose) / prevClose) * 100 : 0,
+    open: num(match.openPrice) ?? prevClose,
+    high: num(match.highest) ?? price,
+    low: num(match.lowest) ?? price,
     prevClose,
-    volume: rowVolume(row) ?? 0,
-    marketCap: marketCapBn != null && marketCapBn > 0 ? marketCapBn * 1_000_000_000 : undefined,
+    volume,
     updatedAt: new Date().toISOString(),
   };
 }
 
-// ---------------------------------------------------------------------------
-// Daily/weekly candles — same endpoint the vnstock library's TCBS source uses
-// for historical data. One request per symbol, so only used for the detail
-// page and small watchlists.
-// ---------------------------------------------------------------------------
-interface TcbsBar {
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
-  tradingDate: string;
-}
-
-async function fetchBars(
-  symbol: string,
-  resolution: "D" | "W" | "M",
-  days: number
-): Promise<TcbsBar[]> {
-  const to = Math.floor(Date.now() / 1000);
-  const from = to - days * 24 * 60 * 60;
-  const url =
-    `${BASE}/stock-insight/v1/stock/bars-long-term` +
-    `?ticker=${encodeURIComponent(symbol.toUpperCase())}&type=stock&resolution=${resolution}&from=${from}&to=${to}`;
-  const data = await fetchJson(url);
-  const bars: TcbsBar[] = data?.data ?? [];
-  return bars
-    .filter((b) => b && b.close != null)
-    .sort((a, b) => a.tradingDate.localeCompare(b.tradingDate));
-}
-
-function quoteFromBars(symbol: string, bars: TcbsBar[]): Quote {
-  if (bars.length === 0) {
-    throw Object.assign(new Error(`Không có dữ liệu cho mã: ${symbol}`), { status: 404 });
+function tradingValueOf(item: any, price: number, volume: number): number {
+  let value = num(item?.matchPrice?.accumulatedValue);
+  const approx = price * volume;
+  if (value != null && approx > 0 && value * 100 < approx) {
+    // Some deployments report value in thousand-VND units; normalise.
+    value *= 1000;
   }
-  const latest = bars[bars.length - 1];
-  const prev = bars.length > 1 ? bars[bars.length - 2] : latest;
-  const prevClose = prev.close;
-  const change = latest.close - prevClose;
-  const seed = findSeed(symbol);
-  return {
-    symbol: symbol.toUpperCase(),
-    name: seed?.name ?? symbol.toUpperCase(),
-    exchange: seed?.exchange ?? "",
-    currency: "VND",
-    price: latest.close,
-    change,
-    changePercent: prevClose ? (change / prevClose) * 100 : 0,
-    open: latest.open,
-    high: latest.high,
-    low: latest.low,
-    prevClose,
-    volume: latest.volume ?? 0,
-    updatedAt: new Date(latest.tradingDate).toISOString(),
-  };
+  return value ?? approx;
 }
 
-const RANGE_TO_PARAMS: Record<HistoryRange, { resolution: "D" | "W" | "M"; days: number }> = {
-  "1D": { resolution: "D", days: 7 }, // TCBS long-term data is end-of-day
-  "1W": { resolution: "D", days: 10 },
-  "1M": { resolution: "D", days: 35 },
-  "3M": { resolution: "D", days: 95 },
-  "6M": { resolution: "D", days: 185 },
-  "1Y": { resolution: "D", days: 370 },
-  "5Y": { resolution: "W", days: 365 * 5 },
+// ---------------------------------------------------------------------------
+// Symbol lists per exchange (for the whole-market top-traded ranking).
+// Cached long since listings rarely change.
+// ---------------------------------------------------------------------------
+const GROUPS: Exclude<TopExchange, "ALL">[] = ["HOSE", "HNX", "UPCOM"];
+const GROUP_TTL_MS = 10 * 60 * 1000;
+let groupCache: { at: number; bySymbolExchange: Map<string, string> } | null = null;
+let groupInFlight: Promise<Map<string, string>> | null = null;
+
+async function fetchGroupSymbols(): Promise<Map<string, string>> {
+  if (groupCache && Date.now() - groupCache.at < GROUP_TTL_MS) return groupCache.bySymbolExchange;
+  if (groupInFlight) return groupInFlight;
+  groupInFlight = (async () => {
+    try {
+      const bySymbolExchange = new Map<string, string>();
+      for (const group of GROUPS) {
+        const data = await fetchJson(`${TRADING}/price/symbols/getByGroup?group=${group}`);
+        const rows: any[] = Array.isArray(data) ? data : [];
+        for (const row of rows) {
+          const symbol = String(row?.symbol ?? "").toUpperCase();
+          if (symbol) bySymbolExchange.set(symbol, group);
+        }
+      }
+      if (bySymbolExchange.size === 0) {
+        throw Object.assign(new Error("Vietcap không trả về danh sách mã"), { status: 502 });
+      }
+      groupCache = { at: Date.now(), bySymbolExchange };
+      return bySymbolExchange;
+    } finally {
+      groupInFlight = null;
+    }
+  })();
+  return groupInFlight;
+}
+
+// Full-market price board, cached 60s and de-duplicated in flight — the
+// top-traded tabs all share this one upstream call.
+const BOARD_TTL_MS = 60_000;
+let boardCache: { at: number; items: any[] } | null = null;
+let boardInFlight: Promise<any[]> | null = null;
+
+async function fetchFullBoard(): Promise<any[]> {
+  if (boardCache && Date.now() - boardCache.at < BOARD_TTL_MS) return boardCache.items;
+  if (boardInFlight) return boardInFlight;
+  boardInFlight = (async () => {
+    try {
+      const bySymbolExchange = await fetchGroupSymbols();
+      const items = await fetchPriceBoard([...bySymbolExchange.keys()]);
+      boardCache = { at: Date.now(), items };
+      return items;
+    } finally {
+      boardInFlight = null;
+    }
+  })();
+  return boardInFlight;
+}
+
+// ---------------------------------------------------------------------------
+// OHLCV history (gap-chart) — response item: {o:[],h:[],l:[],c:[],v:[],t:[]}
+// with t in unix seconds and prices in plain VND.
+// ---------------------------------------------------------------------------
+const RANGE_TO_COUNTBACK: Record<HistoryRange, number> = {
+  "1D": 2,
+  "1W": 7,
+  "1M": 24,
+  "3M": 68,
+  "6M": 134,
+  "1Y": 264,
+  "5Y": 1310,
 };
+
+async function fetchHistoryBars(symbol: string, range: HistoryRange): Promise<HistoryPoint[]> {
+  const data = await fetchJson(`${TRADING}/chart/OHLCChart/gap-chart`, {
+    method: "POST",
+    body: JSON.stringify({
+      timeFrame: "ONE_DAY",
+      symbols: [symbol.toUpperCase()],
+      to: Math.floor(Date.now() / 1000) + 24 * 60 * 60,
+      countBack: RANGE_TO_COUNTBACK[range],
+    }),
+  });
+  const list = Array.isArray(data) ? data : (data?.data ?? []);
+  const bars = list[0];
+  if (!bars || !Array.isArray(bars.t) || bars.t.length === 0) {
+    return [];
+  }
+  const points: HistoryPoint[] = [];
+  for (let i = 0; i < bars.t.length; i++) {
+    const close = bars.c?.[i];
+    if (close == null) continue;
+    points.push({
+      time: new Date(bars.t[i] * 1000).toISOString(),
+      open: bars.o?.[i] ?? close,
+      high: bars.h?.[i] ?? close,
+      low: bars.l?.[i] ?? close,
+      close,
+      volume: bars.v?.[i] ?? 0,
+    });
+  }
+  points.sort((a, b) => a.time.localeCompare(b.time));
+  return points;
+}
 
 export const vnstockProvider: StockProvider = {
   id: "vnstock",
 
   async getQuote(symbol: string): Promise<Quote> {
-    // Candles give real OHLC for the detail page; fall back to the (cached)
-    // screener row if the candle endpoint is having a bad moment.
-    try {
-      const bars = await fetchBars(symbol, "D", 10);
-      return quoteFromBars(symbol, bars);
-    } catch (err) {
-      try {
-        const rows = await fetchScreener();
-        const row = rows.find(
-          (r) => String(r.ticker ?? "").toUpperCase() === symbol.toUpperCase()
-        );
-        const quote = row && quoteFromScreenerRow(symbol, row);
-        if (quote) return quote;
-      } catch {
-        // keep the original error
-      }
-      throw err;
+    const items = await fetchPriceBoard([symbol]);
+    const quote = items.length > 0 ? quoteFromBoardItem(items[0]) : null;
+    if (!quote) {
+      throw Object.assign(new Error(`Không có dữ liệu cho mã: ${symbol}`), { status: 404 });
     }
+    return quote;
   },
 
   async getQuotes(symbols: string[]): Promise<Quote[]> {
     if (symbols.length === 0) return [];
-
-    // Primary path: single cached screener request covers everything.
-    let screenerError: unknown;
-    try {
-      const rows = await fetchScreener();
-      const rowMap = new Map(rows.map((r) => [String(r.ticker ?? "").toUpperCase(), r]));
-      const quotes: Quote[] = [];
-      for (const s of symbols) {
-        const row = rowMap.get(s.toUpperCase());
-        const quote = row ? quoteFromScreenerRow(s, row) : null;
-        if (quote) quotes.push(quote);
-      }
-      if (quotes.length > 0) return quotes;
-    } catch (err) {
-      screenerError = err;
+    const items = await fetchPriceBoard(symbols);
+    const quotes = items
+      .map((item) => quoteFromBoardItem(item))
+      .filter((q): q is Quote => q !== null);
+    if (quotes.length === 0) {
+      throw Object.assign(new Error("Vietcap không trả về dữ liệu cho mã nào"), { status: 502 });
     }
-
-    // Fallback (small sets only, throttled): per-symbol candles. Refusing the
-    // fallback for large boards avoids re-triggering TCBS's rate limit.
-    if (symbols.length <= 20) {
-      const results = await mapLimit(symbols, 4, async (s) =>
-        quoteFromBars(s, await fetchBars(s, "D", 10))
-      );
-      const quotes = results
-        .filter((r): r is PromiseFulfilledResult<Quote> => r.status === "fulfilled")
-        .map((r) => r.value);
-      if (quotes.length > 0) return quotes;
-      const firstFailure = results.find(
-        (r): r is PromiseRejectedResult => r.status === "rejected"
-      );
-      throw firstFailure?.reason ?? new Error("Không lấy được dữ liệu nào từ TCBS (vnstock)");
-    }
-
-    throw screenerError ?? new Error("Không lấy được dữ liệu nào từ TCBS (vnstock)");
+    return quotes;
   },
 
   async getHistory(symbol: string, range: HistoryRange): Promise<HistoryPoint[]> {
-    const { resolution, days } = RANGE_TO_PARAMS[range];
-    const bars = await fetchBars(symbol, resolution, days);
-    return bars.map((b) => ({
-      time: new Date(b.tradingDate).toISOString(),
-      open: b.open,
-      high: b.high,
-      low: b.low,
-      close: b.close,
-      volume: b.volume ?? 0,
-    }));
+    return fetchHistoryBars(symbol, range);
   },
 
   // Search stays local against the curated VN universe.
@@ -327,32 +266,32 @@ export const vnstockProvider: StockProvider = {
   },
 
   async getTopTraded(exchange: TopExchange): Promise<TopTradedItem[]> {
-    const rows = await fetchScreener();
-    const items: TopTradedItem[] = rows
-      .map((row) => {
-        const symbol = String(row.ticker ?? "").toUpperCase();
-        const ex = EXCHANGE_NAMES[String(row.exchangeName ?? "")] ?? String(row.exchangeName ?? "");
-        const valueBnVnd = num(row.totalTradingValue); // reported in billion VND
-        const price = rowPrice(row);
-        const volume = rowVolume(row);
-        return {
-          symbol,
-          exchange: ex,
-          name: findSeed(symbol)?.name,
-          price,
-          changePercent: rowChangePercent(row),
-          volume,
-          value:
-            valueBnVnd != null
-              ? valueBnVnd * 1_000_000_000
-              : price != null && volume != null
-                ? price * volume
-                : undefined,
-        };
-      })
-      .filter((item) => item.symbol && (exchange === "ALL" || item.exchange === exchange));
-
-    items.sort((a, b) => (b.value ?? b.volume ?? 0) - (a.value ?? a.volume ?? 0));
-    return items.slice(0, 10);
+    const [items, bySymbolExchange] = await Promise.all([fetchFullBoard(), fetchGroupSymbols()]);
+    const ranked: TopTradedItem[] = [];
+    for (const item of items) {
+      const listing = item?.listingInfo ?? {};
+      const match = item?.matchPrice ?? {};
+      const symbol = String(listing.symbol ?? "").toUpperCase();
+      const price = num(match.matchPrice) ?? num(listing.refPrice);
+      if (!symbol || price == null || price <= 0) continue;
+      const ex =
+        bySymbolExchange.get(symbol) ??
+        BOARD_MAP[String(listing.board ?? "")] ??
+        String(listing.board ?? "");
+      if (exchange !== "ALL" && ex !== exchange) continue;
+      const volume = num(match.accumulatedVolume) ?? 0;
+      const prevClose = num(listing.refPrice) ?? price;
+      ranked.push({
+        symbol,
+        exchange: ex,
+        name: findSeed(symbol)?.name ?? String(listing.organName ?? ""),
+        price,
+        changePercent: prevClose ? ((price - prevClose) / prevClose) * 100 : 0,
+        volume,
+        value: tradingValueOf(item, price, volume),
+      });
+    }
+    ranked.sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
+    return ranked.slice(0, 10);
   },
 };
