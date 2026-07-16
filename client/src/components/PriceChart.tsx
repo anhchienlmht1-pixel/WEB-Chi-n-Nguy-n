@@ -1,18 +1,22 @@
-import { useEffect, useMemo, useRef } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from "react";
 import {
   CandlestickSeries,
-  HistogramSeries,
+  BarSeries,
   LineSeries,
+  AreaSeries,
+  HistogramSeries,
   ColorType,
   createChart,
   type IChartApi,
   type ISeriesApi,
   type UTCTimestamp,
+  type Time,
 } from "lightweight-charts";
 import type { HistoryPoint } from "../types";
 import { useTheme } from "../hooks/useTheme";
 import { findIndicatorDef, type IndicatorLinePoint } from "../utils/indicatorCatalog";
 import { formatVolume } from "../utils/format";
+import { TrendLinePrimitive, RectanglePrimitive, TextPrimitive, type DrawPoint } from "../utils/drawingPrimitives";
 
 export interface ActiveIndicator {
   instanceId: string;
@@ -20,23 +24,69 @@ export interface ActiveIndicator {
   params: Record<string, number>;
 }
 
+export type ChartType = "candlestick" | "bar" | "line" | "area";
+export type DrawingTool = "trendline" | "hline" | "rectangle" | "text" | null;
+
+export interface PriceChartHandle {
+  takeScreenshot(): string;
+  clearDrawings(): void;
+}
+
 interface Props {
   points: HistoryPoint[];
   activeIndicators: ActiveIndicator[];
+  chartType: ChartType;
+  drawingTool: DrawingTool;
+  onDrawingComplete: () => void;
 }
 
 const UP = "#22c55e";
 const DOWN = "#ef4444";
+const DRAW_COLOR = "#f59e0b";
 
 function fmt(value: number | undefined | null, digits = 2): string {
   return value === undefined || value === null || !Number.isFinite(value) ? "--" : value.toFixed(digits);
 }
 
-export default function PriceChart({ points, activeIndicators }: Props) {
+type MainSeries = ISeriesApi<"Candlestick" | "Bar" | "Line" | "Area">;
+type Drawing =
+  | { kind: "line"; primitive: TrendLinePrimitive }
+  | { kind: "rectangle"; primitive: RectanglePrimitive }
+  | { kind: "text"; primitive: TextPrimitive }
+  | { kind: "hline"; price: number; priceLine: ReturnType<MainSeries["createPriceLine"]> };
+
+const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
+  { points, activeIndicators, chartType, drawingTool, onDrawingComplete },
+  ref
+) {
   const containerRef = useRef<HTMLDivElement>(null);
   const legendRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
+  const mainSeriesRef = useRef<MainSeries | null>(null);
+  const drawingsRef = useRef<Drawing[]>([]);
+  const pendingPointRef = useRef<DrawPoint | null>(null);
+  const drawingToolRef = useRef<DrawingTool>(drawingTool);
+  const onDrawingCompleteRef = useRef(onDrawingComplete);
   const { theme } = useTheme();
+
+  drawingToolRef.current = drawingTool;
+  onDrawingCompleteRef.current = onDrawingComplete;
+
+  useImperativeHandle(ref, () => ({
+    takeScreenshot() {
+      return chartRef.current?.takeScreenshot().toDataURL("image/png") ?? "";
+    },
+    clearDrawings() {
+      const series = mainSeriesRef.current;
+      if (!series) return;
+      for (const d of drawingsRef.current) {
+        if (d.kind === "hline") series.removePriceLine(d.priceLine);
+        else series.detachPrimitive(d.primitive);
+      }
+      drawingsRef.current = [];
+    },
+  }));
+
   const indicatorsKey = useMemo(
     () => activeIndicators.map((i) => `${i.instanceId}:${i.defId}:${JSON.stringify(i.params)}`).join("|"),
     [activeIndicators]
@@ -62,28 +112,54 @@ export default function PriceChart({ points, activeIndicators }: Props) {
     });
     chartRef.current = chart;
 
-    const candles = chart.addSeries(
-      CandlestickSeries,
-      {
-        upColor: UP,
-        downColor: DOWN,
-        borderUpColor: UP,
-        borderDownColor: DOWN,
-        wickUpColor: UP,
-        wickDownColor: DOWN,
-      },
-      0
-    );
-    candles.setData(
-      points.map((p) => ({
-        time: Math.floor(new Date(p.time).getTime() / 1000) as UTCTimestamp,
-        open: p.open,
-        high: p.high,
-        low: p.low,
-        close: p.close,
-      }))
-    );
-    candles.priceScale().applyOptions({ scaleMargins: { top: 0.05, bottom: 0.25 } });
+    const candleData = points.map((p) => ({
+      time: Math.floor(new Date(p.time).getTime() / 1000) as UTCTimestamp,
+      open: p.open,
+      high: p.high,
+      low: p.low,
+      close: p.close,
+    }));
+
+    let mainSeries: MainSeries;
+    if (chartType === "bar") {
+      mainSeries = chart.addSeries(BarSeries, { upColor: UP, downColor: DOWN }, 0);
+      mainSeries.setData(candleData);
+    } else if (chartType === "line") {
+      mainSeries = chart.addSeries(LineSeries, { color: "#0ea5e9", lineWidth: 2 }, 0);
+      mainSeries.setData(candleData.map((c) => ({ time: c.time, value: c.close })));
+    } else if (chartType === "area") {
+      mainSeries = chart.addSeries(
+        AreaSeries,
+        { lineColor: "#0ea5e9", topColor: "rgba(14,165,233,0.35)", bottomColor: "rgba(14,165,233,0.02)" },
+        0
+      );
+      mainSeries.setData(candleData.map((c) => ({ time: c.time, value: c.close })));
+    } else {
+      mainSeries = chart.addSeries(
+        CandlestickSeries,
+        { upColor: UP, downColor: DOWN, borderUpColor: UP, borderDownColor: DOWN, wickUpColor: UP, wickDownColor: DOWN },
+        0
+      );
+      mainSeries.setData(candleData);
+    }
+    mainSeries.priceScale().applyOptions({ scaleMargins: { top: 0.05, bottom: 0.25 } });
+    mainSeriesRef.current = mainSeries;
+
+    // Re-attach drawings created before this remount (theme/indicator/type
+    // changes tear down and recreate the whole chart) so they survive it.
+    for (const d of drawingsRef.current) {
+      if (d.kind === "hline") {
+        d.priceLine = mainSeries.createPriceLine({
+          price: d.price,
+          color: DRAW_COLOR,
+          lineWidth: 2,
+          lineStyle: 2,
+          title: "",
+        });
+      } else {
+        mainSeries.attachPrimitive(d.primitive);
+      }
+    }
 
     const volume = chart.addSeries(
       HistogramSeries,
@@ -100,15 +176,12 @@ export default function PriceChart({ points, activeIndicators }: Props) {
     );
 
     interface RenderedLine {
-      key: string;
       label: string;
       color: string;
       series: ISeriesApi<"Line"> | ISeriesApi<"Histogram">;
       data: IndicatorLinePoint[];
     }
     interface RenderedIndicator {
-      instanceId: string;
-      name: string;
       lines: RenderedLine[];
     }
     const rendered: RenderedIndicator[] = [];
@@ -124,39 +197,29 @@ export default function PriceChart({ points, activeIndicators }: Props) {
         const data = output[spec.key] ?? [];
         if (data.length === 0) continue;
         if (spec.histogram) {
-          const series = chart.addSeries(
-            HistogramSeries,
-            { color: spec.color, lastValueVisible: false, priceLineVisible: false },
-            targetPane
-          );
+          const series = chart.addSeries(HistogramSeries, { color: spec.color, lastValueVisible: false, priceLineVisible: false }, targetPane);
           series.setData(data.map((p) => ({ time: p.time as UTCTimestamp, value: p.value })));
-          lines.push({ key: spec.key, label: spec.label, color: spec.color, series, data });
+          lines.push({ label: spec.label, color: spec.color, series, data });
         } else {
-          const series = chart.addSeries(
-            LineSeries,
-            { color: spec.color, lineWidth: 1, priceLineVisible: false, lastValueVisible: false },
-            targetPane
-          );
+          const series = chart.addSeries(LineSeries, { color: spec.color, lineWidth: 1, priceLineVisible: false, lastValueVisible: false }, targetPane);
           series.setData(data.map((p) => ({ time: p.time as UTCTimestamp, value: p.value })));
-          lines.push({ key: spec.key, label: spec.label, color: spec.color, series, data });
+          lines.push({ label: spec.label, color: spec.color, series, data });
         }
       }
       if (lines.length > 0) {
-        rendered.push({ instanceId: active.instanceId, name: def.nameEn, lines });
+        rendered.push({ lines });
         if (def.category === "oscillator") paneIndex++;
       }
     }
 
     chart.timeScale().fitContent();
 
-    // On-chart legend (top-left): OHLC + volume always shown, plus one
-    // colored row per active indicator line — live-updating with the
-    // crosshair, falling back to the latest bar otherwise.
+    const pointsByTime = new Map(points.map((p) => [Math.floor(new Date(p.time).getTime() / 1000), p]));
+
     const legendEl = legendRef.current;
 
     function renderLegend(
-      bar: { open: number; high: number; low: number; close: number } | undefined,
-      vol: number | undefined,
+      bar: HistoryPoint | undefined,
       valuesByLine: Map<ISeriesApi<"Line"> | ISeriesApi<"Histogram">, number>
     ) {
       const changeColor = bar && bar.close >= bar.open ? UP : DOWN;
@@ -168,12 +231,10 @@ export default function PriceChart({ points, activeIndicators }: Props) {
           `</div>`
       );
       rows.push(
-        `<div class="text-[11px] tabular-nums text-slate-500 dark:text-slate-400">KL ${vol !== undefined ? formatVolume(vol) : "--"}</div>`
+        `<div class="text-[11px] tabular-nums text-slate-500 dark:text-slate-400">KL ${bar ? formatVolume(bar.volume) : "--"}</div>`
       );
       for (const ind of rendered) {
-        const parts = ind.lines
-          .map((l) => `<span style="color:${l.color}">${l.label} ${fmt(valuesByLine.get(l.series))}</span>`)
-          .join(" ");
+        const parts = ind.lines.map((l) => `<span style="color:${l.color}">${l.label} ${fmt(valuesByLine.get(l.series))}</span>`).join(" ");
         rows.push(`<div class="flex flex-wrap gap-x-2 text-[11px] tabular-nums font-medium">${parts}</div>`);
       }
       legendEl.innerHTML = rows.join("");
@@ -192,18 +253,17 @@ export default function PriceChart({ points, activeIndicators }: Props) {
           if (v !== undefined) valuesByLine.set(l.series, v);
         }
       }
-      renderLegend(lastBar, lastBar?.volume, valuesByLine);
+      renderLegend(lastBar, valuesByLine);
     }
 
     renderDefault();
 
     chart.subscribeCrosshairMove((param) => {
-      if (!param.time || !param.seriesData.size) {
+      if (!param.time) {
         renderDefault();
         return;
       }
-      const bar = param.seriesData.get(candles) as { open: number; high: number; low: number; close: number } | undefined;
-      const vol = param.seriesData.get(volume) as { value: number } | undefined;
+      const bar = pointsByTime.get(param.time as number);
       const valuesByLine = new Map<ISeriesApi<"Line"> | ISeriesApi<"Histogram">, number>();
       for (const ind of rendered) {
         for (const l of ind.lines) {
@@ -211,7 +271,53 @@ export default function PriceChart({ points, activeIndicators }: Props) {
           if (v) valuesByLine.set(l.series, v.value);
         }
       }
-      renderLegend(bar, vol?.value, valuesByLine);
+      renderLegend(bar, valuesByLine);
+    });
+
+    // Drawing tools — only active on the main price pane (index 0), where
+    // pixel Y is already local to that pane's own coordinate space.
+    chart.subscribeClick((param) => {
+      const tool = drawingToolRef.current;
+      if (!tool || param.paneIndex !== 0 || !param.time || param.point === undefined) return;
+      const price = mainSeries.coordinateToPrice(param.point.y);
+      if (price === null) return;
+      const point: DrawPoint = { time: param.time as Time, price };
+
+      if (tool === "hline") {
+        const priceLine = mainSeries.createPriceLine({ price, color: DRAW_COLOR, lineWidth: 2, lineStyle: 2, title: "" });
+        drawingsRef.current.push({ kind: "hline", price, priceLine });
+        onDrawingCompleteRef.current();
+        return;
+      }
+
+      if (tool === "text") {
+        const text = window.prompt("Nhập văn bản:");
+        if (text) {
+          const primitive = new TextPrimitive(point, text, DRAW_COLOR);
+          mainSeries.attachPrimitive(primitive);
+          drawingsRef.current.push({ kind: "text", primitive });
+        }
+        onDrawingCompleteRef.current();
+        return;
+      }
+
+      // trendline / rectangle need two clicks
+      if (!pendingPointRef.current) {
+        pendingPointRef.current = point;
+        return;
+      }
+      const p1 = pendingPointRef.current;
+      pendingPointRef.current = null;
+      if (tool === "trendline") {
+        const primitive = new TrendLinePrimitive(p1, point, DRAW_COLOR);
+        mainSeries.attachPrimitive(primitive);
+        drawingsRef.current.push({ kind: "line", primitive });
+      } else if (tool === "rectangle") {
+        const primitive = new RectanglePrimitive(p1, point, DRAW_COLOR);
+        mainSeries.attachPrimitive(primitive);
+        drawingsRef.current.push({ kind: "rectangle", primitive });
+      }
+      onDrawingCompleteRef.current();
     });
 
     const resizeObserver = new ResizeObserver((entries) => {
@@ -224,9 +330,10 @@ export default function PriceChart({ points, activeIndicators }: Props) {
       resizeObserver.disconnect();
       chart.remove();
       chartRef.current = null;
+      mainSeriesRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [points, theme, indicatorsKey]);
+  }, [points, theme, indicatorsKey, chartType]);
 
   return (
     <div className="relative w-full">
@@ -237,4 +344,6 @@ export default function PriceChart({ points, activeIndicators }: Props) {
       <div ref={containerRef} className="w-full" />
     </div>
   );
-}
+});
+
+export default PriceChart;
