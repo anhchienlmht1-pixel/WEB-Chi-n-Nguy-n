@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { fetchHistory, fetchQuote } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
-import type { HistoryRange } from "../types";
 import { formatChange, formatMarketCap, formatPercent, formatPrice, formatVolume, trendClass } from "../utils/format";
+import { aggregatePoints, type ChartResolution } from "../utils/aggregate";
 import PriceChart, { type IndicatorToggles } from "../components/PriceChart";
-import RangeSelector from "../components/RangeSelector";
+import ResolutionSelector from "../components/ResolutionSelector";
 import WatchButton from "../components/WatchButton";
 import FinancialRatios from "../components/FinancialRatios";
 
@@ -14,7 +14,7 @@ const MA_COLORS: Record<number, string> = { 10: "#f43f5e", 20: "#f59e0b", 50: "#
 
 export default function StockDetail() {
   const { symbol = "" } = useParams();
-  const [range, setRange] = useState<HistoryRange>("3M");
+  const [resolution, setResolution] = useState<ChartResolution>("D");
   const [indicators, setIndicators] = useState<IndicatorToggles>({ maPeriods: [20, 50], rsi: false, macd: false });
 
   function toggleMa(period: number) {
@@ -31,9 +31,16 @@ export default function StockDetail() {
   }
 
   const quoteState = usePolling(() => fetchQuote(symbol), [symbol], 30000);
-  const historyState = usePolling(() => fetchHistory(symbol, range), [symbol, range]);
+  // Always fetch the full daily history — the resolution tabs (Ngày/Tuần/
+  // Tháng) roll those daily bars up client-side, so switching resolution
+  // changes what one candle represents instead of just the visible range.
+  const historyState = usePolling(() => fetchHistory(symbol, "5Y"), [symbol]);
 
   const quote = quoteState.data;
+  const chartPoints = useMemo(
+    () => (historyState.data ? aggregatePoints(historyState.data.points, resolution) : []),
+    [historyState.data, resolution]
+  );
 
   if (quoteState.error && !quote) {
     return (
@@ -111,12 +118,12 @@ export default function StockDetail() {
                 </button>
               ))}
             </div>
-            <RangeSelector value={range} onChange={setRange} />
+            <ResolutionSelector value={resolution} onChange={setResolution} />
           </div>
 
           <div className="rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-900/40">
-            {historyState.data && historyState.data.points.length > 0 ? (
-              <PriceChart points={historyState.data.points} indicators={indicators} />
+            {chartPoints.length > 0 ? (
+              <PriceChart points={chartPoints} indicators={indicators} />
             ) : (
               <div className="flex h-[400px] items-center justify-center text-slate-400 dark:text-slate-500">
                 {historyState.loading
