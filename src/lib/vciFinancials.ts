@@ -23,17 +23,28 @@ interface RawRatioRow {
   [key: string]: unknown;
 }
 
+// Some finance APIs send numbers as strings to avoid float precision loss
+// in transit — accept both rather than assuming a bare `number`.
+function toNumber(raw: unknown): number | null {
+  if (typeof raw === "number") return Number.isFinite(raw) ? raw : null;
+  if (typeof raw === "string" && raw.trim() !== "") {
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
 function extractPeriodLabel(
   row: RawRatioRow
 ): { period: string; periodType: "quarter" | "year"; sortKey: number } | null {
-  const year = row.year ?? row.yearReport ?? row.reportYear;
-  const quarter = row.quarter ?? row.quarterReport ?? row.reportQuarter;
+  const year = toNumber(row.year ?? row.yearReport ?? row.reportYear);
+  const quarter = toNumber(row.quarter ?? row.quarterReport ?? row.reportQuarter);
   const reportPeriod = row.report_period ?? row.reportPeriod;
 
-  if (typeof year === "number" && typeof quarter === "number" && quarter >= 1 && quarter <= 4) {
+  if (year !== null && quarter !== null && quarter >= 1 && quarter <= 4) {
     return { period: `Q${quarter} ${year}`, periodType: "quarter", sortKey: year * 10 + quarter };
   }
-  if (typeof year === "number") {
+  if (year !== null) {
     return { period: String(year), periodType: "year", sortKey: year * 10 };
   }
   if (typeof reportPeriod === "string") {
@@ -45,17 +56,6 @@ function extractPeriodLabel(
       periodType: isQuarter ? "quarter" : "year",
       sortKey: Number.isFinite(yearNum) ? yearNum * 10 + (isQuarter ? quarterNum : 0) : 0,
     };
-  }
-  return null;
-}
-
-// Some finance APIs send numbers as strings to avoid float precision loss
-// in transit — accept both rather than assuming a bare `number`.
-function toNumber(raw: unknown): number | null {
-  if (typeof raw === "number") return Number.isFinite(raw) ? raw : null;
-  if (typeof raw === "string" && raw.trim() !== "") {
-    const n = Number(raw);
-    return Number.isFinite(n) ? n : null;
   }
   return null;
 }
@@ -121,11 +121,24 @@ export async function fetchVciRatios(symbol: string): Promise<RatioPoint[]> {
     throw new Error(`Không đọc được cấu trúc dữ liệu Vietcap cho ${symbol}. Raw: ${preview}`);
   }
 
-  const points = rows
-    .map(toRatioPoint)
+  const parsed = rows.map(toRatioPoint);
+  const points = parsed
     .filter((p): p is RatioPoint & { sortKey: number } => p !== null)
     .sort((a, b) => a.sortKey - b.sortKey)
     .map(({ period, periodType, values }) => ({ period, periodType, values }));
+
+  if (points.length === 0) {
+    // Every row failed period extraction (year/quarter/report_period all
+    // unrecognized) — the row's values are never even inspected in that
+    // case, so show what period-ish fields the raw row actually has.
+    const sampleRow = rows[rows.length - 1];
+    const sample = ["year", "quarter", "yearReport", "reportYear", "report_period", "reportPeriod"]
+      .map((k) => `${k}=${JSON.stringify(sampleRow[k])}`)
+      .join(", ");
+    throw new Error(
+      `Nhận được ${rows.length} dòng từ Vietcap cho ${symbol} nhưng không xác định được kỳ báo cáo. Mẫu field kỳ: ${sample}`
+    );
+  }
 
   const hasAnyValue = points.some((p) => Object.values(p.values).some((v) => v !== null));
   if (!hasAnyValue) {
