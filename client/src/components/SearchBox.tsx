@@ -55,7 +55,7 @@ export default function SearchBox() {
         onKeyDown={(e) => {
           if (e.key === "Enter" && results.length > 0) goTo(results[0].symbol);
         }}
-        placeholder="Tìm mã cổ phiếu (VD: VNM, AAPL)..."
+        placeholder="Tìm mã cổ phiếu (VD: VNM, HPG, FPT)..."
         className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
       />
       {open && results.length > 0 && (
