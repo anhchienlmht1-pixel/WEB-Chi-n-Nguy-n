@@ -9,16 +9,26 @@ import RangeSelector from "../components/RangeSelector";
 import WatchButton from "../components/WatchButton";
 import FinancialRatios from "../components/FinancialRatios";
 
-const INDICATOR_LABELS: [keyof IndicatorToggles, string][] = [
-  ["sma", "SMA 20/50"],
-  ["rsi", "RSI 14"],
-  ["macd", "MACD"],
-];
+const MA_OPTIONS = [10, 20, 50, 200];
+const MA_COLORS: Record<number, string> = { 10: "#f43f5e", 20: "#f59e0b", 50: "#14b8a6", 200: "#7c3aed" };
 
 export default function StockDetail() {
   const { symbol = "" } = useParams();
   const [range, setRange] = useState<HistoryRange>("3M");
-  const [indicators, setIndicators] = useState<IndicatorToggles>({ sma: true, rsi: false, macd: false });
+  const [indicators, setIndicators] = useState<IndicatorToggles>({ maPeriods: [20, 50], rsi: false, macd: false });
+
+  function toggleMa(period: number) {
+    setIndicators((prev) => ({
+      ...prev,
+      maPeriods: prev.maPeriods.includes(period)
+        ? prev.maPeriods.filter((p) => p !== period)
+        : [...prev.maPeriods, period].sort((a, b) => a - b),
+    }));
+  }
+
+  function toggleFlag(key: "rsi" | "macd") {
+    setIndicators((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
 
   const quoteState = usePolling(() => fetchQuote(symbol), [symbol], 30000);
   const historyState = usePolling(() => fetchHistory(symbol, range), [symbol, range]);
@@ -66,19 +76,38 @@ export default function StockDetail() {
           </div>
 
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap gap-1.5">
-              {INDICATOR_LABELS.map(([key, label]) => (
+            <div className="flex flex-wrap items-center gap-1.5">
+              {MA_OPTIONS.map((period) => {
+                const active = indicators.maPeriods.includes(period);
+                return (
+                  <button
+                    key={period}
+                    type="button"
+                    onClick={() => toggleMa(period)}
+                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                      active
+                        ? "text-slate-950"
+                        : "bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+                    }`}
+                    style={active ? { backgroundColor: MA_COLORS[period] } : undefined}
+                  >
+                    MA{period}
+                  </button>
+                );
+              })}
+              <span className="mx-1 h-4 w-px bg-slate-200 dark:bg-slate-700" />
+              {(["rsi", "macd"] as const).map((key) => (
                 <button
                   key={key}
                   type="button"
-                  onClick={() => setIndicators((prev) => ({ ...prev, [key]: !prev[key] }))}
+                  onClick={() => toggleFlag(key)}
                   className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
                     indicators[key]
                       ? "bg-emerald-500 text-slate-950"
                       : "bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
                   }`}
                 >
-                  {label}
+                  {key === "rsi" ? "RSI 14" : "MACD"}
                 </button>
               ))}
             </div>
