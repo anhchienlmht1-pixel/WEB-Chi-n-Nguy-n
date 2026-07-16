@@ -6,35 +6,28 @@ import { fetchTodayIntraday } from "@/lib/intraday";
 // headroom than the default before Vercel kills it.
 export const maxDuration = 30;
 
-const RANGE_DAYS: Record<string, number> = {
-  "1M": 30,
-  "3M": 90,
-  "6M": 180,
-  "1Y": 365,
-  "2Y": 730,
-  // Not literally "since HOSE opened in 2000" — a 25-year daily request is
-  // slow enough to risk timing out, and most listed tickers don't go back
-  // that far anyway. 10 years covers the full history for the vast
-  // majority of symbols while staying well within the same order of
-  // magnitude as the 2Y request, which is known to work reliably.
-  "Tất cả": 3650,
-};
-
 const INTRADAY_RESOLUTIONS = new Set<Resolution>(["1", "5", "15", "30", "60"]);
+
+// How far back to look per candle period — each candle IS the period (a
+// weekly candle covers a week, a monthly candle a month), so the lookback
+// just needs to be long enough to show a meaningful number of candles at
+// that resolution without pulling more than VNDirect can return quickly.
+const DAYS_BY_RESOLUTION: Partial<Record<Resolution, number>> = {
+  D: 180, // ~6 months of daily candles
+  W: 1825, // ~5 years of weekly candles
+  M: 7300, // ~20 years of monthly candles
+};
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const symbol = searchParams.get("symbol");
   const resolution = (searchParams.get("resolution") || "D") as Resolution;
-  const range = searchParams.get("range") || "3M";
 
   if (!symbol) {
     return NextResponse.json({ error: "Thiếu tham số symbol" }, { status: 400 });
   }
 
-  const isIntraday = INTRADAY_RESOLUTIONS.has(resolution);
-
-  if (isIntraday) {
+  if (INTRADAY_RESOLUTIONS.has(resolution)) {
     const { candles, source, errors } = await fetchTodayIntraday(symbol);
     if (candles.length === 0 && source === null) {
       return NextResponse.json({ error: errors.join(" | ") }, { status: 502 });
@@ -42,7 +35,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ symbol, candles, source });
   }
 
-  const from = daysAgo(RANGE_DAYS[range] ?? 90);
+  const from = daysAgo(DAYS_BY_RESOLUTION[resolution] ?? 180);
 
   try {
     const candles = await fetchCandles(symbol, resolution, from, nowSeconds());

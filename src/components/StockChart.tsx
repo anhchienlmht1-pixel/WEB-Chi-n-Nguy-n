@@ -20,9 +20,17 @@ interface Response {
   candles: Candle[];
 }
 
-const HISTORY_RANGES = ["1M", "3M", "6M", "1Y", "2Y", "Tất cả"] as const;
-const VIEWS = ["Trong ngày", ...HISTORY_RANGES] as const;
+// Each tab picks the candle *period*, not just a lookback window — "Tuần"
+// means every candle covers a week, "Tháng" a month, etc.
+const HISTORY_VIEWS = ["Ngày", "Tuần", "Tháng"] as const;
+const VIEWS = ["Trong ngày", ...HISTORY_VIEWS] as const;
 type View = (typeof VIEWS)[number];
+
+const HISTORY_RESOLUTION: Record<(typeof HISTORY_VIEWS)[number], "D" | "W" | "M"> = {
+  "Ngày": "D",
+  "Tuần": "W",
+  "Tháng": "M",
+};
 
 const INTRADAY_REFRESH_MS = 5000;
 const HISTORY_REFRESH_MS = 15000;
@@ -56,7 +64,7 @@ export function StockChart({ symbol, refPrice }: { symbol: string; refPrice?: nu
 
   const query = isIntraday
     ? `/api/candles?symbol=${symbol}&resolution=1`
-    : `/api/candles?symbol=${symbol}&resolution=D&range=${encodeURIComponent(view)}`;
+    : `/api/candles?symbol=${symbol}&resolution=${HISTORY_RESOLUTION[view as (typeof HISTORY_VIEWS)[number]]}`;
 
   const { data, error, isLoading } = useSWR<Response>(query, fetcher, {
     refreshInterval: isIntraday ? INTRADAY_REFRESH_MS : HISTORY_REFRESH_MS,
