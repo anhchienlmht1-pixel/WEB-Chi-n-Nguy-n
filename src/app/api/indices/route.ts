@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fetchFireantCandlesTrying, daysAgoMs, nowMs } from "@/lib/fireant";
+import { fetchCandlesTrying, daysAgo, nowSeconds } from "@/lib/vndirect";
 import { IndexCode, IndexQuote } from "@/lib/types";
 
 const INDICES: { code: IndexCode; name: string; candidates: string[] }[] = [
@@ -9,7 +9,7 @@ const INDICES: { code: IndexCode; name: string; candidates: string[] }[] = [
 ];
 
 async function indexFor(code: IndexCode, name: string, candidates: string[]): Promise<IndexQuote | null> {
-  const candles = await fetchFireantCandlesTrying(candidates, "1D", daysAgoMs(30), nowMs());
+  const candles = await fetchCandlesTrying(candidates, "D", daysAgo(30), nowSeconds());
   if (candles.length === 0) return null;
 
   const last = candles[candles.length - 1];
