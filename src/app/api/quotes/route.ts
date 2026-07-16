@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchCandles, daysAgo, nowSeconds } from "@/lib/vndirect";
+import { fetchFireantCandles, daysAgoMs, nowMs } from "@/lib/fireant";
 import { ceilingPrice, floorPrice } from "@/lib/market";
 import { findStock } from "@/lib/symbols";
 import { StockQuote } from "@/lib/types";
 
 async function quoteFor(symbol: string): Promise<StockQuote | null> {
-  const candles = await fetchCandles(symbol, "D", daysAgo(10), nowSeconds());
+  const candles = await fetchFireantCandles(symbol, "1D", daysAgoMs(10), nowMs());
   if (candles.length === 0) return null;
 
   const last = candles[candles.length - 1];
