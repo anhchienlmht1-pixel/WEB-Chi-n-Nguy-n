@@ -50,7 +50,14 @@ export async function fetchCandles(
     throw new Error(`VNDirect dchart trả về lỗi HTTP ${res.status} cho ${symbol}`);
   }
 
-  const data = (await res.json()) as UdfHistoryResponse;
+  const rawBody = await res.text();
+  let data: UdfHistoryResponse;
+  try {
+    data = JSON.parse(rawBody) as UdfHistoryResponse;
+  } catch {
+    console.error(`[vndirect] non-JSON response for ${symbol} @${resolution}: ${rawBody.slice(0, 200)}`);
+    throw new Error(`VNDirect không hỗ trợ độ phân giải "${resolution}" cho ${symbol}`);
+  }
 
   if (data.s !== "ok" || !data.t) {
     if (data.s === "no_data") return [];

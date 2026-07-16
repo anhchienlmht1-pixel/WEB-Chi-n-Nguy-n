@@ -87,18 +87,46 @@ export async function fetchVciRatios(symbol: string): Promise<RatioPoint[]> {
     next: { revalidate: 3600 },
   });
 
+  const rawBody = await res.text();
+
   if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    console.error(`[vci-financials] HTTP ${res.status} for ${symbol}: ${body.slice(0, 300)}`);
+    console.error(`[vci-financials] HTTP ${res.status} for ${symbol}: ${rawBody.slice(0, 300)}`);
     throw new Error(`Vietcap trả về lỗi HTTP ${res.status} cho ${symbol}`);
   }
 
-  const json = await res.json();
-  const rows = extractRows(json);
+  let json: unknown;
+  try {
+    json = JSON.parse(rawBody);
+  } catch {
+    console.error(`[vci-financials] non-JSON response for ${symbol}: ${rawBody.slice(0, 200)}`);
+    throw new Error(`Vietcap trả về dữ liệu không hợp lệ cho ${symbol}`);
+  }
 
-  return rows
+  const rows = extractRows(json);
+  if (rows.length === 0) {
+    // Unrecognized top-level shape — surface the raw payload so the exact
+    // structure can be read from the error message instead of guessed at.
+    const preview = JSON.stringify(json).slice(0, 500);
+    console.error(`[vci-financials] no rows extracted for ${symbol}. Raw: ${preview}`);
+    throw new Error(`Không đọc được cấu trúc dữ liệu Vietcap cho ${symbol}. Raw: ${preview}`);
+  }
+
+  const points = rows
     .map(toRatioPoint)
     .filter((p): p is RatioPoint & { sortKey: number } => p !== null)
     .sort((a, b) => a.sortKey - b.sortKey)
     .map(({ period, periodType, values }) => ({ period, periodType, values }));
+
+  const hasAnyValue = points.some((p) => Object.values(p.values).some((v) => v !== null));
+  if (!hasAnyValue) {
+    // Rows parsed fine but none of our guessed field keys (roe, roa,
+    // casaRatio, ...) matched anything real — show what keys the row
+    // actually has so the mapping can be corrected precisely.
+    const sampleKeys = Object.keys(rows[0]).join(", ");
+    throw new Error(
+      `Nhận được ${rows.length} kỳ báo cáo từ Vietcap cho ${symbol} nhưng không khớp field nào đang dùng. Field thực tế: ${sampleKeys}`
+    );
+  }
+
+  return points;
 }
