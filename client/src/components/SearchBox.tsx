@@ -56,19 +56,19 @@ export default function SearchBox() {
           if (e.key === "Enter" && results.length > 0) goTo(results[0].symbol);
         }}
         placeholder="Tìm mã cổ phiếu (VD: VNM, HPG, FPT)..."
-        className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
+        className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
       />
       {open && results.length > 0 && (
-        <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-slate-700 bg-slate-900 shadow-xl">
+        <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
           {results.map((r) => (
             <button
               key={r.symbol}
               onClick={() => goTo(r.symbol)}
-              className="flex w-full items-center justify-between px-4 py-2 text-left text-sm hover:bg-slate-800"
+              className="flex w-full items-center justify-between px-4 py-2 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800"
             >
-              <span className="font-semibold text-slate-100">{r.symbol}</span>
-              <span className="truncate pl-3 text-slate-400">{r.name}</span>
-              <span className="pl-3 text-xs text-slate-500">{r.exchange}</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">{r.symbol}</span>
+              <span className="truncate pl-3 text-slate-500 dark:text-slate-400">{r.name}</span>
+              <span className="pl-3 text-xs text-slate-400 dark:text-slate-500">{r.exchange}</span>
             </button>
           ))}
         </div>

@@ -14,8 +14,8 @@ export default function WatchButton({ symbol }: { symbol: string }) {
       title={watched ? "Bỏ theo dõi" : "Thêm vào danh sách theo dõi"}
       className={`flex h-8 w-8 items-center justify-center rounded-md border text-sm transition-colors ${
         watched
-          ? "border-amber-400 bg-amber-400/10 text-amber-400"
-          : "border-slate-700 text-slate-500 hover:border-slate-500 hover:text-slate-200"
+          ? "border-amber-500 bg-amber-500/10 text-amber-500 dark:border-amber-400 dark:text-amber-400"
+          : "border-slate-300 text-slate-400 hover:border-slate-400 hover:text-slate-600 dark:border-slate-700 dark:text-slate-500 dark:hover:border-slate-500 dark:hover:text-slate-200"
       }`}
     >
       {watched ? "★" : "☆"}

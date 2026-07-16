@@ -7,10 +7,10 @@ export default function StockTable({ quotes }: { quotes: Quote[] }) {
   const navigate = useNavigate();
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-800">
+    <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
       <table className="w-full min-w-[640px] border-collapse text-sm">
         <thead>
-          <tr className="border-b border-slate-800 text-left text-xs uppercase tracking-wide text-slate-500">
+          <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800">
             <th className="px-4 py-3 font-medium">Mã</th>
             <th className="px-4 py-3 font-medium">Tên</th>
             <th className="px-4 py-3 text-right font-medium">Giá</th>
@@ -25,11 +25,15 @@ export default function StockTable({ quotes }: { quotes: Quote[] }) {
             <tr
               key={q.symbol}
               onClick={() => navigate(`/stock/${q.symbol}`)}
-              className="cursor-pointer border-b border-slate-900 last:border-0 hover:bg-slate-900/60"
+              className="cursor-pointer border-b border-slate-100 last:border-0 hover:bg-slate-50 dark:border-slate-900 dark:hover:bg-slate-900/60"
             >
-              <td className="px-4 py-3 font-semibold text-slate-100">{q.symbol}</td>
-              <td className="max-w-[200px] truncate px-4 py-3 text-slate-400">{q.name}</td>
-              <td className="px-4 py-3 text-right tabular-nums text-slate-100">
+              <td className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+                {q.symbol}
+              </td>
+              <td className="max-w-[240px] truncate px-4 py-3 text-slate-500 dark:text-slate-400">
+                {q.name}
+              </td>
+              <td className="px-4 py-3 text-right tabular-nums text-slate-900 dark:text-slate-100">
                 {formatPrice(q.price, q.currency)}
               </td>
               <td className={`px-4 py-3 text-right tabular-nums ${trendClass(q.change)}`}>
@@ -38,7 +42,7 @@ export default function StockTable({ quotes }: { quotes: Quote[] }) {
               <td className={`px-4 py-3 text-right tabular-nums ${trendClass(q.changePercent)}`}>
                 {formatPercent(q.changePercent)}
               </td>
-              <td className="px-4 py-3 text-right tabular-nums text-slate-400">
+              <td className="px-4 py-3 text-right tabular-nums text-slate-500 dark:text-slate-400">
                 {formatVolume(q.volume)}
               </td>
               <td className="px-4 py-3 text-right">

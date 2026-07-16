@@ -1,26 +1,22 @@
-import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { fetchHistory, fetchQuote } from "../api/client";
+import { fetchQuote } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
-import type { HistoryRange } from "../types";
 import { formatChange, formatMarketCap, formatPercent, formatPrice, formatVolume, trendClass } from "../utils/format";
-import PriceChart from "../components/PriceChart";
-import RangeSelector from "../components/RangeSelector";
+import TVChart from "../components/TVChart";
 import WatchButton from "../components/WatchButton";
 
 export default function StockDetail() {
   const { symbol = "" } = useParams();
-  const [range, setRange] = useState<HistoryRange>("1M");
 
   const quoteState = usePolling(() => fetchQuote(symbol), [symbol], 15000);
-  const historyState = usePolling(() => fetchHistory(symbol, range), [symbol, range]);
-
   const quote = quoteState.data;
 
   if (quoteState.error && !quote) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10 text-center">
-        <p className="text-red-400">Không tìm thấy mã "{symbol}": {quoteState.error}</p>
+        <p className="text-red-500 dark:text-red-400">
+          Không tải được mã "{symbol}": {quoteState.error}
+        </p>
       </div>
     );
   }
@@ -32,16 +28,18 @@ export default function StockDetail() {
           <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-slate-100">{quote.symbol}</h1>
-                <span className="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                  {quote.symbol}
+                </h1>
+                <span className="rounded-full border border-slate-300 px-2 py-0.5 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
                   {quote.exchange}
                 </span>
                 <WatchButton symbol={quote.symbol} />
               </div>
-              <p className="text-slate-400">{quote.name}</p>
+              <p className="text-slate-500 dark:text-slate-400">{quote.name}</p>
             </div>
             <div className="text-right">
-              <div className="text-3xl font-bold tabular-nums text-slate-100">
+              <div className="text-3xl font-bold tabular-nums text-slate-900 dark:text-slate-100">
                 {formatPrice(quote.price, quote.currency)}
                 <span className="ml-2 text-base text-slate-500">{quote.currency}</span>
               </div>
@@ -51,18 +49,8 @@ export default function StockDetail() {
             </div>
           </div>
 
-          <div className="mb-4 flex justify-end">
-            <RangeSelector value={range} onChange={setRange} />
-          </div>
-
-          <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-2">
-            {historyState.data && historyState.data.points.length > 0 ? (
-              <PriceChart points={historyState.data.points} positive={quote.change >= 0} />
-            ) : (
-              <div className="flex h-[360px] items-center justify-center text-slate-500">
-                {historyState.loading ? "Đang tải biểu đồ..." : "Không có dữ liệu biểu đồ"}
-              </div>
-            )}
+          <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
+            <TVChart symbol={quote.symbol} exchange={quote.exchange} />
           </div>
 
           <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
@@ -74,8 +62,8 @@ export default function StockDetail() {
             <Stat label="Vốn hóa" value={formatMarketCap(quote.marketCap, quote.currency)} />
           </div>
 
-          <p className="mt-6 text-xs text-slate-600">
-            Cập nhật lúc {new Date(quote.updatedAt).toLocaleTimeString("vi-VN")}
+          <p className="mt-6 text-xs text-slate-400 dark:text-slate-600">
+            Cập nhật lúc {new Date(quote.updatedAt).toLocaleTimeString("vi-VN")} — Biểu đồ: TradingView
           </p>
         </>
       )}
@@ -85,9 +73,11 @@ export default function StockDetail() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-3">
+    <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/40">
       <div className="text-xs text-slate-500">{label}</div>
-      <div className="mt-1 font-semibold tabular-nums text-slate-100">{value}</div>
+      <div className="mt-1 font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+        {value}
+      </div>
     </div>
   );
 }

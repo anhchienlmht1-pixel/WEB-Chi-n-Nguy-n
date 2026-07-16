@@ -6,7 +6,7 @@ import Watchlist from './pages/Watchlist'
 
 function App() {
   return (
-    <div className="min-h-svh bg-slate-950">
+    <div className="min-h-svh bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <Header />
       <Routes>
         <Route path="/" element={<Dashboard />} />
