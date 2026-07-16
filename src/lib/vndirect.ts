@@ -3,7 +3,7 @@ import { Candle } from "./types";
 
 const DCHART_BASE = "https://dchart-api.vndirect.com.vn/dchart/history";
 
-export type Resolution = "D" | "W" | "M";
+export type Resolution = "1" | "5" | "15" | "30" | "60" | "D" | "W" | "M";
 
 interface UdfHistoryResponse {
   s: "ok" | "no_data" | "error";
@@ -108,4 +108,12 @@ export function daysAgo(days: number): number {
 
 export function nowSeconds(): number {
   return Math.floor(Date.now() / 1000);
+}
+
+/** Unix seconds for today's midnight in Vietnam time (UTC+7, no DST). */
+export function startOfTodayVN(): number {
+  const VN_OFFSET_MS = 7 * 60 * 60 * 1000;
+  const shifted = new Date(Date.now() + VN_OFFSET_MS);
+  const vnMidnightUtcMs = Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate()) - VN_OFFSET_MS;
+  return Math.floor(vnMidnightUtcMs / 1000);
 }

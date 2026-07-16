@@ -3,7 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import clsx from "clsx";
-import { createChart, CandlestickSeries, IChartApi, ISeriesApi, UTCTimestamp } from "lightweight-charts";
+import {
+  createChart,
+  CandlestickSeries,
+  BaselineSeries,
+  IChartApi,
+  ISeriesApi,
+  UTCTimestamp,
+} from "lightweight-charts";
 import { fetcher } from "@/lib/fetcher";
 import { Candle } from "@/lib/types";
 import { useTheme } from "@/lib/theme";
@@ -13,13 +20,17 @@ interface Response {
   candles: Candle[];
 }
 
-const RANGES = ["1M", "3M", "6M", "1Y", "2Y"] as const;
-const REFRESH_MS = 15000;
+const HISTORY_RANGES = ["1M", "3M", "6M", "1Y", "2Y"] as const;
+const VIEWS = ["Trong ngày", ...HISTORY_RANGES] as const;
+type View = (typeof VIEWS)[number];
+
+const INTRADAY_REFRESH_MS = 5000;
+const HISTORY_REFRESH_MS = 15000;
 
 const UP_COLOR = { light: "#059669", dark: "#34d399" };
 const DOWN_COLOR = { light: "#e11d48", dark: "#fb7185" };
 
-function toChartCandle(c: Candle) {
+function toCandlestickPoint(c: Candle) {
   return {
     time: c.time as unknown as UTCTimestamp,
     open: c.open,
@@ -29,20 +40,27 @@ function toChartCandle(c: Candle) {
   };
 }
 
-export function StockChart({ symbol }: { symbol: string }) {
-  const [range, setRange] = useState<(typeof RANGES)[number]>("6M");
+function toLinePoint(c: Candle) {
+  return { time: c.time as unknown as UTCTimestamp, value: c.close };
+}
+
+export function StockChart({ symbol, refPrice }: { symbol: string; refPrice?: number }) {
+  const [view, setView] = useState<View>("Trong ngày");
+  const isIntraday = view === "Trong ngày";
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
-  const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const seriesRef = useRef<ISeriesApi<"Candlestick"> | ISeriesApi<"Baseline"> | null>(null);
   const lastCandleCountRef = useRef(0);
-  const lastRangeRef = useRef(range);
+  const lastViewRef = useRef(view);
   const { theme } = useTheme();
 
-  const { data, error, isLoading } = useSWR<Response>(
-    `/api/candles?symbol=${symbol}&resolution=D&range=${range}`,
-    fetcher,
-    { refreshInterval: REFRESH_MS }
-  );
+  const query = isIntraday
+    ? `/api/candles?symbol=${symbol}&resolution=1`
+    : `/api/candles?symbol=${symbol}&resolution=D&range=${view}`;
+
+  const { data, error, isLoading } = useSWR<Response>(query, fetcher, {
+    refreshInterval: isIntraday ? INTRADAY_REFRESH_MS : HISTORY_REFRESH_MS,
+  });
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -61,17 +79,28 @@ export function StockChart({ symbol }: { symbol: string }) {
         horzLines: { color: gridColor },
       },
       rightPriceScale: { borderColor },
-      timeScale: { borderColor },
+      timeScale: { borderColor, timeVisible: isIntraday, secondsVisible: false },
     });
 
-    const series = chart.addSeries(CandlestickSeries, {
-      upColor: up,
-      downColor: down,
-      borderUpColor: up,
-      borderDownColor: down,
-      wickUpColor: up,
-      wickDownColor: down,
-    });
+    const series = isIntraday
+      ? chart.addSeries(BaselineSeries, {
+          baseValue: { type: "price", price: refPrice ?? 0 },
+          topLineColor: up,
+          topFillColor1: `${up}33`,
+          topFillColor2: `${up}05`,
+          bottomLineColor: down,
+          bottomFillColor1: `${down}05`,
+          bottomFillColor2: `${down}33`,
+          lineWidth: 2,
+        })
+      : chart.addSeries(CandlestickSeries, {
+          upColor: up,
+          downColor: down,
+          borderUpColor: up,
+          borderDownColor: down,
+          wickUpColor: up,
+          wickDownColor: down,
+        });
 
     chartRef.current = chart;
     seriesRef.current = series;
@@ -91,43 +120,52 @@ export function StockChart({ symbol }: { symbol: string }) {
       chartRef.current = null;
       seriesRef.current = null;
     };
-  }, [theme]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [theme, isIntraday]);
 
   useEffect(() => {
     if (!seriesRef.current || !data || data.candles.length === 0) return;
 
     const candles = data.candles;
-    const rangeChanged = lastRangeRef.current !== range;
-    const sameShape = !rangeChanged && candles.length === lastCandleCountRef.current;
+    const viewChanged = lastViewRef.current !== view;
+    const sameShape = !viewChanged && candles.length === lastCandleCountRef.current;
+    const last = candles[candles.length - 1];
 
-    if (sameShape) {
-      // Live refresh: only the last (in-progress) candle changed — patch it
-      // in place so the chart doesn't flicker or reset zoom/scroll position.
-      seriesRef.current.update(toChartCandle(candles[candles.length - 1]));
+    // Live refresh: only the last (in-progress) bar changed — patch it in
+    // place so the chart doesn't flicker or reset zoom/scroll position.
+    if (isIntraday) {
+      const series = seriesRef.current as ISeriesApi<"Baseline">;
+      if (sameShape) series.update(toLinePoint(last));
+      else series.setData(candles.map(toLinePoint));
     } else {
-      seriesRef.current.setData(candles.map(toChartCandle));
+      const series = seriesRef.current as ISeriesApi<"Candlestick">;
+      if (sameShape) series.update(toCandlestickPoint(last));
+      else series.setData(candles.map(toCandlestickPoint));
+    }
+
+    if (!sameShape) {
       chartRef.current?.timeScale().fitContent();
       lastCandleCountRef.current = candles.length;
-      lastRangeRef.current = range;
+      lastViewRef.current = view;
     }
-  }, [data, range]);
+  }, [data, view, isIntraday]);
 
   return (
     <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm shadow-neutral-900/[0.02] dark:border-neutral-800 dark:bg-neutral-900/60 dark:shadow-lg dark:shadow-black/20">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-1">
-          {RANGES.map((r) => (
+          {VIEWS.map((v) => (
             <button
-              key={r}
-              onClick={() => setRange(r)}
+              key={v}
+              onClick={() => setView(v)}
               className={clsx(
                 "rounded-full px-3 py-1 text-xs font-semibold transition-colors",
-                r === range
+                v === view
                   ? "bg-brand-600 text-white"
                   : "text-neutral-500 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
               )}
             >
-              {r}
+              {v}
             </button>
           ))}
         </div>
@@ -146,7 +184,9 @@ export function StockChart({ symbol }: { symbol: string }) {
       )}
       {!error && !isLoading && data && data.candles.length === 0 && (
         <div className="rounded-xl bg-amber-50 p-3 text-sm text-amber-700 dark:bg-amber-950/20 dark:text-amber-300">
-          Không có dữ liệu biểu đồ cho {symbol} trong khung thời gian này.
+          {isIntraday
+            ? `Chưa có dữ liệu khớp lệnh hôm nay cho ${symbol} (ngoài giờ giao dịch hoặc chưa mở phiên).`
+            : `Không có dữ liệu biểu đồ cho ${symbol} trong khung thời gian này.`}
         </div>
       )}
       {isLoading && <div className="h-[380px] animate-pulse rounded-xl bg-neutral-100 dark:bg-neutral-800" />}

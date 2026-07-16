@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchCandles, daysAgo, nowSeconds, Resolution } from "@/lib/vndirect";
+import { fetchCandles, daysAgo, nowSeconds, startOfTodayVN, Resolution } from "@/lib/vndirect";
 
 const RANGE_DAYS: Record<string, number> = {
   "1M": 30,
@@ -8,6 +8,8 @@ const RANGE_DAYS: Record<string, number> = {
   "1Y": 365,
   "2Y": 730,
 };
+
+const INTRADAY_RESOLUTIONS = new Set<Resolution>(["1", "5", "15", "30", "60"]);
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -19,10 +21,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Thiếu tham số symbol" }, { status: 400 });
   }
 
-  const days = RANGE_DAYS[range] ?? 90;
+  const isIntraday = INTRADAY_RESOLUTIONS.has(resolution);
+  const from = isIntraday ? startOfTodayVN() : daysAgo(RANGE_DAYS[range] ?? 90);
 
   try {
-    const candles = await fetchCandles(symbol, resolution, daysAgo(days), nowSeconds());
+    const candles = await fetchCandles(symbol, resolution, from, nowSeconds());
     return NextResponse.json({ symbol, candles });
   } catch (err) {
     return NextResponse.json(

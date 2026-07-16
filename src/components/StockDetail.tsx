@@ -73,7 +73,7 @@ export function StockDetail({ symbol }: { symbol: string }) {
         )}
       </div>
 
-      <StockChart symbol={symbol} />
+      <StockChart symbol={symbol} refPrice={quote?.refPrice} />
     </div>
   );
 }
