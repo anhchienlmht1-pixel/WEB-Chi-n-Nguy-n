@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import useSWR from "swr";
 import clsx from "clsx";
 import {
@@ -54,13 +54,18 @@ export function StockChart({ symbol, refPrice }: { symbol: string; refPrice?: nu
   const lastViewRef = useRef(view);
   const { theme } = useTheme();
 
+  // "Tất cả" spans ~25 years — daily bars for that range are slow to fetch
+  // and render, so fall back to weekly bars just for that view.
+  const historyResolution = view === "Tất cả" ? "W" : "D";
   const query = isIntraday
     ? `/api/candles?symbol=${symbol}&resolution=1`
-    : `/api/candles?symbol=${symbol}&resolution=D&range=${encodeURIComponent(view)}`;
+    : `/api/candles?symbol=${symbol}&resolution=${historyResolution}&range=${encodeURIComponent(view)}`;
 
   const { data, error, isLoading } = useSWR<Response>(query, fetcher, {
     refreshInterval: isIntraday ? INTRADAY_REFRESH_MS : HISTORY_REFRESH_MS,
   });
+  const candles = useMemo(() => data?.candles ?? [], [data]);
+  const hasCandles = candles.length > 0;
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -124,9 +129,8 @@ export function StockChart({ symbol, refPrice }: { symbol: string; refPrice?: nu
   }, [theme, isIntraday]);
 
   useEffect(() => {
-    if (!seriesRef.current || !data || data.candles.length === 0) return;
+    if (!seriesRef.current || !hasCandles) return;
 
-    const candles = data.candles;
     const viewChanged = lastViewRef.current !== view;
     const sameShape = !viewChanged && candles.length === lastCandleCountRef.current;
     const last = candles[candles.length - 1];
@@ -148,7 +152,7 @@ export function StockChart({ symbol, refPrice }: { symbol: string; refPrice?: nu
       lastCandleCountRef.current = candles.length;
       lastViewRef.current = view;
     }
-  }, [data, view, isIntraday]);
+  }, [candles, hasCandles, view, isIntraday]);
 
   return (
     <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm shadow-neutral-900/[0.02] dark:border-neutral-800 dark:bg-neutral-900/60 dark:shadow-lg dark:shadow-black/20">
@@ -182,7 +186,7 @@ export function StockChart({ symbol, refPrice }: { symbol: string; refPrice?: nu
           Không thể tải dữ liệu biểu đồ cho {symbol}.
         </div>
       )}
-      {!error && !isLoading && data && data.candles.length === 0 && (
+      {!error && !isLoading && data && !hasCandles && (
         <div className="rounded-xl bg-amber-50 p-3 text-sm text-amber-700 dark:bg-amber-950/20 dark:text-amber-300">
           {isIntraday
             ? `Chưa có dữ liệu khớp lệnh hôm nay cho ${symbol} (ngoài giờ giao dịch hoặc chưa mở phiên).`
@@ -190,7 +194,7 @@ export function StockChart({ symbol, refPrice }: { symbol: string; refPrice?: nu
         </div>
       )}
       {isLoading && <div className="h-[380px] animate-pulse rounded-xl bg-neutral-100 dark:bg-neutral-800" />}
-      <div ref={containerRef} className={isLoading || (data && data.candles.length === 0) ? "hidden" : ""} />
+      <div ref={containerRef} className={isLoading || (data && !hasCandles) ? "hidden" : ""} />
     </div>
   );
 }

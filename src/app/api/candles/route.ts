@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchCandles, daysAgo, nowSeconds, startOfTodayVN, Resolution } from "@/lib/vndirect";
 
+// VNDirect's dchart can be slow for very long ranges (e.g. the all-time
+// weekly request); give the function more headroom than the default.
+export const maxDuration = 30;
+
 const RANGE_DAYS: Record<string, number> = {
   "1M": 30,
   "3M": 90,

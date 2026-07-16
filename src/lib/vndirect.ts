@@ -68,13 +68,15 @@ export async function fetchCandles(
     volume: v[i] ?? 0,
   }));
 
-  return candles.filter(
-    (candle) =>
-      Number.isFinite(candle.open) &&
-      Number.isFinite(candle.high) &&
-      Number.isFinite(candle.low) &&
-      Number.isFinite(candle.close)
-  );
+  return candles
+    .filter(
+      (candle) =>
+        Number.isFinite(candle.open) &&
+        Number.isFinite(candle.high) &&
+        Number.isFinite(candle.low) &&
+        Number.isFinite(candle.close)
+    )
+    .sort((a, b) => a.time - b.time);
 }
 
 /**
