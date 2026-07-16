@@ -8,6 +8,7 @@ import { findStock } from "@/lib/symbols";
 import { priceState, PRICE_COLOR } from "@/lib/market";
 import { formatChange, formatPercent, formatPrice, formatVolume } from "@/lib/format";
 import { WatchlistButton } from "./WatchlistButton";
+import { FinancialRatios } from "./FinancialRatios";
 
 interface Response {
   quotes: StockQuote[];
@@ -71,6 +72,8 @@ export function StockDetail({ symbol }: { symbol: string }) {
           </div>
         )}
       </div>
+
+      <FinancialRatios symbol={symbol} />
     </div>
   );
 }

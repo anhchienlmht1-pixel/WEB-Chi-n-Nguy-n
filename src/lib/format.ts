@@ -26,3 +26,16 @@ export function formatIndexValue(value: number): string {
   if (!Number.isFinite(value)) return "--";
   return value.toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
+
+// Formats a KBS financial-statement/ratio value. `unit` is the raw unit
+// label KBS returns per line item (e.g. "%", "Lần", "VND") — percentages
+// and ratios get 2 decimals, everything else (money, already scaled by the
+// unit=1000 request param) gets grouped thousands with no forced decimals.
+export function formatFinancialValue(value: number | null, unit?: string): string {
+  if (value === null || !Number.isFinite(value)) return "--";
+  const u = (unit ?? "").trim();
+  if (u === "%" || /lần/i.test(u)) {
+    return value.toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  return value.toLocaleString("vi-VN", { maximumFractionDigits: 2 });
+}
