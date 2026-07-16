@@ -48,9 +48,9 @@ function toCandle(bar: RawBar): Candle {
 /**
  * Fetches OHLCV candles for a symbol from FireAnt's public REST API
  * (restv2.fireant.vn). This is not an officially documented third-party
- * API — it's the same endpoint FireAnt's own site calls — so treat it the
- * same way as the VNDirect integration: best-effort, with defensive
- * parsing and a clear error surfaced to the UI on failure.
+ * API — it's the same endpoint FireAnt's own site calls — so treat it as
+ * best-effort, with defensive parsing and a clear error surfaced to the UI
+ * on failure.
  */
 export async function fetchFireantCandles(
   symbol: string,

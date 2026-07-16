@@ -1,4 +1,4 @@
-import { Exchange, StockMeta, TvTab } from "./types";
+import { StockMeta } from "./types";
 
 // Curated list of liquid, widely-followed Vietnamese tickers (VN30 + notable
 // HNX/UPCOM names). This powers the price board, search and watchlist.
@@ -63,6 +63,8 @@ export const STOCK_MAP: Record<string, StockMeta> = Object.fromEntries(
   STOCKS.map((s) => [s.symbol, s])
 );
 
+export const DEFAULT_BOARD_SYMBOLS = STOCKS.map((s) => s.symbol);
+
 export function findStock(symbol: string): StockMeta | undefined {
   return STOCK_MAP[symbol.toUpperCase()];
 }
@@ -76,31 +78,3 @@ export function searchStocks(query: string, limit = 8): StockMeta[] {
   );
   return [...bySymbol, ...byName].slice(0, limit);
 }
-
-/** TradingView symbol format: "EXCHANGE:SYMBOL". */
-export function tvSymbol(meta: Pick<StockMeta, "symbol" | "exchange">): string {
-  return `${meta.exchange}:${meta.symbol}`;
-}
-
-const EXCHANGE_ORDER: Exchange[] = ["HOSE", "HNX", "UPCOM"];
-
-/** Groups stocks into one TradingView Market Overview tab per exchange. */
-export function buildExchangeTabs(stocks: StockMeta[]): TvTab[] {
-  return EXCHANGE_ORDER.map((exchange) => ({
-    title: exchange,
-    symbols: stocks
-      .filter((s) => s.exchange === exchange)
-      .map((s) => ({ s: tvSymbol(s), d: s.name })),
-  })).filter((tab) => tab.symbols.length > 0);
-}
-
-export const INDEX_TABS: TvTab[] = [
-  {
-    title: "Chỉ số",
-    symbols: [
-      { s: "HOSE:VNINDEX", d: "VN-Index" },
-      { s: "HNX:HNXINDEX", d: "HNX-Index" },
-      { s: "HNX:301", d: "UPCOM-Index" },
-    ],
-  },
-];
