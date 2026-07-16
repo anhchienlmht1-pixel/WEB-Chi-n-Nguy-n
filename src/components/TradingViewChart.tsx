@@ -92,7 +92,19 @@ export function TradingViewChart({ tvSymbol }: { tvSymbol: string }) {
           Không thể tải biểu đồ TradingView cho {tvSymbol}. Vui lòng thử lại sau.
         </div>
       )}
-      <div id={containerId} ref={containerRef} className={error ? "hidden" : "h-[560px] w-full"} />
+      {/*
+        key={tvSymbol} forces React to fully replace this DOM node on
+        symbol change rather than reusing it — TradingView's widget has no
+        public teardown/destroy API, so clearing innerHTML alone can leave
+        stale internal listeners/state behind when switching symbols
+        quickly. A fresh node per symbol sidesteps that entirely.
+      */}
+      <div
+        key={tvSymbol}
+        id={containerId}
+        ref={containerRef}
+        className={error ? "hidden" : "h-[560px] w-full"}
+      />
     </div>
   );
 }
