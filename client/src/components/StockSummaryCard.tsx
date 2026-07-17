@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import type { HistoryPoint, Quote } from "../types";
-import { formatChange, formatMarketCap, formatPercent, formatPrice, formatVolume, trendClass } from "../utils/format";
+import { formatChange, formatFinancialValue, formatMarketCap, formatPercent, formatPrice, trendClass } from "../utils/format";
 import { latestSignal } from "../utils/signals";
+import type { KeyRatios } from "../utils/ratios";
 import WatchButton from "./WatchButton";
 
 function Sparkline({ points, positive }: { points: HistoryPoint[]; positive: boolean }) {
@@ -34,6 +35,11 @@ function Sparkline({ points, positive }: { points: HistoryPoint[]; positive: boo
   );
 }
 
+function formatRatio(r: { value: number; unit: string }): string {
+  const formatted = formatFinancialValue(r.value, r.unit);
+  return r.unit === "%" ? `${formatted}%` : r.unit ? `${formatted} ${r.unit}` : formatted;
+}
+
 function SignalBadge({ signal }: { signal: "buy" | "sell" | null }) {
   if (!signal) return null;
   const isBuy = signal === "buy";
@@ -50,7 +56,15 @@ function SignalBadge({ signal }: { signal: "buy" | "sell" | null }) {
   );
 }
 
-export default function StockSummaryCard({ quote, points }: { quote: Quote; points: HistoryPoint[] }) {
+export default function StockSummaryCard({
+  quote,
+  points,
+  ratios,
+}: {
+  quote: Quote;
+  points: HistoryPoint[];
+  ratios?: KeyRatios;
+}) {
   const navigate = useNavigate();
   const positive = quote.change >= 0;
   const signal = latestSignal(points);
@@ -87,10 +101,13 @@ export default function StockSummaryCard({ quote, points }: { quote: Quote; poin
         <Sparkline points={points} positive={positive} />
       </div>
 
-      <div className="mt-2 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
-        <span>KL {formatVolume(quote.volume)}</span>
-        {!isIndexOrFutures && <span>{formatMarketCap(quote.marketCap, quote.currency)}</span>}
-      </div>
+      {!isIndexOrFutures && (ratios?.pe || ratios?.roe || quote.marketCap) && (
+        <div className="mt-2 flex items-center gap-3 text-[11px] text-slate-400 dark:text-slate-500">
+          {ratios?.pe && <span>P/E {formatRatio(ratios.pe)}</span>}
+          {ratios?.roe && <span>ROE {formatRatio(ratios.roe)}</span>}
+          <span className="ml-auto">{formatMarketCap(quote.marketCap, quote.currency)}</span>
+        </div>
+      )}
     </div>
   );
 }

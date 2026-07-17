@@ -1,9 +1,10 @@
 import { useCallback, useState } from "react";
-import { fetchHistory, fetchQuote } from "../api/client";
+import { fetchFinancials, fetchHistory, fetchQuote } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { useWatchlist } from "../hooks/useWatchlist";
 import StockTable from "../components/StockTable";
 import StockSummaryCard from "../components/StockSummaryCard";
+import { extractKeyRatios, type KeyRatios } from "../utils/ratios";
 import type { HistoryPoint, Quote } from "../types";
 
 type ViewMode = "cards" | "table";
@@ -11,6 +12,7 @@ type ViewMode = "cards" | "table";
 interface WatchlistEntry {
   quote: Quote;
   points: HistoryPoint[];
+  ratios: KeyRatios | undefined;
 }
 
 export default function Watchlist() {
@@ -21,7 +23,13 @@ export default function Watchlist() {
     const results = await Promise.allSettled(
       symbols.map(async (s) => {
         const [quote, history] = await Promise.all([fetchQuote(s), fetchHistory(s, "3M")]);
-        return { quote, points: history.points };
+        let ratios: KeyRatios | undefined;
+        try {
+          ratios = extractKeyRatios(await fetchFinancials(s, "CSTC", "year"));
+        } catch {
+          ratios = undefined; // P/E & ROE are a nice-to-have — don't fail the whole card for it.
+        }
+        return { quote, points: history.points, ratios };
       })
     );
     return results
@@ -74,7 +82,7 @@ export default function Watchlist() {
       {data && data.length > 0 && view === "cards" && (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {data.map((d) => (
-            <StockSummaryCard key={d.quote.symbol} quote={d.quote} points={d.points} />
+            <StockSummaryCard key={d.quote.symbol} quote={d.quote} points={d.points} ratios={d.ratios} />
           ))}
         </div>
       )}
