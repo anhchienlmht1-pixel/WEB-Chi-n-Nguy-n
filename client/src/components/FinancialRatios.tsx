@@ -5,6 +5,7 @@ import type { FinancialPeriodType, FinancialReportType } from "../types";
 import { formatFinancialValue } from "../utils/format";
 import ProfitChart from "./ProfitChart";
 import RatioTrendChart from "./RatioTrendChart";
+import { sortPeriodIndices } from "../utils/period";
 
 const REPORT_TABS: { value: FinancialReportType; label: string }[] = [
   { value: "CSTC", label: "Chỉ số tài chính" },
@@ -22,10 +23,12 @@ export default function FinancialRatios({ symbol }: { symbol: string }) {
     [symbol, reportType, periodType]
   );
 
-  // KBS returns oldest-first; show newest periods first.
+  // Show newest period first — sorted by the actual year/quarter parsed out
+  // of each label rather than assumed array order (KBS's raw order isn't
+  // reliably oldest-first or newest-first).
   const displayPeriods = useMemo(() => {
     if (!data) return [];
-    return data.periods.map((p, i) => ({ label: p, index: i })).reverse();
+    return sortPeriodIndices(data.periods, "desc").map((index) => ({ label: data.periods[index], index }));
   }, [data]);
 
   return (

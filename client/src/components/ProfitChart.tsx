@@ -1,5 +1,6 @@
 import type { FinancialReport } from "../types";
 import { formatFinancialValue } from "../utils/format";
+import { sortPeriodIndices } from "../utils/period";
 
 const BAR_AREA_HEIGHT = 120;
 
@@ -17,6 +18,9 @@ export default function ProfitChart({ report }: { report: FinancialReport }) {
   if (!item) return null;
 
   const maxAbs = Math.max(1, ...item.values.map((v) => Math.abs(v ?? 0)));
+  // Chart timelines always read oldest (left) -> newest (right), regardless
+  // of whatever order KBS's raw period array happens to be in.
+  const order = sortPeriodIndices(report.periods, "asc");
 
   return (
     <div className="border-b border-slate-200 p-4 dark:border-slate-800">
@@ -24,7 +28,8 @@ export default function ProfitChart({ report }: { report: FinancialReport }) {
         {item.name} theo kỳ{item.unit ? ` (${item.unit})` : ""}
       </h4>
       <div className="flex items-end gap-2 overflow-x-auto pb-1">
-        {report.periods.map((period, i) => {
+        {order.map((i) => {
+          const period = report.periods[i];
           const v = item.values[i];
           const positive = (v ?? 0) >= 0;
           const barPx = v == null ? 0 : Math.max(2, (Math.abs(v) / maxAbs) * BAR_AREA_HEIGHT);

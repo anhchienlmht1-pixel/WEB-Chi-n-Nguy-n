@@ -1,5 +1,6 @@
 import type { FinancialReport } from "../types";
 import { PE_MATCH, ROE_MATCH, findRatioItem } from "../utils/ratios";
+import { sortPeriodIndices } from "../utils/period";
 
 const WIDTH = 800;
 const HEIGHT = 220;
@@ -23,9 +24,14 @@ export default function RatioTrendChart({ report }: { report: FinancialReport })
   const roeItem = findRatioItem(report, ROE_MATCH);
   if (!peItem && !roeItem) return null;
 
+  // Chart timelines always read oldest (left) -> newest (right), regardless
+  // of whatever order KBS's raw period array happens to be in.
+  const order = sortPeriodIndices(report.periods, "asc");
+  const periods = order.map((i) => report.periods[i]);
+
   const lines: Line[] = [];
-  if (peItem) lines.push({ label: "P/E", unit: peItem.unit || "Lần", color: "#f59e0b", values: peItem.values });
-  if (roeItem) lines.push({ label: "ROE", unit: roeItem.unit || "%", color: "#10b981", values: roeItem.values });
+  if (peItem) lines.push({ label: "P/E", unit: peItem.unit || "Lần", color: "#f59e0b", values: order.map((i) => peItem.values[i]) });
+  if (roeItem) lines.push({ label: "ROE", unit: roeItem.unit || "%", color: "#10b981", values: order.map((i) => roeItem.values[i]) });
 
   const allValues = lines.flatMap((l) => l.values.filter((v): v is number => v != null && Number.isFinite(v)));
   if (allValues.length < 2) return null;
@@ -34,7 +40,7 @@ export default function RatioTrendChart({ report }: { report: FinancialReport })
   const max = Math.max(...allValues) * 1.1 || 1;
   const plotW = WIDTH - PAD.left - PAD.right;
   const plotH = HEIGHT - PAD.top - PAD.bottom;
-  const n = report.periods.length;
+  const n = periods.length;
 
   const xScale = (i: number) => PAD.left + (n <= 1 ? plotW / 2 : (i / (n - 1)) * plotW);
   const yScale = (v: number) => PAD.top + (1 - (v - min) / (max - min || 1)) * plotH;
@@ -79,7 +85,7 @@ export default function RatioTrendChart({ report }: { report: FinancialReport })
             </text>
           ))}
 
-          {report.periods.map((p, i) => (
+          {periods.map((p, i) => (
             <text
               key={p}
               x={xScale(i)}
@@ -113,7 +119,7 @@ export default function RatioTrendChart({ report }: { report: FinancialReport })
               v == null || !Number.isFinite(v) ? null : (
                 <circle key={`${line.label}-${i}`} cx={xScale(i)} cy={yScale(v)} r={3} fill={line.color}>
                   <title>
-                    {report.periods[i]} — {line.label}: {v.toFixed(2)} {line.unit}
+                    {periods[i]} — {line.label}: {v.toFixed(2)} {line.unit}
                   </title>
                 </circle>
               )
