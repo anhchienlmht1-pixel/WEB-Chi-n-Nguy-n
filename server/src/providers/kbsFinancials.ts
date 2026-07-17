@@ -37,7 +37,10 @@ export interface FinancialReport {
 // reports), rather than requiring an exact string match.
 const SECTION_MATCH: Record<KbsReportType, string[]> = {
   KQKD: ["Kết quả kinh doanh"],
-  CDKT: ["Cân đối kế toán"],
+  // KBS labels this "Báo cáo tình hình tài chính" (confirmed live for VNM),
+  // not the older "Cân đối kế toán" term — keep both since either could
+  // show up depending on how a given company's data was tagged.
+  CDKT: ["Cân đối kế toán", "Báo cáo tình hình tài chính", "Bảng cân đối kế toán"],
   LCTT: ["Lưu chuyển tiền tệ"],
   CSTC: ["Nhóm chỉ số"],
 };
