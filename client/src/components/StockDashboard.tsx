@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { FinancialPeriodType } from "../types";
 import ProfitBarLineChart from "./ProfitBarLineChart";
 import AssetsBarLineChart from "./AssetsBarLineChart";
-import ValuationChart from "./ValuationChart";
+import ProfitPriceCorrelationChart from "./ProfitPriceCorrelationChart";
 
 // Bar (absolute value) + line (growth %) combo panels, one shared Quý/Năm
 // toggle governing all of them — matching the layout used by VN brokerage
@@ -40,7 +40,7 @@ export default function StockDashboard({ symbol }: { symbol: string }) {
         <ProfitBarLineChart symbol={symbol} periodType={periodType} />
         <AssetsBarLineChart symbol={symbol} periodType={periodType} />
         <div className="lg:col-span-2">
-          <ValuationChart symbol={symbol} periodType={periodType} />
+          <ProfitPriceCorrelationChart symbol={symbol} periodType={periodType} />
         </div>
       </div>
     </div>
