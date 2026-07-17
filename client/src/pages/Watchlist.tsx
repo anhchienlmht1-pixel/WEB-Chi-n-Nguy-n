@@ -40,7 +40,7 @@ export default function Watchlist() {
   const { data, loading, error } = usePolling(fetcher, [symbols.join(",")], 30000);
 
   return (
-    <div className="mx-auto max-w-[1200px] px-4 py-6">
+    <div className="mx-auto max-w-[1400px] px-4 py-6">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Danh sách theo dõi</h1>
         {data && data.length > 0 && (

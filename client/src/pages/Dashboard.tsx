@@ -16,7 +16,7 @@ export default function Dashboard() {
   const [chartSymbol, setChartSymbol] = useState(watchlist[0] ?? DEFAULT_SYMBOL);
 
   return (
-    <div className="mx-auto max-w-[1200px] px-4 py-6">
+    <div className="mx-auto max-w-[1400px] px-4 py-6">
       <Hero />
 
       <div className="mb-6">

@@ -135,7 +135,7 @@ export default function PerformanceCompare() {
   const hasChart = chartSeries.some((s) => s.data.length > 0);
 
   return (
-    <div className="mx-auto max-w-[1200px] px-4 py-6">
+    <div className="mx-auto max-w-[1400px] px-4 py-6">
       <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">So sánh hiệu suất</h1>
       <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
         % lợi nhuận tích luỹ theo thời gian cho từng mã, và bình quân "danh mục" gồm các mã bạn chọn. Bấm vào một mã

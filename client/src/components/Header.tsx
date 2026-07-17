@@ -29,7 +29,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">
-      <div className="mx-auto flex max-w-[1200px] items-center gap-3 px-4 py-3">
+      <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-3">
         <NavLink
           to="/"
           onClick={() => setMenuOpen(false)}
