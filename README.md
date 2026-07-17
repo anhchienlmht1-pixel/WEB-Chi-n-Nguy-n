@@ -74,7 +74,7 @@ npm run dev         # http://localhost:5173 (proxy /api -> :4000)
 - Tìm kiếm mã cổ phiếu (gõ để tìm theo mã hoặc tên công ty).
 - Bấm vào mã → trang chi tiết với biểu đồ giá (dữ liệu vnstock/TCBS, chọn khoảng 1W→5Y) + các chỉ số mở/cao/thấp/đóng cửa/khối lượng/vốn hóa.
 - Chuyển giao diện **sáng/tối** bằng nút ☀️/🌙 trên thanh menu (lưu lựa chọn vào `localStorage`, biểu đồ đổi theme theo).
-- Danh sách theo dõi (watchlist) lưu trong `localStorage`, thêm/bớt bằng nút ★ ở bất kỳ đâu.
+- Danh sách theo dõi (watchlist) lưu trong `localStorage`, thêm/bớt bằng nút ★ ở bất kỳ đâu — xem dạng **Thẻ** (mặc định: giá, % thay đổi, sparkline giá 3 tháng, nhãn tín hiệu MUA/BÁN) hoặc **Bảng** (gọn hơn cho danh sách dài).
 - Heatmap lợi nhuận theo Tháng/Năm cho mỗi mã (trang chi tiết mã).
 - `/so-sanh`: so sánh % lợi nhuận tích luỹ theo thời gian giữa nhiều mã (biểu đồ đường), cộng thêm đường "Danh mục (bình quân)" — bình quân đều các mã đã chọn tại những ngày cả nhóm đều có dữ liệu. Bấm vào một mã/danh mục để ẩn/hiện đường đó trên biểu đồ.
 - Tin tức liên quan đến từng mã ở trang chi tiết mã (`/stock/:symbol`), từ CafeF (`server/src/news/cafefNews.ts`), 2 nguồn theo thứ tự ưu tiên:

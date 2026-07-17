@@ -140,3 +140,12 @@ export function computeTradingSignals(points: HistoryPoint[]): TradingSignalsRes
 
   return { all, transitions };
 }
+
+/** Just the latest bar's signal (or null if neither condition matched) — for compact summaries. */
+export function latestSignal(points: HistoryPoint[]): "buy" | "sell" | null {
+  if (points.length === 0) return null;
+  const { all } = computeTradingSignals(points);
+  if (all.length === 0) return null;
+  const last = all[all.length - 1];
+  return last.time === toSeconds(points[points.length - 1]) ? last.type : null;
+}
