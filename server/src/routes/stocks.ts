@@ -3,7 +3,8 @@ import NodeCache from "node-cache";
 import { getProvider } from "../providers/index.js";
 import { HistoryRange, TopExchange } from "../providers/types.js";
 import { topTradedOf, VALID_EXCHANGES } from "../providers/topTraded.js";
-import { fetchKbsReport, KbsPeriodType, KbsReportType } from "../providers/kbsFinancials.js";
+import { KbsPeriodType, KbsReportType } from "../providers/kbsFinancials.js";
+import { fetchFinancialReport } from "../providers/financials.js";
 import { fetchNewsForSymbol } from "../news/cafefNews.js";
 
 const router = Router();
@@ -91,7 +92,7 @@ router.get(
       return;
     }
     const data = await cached(`financials:${symbol}:${reportType}:${periodType}`, 3600, () =>
-      fetchKbsReport(symbol, reportType, periodType)
+      fetchFinancialReport(symbol, reportType, periodType)
     );
     res.json(data);
   })

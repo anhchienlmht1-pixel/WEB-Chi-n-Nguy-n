@@ -87,6 +87,12 @@ export default function FinancialRatios({ symbol }: { symbol: string }) {
         <div className="p-4 text-sm text-slate-500 dark:text-slate-400">Chưa có dữ liệu.</div>
       )}
 
+      {!loading && data && data.source && (
+        <div className="px-4 pt-3 text-[11px] text-slate-400 dark:text-slate-500">
+          Nguồn: {data.source === "vndirect" ? "VNDirect" : "KBS (dự phòng)"} · {data.periods.length} kỳ
+        </div>
+      )}
+
       {!loading && data && data.items.length > 0 && reportType === "KQKD" && <ProfitChart report={data} />}
       {!loading && data && data.items.length > 0 && reportType === "CSTC" && <RatioTrendChart report={data} />}
 
