@@ -5,7 +5,7 @@ import { useTheme } from "../hooks/useTheme";
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `text-sm font-medium transition-colors ${
     isActive
-      ? "text-orange-600 dark:text-orange-400"
+      ? "text-emerald-600 dark:text-emerald-400"
       : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
   }`;
 
@@ -19,7 +19,7 @@ export default function Header() {
           to="/"
           className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-slate-100"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500 text-slate-950">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500 text-slate-950">
             📈
           </span>
           Chiến Nguyễn Invest

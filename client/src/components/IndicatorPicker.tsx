@@ -50,7 +50,7 @@ export default function IndicatorPicker({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Tìm kiếm"
-            className="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-orange-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            className="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
           />
         </div>
 
@@ -72,7 +72,7 @@ export default function IndicatorPicker({
                 onClick={() => onAdd(def.id)}
                 className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm transition-colors ${
                   active
-                    ? "bg-orange-50 text-orange-700 dark:bg-orange-500/10 dark:text-orange-300"
+                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
                     : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
                 }`}
               >
@@ -80,7 +80,7 @@ export default function IndicatorPicker({
                   {def.nameEn}
                   <span className="text-slate-400 dark:text-slate-500"> - {def.name}</span>
                 </span>
-                {active && <span className="ml-2 shrink-0 text-orange-600 dark:text-orange-400">✓</span>}
+                {active && <span className="ml-2 shrink-0 text-emerald-600 dark:text-emerald-400">✓</span>}
               </button>
             );
           })}

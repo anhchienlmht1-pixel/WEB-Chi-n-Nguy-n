@@ -10,20 +10,20 @@ export default function Hero() {
       {/* Warm glow accents — no external assets, just layered radial gradients. */}
       <div
         className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full opacity-40 blur-3xl"
-        style={{ background: "radial-gradient(circle, #f97316 0%, transparent 70%)" }}
+        style={{ background: "radial-gradient(circle, #10b981 0%, transparent 70%)" }}
       />
       <div
         className="pointer-events-none absolute -bottom-32 -left-16 h-72 w-72 rounded-full opacity-20 blur-3xl"
-        style={{ background: "radial-gradient(circle, #f97316 0%, transparent 70%)" }}
+        style={{ background: "radial-gradient(circle, #10b981 0%, transparent 70%)" }}
       />
 
       <div className="relative">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-400">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-400">
           Theo dõi. Phân tích. Đầu tư.
         </p>
         <h1 className="mt-3 max-w-2xl text-3xl font-extrabold leading-tight text-white sm:text-5xl">
           Nền tảng đầu tư chứng khoán{" "}
-          <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent">
             toàn diện
           </span>{" "}
           của bạn
@@ -37,7 +37,7 @@ export default function Hero() {
         <div className="mt-8 flex flex-wrap gap-8 sm:gap-12">
           {STATS.map((s) => (
             <div key={s.label}>
-              <div className="text-2xl font-bold text-orange-400 sm:text-3xl">{s.value}</div>
+              <div className="text-2xl font-bold text-emerald-400 sm:text-3xl">{s.value}</div>
               <div className="mt-1 text-xs text-slate-400 sm:text-sm">{s.label}</div>
             </div>
           ))}
