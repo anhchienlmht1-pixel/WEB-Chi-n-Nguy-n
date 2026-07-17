@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { fetchNewsForSymbol } from "../../server/src/news/vnexpressNews.js";
+import { fetchNewsForSymbol } from "../../server/src/news/cafefNews.js";
 import { cached } from "../_lib/cache.js";
 import { sendError } from "../_lib/errors.js";
 

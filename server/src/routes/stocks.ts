@@ -4,7 +4,7 @@ import { getProvider } from "../providers/index.js";
 import { HistoryRange, TopExchange } from "../providers/types.js";
 import { topTradedOf, VALID_EXCHANGES } from "../providers/topTraded.js";
 import { fetchKbsReport, KbsPeriodType, KbsReportType } from "../providers/kbsFinancials.js";
-import { fetchNewsForSymbol } from "../news/vnexpressNews.js";
+import { fetchNewsForSymbol } from "../news/cafefNews.js";
 
 const router = Router();
 const cache = new NodeCache({ stdTTL: 20, checkperiod: 30 });

@@ -1,9 +1,9 @@
-// Pulls market/stock news from VnExpress's public RSS feeds. RSS 2.0 is a
+// Pulls market/stock news from CafeF's public RSS feeds. RSS 2.0 is a
 // stable, documented format (unlike KBS's undocumented JSON API), so this is
 // lower-risk than the price/financials providers — the only real unknown is
-// which category slug VnExpress currently uses for stock-market news, since
-// this sandbox can't reach vnexpress.net to verify it directly. We try a few
-// known VnExpress RSS slugs in order and use whichever responds with items.
+// which category slug CafeF currently uses for stock-market news, since
+// this sandbox can't reach cafef.vn to verify it directly. We try a few
+// known CafeF RSS slugs in order and use whichever responds with items.
 export interface NewsItem {
   title: string;
   link: string;
@@ -13,9 +13,9 @@ export interface NewsItem {
 }
 
 const FEEDS: { url: string; source: string }[] = [
-  { url: "https://vnexpress.net/rss/kinh-doanh/chung-khoan.rss", source: "VnExpress - Chứng khoán" },
-  { url: "https://vnexpress.net/rss/chung-khoan.rss", source: "VnExpress - Chứng khoán" },
-  { url: "https://vnexpress.net/rss/kinh-doanh.rss", source: "VnExpress - Kinh doanh" },
+  { url: "https://cafef.vn/thi-truong-chung-khoan.rss", source: "CafeF - Thị trường chứng khoán" },
+  { url: "https://cafef.vn/chung-khoan.rss", source: "CafeF - Chứng khoán" },
+  { url: "https://cafef.vn/tai-chinh-ngan-hang.rss", source: "CafeF - Tài chính ngân hàng" },
 ];
 
 const HEADERS = {
@@ -35,7 +35,9 @@ function decodeXmlEntities(s: string): string {
 
 function cleanText(raw: string): string {
   const cdata = raw.match(/^\s*<!\[CDATA\[([\s\S]*?)\]\]>\s*$/);
-  return decodeXmlEntities((cdata ? cdata[1] : raw).trim());
+  // CafeF descriptions sometimes embed an <img>/<a> in the CDATA — strip any
+  // inner HTML tags since we only ever show plain text.
+  return decodeXmlEntities((cdata ? cdata[1] : raw).replace(/<[^>]*>/g, "").trim());
 }
 
 function extractTag(xml: string, tag: string): string | null {
@@ -67,7 +69,7 @@ function parseRssItems(xml: string, source: string): NewsItem[] {
   return items;
 }
 
-export async function fetchVnexpressNews(limit = 20): Promise<NewsItem[]> {
+export async function fetchCafefNews(limit = 20): Promise<NewsItem[]> {
   const attempts: string[] = [];
 
   for (const feed of FEEDS) {
@@ -87,7 +89,7 @@ export async function fetchVnexpressNews(limit = 20): Promise<NewsItem[]> {
   }
 
   throw Object.assign(
-    new Error(`Không lấy được tin tức từ VnExpress. Chi tiết: ${attempts.join(" | ")}`),
+    new Error(`Không lấy được tin tức từ CafeF. Chi tiết: ${attempts.join(" | ")}`),
     { status: 502 }
   );
 }
@@ -97,11 +99,11 @@ function mentionsSymbol(item: NewsItem, symbol: string): boolean {
   return re.test(item.title) || re.test(item.description ?? "");
 }
 
-// VnExpress's RSS feeds are category-wide (not per-stock), so "news for a
+// CafeF's RSS feeds are category-wide (not per-stock), so "news for a
 // symbol" is a best-effort filter over the latest pool of articles by ticker
 // mention — there's no dedicated per-symbol feed to query instead.
 export async function fetchNewsForSymbol(symbol: string, limit = 10): Promise<NewsItem[]> {
   const upper = symbol.toUpperCase();
-  const pool = await fetchVnexpressNews(200);
+  const pool = await fetchCafefNews(200);
   return pool.filter((item) => mentionsSymbol(item, upper)).slice(0, limit);
 }

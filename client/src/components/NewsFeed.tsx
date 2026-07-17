@@ -18,7 +18,7 @@ export default function NewsFeed({ symbol }: { symbol: string }) {
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
       <div className="border-b border-slate-200 p-4 dark:border-slate-800">
         <h3 className="font-semibold text-slate-900 dark:text-slate-100">Tin tức liên quan đến {symbol}</h3>
-        <p className="text-xs text-slate-500 dark:text-slate-400">Lọc từ tin mới nhất của VnExpress</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">Lọc từ tin mới nhất của CafeF</p>
       </div>
 
       {loading && !data && (
