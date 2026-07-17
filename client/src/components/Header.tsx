@@ -32,6 +32,9 @@ export default function Header() {
           <NavLink to="/watchlist" className={navLinkClass}>
             Theo dõi
           </NavLink>
+          <NavLink to="/pe-eps" className={navLinkClass}>
+            P/E &amp; EPS
+          </NavLink>
         </nav>
 
         <div className="ml-auto flex items-center gap-3">

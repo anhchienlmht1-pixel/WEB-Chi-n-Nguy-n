@@ -3,6 +3,7 @@ import Header from './components/Header'
 import Dashboard from './pages/Dashboard'
 import StockDetail from './pages/StockDetail'
 import Watchlist from './pages/Watchlist'
+import PeEpsScreener from './pages/PeEpsScreener'
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/stock/:symbol" element={<StockDetail />} />
         <Route path="/watchlist" element={<Watchlist />} />
+        <Route path="/pe-eps" element={<PeEpsScreener />} />
         <Route path="*" element={<Dashboard />} />
       </Routes>
     </div>
