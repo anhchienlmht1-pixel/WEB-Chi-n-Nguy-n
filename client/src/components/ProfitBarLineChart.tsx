@@ -2,11 +2,19 @@ import { useMemo } from "react";
 import { fetchFinancials } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import type { FinancialPeriodType } from "../types";
-import { findProfitItem } from "../utils/financials";
+import { findProfitItem, growthOffset, type GrowthMode } from "../utils/financials";
 import { sortPeriodIndices } from "../utils/period";
 import BarLineComboChart from "./BarLineComboChart";
 
-export default function ProfitBarLineChart({ symbol, periodType }: { symbol: string; periodType: FinancialPeriodType }) {
+export default function ProfitBarLineChart({
+  symbol,
+  periodType,
+  growthMode,
+}: {
+  symbol: string;
+  periodType: FinancialPeriodType;
+  growthMode: GrowthMode;
+}) {
   const { data, error, loading } = usePolling(() => fetchFinancials(symbol, "KQKD", periodType), [symbol, periodType]);
 
   const chart = useMemo(() => {
@@ -29,5 +37,14 @@ export default function ProfitBarLineChart({ symbol, periodType }: { symbol: str
       </div>
     );
   }
-  return <BarLineComboChart title="Lợi nhuận sau thuế" periods={chart.periods} values={chart.values} unit={chart.unit} />;
+  return (
+    <BarLineComboChart
+      title="Lợi nhuận sau thuế"
+      periods={chart.periods}
+      values={chart.values}
+      unit={chart.unit}
+      growthOffset={growthOffset(periodType, growthMode)}
+      growthLabel={growthMode === "yoy" ? "Tăng trưởng YoY (%)" : "Tăng trưởng QoQ (%)"}
+    />
+  );
 }

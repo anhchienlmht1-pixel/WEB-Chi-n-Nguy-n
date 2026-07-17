@@ -16,13 +16,17 @@ export default function BarLineComboChart({
   periods,
   values,
   unit,
+  growthOffset = 1,
+  growthLabel = "Tăng trưởng (%)",
 }: {
   title: string;
   periods: string[];
   values: (number | null)[];
   unit: string;
+  growthOffset?: number;
+  growthLabel?: string;
 }) {
-  const growth = periodGrowth(values);
+  const growth = periodGrowth(values, growthOffset);
   const definedValues = values.filter((v): v is number => v != null && Number.isFinite(v));
   const definedGrowth = growth.filter((v): v is number => v != null && Number.isFinite(v));
   if (definedValues.length < 2) return null;
@@ -63,7 +67,7 @@ export default function BarLineComboChart({
           </span>
           <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
             <span className="h-0.5 w-2.5" style={{ backgroundColor: LINE_COLOR }} />
-            Tăng trưởng (%)
+            {growthLabel}
           </span>
         </div>
       </div>

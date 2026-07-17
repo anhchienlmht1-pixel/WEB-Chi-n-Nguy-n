@@ -38,7 +38,10 @@ export async function fetchVndirectReport(
   symbol: string,
   reportType: KbsReportType,
   periodType: KbsPeriodType,
-  maxPeriods = 40
+  // 80 quarters / years covers 20 years of quarterly history (or 80 years
+  // annually) — VNDirect's own API doesn't have KBS's 50-row cap, so there's
+  // no reason to trim harder than "however far back the data actually goes".
+  maxPeriods = 80
 ): Promise<FinancialReport> {
   const vndReportType = REPORT_TYPE_MAP[reportType];
   const fiscalDateType = periodType === "quarter" ? "QUARTER" : "YEAR";
