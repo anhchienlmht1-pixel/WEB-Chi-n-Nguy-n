@@ -5,6 +5,7 @@ import { formatChange, formatMarketCap, formatPercent, formatPrice, formatVolume
 import TechnicalChartPanel from "../components/TechnicalChartPanel";
 import WatchButton from "../components/WatchButton";
 import FinancialRatios from "../components/FinancialRatios";
+import SeasonalityHeatmap from "../components/SeasonalityHeatmap";
 
 export default function StockDetail() {
   const { symbol = "" } = useParams();
@@ -68,6 +69,10 @@ export default function StockDetail() {
           <p className="mt-6 text-xs text-slate-400 dark:text-slate-600">
             Cập nhật lúc {new Date(quote.updatedAt).toLocaleTimeString("vi-VN")}
           </p>
+
+          <div className="mt-6">
+            <SeasonalityHeatmap symbol={quote.symbol} />
+          </div>
 
           {/* Indices/futures aren't companies — no financial statements to show. */}
           {!isIndexOrFutures && (
