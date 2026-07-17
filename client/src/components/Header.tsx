@@ -35,6 +35,9 @@ export default function Header() {
           <NavLink to="/pe-eps" className={navLinkClass}>
             P/E &amp; EPS
           </NavLink>
+          <NavLink to="/so-sanh" className={navLinkClass}>
+            So sánh
+          </NavLink>
         </nav>
 
         <div className="ml-auto flex items-center gap-3">
