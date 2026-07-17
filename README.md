@@ -14,7 +14,8 @@ Cả hai đều dùng chung code trong `server/src/providers/` — sửa 1 nơi,
 
 | Provider | Giá trị `DATA_PROVIDER` | Cần xác thực | Ghi chú |
 |---|---|---|---|
-| vnstock (VCI/Vietcap) | `vnstock` (mặc định) | Không | Đúng nguồn dữ liệu mặc định của thư viện **vnstock** (vnstocks.com): API của Chứng khoán Vietcap (`trading.vietcap.com.vn`). Các endpoint/tham số/cấu trúc phản hồi được **đối chiếu trực tiếp với mã nguồn vnstock 4.0.4 tải từ PyPI** (module `vnstock/explorer/vci`). Bảng giá batch 1 request, biểu đồ nến OHLCV, top giao dịch cả 3 sàn HOSE/HNX/UPCOM. Không cần token. |
+| KB Securities (KBS) | `kbs` (mặc định) | Không | Nguồn dữ liệu mặc định **hiện tại** của thư viện **vnstock** (vnstocks.com) cho `Market.equity.ohlcv()`/`quote()` — xác nhận trực tiếp từ README chính thức của vnstock trên GitHub (không phải VCI như bản cũ). Cùng nguồn với tính năng Chỉ số tài chính (`server/src/providers/kbsFinancials.ts`). Bảng giá batch 1 request (`POST /stock/iss`), biểu đồ nến OHLCV (`GET /stocks/{symbol}/data_day`). Không cần token. |
+| vnstock (VCI/Vietcap) | `vnstock` | Không | Endpoint VCI cũ hơn (`trading.vietcap.com.vn`), giữ lại làm phương án dự phòng — thư viện vnstock hiện đã chuyển nguồn mặc định sang KBS. |
 | TradingView | `tradingview` | Không | Scanner công khai của TradingView cho thị trường VN. |
 | FireAnt | `fireant` | Có — `FIREANT_TOKEN` | Dữ liệu thật từ FireAnt (fireant.vn). Cần token Bearer (xem cách lấy bên dưới). |
 | VNDirect | `vndirect` | Không | Dữ liệu thật từ VNDirect, không cần token. |
@@ -38,17 +39,18 @@ Muốn dùng nguồn khác (SSI iBoard, TCBS, Twelve Data, Polygon.io, v.v.) ch�
 Copy `server/.env.example` thành `server/.env` rồi chỉnh:
 
 ```
-DATA_PROVIDER=vnstock
+DATA_PROVIDER=kbs
 WATCHLIST_SYMBOLS=
 PORT=4000
 ```
 
-> Provider `vnstock` dùng đúng 3 endpoint VCI mà thư viện vnstock gọi (đã đối chiếu với mã nguồn vnstock 4.0.4 trên PyPI):
-> - `POST /api/price/symbols/getList` — bảng giá batch (giá khớp, tham chiếu, cao/thấp, KL & GT giao dịch lũy kế) cho mọi mã trong 1 request;
-> - `POST /api/chart/OHLCChart/gap-chart` — dữ liệu nến OHLCV cho biểu đồ;
-> - `GET /api/price/symbols/getByGroup?group=HOSE|HNX|UPCOM` — danh sách mã từng sàn, phục vụ xếp hạng Top 10 toàn thị trường.
+> Provider `kbs` dùng 2 endpoint KBS mà thư viện vnstock hiện tại gọi (đối chiếu trực tiếp với mã nguồn `vnstock/explorer/kbs/{quote,trading,const}.py` trên GitHub):
+> - `POST /iis-server/investment/stock/iss` — bảng giá batch `{"code":"ACB,VCB,..."}` (mã cách nhau bằng dấu phẩy, không phải mảng);
+> - `GET /iis-server/investment/stocks/{symbol}/data_day` (hoặc `/index/{symbol}/data_day` cho chỉ số) — dữ liệu nến OHLCV, tham số `sdate`/`edate` định dạng `DD-MM-YYYY`. Giá cổ phiếu KBS trả về nhân 1000 (cùng quy ước với `finance-info`), cần chia lại; giá chỉ số thì không.
 >
-> Môi trường sandbox phát triển phiên bản này chặn mạng ra ngoài nên chưa gọi thử trực tiếp được (chỉ `mock` test được tại chỗ), nhưng cấu trúc request/response lấy nguyên văn từ thư viện vnstock nên độ tin cậy cao. Nếu có lỗi, trang hiển thị thông báo cụ thể — đổi tạm `DATA_PROVIDER=mock` trong lúc chờ sửa.
+> Chưa hỗ trợ Top 10 giao dịch riêng cho `kbs` — tự động dùng lại logic xếp hạng từ bảng giá tổng quan (`topTradedOf()` fallback), đã có sẵn cho mọi provider không có `getTopTraded` riêng. Hợp đồng tương lai VN30 (VN30F1M/F2M/F1Q/F2Q) **chưa được hỗ trợ** — KBS yêu cầu quy đổi sang mã KRX theo ngày đáo hạn hiện tại, phần logic này chưa được triển khai.
+>
+> Môi trường sandbox phát triển phiên bản này chặn mạng ra ngoài nên chưa gọi thử trực tiếp được (chỉ `mock` test được tại chỗ), nhưng cấu trúc request/response lấy nguyên văn từ mã nguồn vnstock nên độ tin cậy cao. Nếu có lỗi, trang hiển thị thông báo cụ thể — đổi tạm `DATA_PROVIDER=mock` trong lúc chờ sửa.
 
 ## Chạy local
 
@@ -86,8 +88,9 @@ cd client && npm run build   # build tĩnh vào client/dist, deploy lên bất k
 Repo đã có sẵn `vercel.json` + thư mục `api/` (Serverless Functions) nên chỉ cần:
 
 1. Trong Vercel Dashboard → Project Settings → **General → Root Directory**: để trống / chọn thư mục **gốc của repo** (không phải `client`). Nếu để `client` làm root thì Vercel sẽ không thấy được thư mục `api/`, và bảng giá sẽ không tải được dữ liệu dù trang vẫn hiện ra.
-2. Project Settings → **Environment Variables**: mặc định dùng provider `vnstock` (TCBS) — **không cần token hay key gì cả**, deploy là chạy. Tùy chọn:
-   - `DATA_PROVIDER` = `vnstock` (mặc định) / `tradingview` / `fireant` / `vndirect` / `mock` / ...
+2. Project Settings → **Environment Variables**: mặc định dùng provider `kbs` (KB Securities) — **không cần token hay key gì cả**, deploy là chạy. Tùy chọn:
+   - `DATA_PROVIDER` = `kbs` (mặc định) / `vnstock` / `tradingview` / `fireant` / `vndirect` / `mock` / ...
+   - ⚠️ Nếu project đã có sẵn biến `DATA_PROVIDER=vnstock` được set thủ công trong Vercel, biến đó sẽ **ghi đè** giá trị mặc định mới trong code — cần xoá biến này (hoặc đổi thành `kbs`) rồi Redeploy để dùng nguồn dữ liệu mới.
    - `WATCHLIST_SYMBOLS` nếu muốn đổi danh sách mã hiển thị ở trang tổng quan
    - `FIREANT_TOKEN` nếu chuyển sang provider `fireant`
 3. Project Settings → **Deployment Protection**: nếu bật "Vercel Authentication" hoặc "Password Protection", người ngoài truy cập domain sẽ gặp lỗi 403. Tắt đi (hoặc thêm domain vào danh sách bypass) nếu muốn ai cũng xem được.

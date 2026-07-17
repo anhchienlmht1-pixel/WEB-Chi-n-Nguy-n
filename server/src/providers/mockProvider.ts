@@ -13,12 +13,8 @@ import { INDEX_UNIVERSE, findIndexSeed } from "./indices.js";
 const INDEX_BASE_PRICES: Record<string, number> = {
   VNINDEX: 1250,
   HNXINDEX: 230,
-  UPINDEX: 95,
+  UPCOMINDEX: 95,
   VN30: 1310,
-  VN30F1M: 1312,
-  VN30F2M: 1315,
-  VN30F1Q: 1318,
-  VN30F2Q: 1320,
 };
 
 interface Seed {
