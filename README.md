@@ -76,7 +76,7 @@ npm run dev         # http://localhost:5173 (proxy /api -> :4000)
 - Chuyển giao diện **sáng/tối** bằng nút ☀️/🌙 trên thanh menu (lưu lựa chọn vào `localStorage`, biểu đồ đổi theme theo).
 - Danh sách theo dõi (watchlist) lưu trong `localStorage`, thêm/bớt bằng nút ★ ở bất kỳ đâu.
 - Heatmap lợi nhuận theo Tháng/Năm cho mỗi mã (trang chi tiết mã).
-- `/so-sanh`: so sánh % hiệu suất giữa nhiều mã trong một khoảng thời gian (biểu đồ cột).
+- `/so-sanh`: so sánh % lợi nhuận tích luỹ theo thời gian giữa nhiều mã (biểu đồ đường), cộng thêm đường "Danh mục (bình quân)" — bình quân đều các mã đã chọn tại những ngày cả nhóm đều có dữ liệu. Bấm vào một mã/danh mục để ẩn/hiện đường đó trên biểu đồ.
 - Tin tức liên quan đến từng mã ở trang chi tiết mã (`/stock/:symbol`), từ CafeF (`server/src/news/cafefNews.ts`), 2 nguồn theo thứ tự ưu tiên:
   1. Tab "Tin tức" trên trang dữ liệu riêng của mã đó trên CafeF — `cafef.vn/du-lieu/{sàn}/{mã}-tin-tuc.chn` (đã xác nhận đúng qua ảnh chụp URL thật của người dùng, ví dụ `hose/hpg-tin-tuc.chn`), thử thêm `{mã}.chn` nếu dạng trên không có. Cào các link bài viết trên trang, chỉ giữ lại link có nhắc đến mã (loại bỏ tin "Mới nhất" chung toàn trang không liên quan mã đang xem). Cấu trúc HTML chi tiết của trang này vẫn **chưa xác minh được đầy đủ** (sandbox phát triển chặn mạng ra `cafef.vn`) nên phần cào dữ liệu là suy đoán có kiểm tra chéo bằng bộ lọc, không phải API chính thức.
   2. Nếu cách trên không ra kết quả: lọc theo mã trong RSS công khai của CafeF (thử lần lượt `thi-truong-chung-khoan`, `chung-khoan`, `tai-chinh-ngan-hang`).
