@@ -34,20 +34,17 @@ function toNumber(raw: unknown): number | null {
   return null;
 }
 
-export async function fetchVndirectReport(
-  symbol: string,
-  reportType: KbsReportType,
-  periodType: KbsPeriodType,
-  // 80 quarters / years covers 20 years of quarterly history (or 80 years
-  // annually) — VNDirect's own API doesn't have KBS's 50-row cap, so there's
-  // no reason to trim harder than "however far back the data actually goes".
-  maxPeriods = 80
-): Promise<FinancialReport> {
-  const vndReportType = REPORT_TYPE_MAP[reportType];
-  const fiscalDateType = periodType === "quarter" ? "QUARTER" : "YEAR";
-  const q = `code:${symbol}~reportType:${vndReportType}~fiscalDateType:${fiscalDateType}`;
-  const url = `${FINFO_BASE}/financial_statements?q=${encodeURIComponent(q)}&sort=fiscalDate:desc&size=${maxPeriods * 80}`;
+// A single request with a huge `size` turned out to only ever get back ~4
+// periods' worth of rows regardless of how large `size` was set to — this
+// endpoint (unlike stock_prices, which does honor a large `size`) appears to
+// cap how many rows it returns per request. So instead of trusting one big
+// request, page through it: keep asking for the next `page` at a fixed
+// `size` until a page comes back short (the real end of the data) or we've
+// collected enough distinct periods.
+const PAGE_SIZE = 500;
+const MAX_PAGES = 12;
 
+async function fetchPage(url: string, symbol: string, reportType: KbsReportType): Promise<any[]> {
   const res = await fetch(url, { headers: HEADERS });
   const rawBody = await res.text();
 
@@ -68,10 +65,45 @@ export async function fetchVndirectReport(
     );
   }
 
-  const rows: any[] = Array.isArray(data?.data) ? data.data : [];
+  return Array.isArray(data?.data) ? data.data : [];
+}
+
+export async function fetchVndirectReport(
+  symbol: string,
+  reportType: KbsReportType,
+  periodType: KbsPeriodType,
+  // 80 quarters / years covers 20 years of quarterly history (or 80 years
+  // annually) — VNDirect's own API doesn't have KBS's 50-row cap, so there's
+  // no reason to trim harder than "however far back the data actually goes".
+  maxPeriods = 80
+): Promise<FinancialReport> {
+  const vndReportType = REPORT_TYPE_MAP[reportType];
+  const fiscalDateType = periodType === "quarter" ? "QUARTER" : "YEAR";
+  const q = `code:${symbol}~reportType:${vndReportType}~fiscalDateType:${fiscalDateType}`;
+  const baseUrl = (page: number) =>
+    `${FINFO_BASE}/financial_statements?q=${encodeURIComponent(q)}&sort=fiscalDate:desc&size=${PAGE_SIZE}&page=${page}`;
+
+  const rows: any[] = [];
+  const periodsSeen = new Set<string>();
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const pageRows = await fetchPage(baseUrl(page), symbol, reportType);
+    if (pageRows.length === 0) break;
+    const periodsBefore = periodsSeen.size;
+    rows.push(...pageRows);
+    for (const row of pageRows) periodsSeen.add(String(row.fiscalDate ?? row.fiscalYear ?? "?"));
+    if (periodsSeen.size >= maxPeriods) break;
+    // Don't assume the server actually returned up to PAGE_SIZE when there
+    // was more data — if it enforces its own smaller per-request cap
+    // regardless of our `size`, a "short page" isn't reliable proof we hit
+    // the real end. Stop only once a page brings back nothing new (either
+    // truly out of data, or `page` isn't a real param and every request
+    // just repeats the same rows) — that's true either way we got here.
+    if (periodsSeen.size === periodsBefore) break;
+  }
+
   if (rows.length === 0) {
     throw Object.assign(
-      new Error(`VNDirect trả về rỗng cho ${symbol} (${reportType}). Raw: ${JSON.stringify(data).slice(0, 400)}`),
+      new Error(`VNDirect trả về rỗng cho ${symbol} (${reportType}).`),
       { status: 502 }
     );
   }
