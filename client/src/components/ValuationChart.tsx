@@ -56,6 +56,12 @@ export default function ValuationChart({ symbol, periodType }: { symbol: string;
       )}
 
       {!loading && chart && <PeLine {...chart} />}
+
+      {!loading && data?.source && chart && (
+        <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
+          Nguồn: {data.source === "vndirect" ? "VNDirect" : "KBS"} · {chart.labels.length} kỳ
+        </p>
+      )}
     </div>
   );
 }

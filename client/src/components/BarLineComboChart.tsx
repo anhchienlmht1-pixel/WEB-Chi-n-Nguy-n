@@ -18,6 +18,7 @@ export default function BarLineComboChart({
   unit,
   growthOffset = 1,
   growthLabel = "Tăng trưởng (%)",
+  sourceLabel,
 }: {
   title: string;
   periods: string[];
@@ -25,6 +26,7 @@ export default function BarLineComboChart({
   unit: string;
   growthOffset?: number;
   growthLabel?: string;
+  sourceLabel?: string;
 }) {
   const growth = periodGrowth(values, growthOffset);
   const definedValues = values.filter((v): v is number => v != null && Number.isFinite(v));
@@ -150,6 +152,7 @@ export default function BarLineComboChart({
           )}
         </svg>
       </div>
+      {sourceLabel && <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">{sourceLabel}</p>}
     </div>
   );
 }

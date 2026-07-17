@@ -45,6 +45,7 @@ export default function AssetsBarLineChart({
       unit={chart.unit}
       growthOffset={growthOffset(periodType, growthMode)}
       growthLabel={growthMode === "yoy" ? "Tăng trưởng YoY (%)" : "Tăng trưởng QoQ (%)"}
+      sourceLabel={data?.source && `Nguồn: ${data.source === "vndirect" ? "VNDirect" : "KBS"} · ${chart.periods.length} kỳ`}
     />
   );
 }
