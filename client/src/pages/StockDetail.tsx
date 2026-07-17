@@ -7,6 +7,8 @@ import WatchButton from "../components/WatchButton";
 import FinancialRatios from "../components/FinancialRatios";
 import SeasonalityHeatmap from "../components/SeasonalityHeatmap";
 import NewsFeed from "../components/NewsFeed";
+import ProfitVsPriceChart from "../components/ProfitVsPriceChart";
+import ValuationChart from "../components/ValuationChart";
 
 export default function StockDetail() {
   const { symbol = "" } = useParams();
@@ -70,6 +72,13 @@ export default function StockDetail() {
           <p className="mt-6 text-xs text-slate-400 dark:text-slate-600">
             Cập nhật lúc {new Date(quote.updatedAt).toLocaleTimeString("vi-VN")}
           </p>
+
+          {!isIndexOrFutures && (
+            <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-2">
+              <ProfitVsPriceChart symbol={quote.symbol} />
+              <ValuationChart symbol={quote.symbol} />
+            </div>
+          )}
 
           <div className="mt-6">
             <SeasonalityHeatmap symbol={quote.symbol} />

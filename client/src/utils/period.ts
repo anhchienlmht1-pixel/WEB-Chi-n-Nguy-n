@@ -20,3 +20,27 @@ export function sortPeriodIndices(periods: string[], direction: "asc" | "desc" =
   if (direction === "desc") indices.reverse();
   return indices;
 }
+
+const QUARTER_END_MONTH_DAY: Record<string, [number, number]> = {
+  "1": [2, 31],
+  "2": [5, 30],
+  "3": [8, 30],
+  "4": [11, 31],
+};
+
+/**
+ * Approximate reporting-period end date for a KBS period label, so a
+ * quarterly/yearly financial figure can be lined up against a daily price
+ * series. "Q1 2024" -> Mar 31 2024, a bare "2024" -> Dec 31 2024. Returns
+ * null for anything that doesn't parse as a period label.
+ */
+export function periodEndDate(label: string): Date | null {
+  const q = label.match(/^Q(\d)\s+(\d{4})$/i);
+  if (q) {
+    const [month, day] = QUARTER_END_MONTH_DAY[q[1]] ?? [11, 31];
+    return new Date(Date.UTC(Number(q[2]), month, day));
+  }
+  const y = label.match(/^(\d{4})$/);
+  if (y) return new Date(Date.UTC(Number(y[1]), 11, 31));
+  return null;
+}
