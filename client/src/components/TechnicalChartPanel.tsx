@@ -3,6 +3,7 @@ import { fetchHistory } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { aggregatePoints, type ChartResolution } from "../utils/aggregate";
 import { findIndicatorDef, defaultParams } from "../utils/indicatorCatalog";
+import { computeTradingSignals } from "../utils/signals";
 import PriceChart, { type ActiveIndicator, type ChartType, type DrawingTool, type PriceChartHandle } from "./PriceChart";
 import ChartToolbar from "./ChartToolbar";
 import DrawingToolbar from "./DrawingToolbar";
@@ -30,6 +31,7 @@ export default function TechnicalChartPanel({ symbol, height = 420 }: { symbol: 
   const [editingInstanceId, setEditingInstanceId] = useState<string | null>(null);
   const [chartType, setChartType] = useState<ChartType>("candlestick");
   const [drawingTool, setDrawingTool] = useState<DrawingTool>(null);
+  const [showSignals, setShowSignals] = useState(false);
   const chartRef = useRef<PriceChartHandle>(null);
   const chartWrapperRef = useRef<HTMLDivElement>(null);
 
@@ -76,6 +78,12 @@ export default function TechnicalChartPanel({ symbol, height = 420 }: { symbol: 
     () => (historyState.data ? aggregatePoints(historyState.data.points, resolution) : []),
     [historyState.data, resolution]
   );
+  const signalResult = useMemo(
+    () => (showSignals ? computeTradingSignals(chartPoints) : { all: [], transitions: [] }),
+    [chartPoints, showSignals]
+  );
+  const buyCount = useMemo(() => signalResult.all.filter((s) => s.type === "buy").length, [signalResult]);
+  const sellCount = useMemo(() => signalResult.all.filter((s) => s.type === "sell").length, [signalResult]);
 
   return (
     <>
@@ -103,9 +111,21 @@ export default function TechnicalChartPanel({ symbol, height = 420 }: { symbol: 
           chartType={chartType}
           onChartTypeChange={setChartType}
           onOpenIndicators={() => setPickerOpen(true)}
+          showSignals={showSignals}
+          onToggleSignals={() => setShowSignals((v) => !v)}
           onScreenshot={screenshot}
           onFullscreen={toggleFullscreen}
         />
+
+        {showSignals && signalResult.all.length > 0 && (
+          <div className="flex items-center gap-3 border-b border-slate-200 px-2 py-1.5 text-xs font-medium dark:border-slate-800">
+            <span className="text-emerald-600 dark:text-emerald-400">▲ Mua: {buyCount}</span>
+            <span className="text-red-500 dark:text-red-400">▼ Bán: {sellCount}</span>
+            <span className="text-slate-400 dark:text-slate-500">
+              (SMA20/SMA50, ADX(14) &gt; 25, Supertrend(10,3))
+            </span>
+          </div>
+        )}
 
         {indicators.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-200 px-2 py-1.5 dark:border-slate-800">
@@ -153,6 +173,7 @@ export default function TechnicalChartPanel({ symbol, height = 420 }: { symbol: 
                 ref={chartRef}
                 points={chartPoints}
                 activeIndicators={indicators}
+                signals={signalResult.transitions}
                 chartType={chartType}
                 drawingTool={drawingTool}
                 onDrawingComplete={() => setDrawingTool(null)}

@@ -56,20 +56,20 @@ export interface IndicatorDef {
   compute(points: HistoryPoint[], params: Record<string, number>): Record<string, IndicatorLinePoint[]>;
 }
 
-function toSeconds(p: HistoryPoint): number {
+export function toSeconds(p: HistoryPoint): number {
   return Math.floor(new Date(p.time).getTime() / 1000);
 }
 
 /** technicalindicators drops leading warm-up bars and returns a shorter
  * array with no time info — this re-attaches each output value to the
  * corresponding (tail-aligned) source bar's time. */
-function alignTail(points: HistoryPoint[], values: number[]): IndicatorLinePoint[] {
+export function alignTail(points: HistoryPoint[], values: number[]): IndicatorLinePoint[] {
   const offset = points.length - values.length;
   if (offset < 0) return [];
   return values.map((value, i) => ({ time: toSeconds(points[offset + i]), value }));
 }
 
-function alignTailField<T>(points: HistoryPoint[], rows: T[], field: keyof T): IndicatorLinePoint[] {
+export function alignTailField<T>(points: HistoryPoint[], rows: T[], field: keyof T): IndicatorLinePoint[] {
   const offset = points.length - rows.length;
   if (offset < 0) return [];
   const out: IndicatorLinePoint[] = [];

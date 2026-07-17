@@ -22,6 +22,8 @@ export default function ChartToolbar({
   chartType,
   onChartTypeChange,
   onOpenIndicators,
+  showSignals,
+  onToggleSignals,
   onScreenshot,
   onFullscreen,
 }: {
@@ -31,6 +33,8 @@ export default function ChartToolbar({
   chartType: ChartType;
   onChartTypeChange: (t: ChartType) => void;
   onOpenIndicators: () => void;
+  showSignals: boolean;
+  onToggleSignals: () => void;
   onScreenshot: () => void;
   onFullscreen: () => void;
 }) {
@@ -107,6 +111,18 @@ export default function ChartToolbar({
             </>
           )}
         </div>
+
+        <button
+          type="button"
+          onClick={onToggleSignals}
+          className={`rounded-md px-2 py-1 text-xs font-medium transition-colors ${
+            showSignals
+              ? "bg-emerald-500 text-slate-950"
+              : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          }`}
+        >
+          Tín hiệu Mua/Bán
+        </button>
       </div>
 
       <div className="flex items-center gap-1">

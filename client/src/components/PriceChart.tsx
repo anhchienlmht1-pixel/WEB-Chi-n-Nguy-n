@@ -7,16 +7,19 @@ import {
   HistogramSeries,
   ColorType,
   createChart,
+  createSeriesMarkers,
   type IChartApi,
   type ISeriesApi,
   type UTCTimestamp,
   type Time,
+  type SeriesMarker,
 } from "lightweight-charts";
 import type { HistoryPoint } from "../types";
 import { useTheme } from "../hooks/useTheme";
 import { findIndicatorDef, type IndicatorLinePoint } from "../utils/indicatorCatalog";
 import { formatVolume } from "../utils/format";
 import { TrendLinePrimitive, RectanglePrimitive, TextPrimitive, type DrawPoint } from "../utils/drawingPrimitives";
+import type { TradingSignal } from "../utils/signals";
 
 export interface ActiveIndicator {
   instanceId: string;
@@ -35,6 +38,7 @@ export interface PriceChartHandle {
 interface Props {
   points: HistoryPoint[];
   activeIndicators: ActiveIndicator[];
+  signals?: TradingSignal[];
   chartType: ChartType;
   drawingTool: DrawingTool;
   onDrawingComplete: () => void;
@@ -57,7 +61,7 @@ type Drawing =
   | { kind: "hline"; price: number; priceLine: ReturnType<MainSeries["createPriceLine"]> };
 
 const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
-  { points, activeIndicators, chartType, drawingTool, onDrawingComplete, height = 420 },
+  { points, activeIndicators, signals = [], chartType, drawingTool, onDrawingComplete, height = 420 },
   ref
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -92,6 +96,7 @@ const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
     () => activeIndicators.map((i) => `${i.instanceId}:${i.defId}:${JSON.stringify(i.params)}`).join("|"),
     [activeIndicators]
   );
+  const signalsKey = useMemo(() => (signals.length > 0 ? `${signals.length}:${signals[0].time}` : ""), [signals]);
 
   useEffect(() => {
     if (!containerRef.current || !legendRef.current) return;
@@ -145,6 +150,17 @@ const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
     }
     mainSeries.priceScale().applyOptions({ scaleMargins: { top: 0.05, bottom: 0.25 } });
     mainSeriesRef.current = mainSeries;
+
+    if (signals.length > 0) {
+      const markers: SeriesMarker<Time>[] = signals.map((s) => ({
+        time: s.time as Time,
+        position: s.type === "buy" ? "belowBar" : "aboveBar",
+        color: s.type === "buy" ? UP : DOWN,
+        shape: s.type === "buy" ? "arrowUp" : "arrowDown",
+        text: s.type === "buy" ? "MUA" : "BÁN",
+      }));
+      createSeriesMarkers(mainSeries, markers);
+    }
 
     // Re-attach drawings created before this remount (theme/indicator/type
     // changes tear down and recreate the whole chart) so they survive it.
@@ -371,7 +387,7 @@ const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
       mainSeriesRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [points, theme, indicatorsKey, chartType, height]);
+  }, [points, theme, indicatorsKey, signalsKey, chartType, height]);
 
   return (
     <div className="relative w-full">
