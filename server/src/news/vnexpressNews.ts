@@ -91,3 +91,17 @@ export async function fetchVnexpressNews(limit = 20): Promise<NewsItem[]> {
     { status: 502 }
   );
 }
+
+function mentionsSymbol(item: NewsItem, symbol: string): boolean {
+  const re = new RegExp(`\\b${symbol}\\b`);
+  return re.test(item.title) || re.test(item.description ?? "");
+}
+
+// VnExpress's RSS feeds are category-wide (not per-stock), so "news for a
+// symbol" is a best-effort filter over the latest pool of articles by ticker
+// mention — there's no dedicated per-symbol feed to query instead.
+export async function fetchNewsForSymbol(symbol: string, limit = 10): Promise<NewsItem[]> {
+  const upper = symbol.toUpperCase();
+  const pool = await fetchVnexpressNews(200);
+  return pool.filter((item) => mentionsSymbol(item, upper)).slice(0, limit);
+}

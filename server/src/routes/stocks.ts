@@ -4,7 +4,7 @@ import { getProvider } from "../providers/index.js";
 import { HistoryRange, TopExchange } from "../providers/types.js";
 import { topTradedOf, VALID_EXCHANGES } from "../providers/topTraded.js";
 import { fetchKbsReport, KbsPeriodType, KbsReportType } from "../providers/kbsFinancials.js";
-import { fetchVnexpressNews } from "../news/vnexpressNews.js";
+import { fetchNewsForSymbol } from "../news/vnexpressNews.js";
 
 const router = Router();
 const cache = new NodeCache({ stdTTL: 20, checkperiod: 30 });
@@ -112,11 +112,12 @@ router.get(
 );
 
 router.get(
-  "/news",
+  "/news/:symbol",
   asyncHandler(async (req, res) => {
-    const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 20));
-    const data = await cached(`news:${limit}`, 600, () => fetchVnexpressNews(limit));
-    res.json({ items: data });
+    const symbol = String(req.params.symbol).toUpperCase();
+    const limit = Math.min(30, Math.max(1, Number(req.query.limit) || 10));
+    const data = await cached(`news:${symbol}`, 600, () => fetchNewsForSymbol(symbol, limit));
+    res.json({ symbol, items: data });
   })
 );
 

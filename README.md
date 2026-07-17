@@ -78,7 +78,7 @@ npm run dev         # http://localhost:5173 (proxy /api -> :4000)
 - Heatmap lợi nhuận theo Tháng/Năm cho mỗi mã (trang chi tiết mã).
 - `/pe-eps`: scatter tương quan P/E và tăng trưởng EPS cho toàn bộ danh sách mã.
 - `/so-sanh`: so sánh % hiệu suất giữa nhiều mã trong một khoảng thời gian (biểu đồ cột).
-- Tin tức thị trường ở trang chủ, lấy từ RSS công khai của VnExpress (`server/src/news/vnexpressNews.ts`) — thử lần lượt vài feed (`kinh-doanh/chung-khoan`, `chung-khoan`, `kinh-doanh`) vì chưa xác minh được slug chính xác hiện tại do sandbox phát triển chặn mạng ra `vnexpress.net`; nếu trang chủ báo lỗi tải tin tức, thông báo lỗi sẽ liệt kê HTTP status/nội dung thô của từng feed đã thử để chẩn đoán.
+- Tin tức liên quan đến từng mã ở trang chi tiết mã (`/stock/:symbol`), lọc từ RSS công khai của VnExpress (`server/src/news/vnexpressNews.ts`) theo mã xuất hiện trong tiêu đề/mô tả — thử lần lượt vài feed (`kinh-doanh/chung-khoan`, `chung-khoan`, `kinh-doanh`) vì chưa xác minh được slug chính xác hiện tại do sandbox phát triển chặn mạng ra `vnexpress.net`; nếu báo lỗi tải tin tức, thông báo lỗi sẽ liệt kê HTTP status/nội dung thô của từng feed đã thử để chẩn đoán. RSS là feed theo chuyên mục chung (không phải theo từng mã), nên với mã ít được nhắc tới gần đây có thể không có tin nào — đó là bình thường, không phải lỗi.
 
 ## Build production
 

@@ -6,6 +6,7 @@ import TechnicalChartPanel from "../components/TechnicalChartPanel";
 import WatchButton from "../components/WatchButton";
 import FinancialRatios from "../components/FinancialRatios";
 import SeasonalityHeatmap from "../components/SeasonalityHeatmap";
+import NewsFeed from "../components/NewsFeed";
 
 export default function StockDetail() {
   const { symbol = "" } = useParams();
@@ -72,6 +73,10 @@ export default function StockDetail() {
 
           <div className="mt-6">
             <SeasonalityHeatmap symbol={quote.symbol} />
+          </div>
+
+          <div className="mt-6">
+            <NewsFeed symbol={quote.symbol} />
           </div>
 
           {/* Indices/futures aren't companies — no financial statements to show. */}

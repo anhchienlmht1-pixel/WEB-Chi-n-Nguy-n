@@ -7,7 +7,6 @@ import TopTraded from "../components/TopTraded";
 import TechnicalChartPanel from "../components/TechnicalChartPanel";
 import SymbolPicker from "../components/SymbolPicker";
 import Hero from "../components/Hero";
-import NewsFeed from "../components/NewsFeed";
 
 const DEFAULT_SYMBOL = "VCB";
 
@@ -29,10 +28,6 @@ export default function Dashboard() {
       </div>
 
       <TopTraded />
-
-      <div className="mb-6">
-        <NewsFeed />
-      </div>
 
       <div className="mb-6 flex items-baseline justify-between">
         <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
