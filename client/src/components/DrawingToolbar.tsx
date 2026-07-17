@@ -27,7 +27,7 @@ export default function DrawingToolbar({
           onClick={() => onSelect(t.id)}
           className={`flex h-8 w-8 items-center justify-center rounded text-base transition-colors ${
             tool === t.id
-              ? "bg-emerald-500 text-slate-950"
+              ? "bg-orange-500 text-slate-950"
               : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
           }`}
         >

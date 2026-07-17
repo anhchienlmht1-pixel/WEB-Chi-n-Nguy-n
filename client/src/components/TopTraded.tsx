@@ -38,7 +38,7 @@ export default function TopTraded() {
               onClick={() => setExchange(tab.key)}
               className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                 exchange === tab.key
-                  ? "bg-emerald-500 text-slate-950"
+                  ? "bg-orange-500 text-slate-950"
                   : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
               }`}
             >

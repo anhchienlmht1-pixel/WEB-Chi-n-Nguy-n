@@ -6,6 +6,7 @@ import StockTable from "../components/StockTable";
 import TopTraded from "../components/TopTraded";
 import TechnicalChartPanel from "../components/TechnicalChartPanel";
 import SymbolPicker from "../components/SymbolPicker";
+import Hero from "../components/Hero";
 
 const DEFAULT_SYMBOL = "VCB";
 
@@ -16,6 +17,8 @@ export default function Dashboard() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
+      <Hero />
+
       <div className="mb-6">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Biểu đồ kỹ thuật</h1>
