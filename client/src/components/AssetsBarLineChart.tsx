@@ -2,19 +2,11 @@ import { useMemo } from "react";
 import { fetchFinancials } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import type { FinancialPeriodType } from "../types";
-import { findTotalAssetsItem, growthOffset, type GrowthMode } from "../utils/financials";
+import { findTotalAssetsItem } from "../utils/financials";
 import { sortPeriodIndices } from "../utils/period";
 import BarLineComboChart from "./BarLineComboChart";
 
-export default function AssetsBarLineChart({
-  symbol,
-  periodType,
-  growthMode,
-}: {
-  symbol: string;
-  periodType: FinancialPeriodType;
-  growthMode: GrowthMode;
-}) {
+export default function AssetsBarLineChart({ symbol, periodType }: { symbol: string; periodType: FinancialPeriodType }) {
   const { data, error, loading } = usePolling(() => fetchFinancials(symbol, "CDKT", periodType), [symbol, periodType]);
 
   const chart = useMemo(() => {
@@ -43,8 +35,6 @@ export default function AssetsBarLineChart({
       periods={chart.periods}
       values={chart.values}
       unit={chart.unit}
-      growthOffset={growthOffset(periodType, growthMode)}
-      growthLabel={growthMode === "yoy" ? "Tăng trưởng YoY (%)" : "Tăng trưởng QoQ (%)"}
       sourceLabel={data?.source && `Nguồn: ${data.source === "vndirect" ? "VNDirect" : "KBS"} · ${chart.periods.length} kỳ`}
     />
   );
