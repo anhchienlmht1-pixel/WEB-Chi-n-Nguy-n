@@ -1,8 +1,12 @@
 // Pulls market/stock news from CafeF. Two sources, tried in order:
-//  1. CafeF's own per-symbol data page (cafef.vn/du-lieu/{exchange}/{symbol}.chn),
-//     scraped for its "Tin tức" article links — genuinely per-stock, but the
-//     page's HTML structure is unverified (this sandbox can't reach cafef.vn),
-//     so this is a best-effort heuristic scrape, not a documented API.
+//  1. CafeF's own per-symbol "Tin tức" tab page — confirmed live by a user
+//     screenshot to be cafef.vn/du-lieu/{exchange}/{symbol}-tin-tuc.chn (e.g.
+//     .../hose/hpg-tin-tuc.chn), scraped for its article links. The full
+//     .../hpg-cong-ty-co-phan-tap-doan-hoa-phat.chn slug also works as a
+//     fallback URL, but -tin-tuc is shorter and ticker-only so it's tried
+//     first. The page's exact HTML structure is still unverified (this
+//     sandbox can't reach cafef.vn), so this is a best-effort heuristic
+//     scrape, not a documented API.
 //  2. CafeF's category RSS feeds (a stable, documented format), filtered by
 //     ticker mention — used as a fallback when the page scrape finds nothing.
 import { findSeed } from "../providers/universe.js";
@@ -141,20 +145,19 @@ function looksLikeHeadline(text: string): boolean {
   return !NON_HEADLINE_LABELS.has(clean.toLowerCase());
 }
 
-// Best-effort scrape of a stock's own CafeF data page for its news links.
-// We don't know the exact HTML structure (unverified — see file header), so
-// this just grabs every link back into cafef.vn's article namespace (*.chn)
-// with headline-shaped visible text, rather than targeting a specific
-// selector that might not exist. Returns null (not []) on any failure, or if
-// nothing survives filtering, so the caller falls back to the RSS pool
-// instead of showing "no news" or (worse) unrelated site-wide headlines.
+// Best-effort scrape of one CafeF page for its news links. We don't know the
+// exact HTML structure (unverified — see file header), so this just grabs
+// every link back into cafef.vn's article namespace (*.chn) with
+// headline-shaped visible text, rather than targeting a specific selector
+// that might not exist. Returns null (not []) if the page 404s, or nothing
+// survives filtering, so the caller can try the next candidate URL / the RSS
+// pool instead of showing "no news" or (worse) unrelated site-wide headlines.
 //
 // The data page also carries CafeF's site-wide "mới nhất" ticker, which is
 // unrelated to this specific stock but matches the same headline shape —
 // so scraped candidates are additionally required to mention the ticker
 // itself, same as the RSS fallback below.
-async function fetchCafefSymbolPage(symbol: string, exchange: string, limit: number): Promise<NewsItem[] | null> {
-  const url = `https://cafef.vn/du-lieu/${exchange.toLowerCase()}/${symbol.toLowerCase()}.chn`;
+async function scrapeCafefPage(url: string, symbol: string, limit: number): Promise<NewsItem[] | null> {
   try {
     const res = await fetch(url, { headers: HEADERS, redirect: "follow" });
     if (!res.ok) return null;
@@ -178,18 +181,30 @@ async function fetchCafefSymbolPage(symbol: string, exchange: string, limit: num
   }
 }
 
+async function fetchCafefSymbolPage(
+  symbol: string,
+  exchange: string,
+  limit: number
+): Promise<{ items: NewsItem[]; url: string } | null> {
+  const base = `https://cafef.vn/du-lieu/${exchange.toLowerCase()}/${symbol.toLowerCase()}`;
+  // -tin-tuc.chn confirmed live (user screenshot); plain .chn kept as a
+  // second guess in case a symbol doesn't resolve the short form.
+  const candidates = [`${base}-tin-tuc.chn`, `${base}.chn`];
+  for (const url of candidates) {
+    const items = await scrapeCafefPage(url, symbol, limit);
+    if (items) return { items, url };
+  }
+  return null;
+}
+
 export async function fetchNewsForSymbol(symbol: string, limit = 10): Promise<SymbolNewsResult> {
   const upper = symbol.toUpperCase();
   const seed = findSeed(upper);
 
   if (seed) {
-    const pageItems = await fetchCafefSymbolPage(upper, seed.exchange, limit);
-    if (pageItems) {
-      return {
-        items: pageItems,
-        poolSize: pageItems.length,
-        usedFeed: `https://cafef.vn/du-lieu/${seed.exchange.toLowerCase()}/${upper.toLowerCase()}.chn`,
-      };
+    const page = await fetchCafefSymbolPage(upper, seed.exchange, limit);
+    if (page) {
+      return { items: page.items, poolSize: page.items.length, usedFeed: page.url };
     }
   }
 

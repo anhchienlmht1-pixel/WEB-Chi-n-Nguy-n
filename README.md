@@ -79,7 +79,7 @@ npm run dev         # http://localhost:5173 (proxy /api -> :4000)
 - `/pe-eps`: scatter tương quan P/E và tăng trưởng EPS cho toàn bộ danh sách mã.
 - `/so-sanh`: so sánh % hiệu suất giữa nhiều mã trong một khoảng thời gian (biểu đồ cột).
 - Tin tức liên quan đến từng mã ở trang chi tiết mã (`/stock/:symbol`), từ CafeF (`server/src/news/cafefNews.ts`), 2 nguồn theo thứ tự ưu tiên:
-  1. Trang dữ liệu riêng của mã đó trên CafeF (`cafef.vn/du-lieu/{sàn}/{mã}.chn`) — cào các link bài viết trên trang, chỉ giữ lại link có nhắc đến mã (loại bỏ tin "Mới nhất" chung của toàn trang). Cấu trúc HTML thật của trang này **chưa xác minh được** (sandbox phát triển chặn mạng ra `cafef.vn`) nên đây là suy đoán có kiểm tra chéo bằng bộ lọc, không phải API chính thức.
+  1. Tab "Tin tức" trên trang dữ liệu riêng của mã đó trên CafeF — `cafef.vn/du-lieu/{sàn}/{mã}-tin-tuc.chn` (đã xác nhận đúng qua ảnh chụp URL thật của người dùng, ví dụ `hose/hpg-tin-tuc.chn`), thử thêm `{mã}.chn` nếu dạng trên không có. Cào các link bài viết trên trang, chỉ giữ lại link có nhắc đến mã (loại bỏ tin "Mới nhất" chung toàn trang không liên quan mã đang xem). Cấu trúc HTML chi tiết của trang này vẫn **chưa xác minh được đầy đủ** (sandbox phát triển chặn mạng ra `cafef.vn`) nên phần cào dữ liệu là suy đoán có kiểm tra chéo bằng bộ lọc, không phải API chính thức.
   2. Nếu cách trên không ra kết quả: lọc theo mã trong RSS công khai của CafeF (thử lần lượt `thi-truong-chung-khoan`, `chung-khoan`, `tai-chinh-ngan-hang`).
 
   Nếu báo lỗi tải tin tức, thông báo sẽ liệt kê HTTP status/nội dung thô của từng nguồn đã thử. Nếu không lỗi nhưng không có tin nào, trang sẽ hiện số bài đã kiểm tra + nguồn đã dùng để dễ chẩn đoán xem là "thật sự không có tin" hay "đoán sai cấu trúc".
