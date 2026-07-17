@@ -7,8 +7,7 @@ import WatchButton from "../components/WatchButton";
 import FinancialRatios from "../components/FinancialRatios";
 import SeasonalityHeatmap from "../components/SeasonalityHeatmap";
 import NewsFeed from "../components/NewsFeed";
-import ProfitVsPriceChart from "../components/ProfitVsPriceChart";
-import ValuationChart from "../components/ValuationChart";
+import StockDashboard from "../components/StockDashboard";
 
 export default function StockDetail() {
   const { symbol = "" } = useParams();
@@ -74,9 +73,8 @@ export default function StockDetail() {
           </p>
 
           {!isIndexOrFutures && (
-            <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-2">
-              <ProfitVsPriceChart symbol={quote.symbol} />
-              <ValuationChart symbol={quote.symbol} />
+            <div className="mt-6">
+              <StockDashboard symbol={quote.symbol} />
             </div>
           )}
 

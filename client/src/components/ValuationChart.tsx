@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { fetchFinancials } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import type { FinancialPeriodType } from "../types";
@@ -12,9 +12,7 @@ const PAD = { top: 16, right: 16, bottom: 28, left: 44 };
 const PE_COLOR = "#f59e0b";
 const AVG_COLOR = "#ef4444";
 
-export default function ValuationChart({ symbol }: { symbol: string }) {
-  const [periodType, setPeriodType] = useState<FinancialPeriodType>("quarter");
-
+export default function ValuationChart({ symbol, periodType }: { symbol: string; periodType: FinancialPeriodType }) {
   const { data, error, loading } = usePolling(
     () => fetchFinancials(symbol, "CSTC", periodType),
     [symbol, periodType]
@@ -40,31 +38,13 @@ export default function ValuationChart({ symbol }: { symbol: string }) {
 
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-baseline gap-2">
-          <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Định giá P/E theo thời gian</h4>
-          {chart && (
-            <span className="text-sm font-bold tabular-nums" style={{ color: PE_COLOR }}>
-              {chart.latest.toFixed(2)}
-            </span>
-          )}
-        </div>
-        <div className="flex gap-1 rounded-lg border border-slate-200 p-1 text-xs font-medium dark:border-slate-800">
-          {(["quarter", "year"] as FinancialPeriodType[]).map((pt) => (
-            <button
-              key={pt}
-              type="button"
-              onClick={() => setPeriodType(pt)}
-              className={`rounded-md px-2.5 py-1 transition-colors ${
-                periodType === pt
-                  ? "bg-emerald-500 text-slate-950"
-                  : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
-              }`}
-            >
-              {pt === "quarter" ? "Quý" : "Năm"}
-            </button>
-          ))}
-        </div>
+      <div className="mb-3 flex items-baseline gap-2">
+        <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Định giá P/E theo thời gian</h4>
+        {chart && (
+          <span className="text-sm font-bold tabular-nums" style={{ color: PE_COLOR }}>
+            {chart.latest.toFixed(2)}
+          </span>
+        )}
       </div>
 
       {loading && <div className="h-[200px] animate-pulse rounded bg-slate-100 dark:bg-slate-800" />}
