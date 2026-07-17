@@ -60,3 +60,11 @@ export interface FinancialReport {
 
 export type FinancialReportType = "KQKD" | "CDKT" | "LCTT" | "CSTC";
 export type FinancialPeriodType = "year" | "quarter";
+
+export interface NewsItem {
+  title: string;
+  link: string;
+  pubDate: string;
+  description?: string;
+  source: string;
+}

@@ -75,6 +75,10 @@ npm run dev         # http://localhost:5173 (proxy /api -> :4000)
 - Bấm vào mã → trang chi tiết với biểu đồ giá (dữ liệu vnstock/TCBS, chọn khoảng 1W→5Y) + các chỉ số mở/cao/thấp/đóng cửa/khối lượng/vốn hóa.
 - Chuyển giao diện **sáng/tối** bằng nút ☀️/🌙 trên thanh menu (lưu lựa chọn vào `localStorage`, biểu đồ đổi theme theo).
 - Danh sách theo dõi (watchlist) lưu trong `localStorage`, thêm/bớt bằng nút ★ ở bất kỳ đâu.
+- Heatmap lợi nhuận theo Tháng/Năm cho mỗi mã (trang chi tiết mã).
+- `/pe-eps`: scatter tương quan P/E và tăng trưởng EPS cho toàn bộ danh sách mã.
+- `/so-sanh`: so sánh % hiệu suất giữa nhiều mã trong một khoảng thời gian (biểu đồ cột).
+- Tin tức thị trường ở trang chủ, lấy từ RSS công khai của VnExpress (`server/src/news/vnexpressNews.ts`) — thử lần lượt vài feed (`kinh-doanh/chung-khoan`, `chung-khoan`, `kinh-doanh`) vì chưa xác minh được slug chính xác hiện tại do sandbox phát triển chặn mạng ra `vnexpress.net`; nếu trang chủ báo lỗi tải tin tức, thông báo lỗi sẽ liệt kê HTTP status/nội dung thô của từng feed đã thử để chẩn đoán.
 
 ## Build production
 

@@ -5,6 +5,7 @@ import type {
   FinancialReportType,
   HistoryPoint,
   HistoryRange,
+  NewsItem,
   Quote,
   SearchResult,
   TopExchange,
@@ -65,4 +66,9 @@ export async function searchSymbols(query: string): Promise<SearchResult[]> {
   if (!query.trim()) return [];
   const { data } = await api.get("/search", { params: { q: query } });
   return data.results;
+}
+
+export async function fetchNews(limit = 20): Promise<{ items: NewsItem[] }> {
+  const { data } = await api.get("/news", { params: { limit } });
+  return data;
 }

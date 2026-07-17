@@ -4,6 +4,7 @@ import { getProvider } from "../providers/index.js";
 import { HistoryRange, TopExchange } from "../providers/types.js";
 import { topTradedOf, VALID_EXCHANGES } from "../providers/topTraded.js";
 import { fetchKbsReport, KbsPeriodType, KbsReportType } from "../providers/kbsFinancials.js";
+import { fetchVnexpressNews } from "../news/vnexpressNews.js";
 
 const router = Router();
 const cache = new NodeCache({ stdTTL: 20, checkperiod: 30 });
@@ -107,6 +108,15 @@ router.get(
     }
     const data = await cached(`search:${q.toLowerCase()}`, 30, () => provider.search(q));
     res.json({ results: data });
+  })
+);
+
+router.get(
+  "/news",
+  asyncHandler(async (req, res) => {
+    const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 20));
+    const data = await cached(`news:${limit}`, 600, () => fetchVnexpressNews(limit));
+    res.json({ items: data });
   })
 );
 
