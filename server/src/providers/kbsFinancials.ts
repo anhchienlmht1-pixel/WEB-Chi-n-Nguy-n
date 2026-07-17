@@ -70,7 +70,9 @@ async function fetchKbsPage(
 ): Promise<any> {
   const url = new URL(FINANCE_INFO_URL(symbol));
   url.searchParams.set("page", String(page));
-  url.searchParams.set("pageSize", String(pageSize));
+  // KBS hard-rejects pageSize > 50 with HTTP 500, so clamp defensively
+  // regardless of what the caller asked for.
+  url.searchParams.set("pageSize", String(Math.min(50, pageSize)));
   url.searchParams.set("type", reportType);
   url.searchParams.set("unit", "1000");
   url.searchParams.set("termtype", periodType === "year" ? "1" : "2");
@@ -104,7 +106,7 @@ export async function fetchKbsReport(
   symbol: string,
   reportType: KbsReportType,
   periodType: KbsPeriodType,
-  periodCount = 60
+  periodCount = 50 // KBS rejects pageSize > 50 with HTTP 500 ("pageSize must not be greater than 50")
 ): Promise<FinancialReport> {
   const data = await fetchKbsPage(symbol, reportType, periodType, 1, periodCount);
 
