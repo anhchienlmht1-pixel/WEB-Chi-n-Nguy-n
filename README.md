@@ -10,7 +10,7 @@ Cả hai đều dùng chung code trong `server/src/providers/` — sửa 1 nơi,
 
 ## Nguồn dữ liệu (pluggable — cắm bất kỳ API nào)
 
-Ứng dụng chỉ hiển thị **cổ phiếu thị trường Việt Nam** (danh sách ~50 mã HOSE/HNX tiêu biểu trong `server/src/providers/universe.ts`). Backend được thiết kế theo interface `StockProvider` (`server/src/providers/types.ts`), chọn provider qua biến môi trường `DATA_PROVIDER`:
+Ứng dụng chỉ hiển thị **cổ phiếu thị trường Việt Nam** (danh sách ~70 mã HOSE/HNX/UPCOM tiêu biểu trong `server/src/providers/universe.ts`). Backend được thiết kế theo interface `StockProvider` (`server/src/providers/types.ts`), chọn provider qua biến môi trường `DATA_PROVIDER`:
 
 | Provider | Giá trị `DATA_PROVIDER` | Cần xác thực | Ghi chú |
 |---|---|---|---|

@@ -82,6 +82,18 @@ export const STOCK_UNIVERSE: StockSeed[] = [
   { symbol: "BVH", name: "Tập đoàn Bảo Việt", exchange: "HOSE", currency: "VND", basePrice: 42600 },
   { symbol: "GEX", name: "Gelex Group", exchange: "HOSE", currency: "VND", basePrice: 18900 },
 
+  // Sàn HNX (PVS ở trên cũng niêm yết HNX — nhóm này bổ sung để "Top 10 HNX"
+  // có đủ mã thay vì gần như trống)
+  { symbol: "SHS", name: "Chứng khoán Sài Gòn - Hà Nội", exchange: "HNX", currency: "VND", basePrice: 20000 },
+  { symbol: "MBS", name: "Chứng khoán MB", exchange: "HNX", currency: "VND", basePrice: 28000 },
+  { symbol: "CEO", name: "Tập đoàn C.E.O", exchange: "HNX", currency: "VND", basePrice: 22000 },
+  { symbol: "PVI", name: "Bảo hiểm PVI", exchange: "HNX", currency: "VND", basePrice: 48000 },
+  { symbol: "IDC", name: "Tổng Công ty IDICO", exchange: "HNX", currency: "VND", basePrice: 58000 },
+  { symbol: "TNG", name: "TNG Investment", exchange: "HNX", currency: "VND", basePrice: 24000 },
+  { symbol: "VCS", name: "Vicostone", exchange: "HNX", currency: "VND", basePrice: 68000 },
+  { symbol: "NTP", name: "Nhựa Tiền Phong", exchange: "HNX", currency: "VND", basePrice: 55000 },
+  { symbol: "HUT", name: "Tasco", exchange: "HNX", currency: "VND", basePrice: 12000 },
+
   // UPCOM
   { symbol: "ACV", name: "Tổng Công ty Cảng hàng không Việt Nam", exchange: "UPCOM", currency: "VND", basePrice: 118000 },
   { symbol: "VGI", name: "Viettel Global", exchange: "UPCOM", currency: "VND", basePrice: 68500 },
