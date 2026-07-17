@@ -16,7 +16,7 @@ export default function Dashboard() {
   const [chartSymbol, setChartSymbol] = useState(watchlist[0] ?? DEFAULT_SYMBOL);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
+    <div className="mx-auto max-w-[1200px] px-4 py-6">
       <Hero />
 
       <div className="mb-6">
@@ -29,7 +29,7 @@ export default function Dashboard() {
 
       <TopTraded />
 
-      <div className="mb-6 flex items-baseline justify-between">
+      <div className="mb-6 flex flex-wrap items-baseline justify-between gap-2">
         <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
           Tổng quan thị trường
         </h1>

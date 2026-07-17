@@ -10,13 +10,30 @@ html.dark {
   color-scheme: dark;
 }
 
+/* Responsive/mobile baseline: block accidental page-level horizontal
+   scrollbars (nested tables/charts still scroll via their own
+   overflow-x-auto containers), and make touch targets feel snappier. */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  touch-action: manipulation;
 }
 
 #root {
   min-height: 100svh;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
 }
 
 .up { color: #16a34a; }
