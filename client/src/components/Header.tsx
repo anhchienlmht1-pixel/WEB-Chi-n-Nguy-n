@@ -38,6 +38,9 @@ export default function Header() {
           <NavLink to="/so-sanh" className={navLinkClass}>
             So sánh
           </NavLink>
+          <NavLink to="/vi-mo" className={navLinkClass}>
+            Vĩ mô
+          </NavLink>
         </nav>
 
         <div className="ml-auto flex items-center gap-3">

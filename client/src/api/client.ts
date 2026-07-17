@@ -5,6 +5,7 @@ import type {
   FinancialReportType,
   HistoryPoint,
   HistoryRange,
+  MacroIndicator,
   NewsItem,
   Quote,
   SearchResult,
@@ -73,5 +74,10 @@ export async function fetchNewsForSymbol(
   limit = 10
 ): Promise<{ symbol: string; items: NewsItem[]; poolSize: number; usedFeed: string }> {
   const { data } = await api.get(`/news/${encodeURIComponent(symbol)}`, { params: { limit } });
+  return data;
+}
+
+export async function fetchMacroIndicators(): Promise<{ indicators: MacroIndicator[] }> {
+  const { data } = await api.get("/macro");
   return data;
 }

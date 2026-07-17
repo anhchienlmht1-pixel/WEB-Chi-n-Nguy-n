@@ -5,6 +5,7 @@ import StockDetail from './pages/StockDetail'
 import Watchlist from './pages/Watchlist'
 import PeEpsScreener from './pages/PeEpsScreener'
 import PerformanceCompare from './pages/PerformanceCompare'
+import Macro from './pages/Macro'
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/watchlist" element={<Watchlist />} />
         <Route path="/pe-eps" element={<PeEpsScreener />} />
         <Route path="/so-sanh" element={<PerformanceCompare />} />
+        <Route path="/vi-mo" element={<Macro />} />
         <Route path="*" element={<Dashboard />} />
       </Routes>
     </div>

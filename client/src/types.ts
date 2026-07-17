@@ -68,3 +68,17 @@ export interface NewsItem {
   description?: string;
   source: string;
 }
+
+export interface MacroPoint {
+  year: number;
+  value: number;
+}
+
+export interface MacroIndicator {
+  code: string;
+  name: string;
+  unit: string;
+  latestYear: number;
+  latestValue: number;
+  series: MacroPoint[];
+}
