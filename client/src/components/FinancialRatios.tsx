@@ -23,12 +23,13 @@ export default function FinancialRatios({ symbol }: { symbol: string }) {
     [symbol, reportType, periodType]
   );
 
-  // Show newest period first — sorted by the actual year/quarter parsed out
-  // of each label rather than assumed array order (KBS's raw order isn't
-  // reliably oldest-first or newest-first).
+  // Oldest column first, newest last — same left-to-right timeline
+  // convention as the charts above, sorted by the actual year/quarter
+  // parsed out of each label rather than assumed array order (KBS's raw
+  // order isn't reliably oldest-first or newest-first).
   const displayPeriods = useMemo(() => {
     if (!data) return [];
-    return sortPeriodIndices(data.periods, "desc").map((index) => ({ label: data.periods[index], index }));
+    return sortPeriodIndices(data.periods, "asc").map((index) => ({ label: data.periods[index], index }));
   }, [data]);
 
   return (
