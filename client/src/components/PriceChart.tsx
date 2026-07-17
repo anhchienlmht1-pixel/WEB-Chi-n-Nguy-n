@@ -38,6 +38,7 @@ interface Props {
   chartType: ChartType;
   drawingTool: DrawingTool;
   onDrawingComplete: () => void;
+  height?: number;
 }
 
 const UP = "#22c55e";
@@ -56,7 +57,7 @@ type Drawing =
   | { kind: "hline"; price: number; priceLine: ReturnType<MainSeries["createPriceLine"]> };
 
 const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
-  { points, activeIndicators, chartType, drawingTool, onDrawingComplete },
+  { points, activeIndicators, chartType, drawingTool, onDrawingComplete, height = 420 },
   ref
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -107,7 +108,7 @@ const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
       },
       rightPriceScale: { borderColor: dark ? "#1e293b" : "#e2e8f0" },
       timeScale: { borderColor: dark ? "#1e293b" : "#e2e8f0" },
-      height: 420,
+      height,
       width: containerRef.current.clientWidth,
     });
     chartRef.current = chart;
@@ -370,7 +371,7 @@ const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
       mainSeriesRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [points, theme, indicatorsKey, chartType]);
+  }, [points, theme, indicatorsKey, chartType, height]);
 
   return (
     <div className="relative w-full">

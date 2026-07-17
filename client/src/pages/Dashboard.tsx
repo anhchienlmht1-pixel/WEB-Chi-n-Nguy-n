@@ -1,13 +1,29 @@
+import { useState } from "react";
 import { fetchMarketOverview } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
+import { useWatchlist } from "../hooks/useWatchlist";
 import StockTable from "../components/StockTable";
 import TopTraded from "../components/TopTraded";
+import TechnicalChartPanel from "../components/TechnicalChartPanel";
+import SymbolPicker from "../components/SymbolPicker";
+
+const DEFAULT_SYMBOL = "VCB";
 
 export default function Dashboard() {
   const { data, error, loading } = usePolling(fetchMarketOverview, [], 30000);
+  const { symbols: watchlist } = useWatchlist();
+  const [chartSymbol, setChartSymbol] = useState(watchlist[0] ?? DEFAULT_SYMBOL);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
+      <div className="mb-6">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Biểu đồ kỹ thuật</h1>
+          <SymbolPicker value={chartSymbol} onChange={setChartSymbol} />
+        </div>
+        <TechnicalChartPanel symbol={chartSymbol} height={600} />
+      </div>
+
       <TopTraded />
 
       <div className="mb-6 flex items-baseline justify-between">
