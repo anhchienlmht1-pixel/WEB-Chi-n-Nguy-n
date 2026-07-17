@@ -38,30 +38,41 @@ function dedupePeriods(report: FinancialReport): FinancialReport {
   return { ...report, periods, items };
 }
 
-// VNDirect is tried first — its public finfo API is understood to carry
-// deeper historical coverage than KBS's retail-app endpoint. KBS (already
-// confirmed working, including two bugs found and fixed from live reports)
-// is the fallback whenever VNDirect fails for any reason, so a wrong guess
-// in the new VNDirect integration degrades to "shorter history" rather than
-// "no data at all".
+function errorMessage(reason: unknown): string {
+  return reason instanceof Error ? reason.message : String(reason);
+}
+
+// VNDirect was assumed to have deeper historical coverage than KBS's
+// retail-app endpoint, so it used to be tried first with KBS only as a
+// fallback on outright failure. A live report broke that assumption: VNDirect
+// returned a *valid* response (didn't throw) but stuck at 4 quarters no
+// matter how much pagination asked for more, while a company's real
+// reporting history obviously goes back further — "didn't throw" isn't the
+// same as "actually has enough history". Both sources are queried and
+// whichever has more periods for this exact call wins, instead of trusting
+// whichever happened to answer first without erroring.
 export async function fetchFinancialReport(
   symbol: string,
   reportType: KbsReportType,
   periodType: KbsPeriodType
 ): Promise<FinancialReportWithSource> {
-  try {
-    const report = dedupePeriods(await fetchVndirectReport(symbol, reportType, periodType));
-    return { ...report, source: "vndirect" };
-  } catch (vndErr) {
-    try {
-      const report = dedupePeriods(await fetchKbsReport(symbol, reportType, periodType));
-      return { ...report, source: "kbs" };
-    } catch (kbsErr) {
-      const vndMsg = vndErr instanceof Error ? vndErr.message : String(vndErr);
-      const kbsMsg = kbsErr instanceof Error ? kbsErr.message : String(kbsErr);
-      throw Object.assign(new Error(`Cả 2 nguồn báo cáo tài chính đều lỗi. VNDirect: ${vndMsg} | KBS: ${kbsMsg}`), {
-        status: 502,
-      });
-    }
-  }
+  const [vndResult, kbsResult] = await Promise.allSettled([
+    fetchVndirectReport(symbol, reportType, periodType),
+    fetchKbsReport(symbol, reportType, periodType),
+  ]);
+
+  const vnd: FinancialReportWithSource | null =
+    vndResult.status === "fulfilled" ? { ...dedupePeriods(vndResult.value), source: "vndirect" } : null;
+  const kbs: FinancialReportWithSource | null =
+    kbsResult.status === "fulfilled" ? { ...dedupePeriods(kbsResult.value), source: "kbs" } : null;
+
+  if (vnd && kbs) return vnd.periods.length >= kbs.periods.length ? vnd : kbs;
+  if (vnd) return vnd;
+  if (kbs) return kbs;
+
+  const vndMsg = vndResult.status === "rejected" ? errorMessage(vndResult.reason) : "?";
+  const kbsMsg = kbsResult.status === "rejected" ? errorMessage(kbsResult.reason) : "?";
+  throw Object.assign(new Error(`Cả 2 nguồn báo cáo tài chính đều lỗi. VNDirect: ${vndMsg} | KBS: ${kbsMsg}`), {
+    status: 502,
+  });
 }
