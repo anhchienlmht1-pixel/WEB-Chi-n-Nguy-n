@@ -8,6 +8,8 @@ import { fetcher } from "@/lib/fetcher";
 import { FinancialReport } from "@/lib/types";
 import { formatFinancialValue } from "@/lib/format";
 import { KbsPeriodType, KbsReportType } from "@/lib/kbs";
+import { ProfitChart } from "./ProfitChart";
+import { RatioTrendChart } from "./RatioTrendChart";
 
 const REPORT_TABS: { value: KbsReportType; label: string }[] = [
   { value: "CSTC", label: "Chỉ số tài chính" },
@@ -89,6 +91,9 @@ export function FinancialRatios({ symbol }: { symbol: string }) {
       {!isLoading && data && data.items.length === 0 && (
         <div className="p-4 text-sm text-neutral-500 dark:text-neutral-400">Chưa có dữ liệu.</div>
       )}
+
+      {!isLoading && data && data.items.length > 0 && reportType === "KQKD" && <ProfitChart report={data} />}
+      {!isLoading && data && data.items.length > 0 && reportType === "CSTC" && <RatioTrendChart report={data} />}
 
       {!isLoading && data && data.items.length > 0 && (
         <div className="overflow-x-auto">
