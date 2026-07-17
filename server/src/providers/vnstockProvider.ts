@@ -8,6 +8,7 @@ import {
   TopTradedItem,
 } from "./types.js";
 import { STOCK_UNIVERSE, findSeed } from "./universe.js";
+import { INDEX_UNIVERSE, findIndexSeed } from "./indices.js";
 
 // Same data source as the vnstock library (vnstocks.com): VCI / Vietcap
 // Securities' trading API. Endpoints, payloads and response shapes below were
@@ -110,11 +111,12 @@ function quoteFromBoardItem(item: any): Quote | null {
   const prevClose = num(listing.refPrice) ?? price;
   const volume = num(match.accumulatedVolume) ?? 0;
   const seed = findSeed(symbol);
+  const indexSeed = findIndexSeed(symbol);
   return {
     symbol,
-    name: seed?.name ?? String(listing.organName ?? symbol),
-    exchange: seed?.exchange ?? BOARD_MAP[String(listing.board ?? "")] ?? String(listing.board ?? ""),
-    currency: "VND",
+    name: seed?.name ?? indexSeed?.name ?? String(listing.organName ?? symbol),
+    exchange: seed?.exchange ?? (indexSeed ? (indexSeed.kind === "futures" ? "Phái sinh" : "Chỉ số") : BOARD_MAP[String(listing.board ?? "")] ?? String(listing.board ?? "")),
+    currency: indexSeed ? "điểm" : "VND",
     price,
     change: price - prevClose,
     changePercent: prevClose ? ((price - prevClose) / prevClose) * 100 : 0,
@@ -284,11 +286,13 @@ export const vnstockProvider: StockProvider = {
   async search(query: string): Promise<SearchResult[]> {
     const q = query.trim().toLowerCase();
     if (!q) return [];
-    return STOCK_UNIVERSE.filter(
+    const indexMatches: SearchResult[] = INDEX_UNIVERSE.filter(
       (s) => s.symbol.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)
-    )
-      .slice(0, 10)
-      .map((s) => ({ symbol: s.symbol, name: s.name, exchange: s.exchange }));
+    ).map((s) => ({ symbol: s.symbol, name: s.name, exchange: s.kind === "futures" ? "Phái sinh" : "Chỉ số" }));
+    const stockMatches: SearchResult[] = STOCK_UNIVERSE.filter(
+      (s) => s.symbol.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)
+    ).map((s) => ({ symbol: s.symbol, name: s.name, exchange: s.exchange }));
+    return [...indexMatches, ...stockMatches].slice(0, 10);
   },
 
   async getMarketOverview(): Promise<Quote[]> {

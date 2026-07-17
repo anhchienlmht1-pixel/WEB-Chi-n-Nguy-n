@@ -8,6 +8,42 @@ import {
   TopTradedItem,
 } from "./types.js";
 import { STOCK_UNIVERSE, findSeed } from "./universe.js";
+import { INDEX_UNIVERSE, findIndexSeed } from "./indices.js";
+
+const INDEX_BASE_PRICES: Record<string, number> = {
+  VNINDEX: 1250,
+  HNXINDEX: 230,
+  UPINDEX: 95,
+  VN30: 1310,
+  VN30F1M: 1312,
+  VN30F2M: 1315,
+  VN30F1Q: 1318,
+  VN30F2Q: 1320,
+};
+
+interface Seed {
+  symbol: string;
+  name: string;
+  exchange: string;
+  currency: string;
+  basePrice: number;
+}
+
+function findAnySeed(symbol: string): Seed | undefined {
+  const stock = findSeed(symbol);
+  if (stock) return stock;
+  const index = findIndexSeed(symbol);
+  if (index) {
+    return {
+      symbol: index.symbol,
+      name: index.name,
+      exchange: index.kind === "futures" ? "Phái sinh" : "Chỉ số",
+      currency: "điểm",
+      basePrice: INDEX_BASE_PRICES[index.symbol] ?? 1000,
+    };
+  }
+  return undefined;
+}
 
 function mulberry32(seed: number) {
   return function () {
@@ -33,7 +69,7 @@ function liveDriftFactor(symbol: string): number {
 }
 
 function buildQuote(symbol: string): Quote {
-  const seed = findSeed(symbol);
+  const seed = findAnySeed(symbol);
   if (!seed) {
     throw Object.assign(new Error(`Unknown symbol: ${symbol}`), { status: 404 });
   }
@@ -82,7 +118,7 @@ const RANGE_DAYS: Record<HistoryRange, number> = {
 };
 
 function buildHistory(symbol: string, range: HistoryRange): HistoryPoint[] {
-  const seed = findSeed(symbol);
+  const seed = findAnySeed(symbol);
   if (!seed) {
     throw Object.assign(new Error(`Unknown symbol: ${symbol}`), { status: 404 });
   }
@@ -137,11 +173,13 @@ export const mockProvider: StockProvider = {
   async search(query: string): Promise<SearchResult[]> {
     const q = query.trim().toLowerCase();
     if (!q) return [];
-    return STOCK_UNIVERSE.filter(
+    const indexMatches: SearchResult[] = INDEX_UNIVERSE.filter(
       (s) => s.symbol.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)
-    )
-      .slice(0, 10)
-      .map((s) => ({ symbol: s.symbol, name: s.name, exchange: s.exchange }));
+    ).map((s) => ({ symbol: s.symbol, name: s.name, exchange: s.kind === "futures" ? "Phái sinh" : "Chỉ số" }));
+    const stockMatches: SearchResult[] = STOCK_UNIVERSE.filter(
+      (s) => s.symbol.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)
+    ).map((s) => ({ symbol: s.symbol, name: s.name, exchange: s.exchange }));
+    return [...indexMatches, ...stockMatches].slice(0, 10);
   },
 
   async getMarketOverview(): Promise<Quote[]> {

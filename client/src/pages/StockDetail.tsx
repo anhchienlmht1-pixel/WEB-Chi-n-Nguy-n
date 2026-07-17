@@ -10,6 +10,7 @@ export default function StockDetail() {
   const { symbol = "" } = useParams();
   const quoteState = usePolling(() => fetchQuote(symbol), [symbol], 30000);
   const quote = quoteState.data;
+  const isIndexOrFutures = quote?.exchange === "Chỉ số" || quote?.exchange === "Phái sinh";
 
   if (quoteState.error && !quote) {
     return (
@@ -61,16 +62,19 @@ export default function StockDetail() {
             <Stat label="Thấp nhất" value={formatPrice(quote.low, quote.currency)} />
             <Stat label="Đóng cửa trước" value={formatPrice(quote.prevClose, quote.currency)} />
             <Stat label="Khối lượng" value={formatVolume(quote.volume)} />
-            <Stat label="Vốn hóa" value={formatMarketCap(quote.marketCap, quote.currency)} />
+            {!isIndexOrFutures && <Stat label="Vốn hóa" value={formatMarketCap(quote.marketCap, quote.currency)} />}
           </div>
 
           <p className="mt-6 text-xs text-slate-400 dark:text-slate-600">
             Cập nhật lúc {new Date(quote.updatedAt).toLocaleTimeString("vi-VN")}
           </p>
 
-          <div className="mt-6">
-            <FinancialRatios symbol={quote.symbol} />
-          </div>
+          {/* Indices/futures aren't companies — no financial statements to show. */}
+          {!isIndexOrFutures && (
+            <div className="mt-6">
+              <FinancialRatios symbol={quote.symbol} />
+            </div>
+          )}
         </>
       )}
     </div>
