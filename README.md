@@ -82,6 +82,7 @@ npm run dev         # http://localhost:5173 (proxy /api -> :4000)
   2. Nếu cách trên không ra kết quả: lọc theo mã trong RSS công khai của CafeF (thử lần lượt `thi-truong-chung-khoan`, `chung-khoan`, `tai-chinh-ngan-hang`).
 - Tín hiệu Mua/Bán trên biểu đồ kỹ thuật — bật bằng nút "Tín hiệu Mua/Bán" trên thanh công cụ. Mua khi SMA20 > SMA50, ADX(14) > 25 và Supertrend(10,3) đang tăng; Bán khi SMA20 < SMA50 hoặc Supertrend đang giảm. Biểu đồ chỉ đánh dấu điểm **chuyển** tín hiệu (để không rối mắt), số lượng "Mua/Bán" hiển thị bên trên tính trên toàn bộ số phiên khớp điều kiện.
 - Biểu đồ cột Lợi nhuận sau thuế theo quý/năm ở tab "Kết quả kinh doanh" (trang chi tiết mã) — quý lãi màu xanh, quý lỗ màu đỏ, lấy từ đúng dữ liệu báo cáo KQKD đã có sẵn.
+- Biểu đồ đường Xu hướng P/E & ROE theo kỳ ở tab "Chỉ số tài chính" (trang chi tiết mã).
 
   Nếu báo lỗi tải tin tức, thông báo sẽ liệt kê HTTP status/nội dung thô của từng nguồn đã thử. Nếu không lỗi nhưng không có tin nào, trang sẽ hiện số bài đã kiểm tra + nguồn đã dùng để dễ chẩn đoán xem là "thật sự không có tin" hay "đoán sai cấu trúc".
 

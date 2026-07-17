@@ -4,6 +4,7 @@ import { usePolling } from "../hooks/usePolling";
 import type { FinancialPeriodType, FinancialReportType } from "../types";
 import { formatFinancialValue } from "../utils/format";
 import ProfitChart from "./ProfitChart";
+import RatioTrendChart from "./RatioTrendChart";
 
 const REPORT_TABS: { value: FinancialReportType; label: string }[] = [
   { value: "CSTC", label: "Chỉ số tài chính" },
@@ -83,6 +84,7 @@ export default function FinancialRatios({ symbol }: { symbol: string }) {
       )}
 
       {!loading && data && data.items.length > 0 && reportType === "KQKD" && <ProfitChart report={data} />}
+      {!loading && data && data.items.length > 0 && reportType === "CSTC" && <RatioTrendChart report={data} />}
 
       {!loading && data && data.items.length > 0 && (
         <div className="overflow-x-auto">
