@@ -3,6 +3,7 @@ import { fetchFinancials } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import type { FinancialPeriodType, FinancialReportType } from "../types";
 import { formatFinancialValue } from "../utils/format";
+import ProfitChart from "./ProfitChart";
 
 const REPORT_TABS: { value: FinancialReportType; label: string }[] = [
   { value: "CSTC", label: "Chỉ số tài chính" },
@@ -80,6 +81,8 @@ export default function FinancialRatios({ symbol }: { symbol: string }) {
       {!loading && data && data.items.length === 0 && (
         <div className="p-4 text-sm text-slate-500 dark:text-slate-400">Chưa có dữ liệu.</div>
       )}
+
+      {!loading && data && data.items.length > 0 && reportType === "KQKD" && <ProfitChart report={data} />}
 
       {!loading && data && data.items.length > 0 && (
         <div className="overflow-x-auto">
