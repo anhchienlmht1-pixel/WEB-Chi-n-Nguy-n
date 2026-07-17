@@ -46,10 +46,23 @@ async function fetchJson(url: string, init?: RequestInit, attempt = 0): Promise<
       { status: 503 }
     );
   }
+  const rawBody = await res.text();
   if (!res.ok) {
-    throw Object.assign(new Error(`Vietcap (vnstock) trả lỗi ${res.status}`), { status: 502 });
+    console.error(`[vnstock] HTTP ${res.status} for ${url}: ${rawBody.slice(0, 500)}`);
+    throw Object.assign(
+      new Error(`Vietcap (vnstock) trả lỗi ${res.status} cho ${url}. Nội dung: ${rawBody.slice(0, 300)}`),
+      { status: 502 }
+    );
   }
-  return res.json();
+  try {
+    return JSON.parse(rawBody);
+  } catch {
+    console.error(`[vnstock] non-JSON response for ${url}: ${rawBody.slice(0, 500)}`);
+    throw Object.assign(
+      new Error(`Vietcap (vnstock) trả về dữ liệu không phải JSON cho ${url}. Nội dung: ${rawBody.slice(0, 300)}`),
+      { status: 502 }
+    );
+  }
 }
 
 function num(v: unknown): number | undefined {
@@ -72,10 +85,19 @@ async function fetchPriceBoard(symbols: string[]): Promise<any[]> {
     method: "POST",
     body: JSON.stringify({ symbols: symbols.map((s) => s.toUpperCase()) }),
   });
-  if (!Array.isArray(data)) {
-    throw Object.assign(new Error("Vietcap trả về dữ liệu bảng giá không hợp lệ"), { status: 502 });
+  const list = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : null;
+  if (list === null) {
+    const preview = JSON.stringify(data).slice(0, 500);
+    console.error(`[vnstock] getList unexpected shape: ${preview}`);
+    throw Object.assign(
+      new Error(`Vietcap trả về dữ liệu bảng giá không hợp lệ (không phải mảng). Raw: ${preview}`),
+      { status: 502 }
+    );
   }
-  return data;
+  if (list.length === 0) {
+    console.error(`[vnstock] getList returned empty array for symbols: ${symbols.join(",")}`);
+  }
+  return list;
 }
 
 function quoteFromBoardItem(item: any): Quote | null {
@@ -229,7 +251,11 @@ export const vnstockProvider: StockProvider = {
     const items = await fetchPriceBoard([symbol]);
     const quote = items.length > 0 ? quoteFromBoardItem(items[0]) : null;
     if (!quote) {
-      throw Object.assign(new Error(`Không có dữ liệu cho mã: ${symbol}`), { status: 404 });
+      const preview = items.length > 0 ? JSON.stringify(items[0]).slice(0, 400) : "(mảng rỗng)";
+      throw Object.assign(
+        new Error(`Không có dữ liệu cho mã: ${symbol}. Raw item từ Vietcap: ${preview}`),
+        { status: 404 }
+      );
     }
     return quote;
   },
@@ -241,7 +267,11 @@ export const vnstockProvider: StockProvider = {
       .map((item) => quoteFromBoardItem(item))
       .filter((q): q is Quote => q !== null);
     if (quotes.length === 0) {
-      throw Object.assign(new Error("Vietcap không trả về dữ liệu cho mã nào"), { status: 502 });
+      const preview = items.length > 0 ? JSON.stringify(items[0]).slice(0, 400) : "(mảng rỗng)";
+      throw Object.assign(
+        new Error(`Vietcap không trả về dữ liệu cho mã nào (nhận ${items.length} dòng). Raw item mẫu: ${preview}`),
+        { status: 502 }
+      );
     }
     return quotes;
   },
@@ -296,6 +326,13 @@ export const vnstockProvider: StockProvider = {
       });
     }
     ranked.sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
+    if (ranked.length === 0 && items.length > 0) {
+      const preview = JSON.stringify(items[0]).slice(0, 400);
+      throw Object.assign(
+        new Error(`Vietcap trả về ${items.length} dòng nhưng không dòng nào hợp lệ. Raw item mẫu: ${preview}`),
+        { status: 502 }
+      );
+    }
     return ranked.slice(0, 10);
   },
 };
