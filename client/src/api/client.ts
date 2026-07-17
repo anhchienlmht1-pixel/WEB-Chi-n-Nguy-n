@@ -68,7 +68,10 @@ export async function searchSymbols(query: string): Promise<SearchResult[]> {
   return data.results;
 }
 
-export async function fetchNewsForSymbol(symbol: string, limit = 10): Promise<{ symbol: string; items: NewsItem[] }> {
+export async function fetchNewsForSymbol(
+  symbol: string,
+  limit = 10
+): Promise<{ symbol: string; items: NewsItem[]; poolSize: number; usedFeed: string }> {
   const { data } = await api.get(`/news/${encodeURIComponent(symbol)}`, { params: { limit } });
   return data;
 }

@@ -117,7 +117,7 @@ router.get(
     const symbol = String(req.params.symbol).toUpperCase();
     const limit = Math.min(30, Math.max(1, Number(req.query.limit) || 10));
     const data = await cached(`news:${symbol}`, 600, () => fetchNewsForSymbol(symbol, limit));
-    res.json({ symbol, items: data });
+    res.json({ symbol, ...data });
   })
 );
 

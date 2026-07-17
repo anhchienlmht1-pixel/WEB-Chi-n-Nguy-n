@@ -12,6 +12,16 @@ export interface NewsItem {
   source: string;
 }
 
+export interface SymbolNewsResult {
+  items: NewsItem[];
+  // How many articles were actually scanned, and which feed provided them —
+  // surfaced to the client so a suspiciously empty match (e.g. 0 articles
+  // scanned, or a handful from the wrong category) is distinguishable from
+  // a real "nothing mentions this ticker right now".
+  poolSize: number;
+  usedFeed: string;
+}
+
 const FEEDS: { url: string; source: string }[] = [
   { url: "https://cafef.vn/thi-truong-chung-khoan.rss", source: "CafeF - Thị trường chứng khoán" },
   { url: "https://cafef.vn/chung-khoan.rss", source: "CafeF - Chứng khoán" },
@@ -69,7 +79,7 @@ function parseRssItems(xml: string, source: string): NewsItem[] {
   return items;
 }
 
-export async function fetchCafefNews(limit = 20): Promise<NewsItem[]> {
+async function fetchCafefPool(limit: number): Promise<{ items: NewsItem[]; usedFeed: string }> {
   const attempts: string[] = [];
 
   for (const feed of FEEDS) {
@@ -81,7 +91,7 @@ export async function fetchCafefNews(limit = 20): Promise<NewsItem[]> {
         continue;
       }
       const items = parseRssItems(body, feed.source);
-      if (items.length > 0) return items.slice(0, limit);
+      if (items.length > 0) return { items: items.slice(0, limit), usedFeed: feed.url };
       attempts.push(`${feed.url} -> parsed 0 items. Raw preview: ${body.slice(0, 200)}`);
     } catch (err) {
       attempts.push(`${feed.url} -> ${err instanceof Error ? err.message : String(err)}`);
@@ -94,16 +104,21 @@ export async function fetchCafefNews(limit = 20): Promise<NewsItem[]> {
   );
 }
 
+export async function fetchCafefNews(limit = 20): Promise<NewsItem[]> {
+  return (await fetchCafefPool(limit)).items;
+}
+
 function mentionsSymbol(item: NewsItem, symbol: string): boolean {
-  const re = new RegExp(`\\b${symbol}\\b`);
+  const re = new RegExp(`\\b${symbol}\\b`, "i");
   return re.test(item.title) || re.test(item.description ?? "");
 }
 
 // CafeF's RSS feeds are category-wide (not per-stock), so "news for a
 // symbol" is a best-effort filter over the latest pool of articles by ticker
 // mention — there's no dedicated per-symbol feed to query instead.
-export async function fetchNewsForSymbol(symbol: string, limit = 10): Promise<NewsItem[]> {
+export async function fetchNewsForSymbol(symbol: string, limit = 10): Promise<SymbolNewsResult> {
   const upper = symbol.toUpperCase();
-  const pool = await fetchCafefNews(200);
-  return pool.filter((item) => mentionsSymbol(item, upper)).slice(0, limit);
+  const { items: pool, usedFeed } = await fetchCafefPool(200);
+  const items = pool.filter((item) => mentionsSymbol(item, upper)).slice(0, limit);
+  return { items, poolSize: pool.length, usedFeed };
 }

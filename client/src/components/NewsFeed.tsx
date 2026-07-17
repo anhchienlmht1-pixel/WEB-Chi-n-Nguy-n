@@ -58,6 +58,11 @@ export default function NewsFeed({ symbol }: { symbol: string }) {
       {!loading && !error && items.length === 0 && (
         <div className="p-4 text-sm text-slate-500 dark:text-slate-400">
           Không tìm thấy tin tức gần đây nhắc đến mã {symbol}.
+          {data && (
+            <span className="mt-1 block text-xs text-slate-400 dark:text-slate-600">
+              (Đã kiểm tra {data.poolSize} bài từ {data.usedFeed})
+            </span>
+          )}
         </div>
       )}
     </div>

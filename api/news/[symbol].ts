@@ -8,7 +8,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const limit = Math.min(30, Math.max(1, Number(req.query.limit) || 10));
   try {
     const data = await cached(`news:${symbol}`, 600, () => fetchNewsForSymbol(symbol, limit));
-    res.status(200).json({ symbol, items: data });
+    res.status(200).json({ symbol, ...data });
   } catch (err) {
     sendError(res, err);
   }
