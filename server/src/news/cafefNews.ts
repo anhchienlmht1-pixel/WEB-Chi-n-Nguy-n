@@ -1,13 +1,16 @@
-// Pulls market/stock news from CafeF's public RSS feeds. RSS 2.0 is a
-// stable, documented format (unlike KBS's undocumented JSON API), so this is
-// lower-risk than the price/financials providers — the only real unknown is
-// which category slug CafeF currently uses for stock-market news, since
-// this sandbox can't reach cafef.vn to verify it directly. We try a few
-// known CafeF RSS slugs in order and use whichever responds with items.
+// Pulls market/stock news from CafeF. Two sources, tried in order:
+//  1. CafeF's own per-symbol data page (cafef.vn/du-lieu/{exchange}/{symbol}.chn),
+//     scraped for its "Tin tức" article links — genuinely per-stock, but the
+//     page's HTML structure is unverified (this sandbox can't reach cafef.vn),
+//     so this is a best-effort heuristic scrape, not a documented API.
+//  2. CafeF's category RSS feeds (a stable, documented format), filtered by
+//     ticker mention — used as a fallback when the page scrape finds nothing.
+import { findSeed } from "../providers/universe.js";
+
 export interface NewsItem {
   title: string;
   link: string;
-  pubDate: string;
+  pubDate?: string;
   description?: string;
   source: string;
 }
@@ -113,11 +116,85 @@ function mentionsSymbol(item: NewsItem, symbol: string): boolean {
   return re.test(item.title) || re.test(item.description ?? "");
 }
 
-// CafeF's RSS feeds are category-wide (not per-stock), so "news for a
-// symbol" is a best-effort filter over the latest pool of articles by ticker
-// mention — there's no dedicated per-symbol feed to query instead.
+// Labels/buttons that show up as plain <a> links on CafeF's data pages but
+// obviously aren't news headlines — filtered out of the scrape below.
+const NON_HEADLINE_LABELS = new Set([
+  "tổng quan",
+  "thông tin cơ bản",
+  "ban lãnh đạo & sở hữu",
+  "tài chính",
+  "tin tức",
+  "tài liệu",
+  "chọn mã ck cần theo dõi",
+  "đọc thêm",
+  "báo lỗi",
+  "xem đồ thị kỹ thuật",
+  "lịch sử gd",
+  "tk đặt lệnh",
+  "ndttnn",
+]);
+
+function looksLikeHeadline(text: string): boolean {
+  const clean = text.trim();
+  if (clean.length < 20 || clean.length > 220) return false;
+  if (!clean.includes(" ")) return false;
+  return !NON_HEADLINE_LABELS.has(clean.toLowerCase());
+}
+
+// Best-effort scrape of a stock's own CafeF data page for its news links.
+// We don't know the exact HTML structure (unverified — see file header), so
+// this just grabs every link back into cafef.vn's article namespace (*.chn)
+// with headline-shaped visible text, rather than targeting a specific
+// selector that might not exist. Returns null (not []) on any failure, or if
+// nothing survives filtering, so the caller falls back to the RSS pool
+// instead of showing "no news" or (worse) unrelated site-wide headlines.
+//
+// The data page also carries CafeF's site-wide "mới nhất" ticker, which is
+// unrelated to this specific stock but matches the same headline shape —
+// so scraped candidates are additionally required to mention the ticker
+// itself, same as the RSS fallback below.
+async function fetchCafefSymbolPage(symbol: string, exchange: string, limit: number): Promise<NewsItem[] | null> {
+  const url = `https://cafef.vn/du-lieu/${exchange.toLowerCase()}/${symbol.toLowerCase()}.chn`;
+  try {
+    const res = await fetch(url, { headers: HEADERS, redirect: "follow" });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const linkRe = /<a[^>]+href="(https:\/\/cafef\.vn\/[a-z0-9\-/]+\.chn)"[^>]*>([^<]{5,220})<\/a>/gi;
+    const seen = new Set<string>();
+    const items: NewsItem[] = [];
+    let m: RegExpExecArray | null;
+    while ((m = linkRe.exec(html))) {
+      const link = m[1];
+      const title = decodeXmlEntities(m[2].trim());
+      if (link === url || seen.has(link) || !looksLikeHeadline(title)) continue;
+      const candidate: NewsItem = { title, link, source: "CafeF" };
+      if (!mentionsSymbol(candidate, symbol)) continue;
+      seen.add(link);
+      items.push(candidate);
+    }
+    return items.length > 0 ? items.slice(0, limit) : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchNewsForSymbol(symbol: string, limit = 10): Promise<SymbolNewsResult> {
   const upper = symbol.toUpperCase();
+  const seed = findSeed(upper);
+
+  if (seed) {
+    const pageItems = await fetchCafefSymbolPage(upper, seed.exchange, limit);
+    if (pageItems) {
+      return {
+        items: pageItems,
+        poolSize: pageItems.length,
+        usedFeed: `https://cafef.vn/du-lieu/${seed.exchange.toLowerCase()}/${upper.toLowerCase()}.chn`,
+      };
+    }
+  }
+
+  // Fallback: CafeF's RSS feeds are category-wide (not per-stock), so this
+  // filters the latest pool of articles by ticker mention.
   const { items: pool, usedFeed } = await fetchCafefPool(200);
   const items = pool.filter((item) => mentionsSymbol(item, upper)).slice(0, limit);
   return { items, poolSize: pool.length, usedFeed };

@@ -1,7 +1,8 @@
 import { fetchNewsForSymbol } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 
-function formatPubDate(iso: string): string {
+function formatPubDate(iso: string | undefined): string | null {
+  if (!iso) return null;
   return new Date(iso).toLocaleString("vi-VN", {
     day: "2-digit",
     month: "2-digit",
@@ -47,7 +48,8 @@ export default function NewsFeed({ symbol }: { symbol: string }) {
               >
                 <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{item.title}</p>
                 <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-                  {item.source} · {formatPubDate(item.pubDate)}
+                  {item.source}
+                  {formatPubDate(item.pubDate) ? ` · ${formatPubDate(item.pubDate)}` : ""}
                 </p>
               </a>
             </li>

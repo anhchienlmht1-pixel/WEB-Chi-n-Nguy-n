@@ -64,7 +64,7 @@ export type FinancialPeriodType = "year" | "quarter";
 export interface NewsItem {
   title: string;
   link: string;
-  pubDate: string;
+  pubDate?: string;
   description?: string;
   source: string;
 }
