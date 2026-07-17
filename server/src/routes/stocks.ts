@@ -5,7 +5,6 @@ import { HistoryRange, TopExchange } from "../providers/types.js";
 import { topTradedOf, VALID_EXCHANGES } from "../providers/topTraded.js";
 import { fetchKbsReport, KbsPeriodType, KbsReportType } from "../providers/kbsFinancials.js";
 import { fetchNewsForSymbol } from "../news/cafefNews.js";
-import { fetchMacroIndicators } from "../macro/worldBank.js";
 
 const router = Router();
 const cache = new NodeCache({ stdTTL: 20, checkperiod: 30 });
@@ -119,14 +118,6 @@ router.get(
     const limit = Math.min(30, Math.max(1, Number(req.query.limit) || 10));
     const data = await cached(`news:${symbol}`, 600, () => fetchNewsForSymbol(symbol, limit));
     res.json({ symbol, ...data });
-  })
-);
-
-router.get(
-  "/macro",
-  asyncHandler(async (_req, res) => {
-    const data = await cached("macro", 6 * 3600, () => fetchMacroIndicators());
-    res.json({ indicators: data });
   })
 );
 

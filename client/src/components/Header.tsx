@@ -32,14 +32,8 @@ export default function Header() {
           <NavLink to="/watchlist" className={navLinkClass}>
             Theo dõi
           </NavLink>
-          <NavLink to="/pe-eps" className={navLinkClass}>
-            P/E &amp; EPS
-          </NavLink>
           <NavLink to="/so-sanh" className={navLinkClass}>
             So sánh
-          </NavLink>
-          <NavLink to="/vi-mo" className={navLinkClass}>
-            Vĩ mô
           </NavLink>
         </nav>
 
