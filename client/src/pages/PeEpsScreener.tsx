@@ -38,8 +38,13 @@ export default function PeEpsScreener() {
 
       const collected: PeEpsPoint[] = [];
       let skipped = 0;
-      let firstFetchError: string | null = null;
-      let names: string[] | null = null;
+      // Plain `let`s reassigned from inside the concurrent worker below trip
+      // a TS control-flow-analysis bug (narrows to `never` on later reads) —
+      // an object holder sidesteps it since property reads aren't narrowed.
+      const diagnostics: { firstFetchError: string | null; names: string[] | null } = {
+        firstFetchError: null,
+        names: null,
+      };
 
       await mapWithConcurrency(symbols, CONCURRENCY, async (symbol) => {
         try {
@@ -49,11 +54,13 @@ export default function PeEpsScreener() {
             collected.push(point);
           } else {
             skipped++;
-            if (!names) names = sampleItemNames(report);
+            if (!diagnostics.names) diagnostics.names = sampleItemNames(report);
           }
         } catch (err) {
           skipped++;
-          if (!firstFetchError) firstFetchError = err instanceof Error ? err.message : String(err);
+          if (!diagnostics.firstFetchError) {
+            diagnostics.firstFetchError = err instanceof Error ? err.message : String(err);
+          }
         } finally {
           if (!cancelled) setProgress((p) => ({ ...p, done: p.done + 1 }));
         }
@@ -62,6 +69,7 @@ export default function PeEpsScreener() {
       if (cancelled) return;
 
       if (collected.length === 0) {
+        const { firstFetchError, names } = diagnostics;
         setError(
           firstFetchError
             ? `Không lấy được dữ liệu chỉ số tài chính cho mã nào. Lỗi mẫu: ${firstFetchError}`
