@@ -115,9 +115,25 @@ export async function fetchCafefNews(limit = 20): Promise<NewsItem[]> {
   return (await fetchCafefPool(limit)).items;
 }
 
-function mentionsSymbol(item: NewsItem, symbol: string): boolean {
-  const re = new RegExp(`\\b${symbol}\\b`, "i");
-  return re.test(item.title) || re.test(item.description ?? "");
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Matches by ticker code, and — since well-known brands (e.g. "Vinamilk" for
+// VNM) are often referred to by name rather than ticker in headlines — also
+// by company name when it's short/distinctive enough that a coincidental
+// match is unlikely (formal names like "Ngân hàng TMCP Kỹ Thương Việt Nam"
+// are too generic-sounding to reliably appear verbatim, so those just fall
+// back to ticker-only matching).
+function mentionsSymbol(item: NewsItem, symbol: string, companyName?: string): boolean {
+  const haystack = `${item.title} ${item.description ?? ""}`;
+  const tickerRe = new RegExp(`\\b${symbol}\\b`, "i");
+  if (tickerRe.test(haystack)) return true;
+  const name = companyName?.trim();
+  if (name && name.length >= 4 && name.length <= 40) {
+    return new RegExp(escapeRegExp(name), "i").test(haystack);
+  }
+  return false;
 }
 
 // Labels/buttons that show up as plain <a> links on CafeF's data pages but
@@ -157,7 +173,12 @@ function looksLikeHeadline(text: string): boolean {
 // unrelated to this specific stock but matches the same headline shape —
 // so scraped candidates are additionally required to mention the ticker
 // itself, same as the RSS fallback below.
-async function scrapeCafefPage(url: string, symbol: string, limit: number): Promise<NewsItem[] | null> {
+async function scrapeCafefPage(
+  url: string,
+  symbol: string,
+  companyName: string | undefined,
+  limit: number
+): Promise<NewsItem[] | null> {
   try {
     const res = await fetch(url, { headers: HEADERS, redirect: "follow" });
     if (!res.ok) return null;
@@ -171,7 +192,7 @@ async function scrapeCafefPage(url: string, symbol: string, limit: number): Prom
       const title = decodeXmlEntities(m[2].trim());
       if (link === url || seen.has(link) || !looksLikeHeadline(title)) continue;
       const candidate: NewsItem = { title, link, source: "CafeF" };
-      if (!mentionsSymbol(candidate, symbol)) continue;
+      if (!mentionsSymbol(candidate, symbol, companyName)) continue;
       seen.add(link);
       items.push(candidate);
     }
@@ -184,6 +205,7 @@ async function scrapeCafefPage(url: string, symbol: string, limit: number): Prom
 async function fetchCafefSymbolPage(
   symbol: string,
   exchange: string,
+  companyName: string | undefined,
   limit: number
 ): Promise<{ items: NewsItem[]; url: string } | null> {
   const base = `https://cafef.vn/du-lieu/${exchange.toLowerCase()}/${symbol.toLowerCase()}`;
@@ -191,7 +213,7 @@ async function fetchCafefSymbolPage(
   // second guess in case a symbol doesn't resolve the short form.
   const candidates = [`${base}-tin-tuc.chn`, `${base}.chn`];
   for (const url of candidates) {
-    const items = await scrapeCafefPage(url, symbol, limit);
+    const items = await scrapeCafefPage(url, symbol, companyName, limit);
     if (items) return { items, url };
   }
   return null;
@@ -202,15 +224,15 @@ export async function fetchNewsForSymbol(symbol: string, limit = 10): Promise<Sy
   const seed = findSeed(upper);
 
   if (seed) {
-    const page = await fetchCafefSymbolPage(upper, seed.exchange, limit);
+    const page = await fetchCafefSymbolPage(upper, seed.exchange, seed.name, limit);
     if (page) {
       return { items: page.items, poolSize: page.items.length, usedFeed: page.url };
     }
   }
 
   // Fallback: CafeF's RSS feeds are category-wide (not per-stock), so this
-  // filters the latest pool of articles by ticker mention.
+  // filters the latest pool of articles by ticker or company-name mention.
   const { items: pool, usedFeed } = await fetchCafefPool(200);
-  const items = pool.filter((item) => mentionsSymbol(item, upper)).slice(0, limit);
+  const items = pool.filter((item) => mentionsSymbol(item, upper, seed?.name)).slice(0, limit);
   return { items, poolSize: pool.length, usedFeed };
 }
