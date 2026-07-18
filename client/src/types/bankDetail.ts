@@ -4,9 +4,14 @@
 // bank.ts's 14-core-ratio "Cơ bản" section, series here are a flat map
 // (not individually typed) since there are ~80 of them; SERIES_META in
 // utils/bankDetailCharts.ts documents what each id means.
-export interface BankDetail {
-  symbol: string;
+export interface BankDetailPeriodData {
   periods: string[];
   industry: Record<string, (number | null)[]>;
   bank: Record<string, (number | null)[]>;
+}
+
+export interface BankDetail {
+  symbol: string;
+  quarter: BankDetailPeriodData;
+  year: BankDetailPeriodData;
 }

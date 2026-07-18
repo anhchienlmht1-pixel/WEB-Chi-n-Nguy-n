@@ -69,10 +69,10 @@ export const CHART_GROUPS: { section: string; charts: ChartDef[] }[] = [
           { id: "depositsInterbank", label: "Tiền gửi TCTD khác", color: AMBER },
           { id: "valuablePapers", label: "Giấy tờ có giá", color: PURPLE },
         ],
-        lines: [{ id: "fundingGrowth", label: "Tăng trưởng huy động QoQ (%)", color: GREEN }],
+        lines: [{ id: "fundingGrowth", label: "Tăng trưởng huy động theo kỳ (%)", color: GREEN }],
       },
       {
-        title: "Tăng trưởng huy động từng mảng (QoQ)",
+        title: "Tăng trưởng huy động từng mảng",
         kind: "multiLine",
         format: "percent",
         lines: [
