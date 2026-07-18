@@ -4,9 +4,10 @@ import { usePolling } from "../hooks/usePolling";
 import { BANK_SYMBOL_LIST, CORE_METRIC_KEYS, METRIC_META, fetchBankData, formatMetricValue } from "../utils/bankData";
 import type { BankData, BankMetricKey, BankOverviewRow } from "../types/bank";
 import BankDetailView from "../components/BankDetailView";
+import BankMetricComparisonTable from "../components/BankMetricComparisonTable";
 
 type SortDir = "asc" | "desc";
-type Tab = "compare" | "detail";
+type Tab = "compare" | "metric" | "detail";
 type PeriodType = "quarter" | "year";
 
 const GROUP_ORDER = ["Quốc doanh", "Doanh nghiệp", "Cá nhân", "Quy mô nhỏ", ""];
@@ -106,6 +107,7 @@ export default function BankCompare() {
           {(
             [
               ["compare", "Bảng so sánh"],
+              ["metric", "So sánh chỉ số"],
               ["detail", "Chi tiết mã ngân hàng"],
             ] as [Tab, string][]
           ).map(([value, label]) => (
@@ -156,6 +158,24 @@ export default function BankCompare() {
           </div>
         )}
       </div>
+
+      {tab === "metric" && (
+        <div className="mt-4 overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
+          {loading && (
+            <div className="space-y-2 p-4">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <div key={i} className="h-6 w-full animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
+              ))}
+            </div>
+          )}
+          {!loading && (error || !banks) && (
+            <div className="p-4 text-sm text-red-500 dark:text-red-400">
+              Không tải được dữ liệu so sánh{error ? `: ${error}` : ""}.
+            </div>
+          )}
+          {!loading && banks && <BankMetricComparisonTable banks={banks} />}
+        </div>
+      )}
 
       {tab === "detail" && (
         <div className="mt-4 overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
