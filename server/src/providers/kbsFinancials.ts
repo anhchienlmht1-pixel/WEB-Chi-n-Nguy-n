@@ -97,6 +97,24 @@ async function fetchKbsPage(
   }
 }
 
+const KBS_PAGE_SIZE = 50; // KBS's own hard cap — "pageSize must not be greater than 50"
+const KBS_MAX_PAGES = 12;
+
+interface AccumulatedRow {
+  name: string;
+  nameEn: string;
+  unit: string;
+  levels: number;
+  values: (number | null)[];
+}
+
+function rowValuesForPage(row: any, head: any[]): (number | null)[] {
+  const valueKeys = Object.keys(row)
+    .filter((k) => /^Value\d+$/.test(k))
+    .sort((a, b) => Number(a.slice(5)) - Number(b.slice(5)));
+  return head.map((_, idx) => toNumber(row[valueKeys[idx]]));
+}
+
 /**
  * Fetches one financial report (income statement / balance sheet / cash
  * flow / ratios) for a symbol from KBS, item-based: each row is a line item
@@ -104,65 +122,109 @@ async function fetchKbsPage(
  * publicly documented, so this parses defensively and throws a diagnostic-
  * rich error (raw payload / section keys) if the expected shape isn't
  * found, rather than silently returning nothing.
+ *
+ * A live report showed exactly 4 periods no matter how high `periodCount`
+ * was set, on both year and quarter views — the same symptom VNDirect had
+ * (a `size`/`pageSize` request not actually being honored past some smaller
+ * real per-request cap). Paginates through `page=1,2,3...` the same way
+ * that was fixed for VNDirect, instead of trusting a single request's Head
+ * array to be the whole history.
  */
 export async function fetchKbsReport(
   symbol: string,
   reportType: KbsReportType,
   periodType: KbsPeriodType,
-  periodCount = 50 // KBS rejects pageSize > 50 with HTTP 500 ("pageSize must not be greater than 50")
+  periodCount = 80
 ): Promise<FinancialReport> {
-  const data = await fetchKbsPage(symbol, reportType, periodType, 1, periodCount);
+  let allHead: any[] = [];
+  const rowsById = new Map<string, AccumulatedRow>();
+  let matchingKeys: string[] | null = null;
+  let firstPageData: any = null;
 
-  const head: any[] = data?.Head ?? [];
-  const content: Record<string, any[]> = data?.Content ?? {};
+  for (let page = 1; page <= KBS_MAX_PAGES; page++) {
+    const data = await fetchKbsPage(symbol, reportType, periodType, page, KBS_PAGE_SIZE);
+    if (page === 1) firstPageData = data;
 
-  if (head.length === 0 || Object.keys(content).length === 0) {
-    const preview = JSON.stringify(data).slice(0, 500);
+    const head: any[] = data?.Head ?? [];
+    const content: Record<string, any[]> = data?.Content ?? {};
+
+    if (head.length === 0 || Object.keys(content).length === 0) break;
+
+    if (matchingKeys === null) {
+      const patterns = SECTION_MATCH[reportType];
+      matchingKeys = Object.keys(content).filter((key) => patterns.some((p) => key.includes(p)));
+      if (matchingKeys.length === 0) {
+        throw Object.assign(
+          new Error(
+            `Không tìm thấy mục dữ liệu cho ${symbol} (${reportType}). Các mục thực tế: ${Object.keys(content).join(", ")}`
+          ),
+          { status: 502 }
+        );
+      }
+    }
+
+    const rows: any[] = matchingKeys.flatMap((key) => content[key] ?? []);
+    if (rows.length === 0) break;
+
+    // Don't assume a page shorter than KBS_PAGE_SIZE proves there's no more
+    // data — the live report this fix is for showed KBS enforcing its own
+    // smaller per-request cap regardless of pageSize, so every page looked
+    // "short". Stop once a page brings back nothing but periods already
+    // seen (either truly out of history, or `page` isn't honored and every
+    // request just repeats page 1 — same outcome either way) — checked
+    // before merging, so a fully-repeated page never gets double-counted.
+    const labelsSeenBefore = new Set(allHead.map(periodLabel));
+    const hasNewPeriod = head.map(periodLabel).some((label) => !labelsSeenBefore.has(label));
+    if (!hasNewPeriod) break;
+
+    const periodsBeforeThisPage = allHead.length;
+    allHead = allHead.concat(head);
+
+    for (const row of rows) {
+      const id = row.ID !== undefined ? String(row.ID) : row.Name ?? `${reportType}-${rowsById.size}`;
+      let acc = rowsById.get(id);
+      if (!acc) {
+        acc = {
+          name: row.Name ?? "",
+          nameEn: row.NameEn ?? "",
+          unit: row.Unit ?? "",
+          levels: typeof row.Levels === "number" ? row.Levels : 0,
+          // Pad so a row first seen on a later page still lines up with
+          // periods already accumulated from earlier pages.
+          values: new Array(periodsBeforeThisPage).fill(null),
+        };
+        rowsById.set(id, acc);
+      }
+      acc.values.push(...rowValuesForPage(row, head));
+    }
+
+    if (allHead.length >= periodCount) break;
+  }
+
+  if (allHead.length === 0) {
+    const preview = JSON.stringify(firstPageData).slice(0, 500);
     throw Object.assign(new Error(`KBS trả về dữ liệu rỗng cho ${symbol} (${reportType}). Raw: ${preview}`), {
       status: 502,
     });
   }
 
-  const patterns = SECTION_MATCH[reportType];
-  const matchingKeys = Object.keys(content).filter((key) => patterns.some((p) => key.includes(p)));
-
-  if (matchingKeys.length === 0) {
-    throw Object.assign(
-      new Error(`Không tìm thấy mục dữ liệu cho ${symbol} (${reportType}). Các mục thực tế: ${Object.keys(content).join(", ")}`),
-      { status: 502 }
-    );
-  }
-
-  const rows: any[] = matchingKeys.flatMap((key) => content[key] ?? []);
-  if (rows.length === 0) {
-    throw Object.assign(new Error(`KBS trả về ${matchingKeys.join(", ")} nhưng không có dòng dữ liệu nào cho ${symbol}.`), {
-      status: 502,
-    });
-  }
-
-  const periods = head.map(periodLabel);
-
-  const items: FinancialLineItem[] = rows.map((row, i) => {
-    const valueKeys = Object.keys(row)
-      .filter((k) => /^Value\d+$/.test(k))
-      .sort((a, b) => Number(a.slice(5)) - Number(b.slice(5)));
-    const values = head.map((_, idx) => toNumber(row[valueKeys[idx]]));
-
-    return {
-      id: row.ID !== undefined ? String(row.ID) : `${reportType}-${i}`,
-      name: row.Name ?? "",
-      nameEn: row.NameEn ?? "",
-      unit: row.Unit ?? "",
-      levels: typeof row.Levels === "number" ? row.Levels : 0,
-      values,
-    };
-  });
+  const periods = allHead.map(periodLabel);
+  const items: FinancialLineItem[] = [...rowsById.entries()].map(([id, r]) => ({
+    id,
+    name: r.name,
+    nameEn: r.nameEn,
+    unit: r.unit,
+    levels: r.levels,
+    // Rows that stopped appearing on a later page (shouldn't normally
+    // happen for a fixed statement's line items) still need to line up
+    // with the full period count.
+    values: r.values.length < periods.length ? r.values.concat(new Array(periods.length - r.values.length).fill(null)) : r.values,
+  }));
 
   const hasAnyValue = items.some((it) => it.values.some((v) => v !== null));
   if (!hasAnyValue) {
-    const sampleRow = rows[0];
     throw Object.assign(
-      new Error(`Nhận được ${items.length} dòng cho ${symbol} (${reportType}) nhưng toàn bộ giá trị rỗng. Field mẫu: ${Object.keys(sampleRow).join(", ")}`),
+      new Error(`Nhận được ${items.length} dòng cho ${symbol} (${reportType}) nhưng toàn bộ giá trị rỗng.`),
       { status: 502 }
     );
   }
