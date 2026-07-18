@@ -350,18 +350,41 @@ def compute_bank_series(sheet: BankSheet, cols: list, is_quarterly: bool, bank_i
     govBonds = [add(a, b) for a, b in zip(series(216), series(217))]
     creditInstBonds = series(218)
     corpBonds = series(219)
+    s["investGovBonds"], s["investCreditInst"], s["investCorpBonds"] = govBonds, creditInstBonds, corpBonds
     s["investGovBondsShare"], s["investCreditInstShare"], s["investCorpBondsShare"] = shares(
         govBonds, creditInstBonds, corpBonds
     )
 
     # Earning-assets composition
+    earningLoan, earningInterbank, earningInvestment, earningOther = series(15), series(8), series(20), series(7)
+    s["earningAssetsLoan"], s["earningAssetsInterbank"], s["earningAssetsInvestment"], s["earningAssetsOther"] = (
+        earningLoan, earningInterbank, earningInvestment, earningOther,
+    )
     s["earningAssetsLoanShare"], s["earningAssetsInterbankShare"], s["earningAssetsInvestmentShare"], s[
         "earningAssetsOtherShare"
-    ] = shares(series(15), series(8), series(20), series(7))
+    ] = shares(earningLoan, earningInterbank, earningInvestment, earningOther)
 
     # Interest-bearing-liabilities composition (same 3 components as funding)
     s["liabDepositsShare"], s["liabInterbankShare"], s["liabPapersShare"] = shares(
         depositsCustomer, depositsInterbank, valuablePapers
+    )
+
+    # Equity & liabilities structure (Vốn chủ & Nợ phải trả). "Nghĩa vụ
+    # phải trả khác" is a residual: total assets minus customer deposits
+    # minus equity — i.e. total liabilities minus deposits, via the
+    # assets = liabilities + equity identity — per the validated source
+    # formula (=TotalAssets - B144(deposits) - B146(equity)), not a direct
+    # row reference.
+    totalAssetsSeries = series(3)
+    equitySeries = series(66)
+    capitalOtherLiab = [
+        sub(sub(t, d), e) for t, d, e in zip(totalAssetsSeries, depositsCustomer, equitySeries)
+    ]
+    s["capitalDeposits"], s["capitalOtherLiab"], s["capitalEquity"] = (
+        depositsCustomer, capitalOtherLiab, equitySeries,
+    )
+    s["capitalDepositsShare"], s["capitalOtherLiabShare"], s["capitalEquityShare"] = shares(
+        depositsCustomer, capitalOtherLiab, equitySeries
     )
 
     # Deposit structure

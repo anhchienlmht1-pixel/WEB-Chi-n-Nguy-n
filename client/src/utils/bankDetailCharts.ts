@@ -165,14 +165,16 @@ export const CHART_GROUPS: { section: string; charts: ChartDef[] }[] = [
       },
       {
         title: "Thu nhập ngoài lãi",
-        kind: "stackedBar",
+        kind: "comboBarLine",
         format: "money",
+        lineFormat: "percent",
         bars: [
           { id: "feeIncome", label: "Hoạt động dịch vụ", color: BLUE },
           { id: "fxIncome", label: "Kinh doanh ngoại hối", color: AMBER },
           { id: "securitiesIncome", label: "Kinh doanh & Đầu tư CK", color: PURPLE },
           { id: "otherIncome", label: "Thu nhập khác", color: SLATE },
         ],
+        lines: [{ id: "noniiGrowth", label: "Tăng trưởng NonII (%)", color: RED }],
       },
       {
         title: "Lợi nhuận trước thuế",
@@ -285,6 +287,16 @@ export const CHART_GROUPS: { section: string; charts: ChartDef[] }[] = [
         ],
       },
       {
+        title: "Cơ cấu nợ phải trả có lãi (giá trị)",
+        kind: "stackedBar",
+        format: "money",
+        bars: [
+          { id: "depositsCustomer", label: "Tiền gửi KH", color: BLUE },
+          { id: "depositsInterbank", label: "Tiền gửi liên NH", color: AMBER },
+          { id: "valuablePapers", label: "Giấy tờ có giá", color: PURPLE },
+        ],
+      },
+      {
         title: "Cơ cấu tài sản có lãi",
         kind: "stackedShare",
         format: "percent",
@@ -296,6 +308,17 @@ export const CHART_GROUPS: { section: string; charts: ChartDef[] }[] = [
         ],
       },
       {
+        title: "Cơ cấu tài sản có lãi (giá trị)",
+        kind: "stackedBar",
+        format: "money",
+        bars: [
+          { id: "earningAssetsLoan", label: "Cho vay KH", color: BLUE },
+          { id: "earningAssetsInterbank", label: "Cho vay liên NH", color: AMBER },
+          { id: "earningAssetsInvestment", label: "DM đầu tư", color: PURPLE },
+          { id: "earningAssetsOther", label: "Tài sản sinh lãi khác", color: SLATE },
+        ],
+      },
+      {
         title: "Cơ cấu danh mục đầu tư",
         kind: "stackedShare",
         format: "percent",
@@ -303,6 +326,36 @@ export const CHART_GROUPS: { section: string; charts: ChartDef[] }[] = [
           { id: "investGovBondsShare", label: "TPCP", color: BLUE },
           { id: "investCreditInstShare", label: "TCTD", color: AMBER },
           { id: "investCorpBondsShare", label: "TPDN", color: PURPLE },
+        ],
+      },
+      {
+        title: "Cơ cấu danh mục đầu tư (giá trị)",
+        kind: "stackedBar",
+        format: "money",
+        bars: [
+          { id: "investGovBonds", label: "TPCP", color: BLUE },
+          { id: "investCreditInst", label: "TCTD", color: AMBER },
+          { id: "investCorpBonds", label: "TPDN", color: PURPLE },
+        ],
+      },
+      {
+        title: "Vốn chủ và Nợ phải trả",
+        kind: "stackedBar",
+        format: "money",
+        bars: [
+          { id: "capitalDeposits", label: "Tiền gửi KH", color: GREEN },
+          { id: "capitalOtherLiab", label: "Nghĩa vụ phải trả khác", color: RED },
+          { id: "capitalEquity", label: "Vốn chủ sở hữu", color: BLUE },
+        ],
+      },
+      {
+        title: "Cơ cấu Vốn chủ và Nợ phải trả",
+        kind: "stackedShare",
+        format: "percent",
+        bars: [
+          { id: "capitalDepositsShare", label: "Tiền gửi KH", color: GREEN },
+          { id: "capitalOtherLiabShare", label: "Nghĩa vụ phải trả khác", color: RED },
+          { id: "capitalEquityShare", label: "Vốn chủ sở hữu", color: BLUE },
         ],
       },
     ],
