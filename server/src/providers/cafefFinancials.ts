@@ -111,7 +111,12 @@ export async function fetchCafefReport(
   let lastUrl = "";
 
   for (const url of urls) {
-    const res = await fetch(url, { headers: HEADERS, redirect: "follow" });
+    let res: Response;
+    try {
+      res = await fetch(url, { headers: HEADERS, redirect: "follow", signal: AbortSignal.timeout(6000) });
+    } catch {
+      continue;
+    }
     if (!res.ok) continue;
     const html = await res.text();
     lastHtml = html;

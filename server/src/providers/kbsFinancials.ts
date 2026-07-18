@@ -81,7 +81,15 @@ async function fetchKbsPage(
   url.searchParams.set("termtype", periodType === "year" ? "1" : "2");
   url.searchParams.set("languageid", "1");
 
-  const res = await fetch(url.toString(), { headers: HEADERS });
+  let res: Response;
+  try {
+    res = await fetch(url.toString(), { headers: HEADERS, signal: AbortSignal.timeout(KBS_FETCH_TIMEOUT_MS) });
+  } catch (err) {
+    const cause = err instanceof Error ? err.message : String(err);
+    throw Object.assign(new Error(`KBS không phản hồi trong ${KBS_FETCH_TIMEOUT_MS}ms cho ${symbol}: ${cause}`), {
+      status: 504,
+    });
+  }
   const rawBody = await res.text();
 
   if (!res.ok) {
@@ -98,7 +106,14 @@ async function fetchKbsPage(
 }
 
 const KBS_PAGE_SIZE = 50; // KBS's own hard cap — "pageSize must not be greater than 50"
-const KBS_MAX_PAGES = 12;
+// Kept modest (6 pages, 24-period target) for the same reason as
+// vndirectFinancials.ts's MAX_PAGES/maxPeriods: a live report showed a
+// sibling source failing with a bare "fetch failed" instead of a proper
+// error, most likely the serverless function's own timeout cutting off a
+// long chain of sequential page requests — this loop and VNDirect's run in
+// the same function call. 24 periods is well beyond the 8 actually needed.
+const KBS_MAX_PAGES = 6;
+const KBS_FETCH_TIMEOUT_MS = 6000;
 
 interface AccumulatedRow {
   name: string;
@@ -134,7 +149,7 @@ export async function fetchKbsReport(
   symbol: string,
   reportType: KbsReportType,
   periodType: KbsPeriodType,
-  periodCount = 80
+  periodCount = 24
 ): Promise<FinancialReport> {
   let allHead: any[] = [];
   const rowsById = new Map<string, AccumulatedRow>();

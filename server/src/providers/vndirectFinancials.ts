@@ -41,11 +41,31 @@ function toNumber(raw: unknown): number | null {
 // request, page through it: keep asking for the next `page` at a fixed
 // `size` until a page comes back short (the real end of the data) or we've
 // collected enough distinct periods.
+//
+// Kept deliberately modest (6 pages, 24-period target — plenty beyond the
+// 8 periods actually needed) rather than the original 12/80: a live report
+// showed this source failing with a bare "fetch failed" instead of any of
+// this file's own error messages, meaning the request never got far enough
+// to hit them — the likely cause is the serverless function's own timeout
+// killing a long chain of sequential page requests (this source and KBS's
+// equally deep pagination both run inside the same function call). A
+// shorter worst case here matters more than chasing more history than
+// needed.
 const PAGE_SIZE = 500;
-const MAX_PAGES = 12;
+const MAX_PAGES = 6;
+const FETCH_TIMEOUT_MS = 6000;
 
 async function fetchPage(url: string, symbol: string, reportType: KbsReportType): Promise<any[]> {
-  const res = await fetch(url, { headers: HEADERS });
+  let res: Response;
+  try {
+    res = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+  } catch (err) {
+    const cause = err instanceof Error ? err.message : String(err);
+    throw Object.assign(
+      new Error(`VNDirect không phản hồi trong ${FETCH_TIMEOUT_MS}ms cho ${symbol} (${reportType}): ${cause}`),
+      { status: 504 }
+    );
+  }
   const rawBody = await res.text();
 
   if (!res.ok) {
@@ -72,10 +92,10 @@ export async function fetchVndirectReport(
   symbol: string,
   reportType: KbsReportType,
   periodType: KbsPeriodType,
-  // 80 quarters / years covers 20 years of quarterly history (or 80 years
-  // annually) — VNDirect's own API doesn't have KBS's 50-row cap, so there's
-  // no reason to trim harder than "however far back the data actually goes".
-  maxPeriods = 80
+  // 24 covers 6 years of quarterly history (or 24 years annually) — well
+  // beyond the 8 periods actually needed, kept modest to bound worst-case
+  // request time (see MAX_PAGES comment above).
+  maxPeriods = 24
 ): Promise<FinancialReport> {
   const vndReportType = REPORT_TYPE_MAP[reportType];
   const fiscalDateType = periodType === "quarter" ? "QUARTER" : "YEAR";

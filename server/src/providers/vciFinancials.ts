@@ -116,11 +116,18 @@ export async function fetchVciReport(
   const query = buildQuery(reportType);
   const variables = { ticker: symbol, period: periodType === "quarter" ? "quarterly" : "yearly" };
 
-  const res = await fetch(VCI_GRAPHQL_URL, {
-    method: "POST",
-    headers: HEADERS,
-    body: JSON.stringify({ query, variables }),
-  });
+  let res: Response;
+  try {
+    res = await fetch(VCI_GRAPHQL_URL, {
+      method: "POST",
+      headers: HEADERS,
+      body: JSON.stringify({ query, variables }),
+      signal: AbortSignal.timeout(6000),
+    });
+  } catch (err) {
+    const cause = err instanceof Error ? err.message : String(err);
+    throw Object.assign(new Error(`VCI không phản hồi cho ${symbol} (${reportType}): ${cause}`), { status: 504 });
+  }
   const rawBody = await res.text();
 
   if (!res.ok) {
