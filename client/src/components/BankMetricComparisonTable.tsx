@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { METRIC_META, formatMetricValue, type MetricFormat } from "../utils/bankData";
 import type { BankData, BankMetricKey } from "../types/bank";
+import CompanyLogo from "./CompanyLogo";
 
 type PeriodType = "quarter" | "year";
 
@@ -79,7 +80,7 @@ export default function BankMetricComparisonTable({ banks }: { banks: BankData[]
         <table className="w-full min-w-[900px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800">
-              <th className="sticky left-0 z-10 bg-white px-4 py-3 font-medium dark:bg-slate-900">Ngân hàng</th>
+              <th className="sticky left-0 z-10 bg-white px-4 py-3 font-medium text-slate-500">Ngân hàng</th>
               {periods.map((p, i) => (
                 <th key={`${p}-${i}`} className="whitespace-nowrap px-3 py-3 text-right font-medium">
                   {p}
@@ -140,14 +141,12 @@ function GroupRows({
             key={bank.symbol}
             className="border-b border-slate-100 last:border-0 hover:bg-slate-50 dark:border-slate-900 dark:hover:bg-slate-900/60"
           >
-            <td className="sticky left-0 z-10 whitespace-nowrap bg-white px-4 py-2.5 dark:bg-slate-900/40">
-              <Link
-                to={`/stock/${bank.symbol}`}
-                className="font-semibold text-slate-900 hover:text-emerald-600 dark:text-slate-100 dark:hover:text-emerald-400"
-              >
-                {bank.symbol}
+            <td className="sticky left-0 z-10 whitespace-nowrap bg-white px-4 py-2.5">
+              <Link to={`/stock/${bank.symbol}`} className="flex items-center gap-2">
+                <CompanyLogo symbol={bank.symbol} />
+                <span className="font-semibold text-slate-900 hover:text-emerald-600">{bank.symbol}</span>
+                <span className="text-xs text-slate-400">{bank.exchange}</span>
               </Link>
-              <span className="ml-1.5 text-xs text-slate-400 dark:text-slate-500">{bank.exchange}</span>
             </td>
             {values.map((v, i) => (
               <td

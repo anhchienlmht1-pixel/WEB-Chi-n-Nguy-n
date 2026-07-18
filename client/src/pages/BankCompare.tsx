@@ -5,6 +5,7 @@ import { BANK_SYMBOL_LIST, CORE_METRIC_KEYS, METRIC_META, fetchBankData, formatM
 import type { BankData, BankMetricKey, BankOverviewRow } from "../types/bank";
 import BankDetailView from "../components/BankDetailView";
 import BankMetricComparisonTable from "../components/BankMetricComparisonTable";
+import CompanyLogo from "../components/CompanyLogo";
 
 type SortDir = "asc" | "desc";
 type Tab = "compare" | "metric" | "detail";
@@ -204,7 +205,7 @@ export default function BankCompare() {
             <table className="w-full min-w-[1100px] border-collapse text-sm">
               <thead>
                 <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800">
-                  <th className="sticky left-0 z-10 bg-white px-4 py-3 font-medium dark:bg-slate-900">
+                  <th className="sticky left-0 z-10 bg-white px-4 py-3 font-medium text-slate-500">
                     Ngân hàng
                   </th>
                   {CORE_METRIC_KEYS.map((key) => (
@@ -257,14 +258,12 @@ function BankGroupRows({ group, rows }: { group: string; rows: BankOverviewRow[]
           key={row.symbol}
           className="border-b border-slate-100 last:border-0 hover:bg-slate-50 dark:border-slate-900 dark:hover:bg-slate-900/60"
         >
-          <td className="sticky left-0 z-10 whitespace-nowrap bg-white px-4 py-2.5 dark:bg-slate-900/40">
-            <Link
-              to={`/stock/${row.symbol}`}
-              className="font-semibold text-slate-900 hover:text-emerald-600 dark:text-slate-100 dark:hover:text-emerald-400"
-            >
-              {row.symbol}
+          <td className="sticky left-0 z-10 whitespace-nowrap bg-white px-4 py-2.5">
+            <Link to={`/stock/${row.symbol}`} className="flex items-center gap-2">
+              <CompanyLogo symbol={row.symbol} />
+              <span className="font-semibold text-slate-900 hover:text-emerald-600">{row.symbol}</span>
+              <span className="text-xs text-slate-400">{row.exchange}</span>
             </Link>
-            <span className="ml-1.5 text-xs text-slate-400 dark:text-slate-500">{row.exchange}</span>
           </td>
           {CORE_METRIC_KEYS.map((key) => (
             <td
