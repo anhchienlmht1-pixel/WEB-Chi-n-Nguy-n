@@ -1,4 +1,5 @@
 import type { BankData, BankMeta, BankMetricKey, BankOverview, BankStatement } from "../types/bank";
+import type { BankDetail } from "../types/bankDetail";
 
 // The "Cơ bản" (Fundamentals) section only has data for these 27 banks —
 // exported once from the user's own hand-maintained Excel model (see
@@ -39,6 +40,15 @@ export function fetchBankOverview(): Promise<BankOverview> {
 export function fetchBankStatement(symbol: string): Promise<BankStatement> {
   return fetchJson(`/data/banks/statements/${symbol.toUpperCase()}.json`);
 }
+
+export function fetchBankDetail(symbol: string): Promise<BankDetail> {
+  return fetchJson(`/data/banks/detail/${symbol.toUpperCase()}.json`);
+}
+
+// BANK_SYMBOLS order matches meta.json / the source Excel's own bank list
+// — used as the default sort order for the "Chi tiết mã ngân hàng" symbol
+// picker.
+export const BANK_SYMBOL_LIST = Array.from(BANK_SYMBOLS);
 
 // The 14 core ratios, in the order the source Excel's own "Chi tiết"
 // dashboard sheet lists them.

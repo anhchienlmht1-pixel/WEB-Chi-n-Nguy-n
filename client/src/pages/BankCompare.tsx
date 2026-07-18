@@ -1,20 +1,26 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { usePolling } from "../hooks/usePolling";
-import { CORE_METRIC_KEYS, METRIC_META, fetchBankOverview, formatMetricValue } from "../utils/bankData";
+import { BANK_SYMBOL_LIST, CORE_METRIC_KEYS, METRIC_META, fetchBankOverview, formatMetricValue } from "../utils/bankData";
 import type { BankMetricKey, BankOverviewRow } from "../types/bank";
+import BankDetailView from "../components/BankDetailView";
 
 type SortDir = "asc" | "desc";
+type Tab = "compare" | "detail";
 
 const GROUP_ORDER = ["Quốc doanh", "Doanh nghiệp", "Cá nhân", "Quy mô nhỏ", ""];
 
 // Matches the source Excel's own "Tổng quan" sheet: every bank, one row
 // each, at the latest common period — sortable by any of the 14 core
 // ratios so a viewer can rank banks the same way that sheet is used for.
+// A second tab ("Chi tiết mã ngân hàng") replicates that same workbook's
+// much deeper per-bank "Chi tiết" dashboard sheet (see BankDetailView).
 export default function BankCompare() {
   const { data, error, loading } = usePolling(() => fetchBankOverview(), []);
   const [sortKey, setSortKey] = useState<BankMetricKey>("roe4q");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [tab, setTab] = useState<Tab>("compare");
+  const [detailSymbol, setDetailSymbol] = useState<string>(BANK_SYMBOL_LIST[0]);
 
   const sortedBanks = useMemo(() => {
     if (!data) return [];
@@ -56,6 +62,33 @@ export default function BankCompare() {
         27 ngân hàng niêm yết, tại kỳ {data?.period ?? "gần nhất"}. Bấm vào tiêu đề cột để sắp xếp.
       </p>
 
+      <div className="mt-4 flex gap-1 rounded-lg border border-slate-200 p-1 text-xs font-medium dark:border-slate-800 w-fit">
+        {([
+          ["compare", "Bảng so sánh"],
+          ["detail", "Chi tiết mã ngân hàng"],
+        ] as [Tab, string][]).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setTab(value)}
+            className={`rounded-md px-3 py-1.5 transition-colors ${
+              tab === value
+                ? "bg-emerald-500 text-slate-950"
+                : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "detail" && (
+        <div className="mt-4 overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
+          <BankDetailView symbol={detailSymbol} onSymbolChange={setDetailSymbol} />
+        </div>
+      )}
+
+      {tab === "compare" && (
       <div className="mt-4 overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
         {loading && (
           <div className="space-y-2 p-4">
@@ -106,6 +139,7 @@ export default function BankCompare() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }
