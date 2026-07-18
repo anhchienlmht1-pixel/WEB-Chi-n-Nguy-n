@@ -1,8 +1,11 @@
 import { fetchKbsReport, type FinancialReport, type KbsPeriodType, type KbsReportType } from "./kbsFinancials.js";
 import { fetchVndirectReport } from "./vndirectFinancials.js";
+import { fetchVciReport } from "./vciFinancials.js";
+
+export type FinancialSource = "vndirect" | "kbs" | "vci";
 
 export interface FinancialReportWithSource extends FinancialReport {
-  source: "vndirect" | "kbs";
+  source: FinancialSource;
 }
 
 // Both KBS and VNDirect have shown real data-quality quirks before (KBS's
@@ -42,37 +45,40 @@ function errorMessage(reason: unknown): string {
   return reason instanceof Error ? reason.message : String(reason);
 }
 
-// VNDirect was assumed to have deeper historical coverage than KBS's
-// retail-app endpoint, so it used to be tried first with KBS only as a
-// fallback on outright failure. A live report broke that assumption: VNDirect
-// returned a *valid* response (didn't throw) but stuck at 4 quarters no
-// matter how much pagination asked for more, while a company's real
-// reporting history obviously goes back further — "didn't throw" isn't the
-// same as "actually has enough history". Both sources are queried and
-// whichever has more periods for this exact call wins, instead of trusting
-// whichever happened to answer first without erroring.
+// Every source is queried and whichever answers with the most periods wins
+// — "didn't throw" isn't the same as "actually has enough history" (a live
+// report showed VNDirect answering validly but stuck at 4 quarters while
+// KBS had 8 for the same symbol), so a source that fails outright shouldn't
+// block a deeper one, and a source that succeeds shallow shouldn't either.
+const SOURCES: { name: FinancialSource; fetch: typeof fetchVndirectReport }[] = [
+  { name: "vndirect", fetch: fetchVndirectReport },
+  { name: "kbs", fetch: fetchKbsReport },
+  { name: "vci", fetch: fetchVciReport },
+];
+
 export async function fetchFinancialReport(
   symbol: string,
   reportType: KbsReportType,
   periodType: KbsPeriodType
 ): Promise<FinancialReportWithSource> {
-  const [vndResult, kbsResult] = await Promise.allSettled([
-    fetchVndirectReport(symbol, reportType, periodType),
-    fetchKbsReport(symbol, reportType, periodType),
-  ]);
+  const results = await Promise.allSettled(SOURCES.map((s) => s.fetch(symbol, reportType, periodType)));
 
-  const vnd: FinancialReportWithSource | null =
-    vndResult.status === "fulfilled" ? { ...dedupePeriods(vndResult.value), source: "vndirect" } : null;
-  const kbs: FinancialReportWithSource | null =
-    kbsResult.status === "fulfilled" ? { ...dedupePeriods(kbsResult.value), source: "kbs" } : null;
+  const succeeded: FinancialReportWithSource[] = [];
+  const failures: string[] = [];
+  results.forEach((result, i) => {
+    const { name } = SOURCES[i];
+    if (result.status === "fulfilled") {
+      succeeded.push({ ...dedupePeriods(result.value), source: name });
+    } else {
+      failures.push(`${name}: ${errorMessage(result.reason)}`);
+    }
+  });
 
-  if (vnd && kbs) return vnd.periods.length >= kbs.periods.length ? vnd : kbs;
-  if (vnd) return vnd;
-  if (kbs) return kbs;
+  if (succeeded.length > 0) {
+    return succeeded.reduce((best, r) => (r.periods.length > best.periods.length ? r : best));
+  }
 
-  const vndMsg = vndResult.status === "rejected" ? errorMessage(vndResult.reason) : "?";
-  const kbsMsg = kbsResult.status === "rejected" ? errorMessage(kbsResult.reason) : "?";
-  throw Object.assign(new Error(`Cả 2 nguồn báo cáo tài chính đều lỗi. VNDirect: ${vndMsg} | KBS: ${kbsMsg}`), {
+  throw Object.assign(new Error(`Tất cả nguồn báo cáo tài chính đều lỗi. ${failures.join(" | ")}`), {
     status: 502,
   });
 }

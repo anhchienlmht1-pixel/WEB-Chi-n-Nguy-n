@@ -6,6 +6,7 @@ import { formatFinancialValue } from "../utils/format";
 import ProfitChart from "./ProfitChart";
 import RatioTrendChart from "./RatioTrendChart";
 import { sortPeriodIndices } from "../utils/period";
+import { financialSourceLabel } from "../utils/financials";
 
 const REPORT_TABS: { value: FinancialReportType; label: string }[] = [
   { value: "CSTC", label: "Chỉ số tài chính" },
@@ -89,7 +90,7 @@ export default function FinancialRatios({ symbol }: { symbol: string }) {
 
       {!loading && data && data.source && (
         <div className="px-4 pt-3 text-[11px] text-slate-400 dark:text-slate-500">
-          Nguồn: {data.source === "vndirect" ? "VNDirect" : "KBS (dự phòng)"} · {data.periods.length} kỳ
+          Nguồn: {financialSourceLabel(data.source)} · {data.periods.length} kỳ
         </div>
       )}
 

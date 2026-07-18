@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { fetchFinancials, fetchHistory } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
-import type { FinancialPeriodType, HistoryPoint } from "../types";
-import { findProfitItem } from "../utils/financials";
+import type { FinancialPeriodType, FinancialSource, HistoryPoint } from "../types";
+import { findProfitItem, financialSourceLabel } from "../utils/financials";
 import { periodEndDate, sortPeriodIndices } from "../utils/period";
 import { pickLabelIndices } from "../utils/chartTicks";
 
@@ -148,7 +148,7 @@ function CorrelationLines({
   labels: string[];
   profit: (number | null)[];
   price: number[];
-  source?: "vndirect" | "kbs";
+  source?: FinancialSource;
 }) {
   const allValues = [...profit.filter((v): v is number => v != null), ...price];
   const min = Math.min(100, ...allValues);
@@ -244,7 +244,7 @@ function CorrelationLines({
 
       {source && (
         <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
-          Nguồn lợi nhuận: {source === "vndirect" ? "VNDirect" : "KBS"} · {labels.length} kỳ
+          Nguồn lợi nhuận: {financialSourceLabel(source)} · {labels.length} kỳ
         </p>
       )}
     </>

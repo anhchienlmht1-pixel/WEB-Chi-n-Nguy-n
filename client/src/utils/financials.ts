@@ -1,4 +1,14 @@
-import type { FinancialLineItem, FinancialReport } from "../types";
+import type { FinancialLineItem, FinancialReport, FinancialSource } from "../types";
+
+const SOURCE_LABEL: Record<FinancialSource, string> = {
+  vndirect: "VNDirect",
+  kbs: "KBS",
+  vci: "VCI",
+};
+
+export function financialSourceLabel(source: FinancialSource): string {
+  return SOURCE_LABEL[source];
+}
 
 // KBS doesn't document exact KQKD row IDs, so the net-profit line is found
 // by name match — prefer the top-level (least indented) row when several
