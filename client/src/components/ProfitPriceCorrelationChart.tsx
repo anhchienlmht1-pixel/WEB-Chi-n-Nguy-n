@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { fetchFinancials, fetchHistory } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import type { FinancialPeriodType, HistoryPoint } from "../types";
@@ -32,13 +32,14 @@ function nearestPriceOnOrBefore(points: HistoryPoint[], date: Date): number | nu
 // a common base (100 at the first period both have data for) — a literal
 // dual-axis chart would just be two arbitrary y-scales picked to make the
 // lines look related.
-export default function ProfitPriceCorrelationChart({
-  symbol,
-  periodType,
-}: {
-  symbol: string;
-  periodType: FinancialPeriodType;
-}) {
+//
+// Runs its own Quý/Năm toggle rather than following the dashboard's shared
+// one — a quarterly correlation view is a lot more telling than a 4-5 point
+// yearly one, so it's useful to be able to keep this chart on quarterly
+// while the profit/assets panels above are on yearly, or vice versa.
+export default function ProfitPriceCorrelationChart({ symbol }: { symbol: string }) {
+  const [periodType, setPeriodType] = useState<FinancialPeriodType>("quarter");
+
   const { data, error, loading } = usePolling(
     async () => {
       const [kqkd, historyRes] = await Promise.all([
@@ -88,18 +89,54 @@ export default function ProfitPriceCorrelationChart({
     };
   }, [data]);
 
-  if (loading) {
-    return <div className="h-[240px] animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800" />;
-  }
-  if (error || !chart) {
-    return (
-      <div className="flex h-[240px] items-center justify-center rounded-lg border border-slate-200 text-sm text-slate-400 dark:border-slate-800 dark:text-slate-500">
-        Chưa đủ dữ liệu để so sánh lợi nhuận với giá cổ phiếu cho {symbol}.
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
+      <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+        <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Lợi nhuận tương quan với giá cổ phiếu</h4>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex gap-3 text-xs font-medium">
+            <span className="flex items-center gap-1.5" style={{ color: PROFIT_COLOR }}>
+              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: PROFIT_COLOR }} />
+              Lợi nhuận sau thuế
+            </span>
+            <span className="flex items-center gap-1.5" style={{ color: PRICE_COLOR }}>
+              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: PRICE_COLOR }} />
+              Giá cổ phiếu
+            </span>
+          </div>
+          <div className="flex gap-1 rounded-lg border border-slate-200 p-1 text-xs font-medium dark:border-slate-800">
+            {(["quarter", "year"] as FinancialPeriodType[]).map((pt) => (
+              <button
+                key={pt}
+                type="button"
+                onClick={() => setPeriodType(pt)}
+                className={`rounded-md px-2.5 py-1 transition-colors ${
+                  periodType === pt
+                    ? "bg-emerald-500 text-slate-950"
+                    : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                }`}
+              >
+                {pt === "quarter" ? "Theo quý" : "Theo năm"}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
-    );
-  }
+      <p className="mb-2 text-[11px] text-slate-400 dark:text-slate-500">
+        Quy về mốc 100 tại kỳ lợi nhuận dương gần nhất đầu chuỗi — so sánh tốc độ tăng trưởng, không phải giá trị tuyệt đối.
+      </p>
 
-  return <CorrelationLines {...chart} />;
+      {loading && <div className="h-[240px] animate-pulse rounded bg-slate-100 dark:bg-slate-800" />}
+
+      {!loading && (error || !chart) && (
+        <div className="flex h-[240px] items-center justify-center text-sm text-slate-400 dark:text-slate-500">
+          Chưa đủ dữ liệu để so sánh lợi nhuận với giá cổ phiếu cho {symbol}.
+        </div>
+      )}
+
+      {!loading && chart && <CorrelationLines {...chart} />}
+    </div>
+  );
 }
 
 function CorrelationLines({
@@ -134,24 +171,7 @@ function CorrelationLines({
   const pricePts = price.map((v, i) => `${xScale(i)},${yScale(v)}`).join(" ");
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Lợi nhuận tương quan với giá cổ phiếu</h4>
-        <div className="flex gap-3 text-xs font-medium">
-          <span className="flex items-center gap-1.5" style={{ color: PROFIT_COLOR }}>
-            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: PROFIT_COLOR }} />
-            Lợi nhuận sau thuế
-          </span>
-          <span className="flex items-center gap-1.5" style={{ color: PRICE_COLOR }}>
-            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: PRICE_COLOR }} />
-            Giá cổ phiếu
-          </span>
-        </div>
-      </div>
-      <p className="mb-2 text-[11px] text-slate-400 dark:text-slate-500">
-        Quy về mốc 100 tại kỳ lợi nhuận dương gần nhất đầu chuỗi — so sánh tốc độ tăng trưởng, không phải giá trị tuyệt đối.
-      </p>
-
+    <>
       <div className="overflow-x-auto">
         <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="w-full min-w-[560px]" role="img">
           <line
@@ -227,6 +247,6 @@ function CorrelationLines({
           Nguồn lợi nhuận: {source === "vndirect" ? "VNDirect" : "KBS"} · {labels.length} kỳ
         </p>
       )}
-    </div>
+    </>
   );
 }
