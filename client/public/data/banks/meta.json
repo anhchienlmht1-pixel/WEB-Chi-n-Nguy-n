@@ -1,0 +1,166 @@
+{
+  "banks": [
+    {
+      "symbol": "VCB",
+      "name": "Vietcombank",
+      "group": "Quốc doanh",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "BID",
+      "name": "BIDV",
+      "group": "Quốc doanh",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "CTG",
+      "name": "VietinBank",
+      "group": "Quốc doanh",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "TCB",
+      "name": "Techcombank",
+      "group": "Doanh nghiệp",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "VPB",
+      "name": "VPBank",
+      "group": "Cá nhân",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "MBB",
+      "name": "MBBank",
+      "group": "Doanh nghiệp",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "ACB",
+      "name": "ACB",
+      "group": "Cá nhân",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "LPB",
+      "name": "LPBank",
+      "group": "Doanh nghiệp",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "HDB",
+      "name": "HDBank",
+      "group": "Doanh nghiệp",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "STB",
+      "name": "Sacombank",
+      "group": "Cá nhân",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "VIB",
+      "name": "VIBBank",
+      "group": "Cá nhân",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "TPB",
+      "name": "TPBank",
+      "group": "Quy mô nhỏ",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "EIB",
+      "name": "Eximbank",
+      "group": "Doanh nghiệp",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "SHB",
+      "name": "SHB",
+      "group": "Doanh nghiệp",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "MSB",
+      "name": "MSB Bank",
+      "group": "Quy mô nhỏ",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "OCB",
+      "name": "Ngân hàng Phương Đông",
+      "group": "Cá nhân",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "SSB",
+      "name": "SeABank",
+      "group": "",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "NAB",
+      "name": "Ngân hàng Nam Á",
+      "group": "",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "BAB",
+      "name": "Ngân hàng Bắc Á",
+      "group": "",
+      "exchange": "HNX"
+    },
+    {
+      "symbol": "ABB",
+      "name": "Ngân hàng An Bình",
+      "group": "",
+      "exchange": "UPCoM"
+    },
+    {
+      "symbol": "PGB",
+      "name": "PG Bank",
+      "group": "",
+      "exchange": "UPCoM"
+    },
+    {
+      "symbol": "BVB",
+      "name": "Ngân hàng Bản Việt - BVBank",
+      "group": "",
+      "exchange": "UPCoM"
+    },
+    {
+      "symbol": "VBB",
+      "name": "VietBank",
+      "group": "",
+      "exchange": "UPCoM"
+    },
+    {
+      "symbol": "VAB",
+      "name": "Ngân hàng Việt Á",
+      "group": "",
+      "exchange": "UPCoM"
+    },
+    {
+      "symbol": "NVB",
+      "name": "Ngân hàng Quốc Dân",
+      "group": "",
+      "exchange": "HNX"
+    },
+    {
+      "symbol": "KLB",
+      "name": "KienlongBank",
+      "group": "",
+      "exchange": "UPCoM"
+    },
+    {
+      "symbol": "SGB",
+      "name": "Sài Gòn Công thương",
+      "group": "",
+      "exchange": "UPCoM"
+    }
+  ]
+}

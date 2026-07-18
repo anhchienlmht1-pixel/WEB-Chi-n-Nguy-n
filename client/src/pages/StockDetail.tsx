@@ -8,6 +8,8 @@ import FinancialRatios from "../components/FinancialRatios";
 import SeasonalityHeatmap from "../components/SeasonalityHeatmap";
 import NewsFeed from "../components/NewsFeed";
 import StockDashboard from "../components/StockDashboard";
+import BankFundamentals from "../components/BankFundamentals";
+import { isBankSymbol } from "../utils/bankData";
 
 export default function StockDetail() {
   const { symbol = "" } = useParams();
@@ -75,6 +77,12 @@ export default function StockDetail() {
           {!isIndexOrFutures && (
             <div className="mt-6">
               <StockDashboard symbol={quote.symbol} />
+            </div>
+          )}
+
+          {isBankSymbol(quote.symbol) && (
+            <div className="mt-6">
+              <BankFundamentals symbol={quote.symbol} />
             </div>
           )}
 
