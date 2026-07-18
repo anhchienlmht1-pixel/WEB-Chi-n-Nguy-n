@@ -189,13 +189,32 @@ def compute_series(sheet: Sheet, cols: list, is_quarterly: bool) -> dict:
     s["tsFvtpl"], s["tsHtm"], s["tsAfs"] = tsFvtpl, tsHtm, tsAfs
     s["tsFvtplShare"], s["tsHtmShare"], s["tsAfsShare"] = shares(tsFvtpl, tsHtm, tsAfs)
     propTotal = [add(a, b, c) for a, b, c in zip(tsFvtpl, tsHtm, tsAfs)]
+    s["propTotal"] = propTotal
     s["propAssetsGrowth"] = [growth(propTotal[i], propTotal[i - 1]) if i >= 1 else None for i in range(n)]
 
+    # FVTPL trading yield: "Lãi gộp FVTPL" (= lnFvtpl, revenue+cost already
+    # netted) over the average FVTPL book size across the period.
+    fvtplAvgAssets = [
+        (tsFvtpl[i] + tsFvtpl[i - 1]) / 2.0 if i >= 1 and None not in (tsFvtpl[i], tsFvtpl[i - 1]) else None
+        for i in range(n)
+    ]
+    s["fvtplAvgAssets"] = fvtplAvgAssets
+    s["fvtplYield"] = [safe_div(a, b) for a, b in zip(lnFvtpl, fvtplAvgAssets)]
+
     # Proprietary-book composition by instrument type, per book and
-    # combined across all three books.
+    # combined across all three books — both absolute and share.
     fvtplListed, fvtplUnlisted, fvtplFund, fvtplBond, fvtplMoneyMkt = series(578), series(579), series(580), series(581), series(583)
     htmListed, htmUnlisted, htmFund, htmBond, htmMoneyMkt = series(603), series(604), series(605), series(606), series(607)
     afsListed, afsUnlisted, afsFund, afsBond, afsMoneyMkt = series(591), series(592), series(593), series(594), series(595)
+    s["fvtplListed"], s["fvtplUnlisted"], s["fvtplFund"], s["fvtplBond"], s["fvtplMoneyMkt"] = (
+        fvtplListed, fvtplUnlisted, fvtplFund, fvtplBond, fvtplMoneyMkt,
+    )
+    s["htmListed"], s["htmUnlisted"], s["htmFund"], s["htmBond"], s["htmMoneyMkt"] = (
+        htmListed, htmUnlisted, htmFund, htmBond, htmMoneyMkt,
+    )
+    s["afsListed"], s["afsUnlisted"], s["afsFund"], s["afsBond"], s["afsMoneyMkt"] = (
+        afsListed, afsUnlisted, afsFund, afsBond, afsMoneyMkt,
+    )
     s["fvtplListedShare"], s["fvtplUnlistedShare"], s["fvtplFundShare"], s["fvtplBondShare"], s["fvtplMoneyMktShare"] = shares(
         fvtplListed, fvtplUnlisted, fvtplFund, fvtplBond, fvtplMoneyMkt
     )
@@ -210,6 +229,9 @@ def compute_series(sheet: Sheet, cols: list, is_quarterly: bool) -> dict:
     allFund = [add(a, b, c) for a, b, c in zip(fvtplFund, htmFund, afsFund)]
     allBond = [add(a, b, c) for a, b, c in zip(fvtplBond, htmBond, afsBond)]
     allMoneyMkt = [add(a, b, c) for a, b, c in zip(fvtplMoneyMkt, htmMoneyMkt, afsMoneyMkt)]
+    s["allListed"], s["allUnlisted"], s["allFund"], s["allBond"], s["allMoneyMkt"] = (
+        allListed, allUnlisted, allFund, allBond, allMoneyMkt,
+    )
     s["allListedShare"], s["allUnlistedShare"], s["allFundShare"], s["allBondShare"], s["allMoneyMktShare"] = shares(
         allListed, allUnlisted, allFund, allBond, allMoneyMkt
     )

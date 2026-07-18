@@ -215,6 +215,18 @@ export const CHART_GROUPS: { section: string; charts: ChartDef[] }[] = [
         ],
       },
       {
+        title: "Cơ cấu tự doanh theo loại tài sản (giá trị)",
+        kind: "stackedBar",
+        format: "money",
+        bars: [
+          { id: "allListed", label: "CP niêm yết", color: BLUE },
+          { id: "allUnlisted", label: "CP chưa niêm yết", color: AMBER },
+          { id: "allFund", label: "Chứng chỉ quỹ", color: PURPLE },
+          { id: "allBond", label: "Trái phiếu", color: GREEN },
+          { id: "allMoneyMkt", label: "Tiền gửi & CCTG", color: SLATE },
+        ],
+      },
+      {
         title: "Cơ cấu FVTPL theo loại tài sản",
         kind: "stackedShare",
         format: "percent",
@@ -224,6 +236,18 @@ export const CHART_GROUPS: { section: string; charts: ChartDef[] }[] = [
           { id: "fvtplFundShare", label: "Chứng chỉ quỹ", color: PURPLE },
           { id: "fvtplBondShare", label: "Trái phiếu", color: GREEN },
           { id: "fvtplMoneyMktShare", label: "Công cụ TT tiền tệ", color: SLATE },
+        ],
+      },
+      {
+        title: "Cơ cấu FVTPL theo loại tài sản (giá trị)",
+        kind: "stackedBar",
+        format: "money",
+        bars: [
+          { id: "fvtplListed", label: "CP niêm yết", color: BLUE },
+          { id: "fvtplUnlisted", label: "CP chưa niêm yết", color: AMBER },
+          { id: "fvtplFund", label: "Chứng chỉ quỹ", color: PURPLE },
+          { id: "fvtplBond", label: "Trái phiếu", color: GREEN },
+          { id: "fvtplMoneyMkt", label: "Công cụ TT tiền tệ", color: SLATE },
         ],
       },
       {
@@ -239,6 +263,18 @@ export const CHART_GROUPS: { section: string; charts: ChartDef[] }[] = [
         ],
       },
       {
+        title: "Cơ cấu HTM theo loại tài sản (giá trị)",
+        kind: "stackedBar",
+        format: "money",
+        bars: [
+          { id: "htmListed", label: "CP niêm yết", color: BLUE },
+          { id: "htmUnlisted", label: "CP chưa niêm yết", color: AMBER },
+          { id: "htmFund", label: "Chứng chỉ quỹ", color: PURPLE },
+          { id: "htmBond", label: "Trái phiếu", color: GREEN },
+          { id: "htmMoneyMkt", label: "Công cụ TT tiền tệ", color: SLATE },
+        ],
+      },
+      {
         title: "Cơ cấu AFS theo loại tài sản",
         kind: "stackedShare",
         format: "percent",
@@ -251,7 +287,31 @@ export const CHART_GROUPS: { section: string; charts: ChartDef[] }[] = [
         ],
       },
       {
-        title: "Cơ cấu lãi từ FVTPL",
+        title: "Cơ cấu AFS theo loại tài sản (giá trị)",
+        kind: "stackedBar",
+        format: "money",
+        bars: [
+          { id: "afsListed", label: "CP niêm yết", color: BLUE },
+          { id: "afsUnlisted", label: "CP chưa niêm yết", color: AMBER },
+          { id: "afsFund", label: "Chứng chỉ quỹ", color: PURPLE },
+          { id: "afsBond", label: "Trái phiếu", color: GREEN },
+          { id: "afsMoneyMkt", label: "Công cụ TT tiền tệ", color: SLATE },
+        ],
+      },
+      {
+        title: "Cơ cấu lãi từ FVTPL (giá trị)",
+        kind: "comboBarLine",
+        format: "money",
+        lineFormat: "percent",
+        bars: [
+          { id: "fvtplCoTuc", label: "Cổ tức & tiền lãi", color: RED },
+          { id: "fvtplDanhGiaLai", label: "Chênh lệch đánh giá lại", color: AMBER },
+          { id: "fvtplLaiBan", label: "Lãi bán tài sản", color: GREEN },
+        ],
+        lines: [{ id: "fvtplYield", label: "Lãi gộp FVTPL / FVTPL bình quân (%)", color: BLUE }],
+      },
+      {
+        title: "Tỷ trọng lãi từ FVTPL",
         kind: "stackedShare",
         format: "percent",
         bars: [
@@ -262,9 +322,14 @@ export const CHART_GROUPS: { section: string; charts: ChartDef[] }[] = [
       },
       {
         title: "Hiệu suất đầu tư tự doanh",
-        kind: "multiLine",
-        format: "percent",
-        lines: [{ id: "propReturn", label: "LN tự doanh / TS tự doanh", color: BLUE }],
+        kind: "comboBarLine",
+        format: "money",
+        lineFormat: "percent",
+        bars: [
+          { id: "tuDoanhLN", label: "LN tự doanh", color: RED },
+          { id: "propTotal", label: "TS tự doanh", color: AMBER },
+        ],
+        lines: [{ id: "propReturn", label: "Hiệu suất tự doanh bình quân (%)", color: GREEN }],
       },
     ],
   },
@@ -303,9 +368,14 @@ export const CHART_GROUPS: { section: string; charts: ChartDef[] }[] = [
       },
       {
         title: "Lợi suất cho vay margin",
-        kind: "multiLine",
-        format: "percent",
-        lines: [{ id: "marginYield", label: "Lợi suất bình quân năm", color: BLUE }],
+        kind: "comboBarLine",
+        format: "money",
+        lineFormat: "percent",
+        bars: [
+          { id: "marginInterestAnnualized", label: "Lãi thu từ margin (bình quân năm)", color: RED },
+          { id: "margin", label: "Dư nợ margin", color: AMBER },
+        ],
+        lines: [{ id: "marginYield", label: "Lợi suất bình quân năm (%)", color: GREEN }],
       },
       {
         title: "Chi phí vốn",
@@ -339,6 +409,18 @@ export const CHART_GROUPS: { section: string; charts: ChartDef[] }[] = [
           { id: "htmAllocShare", label: "HTM", color: PURPLE },
           { id: "choVayAllocShare", label: "Cho vay", color: GREEN },
           { id: "afsAllocShare", label: "AFS", color: SLATE },
+        ],
+      },
+      {
+        title: "Cấu trúc phân bổ tài sản (giá trị)",
+        kind: "stackedBar",
+        format: "money",
+        bars: [
+          { id: "cash", label: "Tiền & tương đương tiền", color: BLUE },
+          { id: "tsFvtpl", label: "FVTPL", color: AMBER },
+          { id: "tsHtm", label: "HTM", color: PURPLE },
+          { id: "choVay", label: "Cho vay", color: GREEN },
+          { id: "tsAfs", label: "AFS", color: SLATE },
         ],
       },
     ],
