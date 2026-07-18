@@ -22,10 +22,7 @@ const GREEN = "#10b981";
 const AMBER = "#f59e0b";
 const PURPLE = "#a78bfa";
 const PINK = "#f472b6";
-const TEAL = "#2dd4bf";
 const RED = "#f87171";
-const INDIGO = "#818cf8";
-const LIME = "#a3e635";
 const SLATE = "#94a3b8";
 
 // Replicates the securities-industry workbook's own "Chi tiết" dashboard
@@ -39,14 +36,14 @@ export const CHART_GROUPS: { section: string; charts: ChartDef[] }[] = [
     section: "So sánh với trung bình ngành",
     charts: [
       { title: "ROE", kind: "dualLine", format: "percent", lines: [{ id: "roe", label: "Công ty", color: BLUE }] },
-      { title: "ROA", kind: "dualLine", format: "percent", lines: [{ id: "roa", label: "Công ty", color: GREEN }] },
-      { title: "EPS cơ bản", kind: "dualLine", format: "perShare", lines: [{ id: "epsBasic", label: "Công ty", color: AMBER }] },
-      { title: "BVPS", kind: "dualLine", format: "perShare", lines: [{ id: "bvps", label: "Công ty", color: PURPLE }] },
-      { title: "Biên lợi nhuận gộp", kind: "dualLine", format: "percent", lines: [{ id: "grossMargin", label: "Công ty", color: PINK }] },
-      { title: "Biên LNTT", kind: "dualLine", format: "percent", lines: [{ id: "pretaxMargin", label: "Công ty", color: TEAL }] },
-      { title: "Biên LNST", kind: "dualLine", format: "percent", lines: [{ id: "netMargin", label: "Công ty", color: RED }] },
-      { title: "Biên LN môi giới", kind: "dualLine", format: "percent", lines: [{ id: "brokerageMargin", label: "Công ty", color: INDIGO }] },
-      { title: "Tỷ trọng LN tự doanh", kind: "dualLine", format: "percent", lines: [{ id: "propProfitShare", label: "Công ty", color: LIME }] },
+      { title: "ROA", kind: "dualLine", format: "percent", lines: [{ id: "roa", label: "Công ty", color: BLUE }] },
+      { title: "EPS cơ bản", kind: "dualLine", format: "perShare", lines: [{ id: "epsBasic", label: "Công ty", color: BLUE }] },
+      { title: "BVPS", kind: "dualLine", format: "perShare", lines: [{ id: "bvps", label: "Công ty", color: BLUE }] },
+      { title: "Biên lợi nhuận gộp", kind: "dualLine", format: "percent", lines: [{ id: "grossMargin", label: "Công ty", color: BLUE }] },
+      { title: "Biên LNTT", kind: "dualLine", format: "percent", lines: [{ id: "pretaxMargin", label: "Công ty", color: BLUE }] },
+      { title: "Biên LNST", kind: "dualLine", format: "percent", lines: [{ id: "netMargin", label: "Công ty", color: BLUE }] },
+      { title: "Biên LN môi giới", kind: "dualLine", format: "percent", lines: [{ id: "brokerageMargin", label: "Công ty", color: BLUE }] },
+      { title: "Tỷ trọng LN tự doanh", kind: "dualLine", format: "percent", lines: [{ id: "propProfitShare", label: "Công ty", color: BLUE }] },
     ],
   },
   {

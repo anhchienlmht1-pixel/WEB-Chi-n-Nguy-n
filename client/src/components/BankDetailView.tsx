@@ -99,7 +99,7 @@ export default function BankDetailView({
                       const id = chart.lines[0].id;
                       lines.push({
                         label: "Trung bình ngành",
-                        color: "#94a3b8",
+                        color: "#f97316",
                         values: periodData.industry[id] ?? [],
                       });
                     }

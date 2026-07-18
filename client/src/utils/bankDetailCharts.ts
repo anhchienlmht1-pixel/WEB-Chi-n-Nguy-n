@@ -22,7 +22,6 @@ const GREEN = "#10b981";
 const AMBER = "#f59e0b";
 const PURPLE = "#a78bfa";
 const PINK = "#f472b6";
-const TEAL = "#2dd4bf";
 const RED = "#f87171";
 const INDIGO = "#818cf8";
 const LIME = "#a3e635";
@@ -38,12 +37,12 @@ export const CHART_GROUPS: { section: string; charts: ChartDef[] }[] = [
     section: "So sánh với trung bình ngành",
     charts: [
       { title: "NIM", kind: "dualLine", format: "percent", lines: [{ id: "nim", label: "Ngân hàng", color: BLUE }] },
-      { title: "CASA", kind: "dualLine", format: "percent", lines: [{ id: "casa", label: "Ngân hàng", color: GREEN }] },
-      { title: "COF", kind: "dualLine", format: "percent", lines: [{ id: "cof", label: "Ngân hàng", color: AMBER }] },
-      { title: "CIR", kind: "dualLine", format: "percent", lines: [{ id: "cir", label: "Ngân hàng", color: PURPLE }] },
-      { title: "ROE (4 quý gần nhất)", kind: "dualLine", format: "percent", lines: [{ id: "roe4q", label: "Ngân hàng", color: PINK }] },
-      { title: "ROA (4 quý gần nhất)", kind: "dualLine", format: "percent", lines: [{ id: "roa4q", label: "Ngân hàng", color: TEAL }] },
-      { title: "LDR", kind: "dualLine", format: "percent", lines: [{ id: "ldr", label: "Ngân hàng", color: RED }] },
+      { title: "CASA", kind: "dualLine", format: "percent", lines: [{ id: "casa", label: "Ngân hàng", color: BLUE }] },
+      { title: "COF", kind: "dualLine", format: "percent", lines: [{ id: "cof", label: "Ngân hàng", color: BLUE }] },
+      { title: "CIR", kind: "dualLine", format: "percent", lines: [{ id: "cir", label: "Ngân hàng", color: BLUE }] },
+      { title: "ROE (4 quý gần nhất)", kind: "dualLine", format: "percent", lines: [{ id: "roe4q", label: "Ngân hàng", color: BLUE }] },
+      { title: "ROA (4 quý gần nhất)", kind: "dualLine", format: "percent", lines: [{ id: "roa4q", label: "Ngân hàng", color: BLUE }] },
+      { title: "LDR", kind: "dualLine", format: "percent", lines: [{ id: "ldr", label: "Ngân hàng", color: BLUE }] },
     ],
   },
   {

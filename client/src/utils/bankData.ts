@@ -1,4 +1,4 @@
-import type { BankData, BankMeta, BankMetricKey, BankOverview, BankStatement } from "../types/bank";
+import type { BankData, BankMeta, BankMetricKey, BankStatement } from "../types/bank";
 import type { BankDetail } from "../types/bankDetail";
 
 // The "Cơ bản" (Fundamentals) section only has data for these 27 banks —
@@ -31,10 +31,6 @@ export function fetchBankMeta(): Promise<{ banks: BankMeta[] }> {
 
 export function fetchBankData(symbol: string): Promise<BankData> {
   return fetchJson(`/data/banks/${symbol.toUpperCase()}.json`);
-}
-
-export function fetchBankOverview(): Promise<BankOverview> {
-  return fetchJson("/data/banks/overview.json");
 }
 
 export function fetchBankStatement(symbol: string): Promise<BankStatement> {

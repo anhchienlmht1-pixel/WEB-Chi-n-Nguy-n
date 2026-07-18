@@ -2,7 +2,6 @@ import type {
   SecuritiesCompanyData,
   SecuritiesMeta,
   SecuritiesMetricKey,
-  SecuritiesOverview,
   SecuritiesStatement,
 } from "../types/securities";
 import type { SecuritiesDetail } from "../types/securitiesDetail";
@@ -34,10 +33,6 @@ export function fetchSecuritiesMeta(): Promise<{ companies: SecuritiesMeta[] }> 
 
 export function fetchSecuritiesData(symbol: string): Promise<SecuritiesCompanyData> {
   return fetchJson(`/data/securities/${symbol.toUpperCase()}.json`);
-}
-
-export function fetchSecuritiesOverview(): Promise<SecuritiesOverview> {
-  return fetchJson("/data/securities/overview.json");
 }
 
 export function fetchSecuritiesStatement(symbol: string): Promise<SecuritiesStatement> {
