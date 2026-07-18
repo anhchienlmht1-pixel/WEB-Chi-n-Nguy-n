@@ -59,6 +59,7 @@ export interface FinancialReport {
   periods: string[];
   items: FinancialLineItem[];
   source?: FinancialSource;
+  otherSources?: { source: FinancialSource; outcome: string }[];
 }
 
 export type FinancialReportType = "KQKD" | "CDKT" | "LCTT" | "CSTC";

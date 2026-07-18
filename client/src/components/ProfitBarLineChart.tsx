@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { fetchFinancials } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import type { FinancialPeriodType } from "../types";
-import { findProfitItem, financialSourceLabel } from "../utils/financials";
+import { findProfitItem, financialSourceCaption } from "../utils/financials";
 import { sortPeriodIndices } from "../utils/period";
 import BarLineComboChart from "./BarLineComboChart";
 
@@ -35,7 +35,7 @@ export default function ProfitBarLineChart({ symbol, periodType }: { symbol: str
       periods={chart.periods}
       values={chart.values}
       unit={chart.unit}
-      sourceLabel={data?.source && `Nguồn: ${financialSourceLabel(data.source)} · ${chart.periods.length} kỳ`}
+      sourceLabel={data ? financialSourceCaption(data) ?? undefined : undefined}
     />
   );
 }

@@ -11,6 +11,27 @@ export function financialSourceLabel(source: FinancialSource): string {
   return SOURCE_LABEL[source];
 }
 
+// Every non-winning source's outcome is a debugging aid — normally you'd
+// only ever see the winner, but a losing source's failure reason is
+// exactly what's needed to fix it, and there's no other way to see it
+// short of server logs. Shown inline so a screenshot carries it directly.
+export function financialSourceCaption(
+  report: {
+    source?: FinancialSource;
+    periods: string[];
+    otherSources?: { source: FinancialSource; outcome: string }[];
+  },
+  prefix = "Nguồn"
+): string | null {
+  if (!report.source) return null;
+  let caption = `${prefix}: ${financialSourceLabel(report.source)} · ${report.periods.length} kỳ`;
+  if (report.otherSources && report.otherSources.length > 0) {
+    const others = report.otherSources.map((o) => `${financialSourceLabel(o.source)}: ${o.outcome}`).join(" · ");
+    caption += ` (khác: ${others})`;
+  }
+  return caption;
+}
+
 // KBS doesn't document exact KQKD row IDs, so the net-profit line is found
 // by name match — prefer the top-level (least indented) row when several
 // "lợi nhuận sau thuế" rows exist (e.g. consolidated vs. parent-company-only).

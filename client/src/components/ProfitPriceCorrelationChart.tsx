@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { fetchFinancials, fetchHistory } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import type { FinancialPeriodType, FinancialSource, HistoryPoint } from "../types";
-import { findProfitItem, financialSourceLabel } from "../utils/financials";
+import { findProfitItem, financialSourceCaption } from "../utils/financials";
 import { periodEndDate, sortPeriodIndices } from "../utils/period";
 import { pickLabelIndices } from "../utils/chartTicks";
 
@@ -86,6 +86,7 @@ export default function ProfitPriceCorrelationChart({ symbol }: { symbol: string
       profit: trimmed.map((p) => (p.profit == null ? null : (p.profit / baseProfit) * 100)),
       price: trimmed.map((p) => (p.price / basePrice) * 100),
       source: data.kqkd.source,
+      otherSources: data.kqkd.otherSources,
     };
   }, [data]);
 
@@ -144,11 +145,13 @@ function CorrelationLines({
   profit,
   price,
   source,
+  otherSources,
 }: {
   labels: string[];
   profit: (number | null)[];
   price: number[];
   source?: FinancialSource;
+  otherSources?: { source: FinancialSource; outcome: string }[];
 }) {
   const allValues = [...profit.filter((v): v is number => v != null), ...price];
   const min = Math.min(100, ...allValues);
@@ -244,7 +247,7 @@ function CorrelationLines({
 
       {source && (
         <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
-          Nguồn lợi nhuận: {financialSourceLabel(source)} · {labels.length} kỳ
+          {financialSourceCaption({ source, periods: labels, otherSources }, "Nguồn lợi nhuận")}
         </p>
       )}
     </>

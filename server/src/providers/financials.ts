@@ -7,6 +7,12 @@ export type FinancialSource = "vndirect" | "kbs" | "vci" | "cafef";
 
 export interface FinancialReportWithSource extends FinancialReport {
   source: FinancialSource;
+  // Every non-winning source's outcome (periods found, or why it failed) —
+  // normally invisible since only the winner's period count shows in the
+  // UI, but a losing source's failure reason is exactly what's needed to
+  // fix it, and there's no other way to see it short of digging through
+  // server logs. Surfaced so a live report can show it directly.
+  otherSources?: { source: FinancialSource; outcome: string }[];
 }
 
 // Both KBS and VNDirect have shown real data-quality quirks before (KBS's
@@ -66,21 +72,29 @@ export async function fetchFinancialReport(
   const results = await Promise.allSettled(SOURCES.map((s) => s.fetch(symbol, reportType, periodType)));
 
   const succeeded: FinancialReportWithSource[] = [];
-  const failures: string[] = [];
+  const outcomeBySource = new Map<FinancialSource, string>();
   results.forEach((result, i) => {
     const { name } = SOURCES[i];
     if (result.status === "fulfilled") {
-      succeeded.push({ ...dedupePeriods(result.value), source: name });
+      const report = { ...dedupePeriods(result.value), source: name };
+      succeeded.push(report);
+      outcomeBySource.set(name, `${report.periods.length} kỳ`);
     } else {
-      failures.push(`${name}: ${errorMessage(result.reason)}`);
+      outcomeBySource.set(name, errorMessage(result.reason).slice(0, 200));
     }
   });
 
   if (succeeded.length > 0) {
-    return succeeded.reduce((best, r) => (r.periods.length > best.periods.length ? r : best));
+    const best = succeeded.reduce((a, b) => (b.periods.length > a.periods.length ? b : a));
+    const otherSources = SOURCES.filter((s) => s.name !== best.source).map((s) => ({
+      source: s.name,
+      outcome: outcomeBySource.get(s.name) ?? "?",
+    }));
+    return { ...best, otherSources };
   }
 
-  throw Object.assign(new Error(`Tất cả nguồn báo cáo tài chính đều lỗi. ${failures.join(" | ")}`), {
+  const failures = SOURCES.map((s) => `${s.name}: ${outcomeBySource.get(s.name)}`).join(" | ");
+  throw Object.assign(new Error(`Tất cả nguồn báo cáo tài chính đều lỗi. ${failures}`), {
     status: 502,
   });
 }
