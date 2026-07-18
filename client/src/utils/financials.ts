@@ -4,6 +4,7 @@ const SOURCE_LABEL: Record<FinancialSource, string> = {
   vndirect: "VNDirect",
   kbs: "KBS",
   vci: "VCI",
+  cafef: "CafeF",
 };
 
 export function financialSourceLabel(source: FinancialSource): string {

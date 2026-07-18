@@ -1,8 +1,9 @@
 import { fetchKbsReport, type FinancialReport, type KbsPeriodType, type KbsReportType } from "./kbsFinancials.js";
 import { fetchVndirectReport } from "./vndirectFinancials.js";
 import { fetchVciReport } from "./vciFinancials.js";
+import { fetchCafefReport } from "./cafefFinancials.js";
 
-export type FinancialSource = "vndirect" | "kbs" | "vci";
+export type FinancialSource = "vndirect" | "kbs" | "vci" | "cafef";
 
 export interface FinancialReportWithSource extends FinancialReport {
   source: FinancialSource;
@@ -54,6 +55,7 @@ const SOURCES: { name: FinancialSource; fetch: typeof fetchVndirectReport }[] = 
   { name: "vndirect", fetch: fetchVndirectReport },
   { name: "kbs", fetch: fetchKbsReport },
   { name: "vci", fetch: fetchVciReport },
+  { name: "cafef", fetch: fetchCafefReport },
 ];
 
 export async function fetchFinancialReport(

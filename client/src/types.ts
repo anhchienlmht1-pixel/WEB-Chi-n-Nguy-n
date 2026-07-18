@@ -53,7 +53,7 @@ export interface FinancialLineItem {
   values: (number | null)[];
 }
 
-export type FinancialSource = "vndirect" | "kbs" | "vci";
+export type FinancialSource = "vndirect" | "kbs" | "vci" | "cafef";
 
 export interface FinancialReport {
   periods: string[];
