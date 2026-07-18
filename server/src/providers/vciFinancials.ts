@@ -11,6 +11,12 @@ import type { FinancialLineItem, FinancialReport, KbsPeriodType, KbsReportType }
 // sources were, since a GraphQL field-name mismatch fails outright rather
 // than just parsing to something empty. If it 400s with a "Cannot query
 // field ..." message, that error is the fix: it names the real field.
+//
+// Field names below are snake_case (year, quarter, revenue, net_profit...)
+// per a live vnstock `Finance(source="vci").income_statement()` example —
+// vnstock's own DataFrame columns, which may or may not exactly match the
+// raw GraphQL field names underneath, but it's the closest evidence
+// available without a live schema, so it replaces an earlier camelCase guess.
 const VCI_GRAPHQL_URL = "https://api.vietcap.com.vn/data-mt/graphql";
 
 const HEADERS = {
@@ -34,28 +40,28 @@ const QUERY_NAME: Record<KbsReportType, string> = {
 // list, since VCI's ratio/statement endpoints are documented (via vnstock
 // usage examples) as fixed-column tables, not open-ended item rows.
 const FIELD_SET: Record<KbsReportType, string[]> = {
-  KQKD: ["revenue", "revenueGrowth", "netProfit", "netProfitGrowth", "grossProfit", "operatingProfit"],
-  CDKT: ["totalAssets", "totalAssetsGrowth", "totalLiabilities", "totalEquity", "cash", "shortTermDebt"],
-  LCTT: ["netCashFlowFromOperating", "netCashFlowFromInvesting", "netCashFlowFromFinancing"],
+  KQKD: ["revenue", "revenue_growth", "net_profit", "net_profit_growth", "gross_profit", "operating_profit"],
+  CDKT: ["total_assets", "total_assets_growth", "total_liabilities", "total_equity", "cash", "short_term_debt"],
+  LCTT: ["net_cash_flow_from_operating", "net_cash_flow_from_investing", "net_cash_flow_from_financing"],
   CSTC: ["pe", "pb", "roe", "roa", "eps", "bvps", "dividend"],
 };
 
 const FIELD_LABEL: Record<string, string> = {
   revenue: "Doanh thu",
-  revenueGrowth: "Tăng trưởng doanh thu",
-  netProfit: "Lợi nhuận sau thuế",
-  netProfitGrowth: "Tăng trưởng lợi nhuận",
-  grossProfit: "Lợi nhuận gộp",
-  operatingProfit: "Lợi nhuận hoạt động",
-  totalAssets: "Tổng tài sản",
-  totalAssetsGrowth: "Tăng trưởng tổng tài sản",
-  totalLiabilities: "Tổng nợ phải trả",
-  totalEquity: "Vốn chủ sở hữu",
+  revenue_growth: "Tăng trưởng doanh thu",
+  net_profit: "Lợi nhuận sau thuế",
+  net_profit_growth: "Tăng trưởng lợi nhuận",
+  gross_profit: "Lợi nhuận gộp",
+  operating_profit: "Lợi nhuận hoạt động",
+  total_assets: "Tổng tài sản",
+  total_assets_growth: "Tăng trưởng tổng tài sản",
+  total_liabilities: "Tổng nợ phải trả",
+  total_equity: "Vốn chủ sở hữu",
   cash: "Tiền và tương đương tiền",
-  shortTermDebt: "Nợ ngắn hạn",
-  netCashFlowFromOperating: "Lưu chuyển tiền từ HĐKD",
-  netCashFlowFromInvesting: "Lưu chuyển tiền từ HĐĐT",
-  netCashFlowFromFinancing: "Lưu chuyển tiền từ HĐTC",
+  short_term_debt: "Nợ ngắn hạn",
+  net_cash_flow_from_operating: "Lưu chuyển tiền từ HĐKD",
+  net_cash_flow_from_investing: "Lưu chuyển tiền từ HĐĐT",
+  net_cash_flow_from_financing: "Lưu chuyển tiền từ HĐTC",
   pe: "P/E",
   pb: "P/B",
   roe: "ROE",
@@ -67,7 +73,7 @@ const FIELD_LABEL: Record<string, string> = {
 
 function buildQuery(reportType: KbsReportType): string {
   const name = QUERY_NAME[reportType];
-  const fields = ["ticker", "yearReport", "lengthReport", ...FIELD_SET[reportType]];
+  const fields = ["ticker", "year", "quarter", ...FIELD_SET[reportType]];
   return `query Query($ticker: String!, $period: String!) {
   ${name}(ticker: $ticker, period: $period) {
     ${fields.join("\n    ")}
@@ -84,12 +90,22 @@ function toNumber(raw: unknown): number | null {
   return null;
 }
 
-function periodLabel(yearReport: unknown, lengthReport: unknown): string {
-  const year = Number(yearReport);
-  const length = Number(lengthReport);
-  // vnstock's VCI convention: lengthReport 5 means "full year", 1-4 mean quarters.
-  if (Number.isFinite(length) && length >= 1 && length <= 4) return `Q${length} ${year}`;
-  return String(year);
+// A quarter of 0/null/missing means the row is an annual figure — only
+// values 1-4 are an actual quarter.
+function rowQuarter(row: any): number | null {
+  const q = Number(row.quarter);
+  return Number.isFinite(q) && q >= 1 && q <= 4 ? q : null;
+}
+
+function periodSortKey(row: any): number {
+  const year = Number(row.year) || 0;
+  return year * 4 + (rowQuarter(row) ?? 4);
+}
+
+function periodLabel(row: any): string {
+  const year = Number(row.year);
+  const quarter = rowQuarter(row);
+  return quarter ? `Q${quarter} ${year}` : String(year);
 }
 
 export async function fetchVciReport(
@@ -126,10 +142,9 @@ export async function fetchVciReport(
 
   if (Array.isArray(data?.errors) && data.errors.length > 0) {
     const messages = data.errors.map((e: any) => e?.message ?? JSON.stringify(e)).join(" | ");
-    throw Object.assign(
-      new Error(`VCI GraphQL báo lỗi cho ${symbol} (${reportType}): ${messages}`),
-      { status: 502 }
-    );
+    throw Object.assign(new Error(`VCI GraphQL báo lỗi cho ${symbol} (${reportType}): ${messages}`), {
+      status: 502,
+    });
   }
 
   const rows: any[] = data?.data?.[QUERY_NAME[reportType]];
@@ -142,20 +157,15 @@ export async function fetchVciReport(
     );
   }
 
-  const sorted = [...rows].sort((a, b) => {
-    const ay = Number(a.yearReport) * 4 + (Number(a.lengthReport) <= 4 ? Number(a.lengthReport) : 4);
-    const by = Number(b.yearReport) * 4 + (Number(b.lengthReport) <= 4 ? Number(b.lengthReport) : 4);
-    return ay - by;
-  });
-
-  const periods = sorted.map((row) => periodLabel(row.yearReport, row.lengthReport));
+  const sorted = [...rows].sort((a, b) => periodSortKey(a) - periodSortKey(b));
+  const periods = sorted.map(periodLabel);
   const fields = FIELD_SET[reportType];
 
-  const items: FinancialLineItem[] = fields.map((field, i) => ({
+  const items: FinancialLineItem[] = fields.map((field) => ({
     id: field,
     name: FIELD_LABEL[field] ?? field,
     nameEn: field,
-    unit: field.toLowerCase().includes("growth") || ["pe", "pb", "roe", "roa"].includes(field) ? "%" : "Tỷ VNĐ",
+    unit: field.endsWith("_growth") || ["pe", "pb", "roe", "roa"].includes(field) ? "%" : "Tỷ VNĐ",
     levels: 0,
     values: sorted.map((row) => toNumber(row[field])),
   }));
