@@ -1,5 +1,4 @@
 import { pickLabelIndices } from "../utils/chartTicks";
-import { formatDetailTooltip, formatDetailValue, type BankMetricFormat } from "../utils/bankDetailFormat";
 
 const WIDTH = 800;
 const HEIGHT = 240;
@@ -24,17 +23,18 @@ export default function BankStackedBarChart({
   bars,
   mode,
   lines = [],
-  format,
-  lineFormat = "percent",
+  formatValue,
+  formatLineValue,
 }: {
   title: string;
   periods: string[];
   bars: Series[];
   mode: "share" | "absolute";
   lines?: Series[];
-  format: BankMetricFormat;
-  lineFormat?: BankMetricFormat;
+  formatValue: (v: number) => string;
+  formatLineValue?: (v: number) => string;
 }) {
+  const formatLine = formatLineValue ?? formatValue;
   const n = periods.length;
 
   // In "share" mode a period is only plotted if every component has a
@@ -101,7 +101,7 @@ export default function BankStackedBarChart({
               textAnchor="end"
               className="fill-slate-500 text-[9px] dark:fill-slate-400"
             >
-              {formatDetailValue(t, format)}
+              {formatValue(t)}
             </text>
           ))}
           <line
@@ -132,7 +132,7 @@ export default function BankStackedBarChart({
                       fill={bars[bi].color}
                     >
                       <title>
-                        {periods[i]} — {bars[bi].label}: {formatDetailTooltip(v, format)}
+                        {periods[i]} — {bars[bi].label}: {formatValue(v)}
                       </title>
                     </rect>
                   );
@@ -162,7 +162,7 @@ export default function BankStackedBarChart({
               v == null || !Number.isFinite(v) ? null : (
                 <circle key={`${line.label}-${i}`} cx={xCenter(i)} cy={lineY(v)} r={2.5} fill={line.color}>
                   <title>
-                    {periods[i]} — {line.label}: {formatDetailTooltip(v, lineFormat)}
+                    {periods[i]} — {line.label}: {formatLine(v)}
                   </title>
                 </circle>
               )
@@ -177,7 +177,7 @@ export default function BankStackedBarChart({
                 textAnchor="start"
                 className="fill-slate-500 text-[9px] dark:fill-slate-400"
               >
-                {formatDetailValue(t, lineFormat)}
+                {formatLine(t)}
               </text>
             ))}
 

@@ -1,0 +1,84 @@
+{
+  "companies": [
+    {
+      "symbol": "SSI",
+      "name": "Chứng khoán SSI",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "VND",
+      "name": "Chứng khoán VNDIRECT",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "HCM",
+      "name": "Chứng khoán HSC",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "VCI",
+      "name": "Chứng khoán Vietcap",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "VIX",
+      "name": "Chứng khoán VIX",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "MBS",
+      "name": "Chứng khoán MB",
+      "exchange": "HNX"
+    },
+    {
+      "symbol": "FTS",
+      "name": "Chứng khoán FPT",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "SHS",
+      "name": "Chứng khoán SG - HN",
+      "exchange": "HNX"
+    },
+    {
+      "symbol": "BSI",
+      "name": "Chứng khoán BIDV",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "DSE",
+      "name": "Chứng Khoán DNSE",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "CTS",
+      "name": "Chứng khoán Vietinbank",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "VDS",
+      "name": "Chứng khoán Rồng Việt",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "ORS",
+      "name": "Chứng khoán Tiên Phong",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "VCK",
+      "name": "Chứng khoán VPS",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "VPX",
+      "name": "Công ty Chứng khoán VPBank",
+      "exchange": "HOSE"
+    },
+    {
+      "symbol": "TCX",
+      "name": "Chứng khoán Kỹ Thương",
+      "exchange": "HOSE"
+    }
+  ]
+}

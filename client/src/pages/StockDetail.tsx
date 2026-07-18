@@ -10,6 +10,8 @@ import NewsFeed from "../components/NewsFeed";
 import StockDashboard from "../components/StockDashboard";
 import BankFundamentals from "../components/BankFundamentals";
 import { isBankSymbol } from "../utils/bankData";
+import SecuritiesFundamentals from "../components/SecuritiesFundamentals";
+import { isSecuritiesSymbol } from "../utils/securitiesData";
 
 export default function StockDetail() {
   const { symbol = "" } = useParams();
@@ -83,6 +85,12 @@ export default function StockDetail() {
           {isBankSymbol(quote.symbol) && (
             <div className="mt-6">
               <BankFundamentals symbol={quote.symbol} />
+            </div>
+          )}
+
+          {isSecuritiesSymbol(quote.symbol) && (
+            <div className="mt-6">
+              <SecuritiesFundamentals symbol={quote.symbol} />
             </div>
           )}
 
