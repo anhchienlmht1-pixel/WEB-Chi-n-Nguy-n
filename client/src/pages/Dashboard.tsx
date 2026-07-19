@@ -4,6 +4,7 @@ import { usePolling } from "../hooks/usePolling";
 import { useWatchlist } from "../hooks/useWatchlist";
 import StockTable from "../components/StockTable";
 import TopTraded from "../components/TopTraded";
+import MarketMovers from "../components/MarketMovers";
 import TechnicalChartPanel from "../components/TechnicalChartPanel";
 import SymbolPicker from "../components/SymbolPicker";
 import Hero from "../components/Hero";
@@ -28,6 +29,8 @@ export default function Dashboard() {
       </div>
 
       <TopTraded />
+
+      {data && data.quotes.length > 0 && <MarketMovers quotes={data.quotes} />}
 
       <div className="mb-6 flex flex-wrap items-baseline justify-between gap-2">
         <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">

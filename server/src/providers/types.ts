@@ -13,6 +13,10 @@ export interface Quote {
   volume: number;
   marketCap?: number;
   updatedAt: string;
+  /** Foreign-investor trading for the session, when the provider exposes it. */
+  foreignBuyVolume?: number;
+  foreignSellVolume?: number;
+  foreignOwnershipPercent?: number;
 }
 
 export interface HistoryPoint {

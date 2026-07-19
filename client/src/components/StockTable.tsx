@@ -5,10 +5,10 @@ import { formatChange, formatPercent, formatPrice, formatVolume, trendClass } fr
 import type { KeyRatios } from "../utils/ratios";
 import WatchButton from "./WatchButton";
 
-type SortKey = "symbol" | "price" | "changePercent" | "volume" | "pe" | "roe" | "roa";
+type SortKey = "symbol" | "price" | "changePercent" | "volume" | "pe" | "pb" | "roe" | "roa";
 type SortDir = "asc" | "desc";
 
-function ratioValue(ratios: KeyRatios | undefined, key: "pe" | "roe" | "roa"): number | null {
+function ratioValue(ratios: KeyRatios | undefined, key: "pe" | "pb" | "roe" | "roa"): number | null {
   return ratios?.[key]?.value ?? null;
 }
 
@@ -102,6 +102,7 @@ export default function StockTable({ quotes, ratios }: { quotes: Quote[]; ratios
             <SortHeader label="%" sortKeyValue="changePercent" />
             <SortHeader label="KL" sortKeyValue="volume" />
             {hasRatios && <SortHeader label="P/E" sortKeyValue="pe" />}
+            {hasRatios && <SortHeader label="P/B" sortKeyValue="pb" />}
             {hasRatios && <SortHeader label="ROE" sortKeyValue="roe" />}
             {hasRatios && <SortHeader label="ROA" sortKeyValue="roa" />}
             <th className="px-4 py-3"></th>
@@ -137,6 +138,11 @@ export default function StockTable({ quotes, ratios }: { quotes: Quote[]; ratios
                 {hasRatios && (
                   <td className="px-4 py-3 text-right tabular-nums text-slate-700 dark:text-slate-300">
                     {formatRatio(ratioValue(r, "pe"))}
+                  </td>
+                )}
+                {hasRatios && (
+                  <td className="px-4 py-3 text-right tabular-nums text-slate-700 dark:text-slate-300">
+                    {formatRatio(ratioValue(r, "pb"))}
                   </td>
                 )}
                 {hasRatios && (
