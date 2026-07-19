@@ -1,10 +1,12 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { fetchFinancials, fetchHistory, fetchQuote } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { useWatchlist } from "../hooks/useWatchlist";
 import StockTable from "../components/StockTable";
 import StockSummaryCard from "../components/StockSummaryCard";
 import { extractKeyRatios, type KeyRatios } from "../utils/ratios";
+import { generateDailyAlerts, type AlertType, type DailyAlert } from "../utils/alerts";
 import type { HistoryPoint, Quote } from "../types";
 
 type ViewMode = "cards" | "table";
@@ -39,6 +41,11 @@ export default function Watchlist() {
 
   const { data, loading, error } = usePolling(fetcher, [symbols.join(",")], 30000);
 
+  const alerts = useMemo(
+    () => (data ? data.flatMap((d) => generateDailyAlerts(d.quote.symbol, d.points)) : []),
+    [data]
+  );
+
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-6">
       <div className="mb-6 flex items-center justify-between">
@@ -62,6 +69,8 @@ export default function Watchlist() {
           </div>
         )}
       </div>
+
+      {alerts.length > 0 && <AlertsPanel alerts={alerts} />}
 
       {symbols.length === 0 && (
         <p className="text-slate-500 dark:text-slate-400">
@@ -93,6 +102,36 @@ export default function Watchlist() {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+const ALERT_BADGE: Record<AlertType, string> = {
+  OVERSOLD: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
+  BUY: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
+  REVERSAL: "bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400",
+};
+
+// Three daily signal checks (RSI oversold, MACD golden cross, Supertrend
+// reversal) computed from the same 3M history Watchlist already fetches for
+// its sparklines — ported from a user-supplied Python reference, no extra
+// requests needed.
+function AlertsPanel({ alerts }: { alerts: DailyAlert[] }) {
+  return (
+    <div className="mb-6 rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
+      <h2 className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">🔔 Cảnh báo hôm nay</h2>
+      <div className="flex flex-col gap-2">
+        {alerts.map((a, i) => (
+          <Link
+            key={`${a.symbol}-${a.indicator}-${i}`}
+            to={`/stock/${a.symbol}`}
+            className="flex flex-wrap items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60"
+          >
+            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${ALERT_BADGE[a.type]}`}>{a.indicator}</span>
+            <span className="text-slate-700 dark:text-slate-300">{a.message}</span>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }
