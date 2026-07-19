@@ -6,7 +6,7 @@ import { formatFinancialValue } from "../utils/format";
 import ProfitChart from "./ProfitChart";
 import RatioTrendChart from "./RatioTrendChart";
 import { sortPeriodIndices } from "../utils/period";
-import { buildFinancialTree, financialSourceCaption, type FinancialTreeNode } from "../utils/financials";
+import { buildFinancialTree, type FinancialTreeNode } from "../utils/financials";
 
 const REPORT_TABS: { value: FinancialReportType; label: string }[] = [
   { value: "CSTC", label: "Chỉ số tài chính" },
@@ -107,10 +107,6 @@ export default function FinancialRatios({ symbol }: { symbol: string }) {
 
       {!loading && data && data.items.length === 0 && (
         <div className="p-4 text-sm text-slate-500 dark:text-slate-400">Chưa có dữ liệu.</div>
-      )}
-
-      {!loading && data && data.source && (
-        <div className="px-4 pt-3 text-[11px] text-slate-400 dark:text-slate-500">{financialSourceCaption(data)}</div>
       )}
 
       {!loading && data && data.items.length > 0 && reportType === "KQKD" && <ProfitChart report={data} />}

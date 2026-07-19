@@ -16,13 +16,11 @@ export default function BarLineComboChart({
   periods,
   values,
   unit,
-  sourceLabel,
 }: {
   title: string;
   periods: string[];
   values: (number | null)[];
   unit: string;
-  sourceLabel?: string;
 }) {
   const growth = periodGrowth(values);
   const definedValues = values.filter((v): v is number => v != null && Number.isFinite(v));
@@ -148,7 +146,6 @@ export default function BarLineComboChart({
           )}
         </svg>
       </div>
-      {sourceLabel && <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">{sourceLabel}</p>}
     </div>
   );
 }

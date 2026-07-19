@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { fetchFinancials } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import type { FinancialPeriodType } from "../types";
-import { findTotalAssetsItem, financialSourceCaption } from "../utils/financials";
+import { findTotalAssetsItem } from "../utils/financials";
 import { sortPeriodIndices } from "../utils/period";
 import BarLineComboChart from "./BarLineComboChart";
 
@@ -35,7 +35,6 @@ export default function AssetsBarLineChart({ symbol, periodType }: { symbol: str
       periods={chart.periods}
       values={chart.values}
       unit={chart.unit}
-      sourceLabel={data ? financialSourceCaption(data) ?? undefined : undefined}
     />
   );
 }
