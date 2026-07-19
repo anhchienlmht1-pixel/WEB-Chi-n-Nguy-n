@@ -5,6 +5,7 @@ import { HistoryRange, TopExchange } from "../providers/types.js";
 import { topTradedOf, VALID_EXCHANGES } from "../providers/topTraded.js";
 import { KbsPeriodType, KbsReportType } from "../providers/kbsFinancials.js";
 import { fetchFinancialReport } from "../providers/financials.js";
+import { getQuoteWithFallback, getHistoryWithFallback } from "../providers/fallback.js";
 import { fetchNewsForSymbol } from "../news/cafefNews.js";
 
 const router = Router();
@@ -53,9 +54,8 @@ router.get(
 router.get(
   "/quote/:symbol",
   asyncHandler(async (req, res) => {
-    const provider = getProvider();
     const symbol = String(req.params.symbol).toUpperCase();
-    const data = await cached(`quote:${symbol}`, 20, () => provider.getQuote(symbol));
+    const data = await cached(`quote:${symbol}`, 20, () => getQuoteWithFallback(symbol));
     res.json(data);
   })
 );
@@ -63,7 +63,6 @@ router.get(
 router.get(
   "/history/:symbol",
   asyncHandler(async (req, res) => {
-    const provider = getProvider();
     const symbol = String(req.params.symbol).toUpperCase();
     const range = (req.query.range as HistoryRange) || "1M";
     if (!VALID_RANGES.includes(range)) {
@@ -71,7 +70,7 @@ router.get(
       return;
     }
     const data = await cached(`history:${symbol}:${range}`, 120, () =>
-      provider.getHistory(symbol, range)
+      getHistoryWithFallback(symbol, range)
     );
     res.json({ symbol, range, points: data });
   })
