@@ -8,9 +8,11 @@ import {
   DEFAULT_LONG_PERIODS,
   DEFAULT_SHORT_PERIODS,
   optimizeSmaCrossover,
+  optimizeSmaCrossoverOutOfSample,
   runRsiAtrBacktest,
   type BacktestParams,
   type BacktestResult,
+  type OutOfSampleResult,
   type SmaOptimizationRow,
 } from "../utils/backtest";
 import { formatPrice } from "../utils/format";
@@ -315,7 +317,9 @@ function RsiAtrTab({ initialSymbol }: { initialSymbol: string }) {
 function SmaOptimizeTab({ initialSymbol }: { initialSymbol: string }) {
   const [symbol, setSymbol] = useState(initialSymbol);
   const [range, setRange] = useState<HistoryRange>("5Y");
+  const [outOfSample, setOutOfSample] = useState(false);
   const [rows, setRows] = useState<SmaOptimizationRow[] | null>(null);
+  const [oos, setOos] = useState<OutOfSampleResult | null>(null);
   const [barCount, setBarCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -326,10 +330,17 @@ function SmaOptimizeTab({ initialSymbol }: { initialSymbol: string }) {
     try {
       const { points } = await fetchHistory(symbol, range);
       setBarCount(points.length);
-      setRows(optimizeSmaCrossover(points, DEFAULT_SHORT_PERIODS, DEFAULT_LONG_PERIODS));
+      if (outOfSample) {
+        setOos(optimizeSmaCrossoverOutOfSample(points, DEFAULT_SHORT_PERIODS, DEFAULT_LONG_PERIODS));
+        setRows(null);
+      } else {
+        setRows(optimizeSmaCrossover(points, DEFAULT_SHORT_PERIODS, DEFAULT_LONG_PERIODS));
+        setOos(null);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Không tải được dữ liệu giá.");
       setRows(null);
+      setOos(null);
     } finally {
       setLoading(false);
     }
@@ -349,7 +360,7 @@ function SmaOptimizeTab({ initialSymbol }: { initialSymbol: string }) {
 
       <div className="mt-4 grid grid-cols-2 gap-3 rounded-lg border border-slate-200 p-4 dark:border-slate-800 sm:grid-cols-4">
         <TopBar symbol={symbol} onSymbol={setSymbol} range={range} onRange={setRange} />
-        <div className="col-span-2 flex items-end sm:col-span-2">
+        <div className="col-span-2 flex items-end gap-3 sm:col-span-2">
           <button
             type="button"
             onClick={run}
@@ -358,8 +369,19 @@ function SmaOptimizeTab({ initialSymbol }: { initialSymbol: string }) {
           >
             {loading ? "Đang tính..." : "Chạy tối ưu hoá"}
           </button>
+          <label className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+            <input type="checkbox" checked={outOfSample} onChange={(e) => setOutOfSample(e.target.checked)} />
+            Kiểm định out-of-sample
+          </label>
         </div>
       </div>
+
+      {outOfSample && (
+        <p className="mt-3 text-xs text-amber-600 dark:text-amber-400">
+          Chọn tham số tốt nhất trên 70% dữ liệu đầu (train), rồi kiểm tra thật kết quả đó trên 30% dữ liệu cuối chưa
+          từng dùng để chọn (test) — tránh việc "tối ưu vừa khít" một khoảng thời gian rồi tưởng nhầm là chiến lược tốt.
+        </p>
+      )}
 
       {error && (
         <div className="mt-4 rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-600 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-400">
@@ -411,6 +433,62 @@ function SmaOptimizeTab({ initialSymbol }: { initialSymbol: string }) {
                 </tbody>
               </table>
             </div>
+          )}
+        </>
+      )}
+
+      {oos && (
+        <>
+          <p className="mt-4 text-xs text-slate-400 dark:text-slate-500">
+            Train: {oos.trainBars} phiên ({oos.trainPeriod.from.slice(0, 10)} → {oos.trainPeriod.to.slice(0, 10)}) · Test:{" "}
+            {oos.testBars} phiên ({oos.testPeriod.from.slice(0, 10)} → {oos.testPeriod.to.slice(0, 10)})
+          </p>
+
+          {oos.rows.length === 0 && (
+            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Không đủ dữ liệu để chia train/test.</p>
+          )}
+
+          {oos.rows.length > 0 && (
+            <div className="mt-2 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
+              <table className="w-full min-w-[640px] border-collapse text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800">
+                    <th className="px-4 py-2.5 font-medium">#</th>
+                    <th className="px-4 py-2.5 text-right font-medium">SMA ngắn</th>
+                    <th className="px-4 py-2.5 text-right font-medium">SMA dài</th>
+                    <th className="px-4 py-2.5 text-right font-medium">LN Train (in-sample)</th>
+                    <th className="px-4 py-2.5 text-right font-medium">LN Test (out-of-sample)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {oos.rows.map((r, i) => (
+                    <tr
+                      key={`${r.short}-${r.long}`}
+                      className={`border-b border-slate-100 last:border-0 dark:border-slate-900 ${
+                        i === 0 ? "bg-emerald-50/60 dark:bg-emerald-500/5" : ""
+                      }`}
+                    >
+                      <td className="px-4 py-2.5 text-slate-400 dark:text-slate-500">{i + 1}</td>
+                      <td className="px-4 py-2.5 text-right tabular-nums text-slate-900 dark:text-slate-100">{r.short}</td>
+                      <td className="px-4 py-2.5 text-right tabular-nums text-slate-900 dark:text-slate-100">{r.long}</td>
+                      <td className={`px-4 py-2.5 text-right tabular-nums font-medium ${pnlClass(r.inSampleReturnPercent)}`}>
+                        {formatPnl(r.inSampleReturnPercent)}
+                      </td>
+                      <td className={`px-4 py-2.5 text-right tabular-nums font-medium ${pnlClass(r.outOfSampleReturnPercent)}`}>
+                        {formatPnl(r.outOfSampleReturnPercent)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {oos.rows.length > 0 && (
+            <p className="mt-2 text-[11px] text-slate-400 dark:text-slate-500">
+              Cặp #1 là cặp thắng trên train — nhìn cột LN Test của chính nó để biết kết quả có giữ được ngoài mẫu hay
+              không; nếu Test âm trong khi Train dương, đó là dấu hiệu overfit chứ không phải một chiến lược đáng tin.
+            </p>
           )}
         </>
       )}

@@ -212,3 +212,64 @@ export function optimizeSmaCrossover(
 
   return rows.sort((a, b) => b.totalReturnPercent - a.totalReturnPercent);
 }
+
+export interface OutOfSampleRow {
+  short: number;
+  long: number;
+  inSampleReturnPercent: number;
+  outOfSampleReturnPercent: number;
+  inSampleCrossovers: number;
+  outOfSampleCrossovers: number;
+}
+
+export interface OutOfSampleResult {
+  trainBars: number;
+  testBars: number;
+  trainPeriod: { from: string; to: string };
+  testPeriod: { from: string; to: string };
+  rows: OutOfSampleRow[]; // ranked by in-sample return, same order optimizeSmaCrossover would pick a "winner" in
+}
+
+// The optimizer above answers "which pair fit this data best" — not "which
+// pair will keep working." Ranking and reporting return on the exact same
+// window it was chosen from is the textbook overfitting mistake: a pair can
+// win in-sample purely by curve-fitting noise in that specific period. This
+// holds out the most recent `1 - trainRatio` of the series as a test window
+// never used for selection, and reports each pair's in-sample return
+// side-by-side with its out-of-sample return so a pair that only "worked"
+// in-sample is visible as such rather than presented as the answer.
+export function optimizeSmaCrossoverOutOfSample(
+  points: HistoryPoint[],
+  shortPeriods: number[] = DEFAULT_SHORT_PERIODS,
+  longPeriods: number[] = DEFAULT_LONG_PERIODS,
+  trainRatio = 0.7
+): OutOfSampleResult {
+  const sorted = [...points].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+  const splitIdx = Math.floor(sorted.length * trainRatio);
+  const trainPoints = sorted.slice(0, splitIdx);
+  const testPoints = sorted.slice(splitIdx);
+
+  const trainRows = optimizeSmaCrossover(trainPoints, shortPeriods, longPeriods);
+  const testRows = optimizeSmaCrossover(testPoints, shortPeriods, longPeriods);
+  const testByKey = new Map(testRows.map((r) => [`${r.short}-${r.long}`, r]));
+
+  const rows: OutOfSampleRow[] = trainRows.map((r) => {
+    const test = testByKey.get(`${r.short}-${r.long}`);
+    return {
+      short: r.short,
+      long: r.long,
+      inSampleReturnPercent: r.totalReturnPercent,
+      outOfSampleReturnPercent: test?.totalReturnPercent ?? 0,
+      inSampleCrossovers: r.crossovers,
+      outOfSampleCrossovers: test?.crossovers ?? 0,
+    };
+  });
+
+  return {
+    trainBars: trainPoints.length,
+    testBars: testPoints.length,
+    trainPeriod: { from: trainPoints[0]?.time ?? "", to: trainPoints[trainPoints.length - 1]?.time ?? "" },
+    testPeriod: { from: testPoints[0]?.time ?? "", to: testPoints[testPoints.length - 1]?.time ?? "" },
+    rows,
+  };
+}
