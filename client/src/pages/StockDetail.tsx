@@ -14,6 +14,7 @@ import SecuritiesFundamentals from "../components/SecuritiesFundamentals";
 import { isSecuritiesSymbol } from "../utils/securitiesData";
 import CompanyProfileCard from "../components/CompanyProfileCard";
 import { COMPANY_PROFILES } from "../data/companyProfiles";
+import ForeignFlowPanel from "../components/ForeignFlowPanel";
 
 export default function StockDetail() {
   const { symbol = "" } = useParams();
@@ -81,6 +82,12 @@ export default function StockDetail() {
           {(COMPANY_PROFILES[quote.symbol.toUpperCase()] || isBankSymbol(quote.symbol) || isSecuritiesSymbol(quote.symbol)) && (
             <div className="mt-6">
               <CompanyProfileCard symbol={quote.symbol} />
+            </div>
+          )}
+
+          {!isIndexOrFutures && (
+            <div className="mt-6">
+              <ForeignFlowPanel quote={quote} />
             </div>
           )}
 

@@ -17,6 +17,7 @@ export interface Quote {
   foreignBuyVolume?: number;
   foreignSellVolume?: number;
   foreignOwnershipPercent?: number;
+  foreignRoom?: number;
 }
 
 export interface HistoryPoint {

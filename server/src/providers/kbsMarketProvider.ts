@@ -110,10 +110,12 @@ function quoteFromBoardItem(item: any): Quote | null {
     updatedAt: new Date().toISOString(),
     // Foreign-investor fields only apply to stocks (KBS's index/futures rows
     // don't carry them) — verified against KBS explorer's _PRICE_BOARD_MAP:
-    // FB=foreign_buy_volume, FS=foreign_sell_volume, FO=foreign_ownership_ratio.
+    // FB=foreign_buy_volume, FS=foreign_sell_volume, FO=foreign_ownership_ratio,
+    // FR=foreign_room (remaining room before the ownership cap).
     foreignBuyVolume: idxInfo ? undefined : num(item?.FB),
     foreignSellVolume: idxInfo ? undefined : num(item?.FS),
     foreignOwnershipPercent: idxInfo ? undefined : num(item?.FO),
+    foreignRoom: idxInfo ? undefined : num(item?.FR),
   };
 }
 
