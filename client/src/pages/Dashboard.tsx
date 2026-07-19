@@ -34,7 +34,14 @@ export default function Dashboard() {
             </Link>
           </div>
         </div>
-        <TechnicalChartPanel symbol={chartSymbol} height={600} />
+        <TechnicalChartPanel
+          symbol={chartSymbol}
+          height={600}
+          // /market/overview isn't behind the quote/history fallback chain
+          // yet, so this is undefined today — kept so the chart already
+          // picks up a source the moment that endpoint gains one too.
+          preferSource={data?.quotes.find((q) => q.symbol === chartSymbol)?.source}
+        />
       </div>
 
       <TopTraded />

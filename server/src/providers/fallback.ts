@@ -12,21 +12,43 @@ import type { HistoryPoint, HistoryRange, Quote } from "./types.js";
 // can still pin a preferred source; these are the fallbacks if it errors.
 const FALLBACK_PROVIDERS: StockProvider[] = [kbsMarketProvider, vndirectProvider, vnstockProvider];
 
-function orderedProviders(): StockProvider[] {
+// `preferSource`, when given, is tried before everything else — used to
+// keep a quote and its accompanying history chart pinned to the same
+// provider within one page view. Quote and history are separate requests
+// with independent fallback chains; if a source's availability is flaky
+// rather than uniformly down, they could otherwise land on two different
+// providers for the same symbol in the same view (a stale/inconsistent
+// quote-vs-chart mismatch), same failure mode as manually combining two
+// sources' data — this just avoids it happening implicitly across requests.
+function orderedProviders(preferSource?: string): StockProvider[] {
   const primary = getProvider();
   const rest = FALLBACK_PROVIDERS.filter((p) => p.id !== primary.id);
-  return [primary, ...rest];
+  const ordered = [primary, ...rest];
+  if (!preferSource) return ordered;
+  const preferred = ordered.find((p) => p.id === preferSource);
+  if (!preferred) return ordered;
+  return [preferred, ...ordered.filter((p) => p.id !== preferSource)];
 }
 
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
-export async function getQuoteWithFallback(symbol: string): Promise<Quote> {
+export interface QuoteWithSource {
+  quote: Quote;
+  source: string;
+}
+
+export interface HistoryWithSource {
+  points: HistoryPoint[];
+  source: string;
+}
+
+export async function getQuoteWithFallback(symbol: string, preferSource?: string): Promise<QuoteWithSource> {
   const errors: string[] = [];
-  for (const provider of orderedProviders()) {
+  for (const provider of orderedProviders(preferSource)) {
     try {
-      return await provider.getQuote(symbol);
+      return { quote: await provider.getQuote(symbol), source: provider.id };
     } catch (err) {
       errors.push(`${provider.id}: ${errorMessage(err).slice(0, 150)}`);
     }
@@ -36,12 +58,16 @@ export async function getQuoteWithFallback(symbol: string): Promise<Quote> {
   });
 }
 
-export async function getHistoryWithFallback(symbol: string, range: HistoryRange): Promise<HistoryPoint[]> {
+export async function getHistoryWithFallback(
+  symbol: string,
+  range: HistoryRange,
+  preferSource?: string
+): Promise<HistoryWithSource> {
   const errors: string[] = [];
-  for (const provider of orderedProviders()) {
+  for (const provider of orderedProviders(preferSource)) {
     try {
       const points = await provider.getHistory(symbol, range);
-      if (points.length > 0) return points;
+      if (points.length > 0) return { points, source: provider.id };
       errors.push(`${provider.id}: dữ liệu rỗng`);
     } catch (err) {
       errors.push(`${provider.id}: ${errorMessage(err).slice(0, 150)}`);

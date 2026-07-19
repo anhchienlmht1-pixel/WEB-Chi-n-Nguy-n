@@ -29,17 +29,20 @@ export async function fetchMarketOverview(): Promise<{ provider: string; quotes:
   return data;
 }
 
-export async function fetchQuote(symbol: string): Promise<Quote> {
-  const { data } = await api.get(`/quote/${encodeURIComponent(symbol)}`);
+export async function fetchQuote(symbol: string, preferSource?: string): Promise<Quote> {
+  const { data } = await api.get(`/quote/${encodeURIComponent(symbol)}`, {
+    params: preferSource ? { preferSource } : undefined,
+  });
   return data;
 }
 
 export async function fetchHistory(
   symbol: string,
-  range: HistoryRange
-): Promise<{ symbol: string; range: HistoryRange; points: HistoryPoint[] }> {
+  range: HistoryRange,
+  preferSource?: string
+): Promise<{ symbol: string; range: HistoryRange; points: HistoryPoint[]; source?: string }> {
   const { data } = await api.get(`/history/${encodeURIComponent(symbol)}`, {
-    params: { range },
+    params: preferSource ? { range, preferSource } : { range },
   });
   return data;
 }

@@ -55,8 +55,15 @@ router.get(
   "/quote/:symbol",
   asyncHandler(async (req, res) => {
     const symbol = String(req.params.symbol).toUpperCase();
-    const data = await cached(`quote:${symbol}`, 20, () => getQuoteWithFallback(symbol));
-    res.json(data);
+    // A caller that already knows which source answered a related request
+    // (e.g. the history chart for the same symbol) can pass it back here to
+    // stay pinned to that source instead of independently re-resolving the
+    // fallback chain, which could otherwise land on a different provider.
+    const preferSource = (req.query.preferSource as string) || undefined;
+    const { quote, source } = await cached(`quote:${symbol}:${preferSource ?? ""}`, 20, () =>
+      getQuoteWithFallback(symbol, preferSource)
+    );
+    res.json({ ...quote, source });
   })
 );
 
@@ -69,10 +76,11 @@ router.get(
       res.status(400).json({ error: `Invalid range. Use one of: ${VALID_RANGES.join(", ")}` });
       return;
     }
-    const data = await cached(`history:${symbol}:${range}`, 120, () =>
-      getHistoryWithFallback(symbol, range)
+    const preferSource = (req.query.preferSource as string) || undefined;
+    const { points, source } = await cached(`history:${symbol}:${range}:${preferSource ?? ""}`, 120, () =>
+      getHistoryWithFallback(symbol, range, preferSource)
     );
-    res.json({ symbol, range, points: data });
+    res.json({ symbol, range, points, source });
   })
 );
 

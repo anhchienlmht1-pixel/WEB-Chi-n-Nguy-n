@@ -18,6 +18,10 @@ export interface Quote {
   foreignSellVolume?: number;
   foreignOwnershipPercent?: number;
   foreignRoom?: number;
+  /** Which provider answered this request (kbs/vndirect/vnstock) — lets a
+   * caller pin a related request (e.g. history for the same symbol) to the
+   * same source instead of independently re-resolving the fallback chain. */
+  source?: string;
 }
 
 export interface HistoryPoint {

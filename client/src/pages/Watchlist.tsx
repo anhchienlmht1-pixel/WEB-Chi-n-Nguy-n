@@ -24,7 +24,13 @@ export default function Watchlist() {
   const fetcher = useCallback(async (): Promise<WatchlistEntry[]> => {
     const results = await Promise.allSettled(
       symbols.map(async (s) => {
-        const [quote, history] = await Promise.all([fetchQuote(s), fetchHistory(s, "3M")]);
+        // Quote first, then history pinned to whichever source answered it
+        // (via preferSource) — fetching both in parallel independently could
+        // land on two different providers for the same symbol if one is
+        // flaky rather than uniformly down, the same inconsistency risk as
+        // manually mixing two sources' data together.
+        const quote = await fetchQuote(s);
+        const history = await fetchHistory(s, "3M", quote.source);
         let ratios: KeyRatios | undefined;
         try {
           ratios = extractKeyRatios(await fetchFinancials(s, "CSTC", "year"));

@@ -24,7 +24,18 @@ const DEFAULT_INDICATORS: ActiveIndicator[] = [
 // Full technical-chart experience (toolbar, drawing tools, indicator
 // library) as a standalone panel driven only by a symbol — used on the
 // stock detail page and, at a larger height, on the homepage.
-export default function TechnicalChartPanel({ symbol, height = 420 }: { symbol: string; height?: number }) {
+export default function TechnicalChartPanel({
+  symbol,
+  height = 420,
+  preferSource,
+}: {
+  symbol: string;
+  height?: number;
+  /** Pin history to the same provider a sibling quote already resolved to
+   * (see api/client.ts fetchHistory) — avoids the chart silently landing on
+   * a different source than the price header shown next to it. */
+  preferSource?: string;
+}) {
   const [resolution, setResolution] = useState<ChartResolution>("D");
   const [indicators, setIndicators] = useState<ActiveIndicator[]>(DEFAULT_INDICATORS);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -73,7 +84,7 @@ export default function TechnicalChartPanel({ symbol, height = 420 }: { symbol: 
   // Always fetch the full daily history — the resolution tabs (Ngày/Tuần/
   // Tháng) roll those daily bars up client-side, so switching resolution
   // changes what one candle represents instead of just the visible range.
-  const historyState = usePolling(() => fetchHistory(symbol, "MAX"), [symbol]);
+  const historyState = usePolling(() => fetchHistory(symbol, "MAX", preferSource), [symbol, preferSource]);
   const chartPoints = useMemo(
     () => (historyState.data ? aggregatePoints(historyState.data.points, resolution) : []),
     [historyState.data, resolution]

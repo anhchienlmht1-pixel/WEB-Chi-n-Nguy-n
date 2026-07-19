@@ -71,7 +71,7 @@ export default function StockDetail() {
                 🧪 Backtest {quote.symbol}
               </Link>
             </div>
-            <TechnicalChartPanel symbol={symbol} />
+            <TechnicalChartPanel symbol={symbol} preferSource={quote.source} />
           </div>
 
           <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
