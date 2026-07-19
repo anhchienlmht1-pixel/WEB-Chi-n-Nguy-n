@@ -1,4 +1,4 @@
-import { rsi, atr } from "technicalindicators";
+import { rsi, atr, sma } from "technicalindicators";
 import type { HistoryPoint } from "../types";
 
 export interface BacktestParams {
@@ -127,4 +127,88 @@ export function runRsiAtrBacktest(points: HistoryPoint[], params: BacktestParams
   }
 
   return { trades, stats: computeStats(trades) };
+}
+
+export interface SmaOptimizationRow {
+  short: number;
+  long: number;
+  crossovers: number;
+  totalReturnPercent: number;
+  returnPerTradePercent: number;
+}
+
+export const DEFAULT_SHORT_PERIODS = [5, 10, 15, 20, 25];
+export const DEFAULT_LONG_PERIODS = [50, 100, 150, 200];
+
+// Left-pads a tail-aligned indicator output back to the full bar count, so
+// `values[i]` lines up with `sorted[i]` directly (null before the SMA has
+// enough bars, matching pandas' NaN there).
+function alignToFull(totalLength: number, values: number[]): (number | null)[] {
+  const offset = totalLength - values.length;
+  return Array.from({ length: totalLength }, (_, i) => (i >= offset ? values[i - offset] : null));
+}
+
+// Grid search over (short, long) SMA period pairs — ported from a
+// user-supplied pandas reference. Faithfully reproduces its exact
+// (slightly quirky) semantics rather than a "corrected" version: pandas'
+// `(SMA_short > SMA_long).astype(int)` evaluates any NaN comparison as
+// False, so Signal is 0 — not undefined — during SMA warm-up, and .prod()/
+// .sum() silently skip NaN rows (only the very first bar, where both
+// Signal.shift(1) and Returns are undefined) rather than the whole
+// warm-up window. Getting this wrong would silently change which period
+// pair "wins".
+export function optimizeSmaCrossover(
+  points: HistoryPoint[],
+  shortPeriods: number[] = DEFAULT_SHORT_PERIODS,
+  longPeriods: number[] = DEFAULT_LONG_PERIODS
+): SmaOptimizationRow[] {
+  const sorted = [...points].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+  const closes = sorted.map((p) => p.close);
+  const n = sorted.length;
+  if (n < 3) return [];
+
+  const returns: (number | null)[] = closes.map((c, i) => (i === 0 ? null : (c - closes[i - 1]) / closes[i - 1]));
+  const smaCache = new Map<number, (number | null)[]>();
+  const smaFor = (period: number): (number | null)[] => {
+    let cached = smaCache.get(period);
+    if (!cached) {
+      cached = n > period ? alignToFull(n, sma({ period, values: closes })) : Array(n).fill(null);
+      smaCache.set(period, cached);
+    }
+    return cached;
+  };
+
+  const rows: SmaOptimizationRow[] = [];
+  for (const short of shortPeriods) {
+    for (const long of longPeriods) {
+      if (short >= long) continue;
+      const smaShort = smaFor(short);
+      const smaLong = smaFor(long);
+
+      const signal = closes.map((_, i) => {
+        const s = smaShort[i];
+        const l = smaLong[i];
+        return s != null && l != null && s > l ? 1 : 0;
+      });
+
+      let crossovers = 0;
+      let product = 1;
+      for (let i = 1; i < n; i++) {
+        crossovers += Math.abs(signal[i] - signal[i - 1]);
+        const r = returns[i];
+        if (r != null) product *= 1 + signal[i - 1] * r;
+      }
+      const totalReturn = product - 1;
+
+      rows.push({
+        short,
+        long,
+        crossovers,
+        totalReturnPercent: totalReturn * 100,
+        returnPerTradePercent: crossovers > 0 ? (totalReturn / crossovers) * 100 : 0,
+      });
+    }
+  }
+
+  return rows.sort((a, b) => b.totalReturnPercent - a.totalReturnPercent);
 }
