@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { fetchHistory } from "../api/client";
 import type { HistoryRange } from "../types";
 import SymbolPicker from "../components/SymbolPicker";
@@ -110,6 +111,12 @@ function TopBar({
 // strategies below are ported 1:1 from user-supplied Python references.
 export default function Backtest() {
   const [tab, setTab] = useState<Tab>("rsi-atr");
+  const [searchParams] = useSearchParams();
+  // Linked in from "🧪 Backtest {symbol}" next to the technical chart on
+  // Thị trường / stock detail pages — remounting the tab (via `key`) on a
+  // new ?symbol= picks it up even when Backtest is already the current
+  // route, since useState's initial value alone wouldn't re-run.
+  const initialSymbol = searchParams.get("symbol")?.toUpperCase() || "VCB";
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-6">
@@ -137,8 +144,8 @@ export default function Backtest() {
         ))}
       </div>
 
-      {tab === "rsi-atr" && <RsiAtrTab />}
-      {tab === "sma-optimize" && <SmaOptimizeTab />}
+      {tab === "rsi-atr" && <RsiAtrTab key={initialSymbol} initialSymbol={initialSymbol} />}
+      {tab === "sma-optimize" && <SmaOptimizeTab key={initialSymbol} initialSymbol={initialSymbol} />}
 
       <p className="mt-6 text-[11px] text-slate-400 dark:text-slate-500">
         Backtest lịch sử, không phải khuyến nghị đầu tư — hiệu suất quá khứ không đảm bảo kết quả tương lai. Không tính
@@ -148,8 +155,8 @@ export default function Backtest() {
   );
 }
 
-function RsiAtrTab() {
-  const [symbol, setSymbol] = useState("VCB");
+function RsiAtrTab({ initialSymbol }: { initialSymbol: string }) {
+  const [symbol, setSymbol] = useState(initialSymbol);
   const [range, setRange] = useState<HistoryRange>("5Y");
   const [params, setParams] = useState<BacktestParams>(DEFAULT_BACKTEST_PARAMS);
   const [result, setResult] = useState<BacktestResult | null>(null);
@@ -176,6 +183,14 @@ function RsiAtrTab() {
     () => (result ? [...result.trades].sort((a, b) => b.entryDate.localeCompare(a.entryDate)) : []),
     [result]
   );
+
+  // Runs once on mount so arriving via the "🧪 Backtest {symbol}" link next
+  // to a technical chart shows a result immediately instead of requiring an
+  // extra click.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    run();
+  }, []);
 
   return (
     <>
@@ -297,8 +312,8 @@ function RsiAtrTab() {
   );
 }
 
-function SmaOptimizeTab() {
-  const [symbol, setSymbol] = useState("VCB");
+function SmaOptimizeTab({ initialSymbol }: { initialSymbol: string }) {
+  const [symbol, setSymbol] = useState(initialSymbol);
   const [range, setRange] = useState<HistoryRange>("5Y");
   const [rows, setRows] = useState<SmaOptimizationRow[] | null>(null);
   const [barCount, setBarCount] = useState(0);
@@ -319,6 +334,11 @@ function SmaOptimizeTab() {
       setLoading(false);
     }
   }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    run();
+  }, []);
 
   return (
     <>

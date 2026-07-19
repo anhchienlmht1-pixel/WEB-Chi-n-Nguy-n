@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { fetchMarketOverview } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { useWatchlist } from "../hooks/useWatchlist";
@@ -23,7 +24,15 @@ export default function Dashboard() {
       <div className="mb-6">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Biểu đồ kỹ thuật</h1>
-          <SymbolPicker value={chartSymbol} onChange={setChartSymbol} />
+          <div className="flex items-center gap-2">
+            <SymbolPicker value={chartSymbol} onChange={setChartSymbol} />
+            <Link
+              to={`/backtest?symbol=${encodeURIComponent(chartSymbol)}`}
+              className="whitespace-nowrap rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:border-emerald-500 hover:text-emerald-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-emerald-400 dark:hover:text-emerald-400"
+            >
+              🧪 Backtest {chartSymbol}
+            </Link>
+          </div>
         </div>
         <TechnicalChartPanel symbol={chartSymbol} height={600} />
       </div>
