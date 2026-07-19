@@ -1,12 +1,15 @@
-// Static reference profiles for the 43 covered symbols (27 banks + 16
-// securities companies). cafef.vn is unreachable from this build
-// environment (network egress policy), so this was compiled from general
-// public knowledge instead of scraped — deliberately sparse: a field is
-// omitted wherever it couldn't be stated with confidence, and the UI
-// hides missing fields rather than guessing. Financial figures shown next
-// to this info come from the user's own Excel exports, not from here.
+// Static reference profiles for listed symbols. Every external company-data
+// API tried in this environment (cafef.vn, Wikipedia, vnstock's VCI/KBS/MAS
+// sources, Yahoo Finance, Finnhub, Alpha Vantage, TradingView, VNDirect,
+// FireAnt — 10+ distinct domains) is blocked by this build environment's
+// network egress policy, so this is compiled from general public knowledge
+// instead of scraped — deliberately sparse: a field is omitted wherever it
+// couldn't be stated with confidence, and the UI hides missing fields rather
+// than guessing. Financial figures shown next to bank/securities profiles
+// come from the user's own Excel exports, not from here.
 export interface CompanyProfile {
   fullName: string;
+  sector?: string;
   website?: string;
   founded?: number;
   headquarters?: string;
@@ -17,6 +20,7 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   // ---- Banks ----
   VCB: {
     fullName: "Ngân hàng TMCP Ngoại thương Việt Nam",
+    sector: "Ngân hàng",
     website: "vietcombank.com.vn",
     founded: 1963,
     headquarters: "Hà Nội",
@@ -25,6 +29,7 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   },
   BID: {
     fullName: "Ngân hàng TMCP Đầu tư và Phát triển Việt Nam",
+    sector: "Ngân hàng",
     website: "bidv.com.vn",
     founded: 1957,
     headquarters: "Hà Nội",
@@ -32,6 +37,7 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   },
   CTG: {
     fullName: "Ngân hàng TMCP Công Thương Việt Nam",
+    sector: "Ngân hàng",
     website: "vietinbank.vn",
     founded: 1988,
     headquarters: "Hà Nội",
@@ -39,6 +45,7 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   },
   TCB: {
     fullName: "Ngân hàng TMCP Kỹ Thương Việt Nam",
+    sector: "Ngân hàng",
     website: "techcombank.com.vn",
     founded: 1993,
     headquarters: "Hà Nội",
@@ -46,6 +53,7 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   },
   VPB: {
     fullName: "Ngân hàng TMCP Việt Nam Thịnh Vượng",
+    sector: "Ngân hàng",
     website: "vpbank.com.vn",
     founded: 1993,
     headquarters: "Hà Nội",
@@ -54,6 +62,7 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   },
   MBB: {
     fullName: "Ngân hàng TMCP Quân Đội",
+    sector: "Ngân hàng",
     website: "mbbank.com.vn",
     founded: 1994,
     headquarters: "Hà Nội",
@@ -61,6 +70,7 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   },
   ACB: {
     fullName: "Ngân hàng TMCP Á Châu",
+    sector: "Ngân hàng",
     website: "acb.com.vn",
     founded: 1993,
     headquarters: "TP. Hồ Chí Minh",
@@ -68,18 +78,21 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   },
   LPB: {
     fullName: "Ngân hàng TMCP Lộc Phát Việt Nam",
+    sector: "Ngân hàng",
     website: "lpbank.com.vn",
     headquarters: "Hà Nội",
     description: "Tiền thân là LienVietPostBank, có lợi thế mạng lưới qua hệ thống bưu điện rộng khắp.",
   },
   HDB: {
     fullName: "Ngân hàng TMCP Phát triển TP. Hồ Chí Minh",
+    sector: "Ngân hàng",
     website: "hdbank.com.vn",
     headquarters: "TP. Hồ Chí Minh",
     description: "Ngân hàng tăng trưởng nhanh thuộc hệ sinh thái Sovico, sở hữu công ty tài chính tiêu dùng HD Saison.",
   },
   STB: {
     fullName: "Ngân hàng TMCP Sài Gòn Thương Tín",
+    sector: "Ngân hàng",
     website: "sacombank.com.vn",
     founded: 1991,
     headquarters: "TP. Hồ Chí Minh",
@@ -87,12 +100,14 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   },
   VIB: {
     fullName: "Ngân hàng TMCP Quốc tế Việt Nam",
+    sector: "Ngân hàng",
     website: "vib.com.vn",
     founded: 1996,
     description: "Ngân hàng tập trung bán lẻ, dẫn đầu thị phần cho vay mua ô tô, cổ đông chiến lược CBA (Úc).",
   },
   TPB: {
     fullName: "Ngân hàng TMCP Tiên Phong",
+    sector: "Ngân hàng",
     website: "tpb.vn",
     founded: 2008,
     headquarters: "Hà Nội",
@@ -100,6 +115,7 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   },
   EIB: {
     fullName: "Ngân hàng TMCP Xuất Nhập khẩu Việt Nam",
+    sector: "Ngân hàng",
     website: "eximbank.com.vn",
     founded: 1989,
     headquarters: "TP. Hồ Chí Minh",
@@ -107,6 +123,7 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   },
   SHB: {
     fullName: "Ngân hàng TMCP Sài Gòn - Hà Nội",
+    sector: "Ngân hàng",
     website: "shb.com.vn",
     founded: 1993,
     headquarters: "Hà Nội",
@@ -114,6 +131,7 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   },
   MSB: {
     fullName: "Ngân hàng TMCP Hàng Hải Việt Nam",
+    sector: "Ngân hàng",
     website: "msb.com.vn",
     founded: 1991,
     headquarters: "Hà Nội",
@@ -121,6 +139,7 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   },
   OCB: {
     fullName: "Ngân hàng TMCP Phương Đông",
+    sector: "Ngân hàng",
     website: "ocb.com.vn",
     founded: 1996,
     headquarters: "TP. Hồ Chí Minh",
@@ -128,6 +147,7 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   },
   SSB: {
     fullName: "Ngân hàng TMCP Đông Nam Á",
+    sector: "Ngân hàng",
     website: "seabank.com.vn",
     founded: 1994,
     headquarters: "Hà Nội",
@@ -135,6 +155,7 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   },
   NAB: {
     fullName: "Ngân hàng TMCP Nam Á",
+    sector: "Ngân hàng",
     website: "namabank.com.vn",
     founded: 1992,
     headquarters: "TP. Hồ Chí Minh",
@@ -142,6 +163,7 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   },
   BAB: {
     fullName: "Ngân hàng TMCP Bắc Á",
+    sector: "Ngân hàng",
     website: "baca-bank.vn",
     founded: 1994,
     headquarters: "Nghệ An",
@@ -149,34 +171,40 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   },
   ABB: {
     fullName: "Ngân hàng TMCP An Bình",
+    sector: "Ngân hàng",
     website: "abbank.vn",
     founded: 1993,
     description: "Ngân hàng tầm trung, cổ đông lớn gồm Geleximco và Maybank (Malaysia).",
   },
   PGB: {
     fullName: "Ngân hàng TMCP Thịnh vượng và Phát triển",
+    sector: "Ngân hàng",
     website: "pgbank.com.vn",
     description: "Tiền thân là PG Bank thuộc Petrolimex, đổi chủ sở hữu và nhận diện thương hiệu từ 2023.",
   },
   BVB: {
     fullName: "Ngân hàng TMCP Bản Việt",
+    sector: "Ngân hàng",
     website: "bvbank.net.vn",
     headquarters: "TP. Hồ Chí Minh",
     description: "Ngân hàng quy mô nhỏ định hướng bán lẻ, thương hiệu BVBank từ 2023.",
   },
   VBB: {
     fullName: "Ngân hàng TMCP Việt Nam Thương Tín",
+    sector: "Ngân hàng",
     website: "vietbank.com.vn",
     headquarters: "Sóc Trăng",
     description: "Ngân hàng quy mô nhỏ, hội sở đăng ký tại Sóc Trăng, hoạt động chính tại TP.HCM.",
   },
   VAB: {
     fullName: "Ngân hàng TMCP Việt Á",
+    sector: "Ngân hàng",
     website: "vietabank.com.vn",
     description: "Ngân hàng quy mô nhỏ, hình thành từ hợp nhất Công ty tài chính Sài Gòn và Ngân hàng Đà Nẵng.",
   },
   NVB: {
     fullName: "Ngân hàng TMCP Quốc Dân",
+    sector: "Ngân hàng",
     website: "ncb-bank.vn",
     founded: 1995,
     headquarters: "Hà Nội",
@@ -184,6 +212,7 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   },
   KLB: {
     fullName: "Ngân hàng TMCP Kiên Long",
+    sector: "Ngân hàng",
     website: "kienlongbank.com.vn",
     founded: 1995,
     headquarters: "Kiên Giang",
@@ -191,6 +220,7 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   },
   SGB: {
     fullName: "Ngân hàng TMCP Sài Gòn Công Thương",
+    sector: "Ngân hàng",
     website: "saigonbank.com.vn",
     founded: 1987,
     headquarters: "TP. Hồ Chí Minh",
@@ -200,6 +230,7 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   // ---- Securities companies ----
   SSI: {
     fullName: "Công ty CP Chứng khoán SSI",
+    sector: "Chứng khoán",
     website: "ssi.com.vn",
     founded: 1999,
     headquarters: "TP. Hồ Chí Minh",
@@ -208,6 +239,7 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   },
   VND: {
     fullName: "Công ty CP Chứng khoán VNDIRECT",
+    sector: "Chứng khoán",
     website: "vndirect.com.vn",
     founded: 2006,
     headquarters: "Hà Nội",
@@ -215,6 +247,7 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   },
   HCM: {
     fullName: "Công ty CP Chứng khoán TP. Hồ Chí Minh (HSC)",
+    sector: "Chứng khoán",
     website: "hsc.com.vn",
     founded: 2003,
     headquarters: "TP. Hồ Chí Minh",
@@ -222,6 +255,7 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   },
   VCI: {
     fullName: "Công ty CP Chứng khoán Vietcap",
+    sector: "Chứng khoán",
     website: "vietcap.com.vn",
     founded: 2007,
     headquarters: "TP. Hồ Chí Minh",
@@ -229,10 +263,12 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   },
   VIX: {
     fullName: "Công ty CP Chứng khoán VIX",
+    sector: "Chứng khoán",
     description: "Công ty chứng khoán có tỷ trọng tự doanh lớn trong cơ cấu lợi nhuận.",
   },
   MBS: {
     fullName: "Công ty CP Chứng khoán MB",
+    sector: "Chứng khoán",
     website: "mbs.com.vn",
     founded: 2000,
     headquarters: "Hà Nội",
@@ -240,6 +276,7 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   },
   FTS: {
     fullName: "Công ty CP Chứng khoán FPT",
+    sector: "Chứng khoán",
     website: "fpts.com.vn",
     founded: 2007,
     headquarters: "Hà Nội",
@@ -247,6 +284,7 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   },
   SHS: {
     fullName: "Công ty CP Chứng khoán Sài Gòn - Hà Nội",
+    sector: "Chứng khoán",
     website: "shs.com.vn",
     founded: 2007,
     headquarters: "Hà Nội",
@@ -254,6 +292,7 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   },
   BSI: {
     fullName: "Công ty CP Chứng khoán BIDV",
+    sector: "Chứng khoán",
     website: "bsc.com.vn",
     founded: 1999,
     headquarters: "Hà Nội",
@@ -261,12 +300,14 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   },
   DSE: {
     fullName: "Công ty CP Chứng khoán DNSE",
+    sector: "Chứng khoán",
     website: "dnse.com.vn",
     headquarters: "Hà Nội",
     description: "Công ty chứng khoán số định hướng công nghệ, niêm yết HOSE từ 2024.",
   },
   CTS: {
     fullName: "Công ty CP Chứng khoán Ngân hàng Công Thương Việt Nam",
+    sector: "Chứng khoán",
     website: "cts.vn",
     founded: 2000,
     headquarters: "Hà Nội",
@@ -274,6 +315,7 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   },
   VDS: {
     fullName: "Công ty CP Chứng khoán Rồng Việt",
+    sector: "Chứng khoán",
     website: "vdsc.com.vn",
     founded: 2006,
     headquarters: "TP. Hồ Chí Minh",
@@ -281,25 +323,419 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   },
   ORS: {
     fullName: "Công ty CP Chứng khoán Tiên Phong",
+    sector: "Chứng khoán",
     description: "Công ty chứng khoán liên kết với TPBank, hoạt động mạnh mảng trái phiếu doanh nghiệp.",
   },
   VCK: {
     fullName: "Công ty CP Chứng khoán VPS",
+    sector: "Chứng khoán",
     website: "vps.com.vn",
     headquarters: "Hà Nội",
     description: "Công ty chứng khoán giữ thị phần môi giới cổ phiếu và phái sinh số 1 thị trường nhiều năm liền.",
   },
   VPX: {
     fullName: "Công ty CP Chứng khoán VPBank",
+    sector: "Chứng khoán",
     website: "vpbanks.com.vn",
     headquarters: "Hà Nội",
     description: "Công ty chứng khoán thuộc VPBank, tái ra mắt từ 2022 với quy mô vốn chủ thuộc nhóm lớn nhất ngành.",
   },
   TCX: {
     fullName: "Công ty CP Chứng khoán Kỹ Thương (TCBS)",
+    sector: "Chứng khoán",
     website: "tcbs.com.vn",
     headquarters: "Hà Nội",
     description:
       "Công ty chứng khoán thuộc Techcombank, dẫn đầu về lợi nhuận toàn ngành với thế mạnh trái phiếu và quản lý gia sản.",
+  },
+
+  // ---- Bất động sản ----
+  VIC: {
+    fullName: "Tập đoàn Vingroup - CTCP",
+    sector: "Bất động sản",
+    website: "vingroup.net",
+    founded: 1993,
+    headquarters: "Hà Nội",
+    description: "Tập đoàn tư nhân đa ngành lớn nhất Việt Nam: bất động sản, bán lẻ, công nghiệp ô tô (VinFast), y tế, giáo dục.",
+  },
+  VHM: {
+    fullName: "CTCP Vinhomes",
+    sector: "Bất động sản",
+    website: "vinhomes.vn",
+    founded: 2008,
+    headquarters: "Hà Nội",
+    description: "Thành viên Vingroup, nhà phát triển bất động sản nhà ở quy mô đại đô thị lớn nhất Việt Nam.",
+  },
+  VRE: {
+    fullName: "CTCP Vincom Retail",
+    sector: "Bất động sản",
+    website: "vincomretail.com",
+    founded: 2012,
+    headquarters: "Hà Nội",
+    description: "Thành viên Vingroup, vận hành hệ thống trung tâm thương mại Vincom trên cả nước.",
+  },
+  NVL: {
+    fullName: "CTCP Tập đoàn Đầu tư Địa ốc No Va",
+    sector: "Bất động sản",
+    website: "novaland.com.vn",
+    founded: 1992,
+    headquarters: "TP. Hồ Chí Minh",
+    description: "Tập đoàn bất động sản lớn phía Nam với các dự án khu đô thị, nghỉ dưỡng quy mô lớn.",
+  },
+  PDR: {
+    fullName: "CTCP Phát triển Bất động sản Phát Đạt",
+    sector: "Bất động sản",
+    website: "phatdat.com.vn",
+    founded: 2004,
+    headquarters: "TP. Hồ Chí Minh",
+    description: "Doanh nghiệp bất động sản tập trung phát triển dự án nhà ở và nghỉ dưỡng tại nhiều tỉnh thành.",
+  },
+  DXG: {
+    fullName: "CTCP Tập đoàn Đất Xanh",
+    sector: "Bất động sản",
+    website: "datxanhgroup.com",
+    founded: 2003,
+    headquarters: "TP. Hồ Chí Minh",
+    description: "Tập đoàn bất động sản với cả mảng phát triển dự án và môi giới (Đất Xanh Services).",
+  },
+  KDH: {
+    fullName: "CTCP Đầu tư và Kinh doanh Nhà Khang Điền",
+    sector: "Bất động sản",
+    website: "khangdien.com.vn",
+    headquarters: "TP. Hồ Chí Minh",
+    description: "Nhà phát triển bất động sản khu Đông TP.HCM, nổi bật về quản trị tài chính an toàn.",
+  },
+  NLG: {
+    fullName: "CTCP Đầu tư Nam Long",
+    sector: "Bất động sản",
+    website: "namlongvn.com",
+    founded: 1992,
+    headquarters: "TP. Hồ Chí Minh",
+    description: "Doanh nghiệp bất động sản với các dòng sản phẩm Ehome/Flora/Valora hướng vừa túi tiền.",
+  },
+  DIG: {
+    fullName: "Tổng CTCP Đầu tư Phát triển Xây dựng",
+    sector: "Bất động sản",
+    website: "dic.vn",
+    headquarters: "Bà Rịa - Vũng Tàu",
+    description: "Doanh nghiệp bất động sản gốc nhà nước, tập trung các dự án tại Bà Rịa - Vũng Tàu.",
+  },
+  KBC: {
+    fullName: "Tổng Công ty Phát triển Đô thị Kinh Bắc - CTCP",
+    sector: "Bất động sản",
+    website: "kbc.vn",
+    founded: 2002,
+    headquarters: "Bắc Ninh",
+    description: "Nhà phát triển khu công nghiệp và đô thị lớn ở miền Bắc, hưởng lợi từ dòng vốn FDI.",
+  },
+
+  // ---- Bán lẻ / hàng tiêu dùng ----
+  VNM: {
+    fullName: "CTCP Sữa Việt Nam",
+    sector: "Thực phẩm - Đồ uống",
+    website: "vinamilk.com.vn",
+    founded: 1976,
+    headquarters: "TP. Hồ Chí Minh",
+    description: "Doanh nghiệp sữa lớn nhất Việt Nam, thương hiệu phủ khắp thị trường nội địa và xuất khẩu.",
+  },
+  MWG: {
+    fullName: "CTCP Đầu tư Thế Giới Di Động",
+    sector: "Bán lẻ",
+    website: "mwg.vn",
+    founded: 2004,
+    headquarters: "TP. Hồ Chí Minh",
+    description: "Nhà bán lẻ lớn nhất Việt Nam, vận hành chuỗi Thế Giới Di Động, Điện Máy Xanh, Bách Hóa Xanh.",
+  },
+  PNJ: {
+    fullName: "CTCP Vàng bạc Đá quý Phú Nhuận",
+    sector: "Bán lẻ",
+    website: "pnj.com.vn",
+    founded: 1988,
+    headquarters: "TP. Hồ Chí Minh",
+    description: "Nhà bán lẻ và sản xuất trang sức lớn nhất Việt Nam.",
+  },
+  MSN: {
+    fullName: "CTCP Tập đoàn Masan",
+    sector: "Hàng tiêu dùng",
+    website: "masangroup.com",
+    founded: 1996,
+    headquarters: "TP. Hồ Chí Minh",
+    description: "Tập đoàn đa ngành tiêu dùng - bán lẻ, sở hữu Masan Consumer, chuỗi bán lẻ WinCommerce, thức ăn chăn nuôi.",
+  },
+  SAB: {
+    fullName: "Tổng CTCP Bia - Rượu - Nước giải khát Sài Gòn",
+    sector: "Đồ uống",
+    website: "sabeco.com.vn",
+    headquarters: "TP. Hồ Chí Minh",
+    description: "Nhà sản xuất bia lớn nhất Việt Nam (thương hiệu Bia Sài Gòn, 333), cổ đông chi phối là ThaiBev.",
+  },
+  KDC: {
+    fullName: "CTCP Tập đoàn KIDO",
+    sector: "Thực phẩm",
+    website: "kdc.vn",
+    founded: 1993,
+    headquarters: "TP. Hồ Chí Minh",
+    description: "Doanh nghiệp thực phẩm với các ngành hàng dầu ăn, kem, từng sở hữu mảng bánh kẹo Kinh Đô.",
+  },
+  DGW: {
+    fullName: "CTCP Thế Giới Số",
+    sector: "Bán lẻ",
+    website: "digiworldcorp.com",
+    founded: 1997,
+    headquarters: "TP. Hồ Chí Minh",
+    description: "Nhà phân phối sản phẩm công nghệ (điện thoại, laptop) và mở rộng sang hàng tiêu dùng, dược phẩm.",
+  },
+  FRT: {
+    fullName: "CTCP Bán lẻ Kỹ thuật số FPT",
+    sector: "Bán lẻ",
+    website: "fptshop.com.vn",
+    headquarters: "TP. Hồ Chí Minh",
+    description: "Thành viên FPT, vận hành chuỗi FPT Shop và chuỗi nhà thuốc Long Châu.",
+  },
+
+  // ---- Công nghiệp / vật liệu ----
+  HPG: {
+    fullName: "CTCP Tập đoàn Hòa Phát",
+    sector: "Thép",
+    website: "hoaphat.com.vn",
+    founded: 1992,
+    headquarters: "Hà Nội",
+    description: "Nhà sản xuất thép lớn nhất Việt Nam và Đông Nam Á, mở rộng sang nông nghiệp và bất động sản KCN.",
+  },
+  HSG: {
+    fullName: "CTCP Tập đoàn Hoa Sen",
+    sector: "Thép",
+    website: "hoasengroup.vn",
+    founded: 2001,
+    description: "Nhà sản xuất và xuất khẩu tôn thép hàng đầu Việt Nam.",
+  },
+  NKG: {
+    fullName: "CTCP Thép Nam Kim",
+    sector: "Thép",
+    website: "namkimgroup.vn",
+    founded: 2002,
+    headquarters: "Bình Dương",
+    description: "Doanh nghiệp sản xuất tôn mạ, ống thép với tỷ trọng xuất khẩu cao.",
+  },
+  GVR: {
+    fullName: "Tập đoàn Công nghiệp Cao su Việt Nam - CTCP",
+    sector: "Cao su",
+    website: "vnruber.com",
+    headquarters: "TP. Hồ Chí Minh",
+    description: "Doanh nghiệp nhà nước lớn về trồng và chế biến cao su, sở hữu quỹ đất khu công nghiệp lớn.",
+  },
+  DGC: {
+    fullName: "CTCP Tập đoàn Hóa chất Đức Giang",
+    sector: "Hóa chất",
+    website: "ducgiang.com",
+    headquarters: "Hà Nội",
+    description: "Doanh nghiệp hóa chất lớn nhất Việt Nam, chủ lực là phốt pho vàng và phân bón.",
+  },
+
+  // ---- Năng lượng / hạ tầng ----
+  GAS: {
+    fullName: "Tổng Công ty Khí Việt Nam - CTCP",
+    sector: "Dầu khí",
+    website: "pvgas.com.vn",
+    founded: 1990,
+    headquarters: "TP. Hồ Chí Minh",
+    description: "Thành viên PVN, doanh nghiệp thu gom - vận chuyển - phân phối khí đốt lớn nhất Việt Nam.",
+  },
+  PLX: {
+    fullName: "Tập đoàn Xăng dầu Việt Nam",
+    sector: "Xăng dầu",
+    website: "petrolimex.com.vn",
+    founded: 1956,
+    headquarters: "Hà Nội",
+    description: "Doanh nghiệp nhà nước chiếm thị phần phân phối xăng dầu lớn nhất Việt Nam.",
+  },
+  POW: {
+    fullName: "Tổng Công ty Điện lực Dầu khí Việt Nam - CTCP",
+    sector: "Điện",
+    website: "pvpower.vn",
+    founded: 2007,
+    headquarters: "Hà Nội",
+    description: "Thành viên PVN, một trong những nhà sản xuất điện lớn nhất Việt Nam (nhiệt điện khí, than).",
+  },
+  PVD: {
+    fullName: "Tổng CTCP Khoan và Dịch vụ Khoan Dầu khí",
+    sector: "Dầu khí",
+    website: "pvdrilling.com.vn",
+    headquarters: "TP. Hồ Chí Minh",
+    description: "Nhà cung cấp dịch vụ khoan dầu khí hàng đầu Việt Nam, thành viên PVN.",
+  },
+  PVS: {
+    fullName: "Tổng CTCP Dịch vụ Kỹ thuật Dầu khí Việt Nam",
+    sector: "Dầu khí",
+    website: "ptsc.com.vn",
+    headquarters: "Vũng Tàu",
+    description: "Thành viên PVN, cung cấp dịch vụ kỹ thuật dầu khí và đang mở rộng sang điện gió ngoài khơi.",
+  },
+  BCM: {
+    fullName: "Tổng CTCP Đầu tư và Phát triển Công nghiệp",
+    sector: "Bất động sản khu công nghiệp",
+    website: "becamex.com.vn",
+    headquarters: "Bình Dương",
+    description: "Doanh nghiệp nhà nước phát triển hạ tầng khu công nghiệp và đô thị lớn tại Bình Dương.",
+  },
+
+  // ---- Công nghệ / viễn thông ----
+  FPT: {
+    fullName: "CTCP FPT",
+    sector: "Công nghệ thông tin",
+    website: "fpt.com.vn",
+    founded: 1988,
+    headquarters: "Hà Nội",
+    description: "Tập đoàn công nghệ - viễn thông lớn nhất Việt Nam, mảng xuất khẩu phần mềm là động lực tăng trưởng chính.",
+  },
+  CMG: {
+    fullName: "CTCP Tập đoàn Công nghệ CMC",
+    sector: "Công nghệ thông tin",
+    website: "cmc.com.vn",
+    founded: 1993,
+    headquarters: "Hà Nội",
+    description: "Tập đoàn công nghệ với các mảng tích hợp hệ thống, dịch vụ số và viễn thông.",
+  },
+  VGI: {
+    fullName: "Tổng CTCP Đầu tư Quốc tế Viettel",
+    sector: "Viễn thông",
+    website: "viettelglobal.vn",
+    headquarters: "Hà Nội",
+    description: "Đơn vị đầu tư viễn thông ra nước ngoài của Viettel, hoạt động tại nhiều thị trường châu Á, châu Phi.",
+  },
+  FOX: {
+    fullName: "CTCP Viễn thông FPT",
+    sector: "Viễn thông",
+    website: "fpt.vn",
+    headquarters: "TP. Hồ Chí Minh",
+    description: "Thành viên FPT, cung cấp dịch vụ internet băng rộng và truyền hình trả tiền.",
+  },
+
+  // ---- Hàng không ----
+  VJC: {
+    fullName: "CTCP Hàng không Vietjet",
+    sector: "Hàng không",
+    website: "vietjetair.com",
+    founded: 2007,
+    headquarters: "Hà Nội",
+    description: "Hãng hàng không giá rẻ lớn nhất Việt Nam theo thị phần nội địa.",
+  },
+  HVN: {
+    fullName: "Tổng Công ty Hàng không Việt Nam - CTCP",
+    sector: "Hàng không",
+    website: "vietnamairlines.com",
+    headquarters: "Hà Nội",
+    description: "Hãng hàng không quốc gia Việt Nam.",
+  },
+  ACV: {
+    fullName: "Tổng Công ty Cảng hàng không Việt Nam - CTCP",
+    sector: "Hạ tầng hàng không",
+    website: "vietnamairport.vn",
+    headquarters: "TP. Hồ Chí Minh",
+    description: "Doanh nghiệp nhà nước vận hành toàn bộ hệ thống cảng hàng không dân dụng tại Việt Nam.",
+  },
+
+  // ---- Bảo hiểm ----
+  BVH: {
+    fullName: "Tập đoàn Bảo Việt",
+    sector: "Bảo hiểm",
+    website: "baoviet.com.vn",
+    founded: 1965,
+    headquarters: "Hà Nội",
+    description: "Tập đoàn tài chính - bảo hiểm lớn nhất Việt Nam, hoạt động cả bảo hiểm nhân thọ và phi nhân thọ.",
+  },
+  PVI: {
+    fullName: "CTCP PVI",
+    sector: "Bảo hiểm",
+    website: "pvi.com.vn",
+    headquarters: "Hà Nội",
+    description: "Doanh nghiệp bảo hiểm phi nhân thọ gắn với PVN, cổ đông chiến lược HDI Global (Đức).",
+  },
+
+  // ---- Khác ----
+  GEX: {
+    fullName: "CTCP Tập đoàn Gelex",
+    sector: "Công nghiệp",
+    website: "gelex.vn",
+    headquarters: "Hà Nội",
+    description: "Tập đoàn công nghiệp đa ngành: thiết bị điện, hạ tầng - khu công nghiệp (sở hữu Viglacera).",
+  },
+  CEO: {
+    fullName: "CTCP Tập đoàn C.E.O",
+    sector: "Bất động sản",
+    website: "ceogroup.com.vn",
+    headquarters: "Hà Nội",
+    description: "Doanh nghiệp bất động sản nghỉ dưỡng và khu công nghiệp.",
+  },
+  IDC: {
+    fullName: "Tổng Công ty IDICO - CTCP",
+    sector: "Bất động sản khu công nghiệp",
+    website: "idico.com.vn",
+    headquarters: "TP. Hồ Chí Minh",
+    description: "Doanh nghiệp phát triển khu công nghiệp và có mảng thủy điện, giao thông (BOT).",
+  },
+  TNG: {
+    fullName: "CTCP Đầu tư và Thương mại TNG",
+    sector: "Dệt may",
+    website: "tng.vn",
+    headquarters: "Thái Nguyên",
+    description: "Doanh nghiệp dệt may xuất khẩu lớn tại miền Bắc.",
+  },
+  VCS: {
+    fullName: "CTCP Vicostone",
+    sector: "Vật liệu xây dựng",
+    website: "vicostone.com",
+    headquarters: "Hà Nội",
+    description: "Nhà sản xuất đá thạch anh nhân tạo xuất khẩu, thành viên hệ sinh thái Phenikaa.",
+  },
+  NTP: {
+    fullName: "CTCP Nhựa Thiếu niên Tiền Phong",
+    sector: "Vật liệu xây dựng",
+    website: "nhuatienphong.vn",
+    founded: 1960,
+    headquarters: "Hải Phòng",
+    description: "Doanh nghiệp sản xuất ống nhựa xây dựng hàng đầu miền Bắc.",
+  },
+  HUT: {
+    fullName: "CTCP Tasco",
+    sector: "Hạ tầng giao thông",
+    website: "tasco.com.vn",
+    headquarters: "Hà Nội",
+    description: "Doanh nghiệp hạ tầng giao thông (BOT, thu phí không dừng) mở rộng sang bảo hiểm ô tô, phân phối xe.",
+  },
+  MCH: {
+    fullName: "CTCP Hàng tiêu dùng Masan",
+    sector: "Hàng tiêu dùng",
+    website: "masanconsumer.com",
+    headquarters: "TP. Hồ Chí Minh",
+    description: "Thành viên Masan Group, sở hữu các thương hiệu thực phẩm - gia vị tiêu dùng lớn (Chinsu, Omachi, Kokomi).",
+  },
+  BSR: {
+    fullName: "CTCP Lọc hóa Dầu Bình Sơn",
+    sector: "Dầu khí",
+    website: "bsr.com.vn",
+    headquarters: "Quảng Ngãi",
+    description: "Thành viên PVN, đơn vị vận hành Nhà máy Lọc dầu Dung Quất.",
+  },
+  OIL: {
+    fullName: "Tổng CTCP Dầu Việt Nam",
+    sector: "Xăng dầu",
+    website: "pvoil.com.vn",
+    headquarters: "TP. Hồ Chí Minh",
+    description: "Thành viên PVN, doanh nghiệp phân phối xăng dầu lớn thứ hai Việt Nam.",
+  },
+  VEA: {
+    fullName: "Tổng Công ty Máy động lực và Máy nông nghiệp Việt Nam - CTCP",
+    sector: "Cơ khí",
+    website: "veam.com.vn",
+    headquarters: "Hà Nội",
+    description: "Doanh nghiệp nhà nước với lợi nhuận chủ yếu đến từ cổ tức các liên doanh Honda, Toyota, Ford Việt Nam.",
+  },
+  QNS: {
+    fullName: "CTCP Đường Quảng Ngãi",
+    sector: "Thực phẩm - Đồ uống",
+    website: "qns.com.vn",
+    headquarters: "Quảng Ngãi",
+    description: "Doanh nghiệp thực phẩm sở hữu thương hiệu sữa đậu nành Vinasoy và mảng đường, bánh kẹo.",
   },
 };

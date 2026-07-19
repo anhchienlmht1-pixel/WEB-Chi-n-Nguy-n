@@ -13,6 +13,7 @@ import { isBankSymbol } from "../utils/bankData";
 import SecuritiesFundamentals from "../components/SecuritiesFundamentals";
 import { isSecuritiesSymbol } from "../utils/securitiesData";
 import CompanyProfileCard from "../components/CompanyProfileCard";
+import { COMPANY_PROFILES } from "../data/companyProfiles";
 
 export default function StockDetail() {
   const { symbol = "" } = useParams();
@@ -77,7 +78,7 @@ export default function StockDetail() {
             Cập nhật lúc {new Date(quote.updatedAt).toLocaleTimeString("vi-VN")}
           </p>
 
-          {(isBankSymbol(quote.symbol) || isSecuritiesSymbol(quote.symbol)) && (
+          {(COMPANY_PROFILES[quote.symbol.toUpperCase()] || isBankSymbol(quote.symbol) || isSecuritiesSymbol(quote.symbol)) && (
             <div className="mt-6">
               <CompanyProfileCard symbol={quote.symbol} />
             </div>

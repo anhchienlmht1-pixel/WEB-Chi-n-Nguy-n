@@ -90,9 +90,16 @@ export default function CompanyProfileCard({ symbol }: { symbol: string }) {
         <div className="flex min-w-0 items-start gap-3">
           <CompanyLogo symbol={upper} size={44} />
           <div className="min-w-0">
-            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
-              {profile?.fullName ?? displayName ?? upper}
-            </h3>
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                {profile?.fullName ?? displayName ?? upper}
+              </h3>
+              {profile?.sector && (
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                  {profile.sector}
+                </span>
+              )}
+            </div>
             <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
               {profile?.founded && <span>Thành lập {profile.founded}</span>}
               {profile?.headquarters && <span>Trụ sở: {profile.headquarters}</span>}
