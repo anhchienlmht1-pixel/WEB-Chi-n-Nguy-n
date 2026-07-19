@@ -38,9 +38,7 @@ export default function Header() {
           onClick={() => setMenuOpen(false)}
           className="flex shrink-0 items-center gap-2 text-lg font-bold text-slate-900 dark:text-slate-100"
         >
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500 text-slate-950">
-            📈
-          </span>
+          <img src="/logo-bull.png" alt="" className="h-8 w-8 shrink-0 object-contain" />
           <span className="hidden sm:inline">Chiến Nguyễn Invest</span>
         </NavLink>
 
