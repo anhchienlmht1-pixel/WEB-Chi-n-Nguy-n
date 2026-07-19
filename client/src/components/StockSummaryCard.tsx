@@ -101,10 +101,11 @@ export default function StockSummaryCard({
         <Sparkline points={points} positive={positive} />
       </div>
 
-      {!isIndexOrFutures && (ratios?.pe || ratios?.roe || quote.marketCap) && (
+      {!isIndexOrFutures && (ratios?.pe || ratios?.roe || ratios?.roa || quote.marketCap) && (
         <div className="mt-2 flex items-center gap-3 text-[11px] text-slate-400 dark:text-slate-500">
           {ratios?.pe && <span>P/E {formatRatio(ratios.pe)}</span>}
           {ratios?.roe && <span>ROE {formatRatio(ratios.roe)}</span>}
+          {ratios?.roa && <span>ROA {formatRatio(ratios.roa)}</span>}
           <span className="ml-auto">{formatMarketCap(quote.marketCap, quote.currency)}</span>
         </div>
       )}

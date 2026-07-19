@@ -8,10 +8,12 @@ export interface RatioValue {
 export interface KeyRatios {
   pe: RatioValue | null;
   roe: RatioValue | null;
+  roa: RatioValue | null;
 }
 
 export const PE_MATCH = (n: string) => /p\s*\/\s*e/.test(n);
 export const ROE_MATCH = (n: string) => n.includes("roe");
+export const ROA_MATCH = (n: string) => n.includes("roa");
 
 // KBS doesn't document exact CSTC row IDs, so P/E and ROE are found by name
 // match (same approach used elsewhere for KBS reports) — "P/E" and "ROE" are
@@ -37,5 +39,6 @@ export function extractKeyRatios(report: FinancialReport): KeyRatios {
   return {
     pe: findLatest(report, PE_MATCH),
     roe: findLatest(report, ROE_MATCH),
+    roa: findLatest(report, ROA_MATCH),
   };
 }

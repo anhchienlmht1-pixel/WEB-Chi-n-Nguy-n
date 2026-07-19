@@ -77,7 +77,14 @@ export default function Watchlist() {
         <p className="text-red-500 dark:text-red-400">Lỗi tải dữ liệu: {error}</p>
       )}
 
-      {data && data.length > 0 && view === "table" && <StockTable quotes={data.map((d) => d.quote)} />}
+      {data && data.length > 0 && view === "table" && (
+        <StockTable
+          quotes={data.map((d) => d.quote)}
+          ratios={Object.fromEntries(
+            data.filter((d) => d.ratios).map((d) => [d.quote.symbol, d.ratios!])
+          )}
+        />
+      )}
 
       {data && data.length > 0 && view === "cards" && (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
