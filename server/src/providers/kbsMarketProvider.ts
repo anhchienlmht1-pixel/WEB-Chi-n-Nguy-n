@@ -112,10 +112,18 @@ function quoteFromBoardItem(item: any): Quote | null {
 }
 
 // ---------------------------------------------------------------------------
-// OHLCV history — GET /stocks/{symbol}/data_day or /index/{symbol}/data_day,
+// OHLCV history — GET /stocks/{symbol}/data_{suffix} or /index/{symbol}/data_{suffix},
 // params sdate/edate in DD-MM-YYYY. Stock/ETF prices come back x1000 (KBS
 // convention, same as the finance-info endpoint) and need dividing down;
 // index/derivative values are already the full point value.
+//
+// KBS's own suffix scheme (verified against vnstock's KBS explorer source,
+// explorer/kbs/const.py _INTERVAL_MAP) isn't just "day" — <n>P gives real
+// intraday bars (1P/5P/15P/30P = minutes, 60P = hourly). "1D" used to
+// silently fall back to 3 days of *daily* bars here, which isn't intraday
+// at all; it now pulls genuine 15-minute bars for the current session,
+// matching the resolution vndirectProvider.ts already uses for the same
+// range so switching provider doesn't change chart granularity.
 // ---------------------------------------------------------------------------
 const RANGE_TO_DAYS: Record<HistoryRange, number> = {
   "1D": 3,
@@ -126,6 +134,19 @@ const RANGE_TO_DAYS: Record<HistoryRange, number> = {
   "1Y": 380,
   "5Y": 5 * 365,
   MAX: 30 * 365,
+};
+
+// KBS interval suffix per range — only "1D" gets true intraday granularity;
+// everything else stays on daily bars (unchanged, already works well).
+const RANGE_TO_SUFFIX: Record<HistoryRange, string> = {
+  "1D": "15P",
+  "1W": "day",
+  "1M": "day",
+  "3M": "day",
+  "6M": "day",
+  "1Y": "day",
+  "5Y": "day",
+  MAX: "day",
 };
 
 function toKbsDate(d: Date): string {
@@ -143,16 +164,18 @@ async function fetchHistoryBars(symbol: string, range: HistoryRange): Promise<Hi
   const days = RANGE_TO_DAYS[range];
   const end = new Date();
   const start = new Date(end.getTime() - days * 86400000);
+  const suffix = RANGE_TO_SUFFIX[range];
+  const dataKey = `data_${suffix}`;
 
-  const url = new URL(`${IIS_BASE}/${pathSegment}/${encodeURIComponent(upperSymbol)}/data_day`);
+  const url = new URL(`${IIS_BASE}/${pathSegment}/${encodeURIComponent(upperSymbol)}/${dataKey}`);
   url.searchParams.set("sdate", toKbsDate(start));
   url.searchParams.set("edate", toKbsDate(end));
 
   const data = await fetchJson(url.toString());
-  const bars: any[] = data?.data_day;
+  const bars: any[] = data?.[dataKey];
   if (!Array.isArray(bars) || bars.length === 0) {
     const preview = JSON.stringify(data).slice(0, 400);
-    console.error(`[kbs-market] no data_day bars for ${upperSymbol}: ${preview}`);
+    console.error(`[kbs-market] no ${dataKey} bars for ${upperSymbol}: ${preview}`);
     return [];
   }
 
