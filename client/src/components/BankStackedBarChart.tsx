@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { pickLabelIndices } from "../utils/chartTicks";
+import ChartHoverTooltip, { type TooltipRow } from "./ChartHoverTooltip";
 
 const WIDTH = 800;
 const HEIGHT = 240;
@@ -36,6 +38,7 @@ export default function BankStackedBarChart({
 }) {
   const formatLine = formatLineValue ?? formatValue;
   const n = periods.length;
+  const [hover, setHover] = useState<number | null>(null);
 
   // In "share" mode a period is only plotted if every component has a
   // value — a partial stack (some sectors reported, some not) would
@@ -72,6 +75,39 @@ export default function BankStackedBarChart({
   const labelIndices = new Set(pickLabelIndices(n, step));
   const barTicks = mode === "share" ? [0, 0.5, 1] : [0, barMax / 2, barMax];
 
+  function handlePointerMove(e: React.PointerEvent<SVGSVGElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const relX = ((e.clientX - rect.left) / rect.width) * WIDTH;
+    let nearest = 0;
+    let nearestDist = Infinity;
+    for (let i = 0; i < n; i++) {
+      const d = Math.abs(xCenter(i) - relX);
+      if (d < nearestDist) {
+        nearestDist = d;
+        nearest = i;
+      }
+    }
+    setHover(nearest);
+  }
+
+  const tooltipRows: TooltipRow[] = [];
+  if (hover !== null) {
+    const stack = stacks[hover];
+    if (stack) {
+      bars.forEach((b, bi) => {
+        tooltipRows.push({ label: b.label, color: b.color, value: formatValue(stack[bi]) });
+      });
+    }
+    for (const l of lines) {
+      const v = l.values[hover];
+      if (v != null && Number.isFinite(v)) {
+        tooltipRows.push({ label: l.label, color: l.color, value: formatLine(v), shape: "line" });
+      }
+    }
+  }
+  const showTotal =
+    hover !== null && mode === "absolute" && bars.length > 1 && totals[hover] != null && Number.isFinite(totals[hover]!);
+
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
@@ -92,109 +128,136 @@ export default function BankStackedBarChart({
         </div>
       </div>
       <div className="overflow-x-auto">
-        <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="w-full min-w-[560px]" role="img" aria-label={title}>
-          {barTicks.map((t) => (
-            <text
-              key={`bt-${t}`}
-              x={PAD.left - 6}
-              y={barY(t) + 3}
-              textAnchor="end"
-              className="fill-slate-500 text-[9px] dark:fill-slate-400"
-            >
-              {formatValue(t)}
-            </text>
-          ))}
-          <line
-            x1={PAD.left}
-            x2={WIDTH - PAD.right}
-            y1={barY(0)}
-            y2={barY(0)}
-            className="stroke-slate-200 dark:stroke-slate-800"
-            strokeWidth={1}
-          />
-
-          {stacks.map((stack, i) => {
-            if (!stack) return null;
-            let acc = 0;
-            return (
-              <g key={periods[i]}>
-                {stack.map((v, bi) => {
-                  const y0 = barY(acc);
-                  acc += v;
-                  const y1 = barY(acc);
-                  return (
-                    <rect
-                      key={bi}
-                      x={xCenter(i) - barWidth / 2}
-                      y={Math.min(y0, y1)}
-                      width={barWidth}
-                      height={Math.max(0, Math.abs(y1 - y0))}
-                      fill={bars[bi].color}
-                    >
-                      <title>
-                        {periods[i]} — {bars[bi].label}: {formatValue(v)}
-                      </title>
-                    </rect>
-                  );
-                })}
-              </g>
-            );
-          })}
-
-          {lines.map((line) => {
-            const pts = line.values
-              .map((v, i) => (v == null || !Number.isFinite(v) ? null : `${xCenter(i)},${lineY(v)}`))
-              .filter((p): p is string => p !== null);
-            return (
-              <polyline
-                key={line.label}
-                points={pts.join(" ")}
-                fill="none"
-                stroke={line.color}
-                strokeWidth={2}
-                strokeLinejoin="round"
-                strokeLinecap="round"
-              />
-            );
-          })}
-          {lines.map((line) =>
-            line.values.map((v, i) =>
-              v == null || !Number.isFinite(v) ? null : (
-                <circle key={`${line.label}-${i}`} cx={xCenter(i)} cy={lineY(v)} r={2.5} fill={line.color}>
-                  <title>
-                    {periods[i]} — {line.label}: {formatLine(v)}
-                  </title>
-                </circle>
-              )
-            )
-          )}
-          {lines.length > 0 &&
-            [lineMin, lineMax].map((t) => (
+        <div className="relative min-w-[560px]">
+          <svg
+            viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+            className="w-full"
+            role="img"
+            aria-label={title}
+            onPointerMove={handlePointerMove}
+            onPointerLeave={() => setHover(null)}
+          >
+            {barTicks.map((t) => (
               <text
-                key={`lr-${t}`}
-                x={WIDTH - PAD.right + 6}
-                y={lineY(t) + 3}
-                textAnchor="start"
+                key={`bt-${t}`}
+                x={PAD.left - 6}
+                y={barY(t) + 3}
+                textAnchor="end"
                 className="fill-slate-500 text-[9px] dark:fill-slate-400"
               >
-                {formatLine(t)}
+                {formatValue(t)}
               </text>
             ))}
+            <line
+              x1={PAD.left}
+              x2={WIDTH - PAD.right}
+              y1={barY(0)}
+              y2={barY(0)}
+              className="stroke-slate-200 dark:stroke-slate-800"
+              strokeWidth={1}
+            />
 
-          {periods.map((p, i) =>
-            labelIndices.has(i) ? (
-              <text
-                key={p}
-                x={xCenter(i)}
-                y={HEIGHT - PAD.bottom + 14}
-                textAnchor="middle"
-                className="fill-slate-400 text-[9px] dark:fill-slate-500"
-              >
-                {p}
-              </text>
-            ) : null
+            {hover !== null && (
+              <line
+                x1={xCenter(hover)}
+                x2={xCenter(hover)}
+                y1={PAD.top}
+                y2={HEIGHT - PAD.bottom}
+                className="stroke-slate-300 dark:stroke-slate-600"
+                strokeWidth={1}
+              />
+            )}
+
+            {stacks.map((stack, i) => {
+              if (!stack) return null;
+              let acc = 0;
+              return (
+                <g key={periods[i]} opacity={hover === null || hover === i ? 1 : 0.5}>
+                  {stack.map((v, bi) => {
+                    const y0 = barY(acc);
+                    acc += v;
+                    const y1 = barY(acc);
+                    return (
+                      <rect
+                        key={bi}
+                        x={xCenter(i) - barWidth / 2}
+                        y={Math.min(y0, y1)}
+                        width={barWidth}
+                        height={Math.max(0, Math.abs(y1 - y0))}
+                        fill={bars[bi].color}
+                      />
+                    );
+                  })}
+                </g>
+              );
+            })}
+
+            {lines.map((line) => {
+              const pts = line.values
+                .map((v, i) => (v == null || !Number.isFinite(v) ? null : `${xCenter(i)},${lineY(v)}`))
+                .filter((p): p is string => p !== null);
+              return (
+                <polyline
+                  key={line.label}
+                  points={pts.join(" ")}
+                  fill="none"
+                  stroke={line.color}
+                  strokeWidth={2}
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                />
+              );
+            })}
+            {lines.map((line) =>
+              line.values.map((v, i) =>
+                v == null || !Number.isFinite(v) ? null : (
+                  <circle
+                    key={`${line.label}-${i}`}
+                    cx={xCenter(i)}
+                    cy={lineY(v)}
+                    r={hover === i ? 4 : 2.5}
+                    fill={line.color}
+                  />
+                )
+              )
+            )}
+            {lines.length > 0 &&
+              [lineMin, lineMax].map((t) => (
+                <text
+                  key={`lr-${t}`}
+                  x={WIDTH - PAD.right + 6}
+                  y={lineY(t) + 3}
+                  textAnchor="start"
+                  className="fill-slate-500 text-[9px] dark:fill-slate-400"
+                >
+                  {formatLine(t)}
+                </text>
+              ))}
+
+            {periods.map((p, i) =>
+              labelIndices.has(i) ? (
+                <text
+                  key={p}
+                  x={xCenter(i)}
+                  y={HEIGHT - PAD.bottom + 14}
+                  textAnchor="middle"
+                  className="fill-slate-400 text-[9px] dark:fill-slate-500"
+                >
+                  {p}
+                </text>
+              ) : null
+            )}
+          </svg>
+
+          {hover !== null && tooltipRows.length > 0 && (
+            <ChartHoverTooltip
+              period={periods[hover]}
+              rows={tooltipRows}
+              total={showTotal ? { label: "Tổng", value: formatValue(totals[hover]!) } : undefined}
+              leftPercent={Math.min(82, Math.max(18, (xCenter(hover) / WIDTH) * 100))}
+            />
           )}
-        </svg>
+        </div>
       </div>
     </div>
   );

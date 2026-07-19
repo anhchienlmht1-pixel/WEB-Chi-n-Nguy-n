@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { pickLabelIndices } from "../utils/chartTicks";
+import ChartHoverTooltip, { type TooltipRow } from "./ChartHoverTooltip";
 
 const WIDTH = 800;
 const HEIGHT = 220;
@@ -31,6 +33,8 @@ export default function BankMetricLineChart({
   lines: Line[];
   formatValue: (v: number) => string;
 }) {
+  const [hover, setHover] = useState<number | null>(null);
+
   const allValues = lines.flatMap((l) => l.values.filter((v): v is number => v != null && Number.isFinite(v)));
   if (allValues.length < 2) return null;
 
@@ -47,6 +51,30 @@ export default function BankMetricLineChart({
   const step = Math.max(1, Math.ceil(n / 10));
   const labelIndices = new Set(pickLabelIndices(n, step));
 
+  function handlePointerMove(e: React.PointerEvent<SVGSVGElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const relX = ((e.clientX - rect.left) / rect.width) * WIDTH;
+    let nearest = 0;
+    let nearestDist = Infinity;
+    for (let i = 0; i < n; i++) {
+      const d = Math.abs(xScale(i) - relX);
+      if (d < nearestDist) {
+        nearestDist = d;
+        nearest = i;
+      }
+    }
+    setHover(nearest);
+  }
+
+  const tooltipRows: TooltipRow[] =
+    hover === null
+      ? []
+      : lines.flatMap((l) => {
+          const v = l.values[hover];
+          if (v == null || !Number.isFinite(v)) return [];
+          return [{ label: l.label, color: l.color, value: formatValue(v) }];
+        });
+
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -62,73 +90,103 @@ export default function BankMetricLineChart({
       </div>
 
       <div className="overflow-x-auto">
-        <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="w-full min-w-[560px]" role="img" aria-label={title}>
-          {yTicks.map((t) => (
-            <line
-              key={t}
-              x1={PAD.left}
-              x2={WIDTH - PAD.right}
-              y1={yScale(t)}
-              y2={yScale(t)}
-              className="stroke-slate-200 dark:stroke-slate-800"
-              strokeWidth={1}
-            />
-          ))}
-          {yTicks.map((t) => (
-            <text
-              key={`l-${t}`}
-              x={PAD.left - 8}
-              y={yScale(t) + 3}
-              textAnchor="end"
-              className="fill-slate-500 text-[10px] dark:fill-slate-400"
-            >
-              {formatValue(t)}
-            </text>
-          ))}
-
-          {periods.map((p, i) =>
-            labelIndices.has(i) ? (
-              <text
-                key={p}
-                x={xScale(i)}
-                y={HEIGHT - PAD.bottom + 14}
-                textAnchor="middle"
-                className="fill-slate-400 text-[10px] dark:fill-slate-500"
-              >
-                {p}
-              </text>
-            ) : null
-          )}
-
-          {lines.map((line) => {
-            const pts = line.values
-              .map((v, i) => (v == null || !Number.isFinite(v) ? null : `${xScale(i)},${yScale(v)}`))
-              .filter((p): p is string => p !== null);
-            return (
-              <polyline
-                key={line.label}
-                points={pts.join(" ")}
-                fill="none"
-                stroke={line.color}
-                strokeWidth={2}
-                strokeLinejoin="round"
-                strokeLinecap="round"
+        <div className="relative min-w-[560px]">
+          <svg
+            viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+            className="w-full"
+            role="img"
+            aria-label={title}
+            onPointerMove={handlePointerMove}
+            onPointerLeave={() => setHover(null)}
+          >
+            {yTicks.map((t) => (
+              <line
+                key={t}
+                x1={PAD.left}
+                x2={WIDTH - PAD.right}
+                y1={yScale(t)}
+                y2={yScale(t)}
+                className="stroke-slate-200 dark:stroke-slate-800"
+                strokeWidth={1}
               />
-            );
-          })}
+            ))}
+            {yTicks.map((t) => (
+              <text
+                key={`l-${t}`}
+                x={PAD.left - 8}
+                y={yScale(t) + 3}
+                textAnchor="end"
+                className="fill-slate-500 text-[10px] dark:fill-slate-400"
+              >
+                {formatValue(t)}
+              </text>
+            ))}
 
-          {lines.map((line) =>
-            line.values.map((v, i) =>
-              v == null || !Number.isFinite(v) ? null : (
-                <circle key={`${line.label}-${i}`} cx={xScale(i)} cy={yScale(v)} r={2.5} fill={line.color}>
-                  <title>
-                    {periods[i]} — {line.label}: {formatValue(v)}
-                  </title>
-                </circle>
+            {periods.map((p, i) =>
+              labelIndices.has(i) ? (
+                <text
+                  key={p}
+                  x={xScale(i)}
+                  y={HEIGHT - PAD.bottom + 14}
+                  textAnchor="middle"
+                  className="fill-slate-400 text-[10px] dark:fill-slate-500"
+                >
+                  {p}
+                </text>
+              ) : null
+            )}
+
+            {hover !== null && (
+              <line
+                x1={xScale(hover)}
+                x2={xScale(hover)}
+                y1={PAD.top}
+                y2={HEIGHT - PAD.bottom}
+                className="stroke-slate-300 dark:stroke-slate-600"
+                strokeWidth={1}
+              />
+            )}
+
+            {lines.map((line) => {
+              const pts = line.values
+                .map((v, i) => (v == null || !Number.isFinite(v) ? null : `${xScale(i)},${yScale(v)}`))
+                .filter((p): p is string => p !== null);
+              return (
+                <polyline
+                  key={line.label}
+                  points={pts.join(" ")}
+                  fill="none"
+                  stroke={line.color}
+                  strokeWidth={2}
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                />
+              );
+            })}
+
+            {lines.map((line) =>
+              line.values.map((v, i) =>
+                v == null || !Number.isFinite(v) ? null : (
+                  <circle
+                    key={`${line.label}-${i}`}
+                    cx={xScale(i)}
+                    cy={yScale(v)}
+                    r={hover === i ? 4 : 2.5}
+                    fill={line.color}
+                  />
+                )
               )
-            )
+            )}
+          </svg>
+
+          {hover !== null && tooltipRows.length > 0 && (
+            <ChartHoverTooltip
+              period={periods[hover]}
+              rows={tooltipRows}
+              leftPercent={Math.min(82, Math.max(18, (xScale(hover) / WIDTH) * 100))}
+            />
           )}
-        </svg>
+        </div>
       </div>
     </div>
   );
