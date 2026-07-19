@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { to: "/so-sanh", label: "So sánh", end: false },
   { to: "/so-sanh-ngan-hang", label: "So sánh ngân hàng", end: false },
   { to: "/so-sanh-chung-khoan", label: "So sánh chứng khoán", end: false },
+  { to: "/backtest", label: "Backtest", end: false },
 ];
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
