@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { fetchFinancials } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import type { FinancialPeriodType, FinancialReportType } from "../types";
@@ -6,7 +6,7 @@ import { formatFinancialValue } from "../utils/format";
 import ProfitChart from "./ProfitChart";
 import RatioTrendChart from "./RatioTrendChart";
 import { sortPeriodIndices } from "../utils/period";
-import { financialSourceCaption } from "../utils/financials";
+import { buildFinancialTree, financialSourceCaption, type FinancialTreeNode } from "../utils/financials";
 
 const REPORT_TABS: { value: FinancialReportType; label: string }[] = [
   { value: "CSTC", label: "Chỉ số tài chính" },
@@ -18,11 +18,30 @@ const REPORT_TABS: { value: FinancialReportType; label: string }[] = [
 export default function FinancialRatios({ symbol }: { symbol: string }) {
   const [reportType, setReportType] = useState<FinancialReportType>("CSTC");
   const [periodType, setPeriodType] = useState<FinancialPeriodType>("year");
+  // Ids of collapsed parent rows (Excel-style outline groups) — a row with
+  // children can be toggled shut to hide its subtree without losing the
+  // subtotal line itself.
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
   const { data, error, loading } = usePolling(
     () => fetchFinancials(symbol, reportType, periodType),
     [symbol, reportType, periodType]
   );
+
+  // A fresh report (new symbol/report type/period type) starts fully
+  // expanded — collapse state shouldn't leak between unrelated reports.
+  useEffect(() => {
+    setCollapsed(new Set());
+  }, [symbol, reportType, periodType]);
+
+  function toggle(id: string) {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   // Oldest column first, newest last — same left-to-right timeline
   // convention as the charts above, sorted by the actual year/quarter
@@ -32,6 +51,8 @@ export default function FinancialRatios({ symbol }: { symbol: string }) {
     if (!data) return [];
     return sortPeriodIndices(data.periods, "asc").map((index) => ({ label: data.periods[index], index }));
   }, [data]);
+
+  const tree = useMemo(() => (data ? buildFinancialTree(data.items) : []), [data]);
 
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
@@ -111,36 +132,92 @@ export default function FinancialRatios({ symbol }: { symbol: string }) {
               </tr>
             </thead>
             <tbody>
-              {data.items.map((item) => (
-                <tr
-                  key={item.id}
-                  className="border-b border-slate-100 last:border-0 hover:bg-slate-50 dark:border-slate-900 dark:hover:bg-slate-900/60"
-                >
-                  <td
-                    className="sticky left-0 z-10 whitespace-nowrap bg-white px-4 py-2.5 text-slate-600 dark:bg-slate-900/40 dark:text-slate-300"
-                    style={{ paddingLeft: `${1 + item.levels}rem` }}
-                  >
-                    <span className={item.levels === 0 ? "font-semibold text-slate-900 dark:text-slate-100" : ""}>
-                      {item.name}
-                    </span>
-                    {item.unit && (
-                      <span className="ml-1.5 text-xs text-slate-400 dark:text-slate-500">({item.unit})</span>
-                    )}
-                  </td>
-                  {displayPeriods.map((p) => (
-                    <td
-                      key={p.index}
-                      className="whitespace-nowrap px-4 py-2.5 text-right tabular-nums text-slate-700 dark:text-slate-300"
-                    >
-                      {formatFinancialValue(item.values[p.index], item.unit)}
-                    </td>
-                  ))}
-                </tr>
+              {tree.map((node) => (
+                <FinancialTreeRows
+                  key={node.item.id}
+                  node={node}
+                  displayPeriods={displayPeriods}
+                  collapsed={collapsed}
+                  onToggle={toggle}
+                />
               ))}
             </tbody>
           </table>
         </div>
       )}
     </div>
+  );
+}
+
+// One outline row plus (if expanded) its subtree, recursively — the
+// Excel-style parent/child grouping: Tài sản > Tài sản hiện hành > Tiền
+// mặt/Khoản phải thu/Hàng tồn kho, Tài sản cố định, siblings Nợ/Vốn, etc.
+// Guide lines (border-l) at each ancestor depth mimic the ├─/└─ connectors
+// of an outline view without needing to draw one explicitly per row.
+function FinancialTreeRows({
+  node,
+  displayPeriods,
+  collapsed,
+  onToggle,
+}: {
+  node: FinancialTreeNode;
+  displayPeriods: { label: string; index: number }[];
+  collapsed: Set<string>;
+  onToggle: (id: string) => void;
+}) {
+  const { item, children } = node;
+  const hasChildren = children.length > 0;
+  const isOpen = !collapsed.has(item.id);
+
+  return (
+    <>
+      <tr className="border-b border-slate-100 last:border-0 hover:bg-slate-50 dark:border-slate-900 dark:hover:bg-slate-900/60">
+        <td
+          className="sticky left-0 z-10 whitespace-nowrap bg-white px-4 py-2.5 text-slate-600 dark:bg-slate-900/40 dark:text-slate-300"
+          style={{ paddingLeft: `${1 + item.levels * 1.25}rem` }}
+        >
+          <span className="inline-flex items-center gap-1.5">
+            {hasChildren ? (
+              <button
+                type="button"
+                onClick={() => onToggle(item.id)}
+                aria-label={isOpen ? "Thu gọn" : "Mở rộng"}
+                className="flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border border-slate-300 text-[9px] leading-none text-slate-500 hover:border-emerald-500 hover:text-emerald-600 dark:border-slate-600 dark:text-slate-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400"
+              >
+                {isOpen ? "−" : "+"}
+              </button>
+            ) : (
+              <span className="w-4 shrink-0" />
+            )}
+            <span className={item.levels === 0 ? "font-semibold text-slate-900 dark:text-slate-100" : ""}>
+              {item.name}
+            </span>
+            {item.unit && (
+              <span className="text-xs text-slate-400 dark:text-slate-500">({item.unit})</span>
+            )}
+          </span>
+        </td>
+        {displayPeriods.map((p) => (
+          <td
+            key={p.index}
+            className={`whitespace-nowrap px-4 py-2.5 text-right tabular-nums text-slate-700 dark:text-slate-300 ${
+              item.levels === 0 ? "font-semibold text-slate-900 dark:text-slate-100" : ""
+            }`}
+          >
+            {formatFinancialValue(item.values[p.index], item.unit)}
+          </td>
+        ))}
+      </tr>
+      {isOpen &&
+        children.map((child) => (
+          <FinancialTreeRows
+            key={child.item.id}
+            node={child}
+            displayPeriods={displayPeriods}
+            collapsed={collapsed}
+            onToggle={onToggle}
+          />
+        ))}
+    </>
   );
 }

@@ -50,6 +50,36 @@ export function findTotalAssetsItem(report: FinancialReport): FinancialLineItem 
   return [...candidates].sort((a, b) => a.levels - b.levels || a.name.length - b.name.length)[0];
 }
 
+export interface FinancialTreeNode {
+  item: FinancialLineItem;
+  children: FinancialTreeNode[];
+}
+
+// KBS's line items are already in outline order (each row immediately
+// followed by its own children, one level deeper) — this just turns that
+// flat, levels-indented list into an actual parent-child tree so the table
+// can render Excel-style collapsible groups (Tài sản > Tài sản hiện hành >
+// Tiền mặt/Khoản phải thu/...) instead of only visual indentation.
+export function buildFinancialTree(items: FinancialLineItem[]): FinancialTreeNode[] {
+  const roots: FinancialTreeNode[] = [];
+  const stack: FinancialTreeNode[] = [];
+
+  for (const item of items) {
+    const node: FinancialTreeNode = { item, children: [] };
+    while (stack.length > 0 && stack[stack.length - 1].item.levels >= item.levels) {
+      stack.pop();
+    }
+    if (stack.length === 0) {
+      roots.push(node);
+    } else {
+      stack[stack.length - 1].children.push(node);
+    }
+    stack.push(node);
+  }
+
+  return roots;
+}
+
 /**
  * % growth vs. the immediately previous period — period-over-period, which
  * reads as QoQ on a quarterly chart and YoY on a yearly one, matching
