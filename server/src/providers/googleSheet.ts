@@ -31,7 +31,17 @@ function normalizeLabel(s: string): string {
   return s.normalize("NFC").trim().replace(/:\s*$/, "").toUpperCase();
 }
 
-function findLabelCell(table: string[][], label: string): { row: number; col: number } | null {
+// A stock sheet can contain more than one cell literally named "Mã" — e.g.
+// a reference table's header row ("Mã | Tên công ty | ...") as well as the
+// actual dropdown selector cell. `valueLooksLike`, when given, rejects a
+// candidate whose adjacent value doesn't look right (a ticker is short,
+// no spaces, no lowercase Vietnamese text) so the search keeps going to
+// the next occurrence instead of locking onto a header by mistake.
+function findLabelCell(
+  table: string[][],
+  label: string,
+  valueLooksLike?: (value: string) => boolean
+): { row: number; col: number } | null {
   const target = normalizeLabel(label);
   for (let r = 0; r < table.length; r++) {
     for (let c = 0; c < table[r].length; c++) {
@@ -40,12 +50,15 @@ function findLabelCell(table: string[][], label: string): { row: number; col: nu
       // (e.g. "Mã CP" for a "Mã" search) — but not an arbitrary paragraph
       // that happens to start with the same word.
       if (cell === target || (cell.startsWith(target) && cell.length <= target.length + 15)) {
+        if (valueLooksLike && !valueLooksLike(nextNonEmptyInRow(table, r, c))) continue;
         return { row: r, col: c };
       }
     }
   }
   return null;
 }
+
+const looksLikeTicker = (v: string) => /^[A-Za-z0-9]{1,10}$/.test(v.trim());
 
 function nextNonEmptyInRow(table: string[][], row: number, afterCol: number): string {
   const cells = table[row] || [];
@@ -68,7 +81,7 @@ function collectColumnBelow(table: string[][], startRow: number, col: number, st
 }
 
 export function parseStockOutlook(table: string[][]): StockOutlookRecord {
-  const symbolLabel = findLabelCell(table, "Mã");
+  const symbolLabel = findLabelCell(table, "Mã", looksLikeTicker);
   const symbol = symbolLabel ? nextNonEmptyInRow(table, symbolLabel.row, symbolLabel.col) : "";
 
   const dateLabel = findLabelCell(table, "Ngày cập nhật");
