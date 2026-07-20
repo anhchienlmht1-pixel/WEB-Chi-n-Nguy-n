@@ -7,6 +7,7 @@ import PerformanceCompare from './pages/PerformanceCompare'
 import BankCompare from './pages/BankCompare'
 import SecuritiesCompare from './pages/SecuritiesCompare'
 import Backtest from './pages/Backtest'
+import InvestmentOutlook from './pages/InvestmentOutlook'
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/so-sanh-ngan-hang" element={<BankCompare />} />
         <Route path="/so-sanh-chung-khoan" element={<SecuritiesCompare />} />
         <Route path="/backtest" element={<Backtest />} />
+        <Route path="/trien-vong-dau-tu" element={<InvestmentOutlook />} />
         <Route path="*" element={<Dashboard />} />
       </Routes>
     </div>

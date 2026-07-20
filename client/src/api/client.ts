@@ -78,3 +78,14 @@ export async function fetchNewsForSymbol(
   const { data } = await api.get(`/news/${encodeURIComponent(symbol)}`, { params: { limit } });
   return data;
 }
+
+export interface InvestmentOutlook {
+  headers: string[];
+  rows: string[][];
+  updatedAt: string;
+}
+
+export async function fetchInvestmentOutlook(gid?: string): Promise<InvestmentOutlook> {
+  const { data } = await api.get("/investment-outlook", { params: gid ? { gid } : undefined });
+  return data;
+}

@@ -6,6 +6,7 @@ import { topTradedOf, VALID_EXCHANGES } from "../providers/topTraded.js";
 import { KbsPeriodType, KbsReportType } from "../providers/kbsFinancials.js";
 import { fetchFinancialReport } from "../providers/financials.js";
 import { getQuoteWithFallback, getHistoryWithFallback } from "../providers/fallback.js";
+import { fetchInvestmentOutlook } from "../providers/googleSheet.js";
 import { fetchNewsForSymbol } from "../news/cafefNews.js";
 
 const router = Router();
@@ -126,6 +127,18 @@ router.get(
     const limit = Math.min(30, Math.max(1, Number(req.query.limit) || 10));
     const data = await cached(`news:${symbol}`, 600, () => fetchNewsForSymbol(symbol, limit));
     res.json({ symbol, ...data });
+  })
+);
+
+router.get(
+  "/investment-outlook",
+  asyncHandler(async (req, res) => {
+    const gid = (req.query.gid as string) || "0";
+    // 5 min TTL — long enough to not hammer Google Sheets on every page
+    // view, short enough that an edit to the sheet shows up on the site
+    // without a deploy.
+    const data = await cached(`investment-outlook:${gid}`, 300, () => fetchInvestmentOutlook(gid));
+    res.json(data);
   })
 );
 
