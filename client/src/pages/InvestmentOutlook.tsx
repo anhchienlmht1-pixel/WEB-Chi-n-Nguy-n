@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { fetchInvestmentOutlook, type StockOutlookRecord } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 
@@ -12,6 +13,11 @@ const POLL_MS = 3 * 60 * 1000; // server itself caches 5 min — this just re-ch
 // the sheet itself (link below).
 export default function InvestmentOutlook() {
   const { data, error, loading } = usePolling(() => fetchInvestmentOutlook(), [], POLL_MS);
+  const [query, setQuery] = useState("");
+
+  const trimmedQuery = query.trim().toUpperCase();
+  const currentSymbol = data?.symbol.trim().toUpperCase() ?? "";
+  const isMismatch = data !== null && trimmedQuery !== "" && trimmedQuery !== currentSymbol;
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-6">
@@ -31,6 +37,20 @@ export default function InvestmentOutlook() {
         ô "MÃ" trong trang tính.
       </p>
 
+      <div className="mb-4">
+        <label htmlFor="outlook-symbol-input" className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">
+          Nhập mã cổ phiếu bạn muốn xem
+        </label>
+        <input
+          id="outlook-symbol-input"
+          value={query}
+          onChange={(e) => setQuery(e.target.value.toUpperCase())}
+          placeholder="VD: REE"
+          maxLength={10}
+          className="w-full max-w-[220px] rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm uppercase text-slate-900 placeholder:normal-case placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
+        />
+      </div>
+
       {loading && !data && (
         <div className="space-y-2">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -45,7 +65,15 @@ export default function InvestmentOutlook() {
         </div>
       )}
 
-      {data && <StockOutlookRecordView record={data} />}
+      {isMismatch && (
+        <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-400">
+          Trang tính hiện đang hiển thị triển vọng cho mã <strong>{data!.symbol}</strong>, chưa phải mã{" "}
+          <strong>{trimmedQuery}</strong> bạn nhập. Mở trang tính, đổi ô "MÃ" thành {trimmedQuery} rồi quay lại
+          trang này.
+        </div>
+      )}
+
+      {data && !isMismatch && <StockOutlookRecordView record={data} />}
     </div>
   );
 }
