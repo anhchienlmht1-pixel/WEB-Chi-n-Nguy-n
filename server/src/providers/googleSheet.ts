@@ -23,11 +23,25 @@ export interface StockOutlookRecord {
 // cell ("MÃ", "Ngày cập nhật", "Triển vọng đầu tư", "Giá khuyến nghị")
 // wherever it lands in the exported grid, rather than assuming fixed
 // row/column positions, since merged cells shift depending on layout.
+// Normalizes for label comparison: Unicode NFC (Sheets/Drive sometimes
+// serve Vietnamese diacritics as NFD-decomposed combining characters,
+// which look identical on screen but compare unequal as raw strings),
+// trims whitespace, drops a trailing colon, and uppercases.
+function normalizeLabel(s: string): string {
+  return s.normalize("NFC").trim().replace(/:\s*$/, "").toUpperCase();
+}
+
 function findLabelCell(table: string[][], label: string): { row: number; col: number } | null {
-  const target = label.trim().toUpperCase();
+  const target = normalizeLabel(label);
   for (let r = 0; r < table.length; r++) {
     for (let c = 0; c < table[r].length; c++) {
-      if ((table[r][c] || "").trim().toUpperCase() === target) return { row: r, col: c };
+      const cell = normalizeLabel(table[r][c] || "");
+      // Exact match, or the cell starts with the label plus a short suffix
+      // (e.g. "Mã CP" for a "Mã" search) — but not an arbitrary paragraph
+      // that happens to start with the same word.
+      if (cell === target || (cell.startsWith(target) && cell.length <= target.length + 15)) {
+        return { row: r, col: c };
+      }
     }
   }
   return null;
@@ -42,12 +56,12 @@ function nextNonEmptyInRow(table: string[][], row: number, afterCol: number): st
 }
 
 function collectColumnBelow(table: string[][], startRow: number, col: number, stopLabels: string[]): string[] {
-  const stopSet = new Set(stopLabels.map((s) => s.toUpperCase()));
+  const stopSet = new Set(stopLabels.map(normalizeLabel));
   const out: string[] = [];
   for (let r = startRow; r < table.length; r++) {
     const cell = (table[r][col] || "").trim();
     if (!cell) continue;
-    if (stopSet.has(cell.toUpperCase())) break;
+    if (stopSet.has(normalizeLabel(cell))) break;
     out.push(cell);
   }
   return out;
@@ -179,8 +193,13 @@ export async function fetchInvestmentOutlook(gid?: string): Promise<StockOutlook
 
   const record = parseStockOutlook(table);
   if (!record.symbol) {
+    // Surface a preview of what was actually read back in the error text —
+    // this lets a real user relay the true sheet structure by just
+    // screenshotting the on-page error, without needing to manually open
+    // the CSV export URL themselves.
+    const preview = JSON.stringify(table.slice(0, 8).map((r) => r.slice(0, 8))).slice(0, 1200);
     throw Object.assign(
-      new Error('Không tìm thấy ô "MÃ" trong trang tính — kiểm tra lại cấu trúc trang tính.'),
+      new Error(`Không tìm thấy ô "MÃ" trong trang tính. Dữ liệu đọc được: ${preview}`),
       { status: 502 }
     );
   }
