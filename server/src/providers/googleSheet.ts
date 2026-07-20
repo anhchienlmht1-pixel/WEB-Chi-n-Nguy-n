@@ -223,14 +223,16 @@ export async function fetchInvestmentOutlook(gid?: string): Promise<StockOutlook
   return record;
 }
 
-// Two sector tabs ("P/B ngành ngân hàng", "P/B ngành chứng khoán") the user
-// maintains with real daily P/B values per symbol — the sheet's own header
-// row names the symbols and each following row is one date, so unlike the
-// single-record outlook tab these genuinely are database-shaped tables
-// already; no label-hunting needed. Reading this directly is far more
-// accurate than deriving P/B ourselves from price × approximate share count.
+// Three sector tabs ("P/B ngành ngân hàng", "P/B ngành chứng khoán", "P/B
+// ngành bất động sản") the user maintains with real daily P/B values per
+// symbol — the sheet's own header row names the symbols and each
+// following row is one date, so unlike the single-record outlook tab
+// these genuinely are database-shaped tables already; no label-hunting
+// needed. Reading this directly is far more accurate than deriving P/B
+// ourselves from price × approximate share count.
 const BANK_PB_HISTORY_GID = "492106203";
 const SECURITIES_PB_HISTORY_GID = "1429690230";
+const REAL_ESTATE_PB_HISTORY_GID = "454354295";
 
 export interface PbHistoryRow {
   date: string;
@@ -286,4 +288,8 @@ export function fetchBankPbHistory(): Promise<PbHistoryTable> {
 
 export function fetchSecuritiesPbHistory(): Promise<PbHistoryTable> {
   return fetchPbHistory(SECURITIES_PB_HISTORY_GID, "chứng khoán");
+}
+
+export function fetchRealEstatePbHistory(): Promise<PbHistoryTable> {
+  return fetchPbHistory(REAL_ESTATE_PB_HISTORY_GID, "bất động sản");
 }

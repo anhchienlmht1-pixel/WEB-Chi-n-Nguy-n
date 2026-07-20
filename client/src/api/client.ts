@@ -105,3 +105,8 @@ export async function fetchSecuritiesPbHistory(): Promise<PbHistoryTable> {
   const { data } = await api.get("/securities-pb-history");
   return data;
 }
+
+export async function fetchRealEstatePbHistory(): Promise<PbHistoryTable> {
+  const { data } = await api.get("/realestate-pb-history");
+  return data;
+}
