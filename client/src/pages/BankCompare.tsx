@@ -15,6 +15,7 @@ type Tab = "compare" | "metric" | "detail" | "pb";
 type PeriodType = "quarter" | "year";
 
 const GROUP_ORDER = ["Quốc doanh", "Doanh nghiệp", "Cá nhân", "Quy mô nhỏ", ""];
+const PB_POLL_MS = 3 * 60 * 1000; // matches the other Sheets-backed pages (server itself caches 5 min)
 
 function buildRow(bank: BankData, periodType: PeriodType, periodIndex: number): BankOverviewRow {
   const periodData = periodType === "quarter" ? bank.quarter : bank.year;
@@ -53,13 +54,19 @@ export default function BankCompare() {
   const [pbYears, setPbYears] = useState<PbLookbackYears>(1);
 
   // The sheet's own "P/B ngành ngân hàng" tab already has real daily P/B
-  // values per bank — fetched once (lazily, only when the tab is opened)
-  // and cached; switching "Thời gian" (1/3/5 năm) below just recomputes
-  // current/average/min/max client-side from this table, no refetch.
-  const { data: pbHistory, error: pbError, loading: pbLoading } = usePolling(async () => {
-    if (tab !== "pb") return null;
-    return fetchBankPbHistory();
-  }, [tab]);
+  // values per bank — only fetched while the tab is open, refreshed every
+  // 3 min like the other Sheets-backed pages so edits in the sheet show up
+  // without the user having to reload. Switching "Thời gian" (1/3/5 năm)
+  // below just recomputes current/average/min/max client-side from
+  // whatever table is already cached, no extra fetch.
+  const { data: pbHistory, error: pbError, loading: pbLoading } = usePolling(
+    async () => {
+      if (tab !== "pb") return null;
+      return fetchBankPbHistory();
+    },
+    [tab],
+    PB_POLL_MS
+  );
 
   const pbStats = useMemo(() => {
     if (!pbHistory) return null;
