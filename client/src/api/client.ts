@@ -90,3 +90,13 @@ export async function fetchInvestmentOutlook(gid?: string): Promise<StockOutlook
   const { data } = await api.get("/investment-outlook", { params: gid ? { gid } : undefined });
   return data;
 }
+
+export interface BankPbHistoryTable {
+  symbols: string[];
+  rows: { date: string; values: (number | null)[] }[];
+}
+
+export async function fetchBankPbHistory(): Promise<BankPbHistoryTable> {
+  const { data } = await api.get("/bank-pb-history");
+  return data;
+}

@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { usePolling } from "../hooks/usePolling";
-import { fetchHistory, fetchQuote } from "../api/client";
+import { fetchBankPbHistory } from "../api/client";
 import { BANK_SYMBOL_LIST, CORE_METRIC_KEYS, METRIC_META, fetchBankData, formatMetricValue } from "../utils/bankData";
-import { PB_COMPARE_SYMBOLS, computeBankPbStat, type PbLookbackYears } from "../utils/bankPb";
+import { computeBankPbStatsFromHistory, type PbLookbackYears } from "../utils/bankPb";
 import type { BankData, BankMetricKey, BankOverviewRow } from "../types/bank";
 import BankDetailView from "../components/BankDetailView";
 import BankMetricComparisonTable from "../components/BankMetricComparisonTable";
@@ -15,10 +15,6 @@ type Tab = "compare" | "metric" | "detail" | "pb";
 type PeriodType = "quarter" | "year";
 
 const GROUP_ORDER = ["Quốc doanh", "Doanh nghiệp", "Cá nhân", "Quy mô nhỏ", ""];
-
-function errorText(reason: unknown): string {
-  return (reason instanceof Error ? reason.message : String(reason)).slice(0, 150);
-}
 
 function buildRow(bank: BankData, periodType: PeriodType, periodIndex: number): BankOverviewRow {
   const periodData = periodType === "quarter" ? bank.quarter : bank.year;
@@ -56,58 +52,19 @@ export default function BankCompare() {
   const [periodIndex, setPeriodIndex] = useState<number | null>(null);
   const [pbYears, setPbYears] = useState<PbLookbackYears>(1);
 
-  // Quotes + 5-year price history are only fetched once the "So sánh P/B"
-  // tab is opened, and only once — switching the "Thời gian" (1/3/5 năm)
-  // window below just recomputes stats from this cached data, no refetch.
-  // allSettled (not all) so one bank's provider hiccup only blanks that
-  // one bar instead of failing the whole 16-bank chart.
-  const { data: pbRaw, error: pbError, loading: pbLoading } = usePolling(async () => {
+  // The sheet's own "P/B ngành ngân hàng" tab already has real daily P/B
+  // values per bank — fetched once (lazily, only when the tab is opened)
+  // and cached; switching "Thời gian" (1/3/5 năm) below just recomputes
+  // current/average/min/max client-side from this table, no refetch.
+  const { data: pbHistory, error: pbError, loading: pbLoading } = usePolling(async () => {
     if (tab !== "pb") return null;
-    const [quoteResults, historyResults] = await Promise.all([
-      Promise.allSettled(PB_COMPARE_SYMBOLS.map((s) => fetchQuote(s))),
-      Promise.allSettled(PB_COMPARE_SYMBOLS.map((s) => fetchHistory(s, "5Y"))),
-    ]);
-    return { quoteResults, historyResults };
+    return fetchBankPbHistory();
   }, [tab]);
 
   const pbStats = useMemo(() => {
-    if (!pbRaw || !banks) return null;
-    const bankBySymbol = new Map(banks.map((b) => [b.symbol, b]));
-    const since = new Date();
-    since.setFullYear(since.getFullYear() - pbYears);
-    return PB_COMPARE_SYMBOLS.map((symbol, i) => {
-      const bank = bankBySymbol.get(symbol);
-      const quoteResult = pbRaw.quoteResults[i];
-      const historyResult = pbRaw.historyResults[i];
-      if (!bank || quoteResult.status !== "fulfilled" || historyResult.status !== "fulfilled") {
-        return { symbol, current: null, average: null, min: null, max: null };
-      }
-      return computeBankPbStat(quoteResult.value, bank, historyResult.value.points, since);
-    });
-  }, [pbRaw, banks, pbYears]);
-
-  // Every bank came back null — either every request failed, or requests
-  // succeeded but the provider didn't return marketCap for any of them.
-  // Promise.allSettled means neither shows up as a top-level pbError, so
-  // this builds a diagnostic message from the individual results instead
-  // of the chart just rendering empty with no explanation.
-  const pbAllEmpty = pbStats !== null && pbStats.every((s) => s.current == null && s.average == null);
-  const pbDiagnostic = useMemo(() => {
-    if (!pbRaw || !pbAllEmpty) return null;
-    const reasons: string[] = [];
-    let missingMarketCap = 0;
-    PB_COMPARE_SYMBOLS.forEach((symbol, i) => {
-      const q = pbRaw.quoteResults[i];
-      const h = pbRaw.historyResults[i];
-      if (q.status === "rejected") reasons.push(`${symbol} (giá): ${errorText(q.reason)}`);
-      else if (!q.value.marketCap) missingMarketCap++;
-      if (h.status === "rejected") reasons.push(`${symbol} (lịch sử giá): ${errorText(h.reason)}`);
-    });
-    const parts: string[] = [];
-    if (reasons.length > 0) parts.push(reasons.slice(0, 3).join(" | "));
-    if (missingMarketCap > 0) parts.push(`${missingMarketCap}/${PB_COMPARE_SYMBOLS.length} mã tải giá thành công nhưng thiếu vốn hóa thị trường`);
-    return parts.join(". ") || "Không rõ nguyên nhân.";
-  }, [pbRaw, pbAllEmpty]);
+    if (!pbHistory) return null;
+    return computeBankPbStatsFromHistory(pbHistory, pbYears);
+  }, [pbHistory, pbYears]);
 
   const periods = useMemo(() => {
     if (!banks || banks.length === 0) return [];
@@ -258,19 +215,12 @@ export default function BankCompare() {
               Không tải được dữ liệu P/B{pbError ? `: ${pbError}` : ""}.
             </div>
           )}
-          {!pbLoading && pbStats && pbAllEmpty && (
-            <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-600 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-400">
-              Không tính được P/B cho ngân hàng nào — tất cả nguồn giá/lịch sử giá đều lỗi hoặc thiếu vốn hóa thị
-              trường. Chi tiết: {pbDiagnostic}
-            </div>
-          )}
-          {pbStats && !pbAllEmpty && (
+          {pbStats && (
             <>
               <BankPbRangeChart data={pbStats} title="So sánh P/B ngành ngân hàng" />
               <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
-                P/B lịch sử ước tính từ giá đóng cửa và vốn chủ sở hữu theo quý thực tế, áp dụng số lượng cổ phiếu lưu
-                hành hiện tại cho các mốc thời gian trong quá khứ (không có dữ liệu số lượng cổ phiếu lưu hành lịch
-                sử) — có thể lệch với ngân hàng từng phát hành thêm cổ phiếu đáng kể trong giai đoạn so sánh.
+                Dữ liệu P/B theo ngày do người quản lý trang tính tự tính và cập nhật, đồng bộ trực tiếp từ Google
+                Sheets — không phải khuyến nghị đầu tư từ hệ thống.
               </p>
             </>
           )}

@@ -168,7 +168,7 @@ export function parseCsv(text: string): string[][] {
   return rows.filter((r) => r.some((cell) => cell.trim() !== ""));
 }
 
-export async function fetchInvestmentOutlook(gid?: string): Promise<StockOutlookRecord> {
+async function fetchPublishedCsvTable(gid?: string): Promise<string[][]> {
   const params = new URLSearchParams({ output: "csv" });
   if (gid) {
     params.set("gid", gid);
@@ -203,7 +203,11 @@ export async function fetchInvestmentOutlook(gid?: string): Promise<StockOutlook
   if (table.length === 0) {
     throw Object.assign(new Error("Trang tính rỗng."), { status: 502 });
   }
+  return table;
+}
 
+export async function fetchInvestmentOutlook(gid?: string): Promise<StockOutlookRecord> {
+  const table = await fetchPublishedCsvTable(gid);
   const record = parseStockOutlook(table);
   if (!record.symbol) {
     // Surface a preview of what was actually read back in the error text —
@@ -217,4 +221,60 @@ export async function fetchInvestmentOutlook(gid?: string): Promise<StockOutlook
     );
   }
   return record;
+}
+
+// A separate tab ("P/B ngành ngân hàng") the user maintains with real daily
+// P/B values per bank — the sheet's own header row names the banks and
+// each following row is one date, so unlike the single-record outlook tab
+// this genuinely is a database-shaped table already; no label-hunting
+// needed. Reading this directly is far more accurate than deriving P/B
+// ourselves from price × approximate share count.
+const BANK_PB_HISTORY_GID = "492106203";
+
+export interface BankPbHistoryRow {
+  date: string;
+  values: (number | null)[];
+}
+
+export interface BankPbHistoryTable {
+  symbols: string[];
+  rows: BankPbHistoryRow[];
+}
+
+// The sheet displays numbers in Vietnamese locale (comma decimal, dot
+// thousands separator) — Google's CSV export keeps that formatted text
+// verbatim (quoted, since the comma would otherwise look like a field
+// separator), so cells arrive as e.g. "2,18" rather than "2.18".
+function parseVnNumber(raw: string | undefined): number | null {
+  if (raw == null) return null;
+  const s = raw.trim();
+  if (!s) return null;
+  const normalized = s.includes(",") ? s.replace(/\./g, "").replace(",", ".") : s;
+  const n = Number(normalized);
+  return Number.isFinite(n) ? n : null;
+}
+
+export function parseBankPbHistoryTable(table: string[][]): BankPbHistoryTable {
+  const [header, ...dataRows] = table;
+  const symbols = (header ?? []).map((h) => h.trim()).filter(Boolean);
+  const rows: BankPbHistoryRow[] = dataRows
+    .map((row) => ({
+      date: (row[0] ?? "").trim(),
+      values: symbols.map((_, i) => parseVnNumber(row[i + 1])),
+    }))
+    .filter((r) => r.date !== "");
+  return { symbols, rows };
+}
+
+export async function fetchBankPbHistory(): Promise<BankPbHistoryTable> {
+  const table = await fetchPublishedCsvTable(BANK_PB_HISTORY_GID);
+  const parsed = parseBankPbHistoryTable(table);
+  if (parsed.symbols.length === 0 || parsed.rows.length === 0) {
+    const preview = JSON.stringify(table.slice(0, 4).map((r) => r.slice(0, 6))).slice(0, 1200);
+    throw Object.assign(
+      new Error(`Không đọc được bảng P/B ngân hàng — kiểm tra lại cấu trúc tab. Dữ liệu đọc được: ${preview}`),
+      { status: 502 }
+    );
+  }
+  return parsed;
 }

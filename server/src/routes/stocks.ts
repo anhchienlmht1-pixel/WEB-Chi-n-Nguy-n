@@ -6,7 +6,7 @@ import { topTradedOf, VALID_EXCHANGES } from "../providers/topTraded.js";
 import { KbsPeriodType, KbsReportType } from "../providers/kbsFinancials.js";
 import { fetchFinancialReport } from "../providers/financials.js";
 import { getQuoteWithFallback, getHistoryWithFallback } from "../providers/fallback.js";
-import { fetchInvestmentOutlook } from "../providers/googleSheet.js";
+import { fetchInvestmentOutlook, fetchBankPbHistory } from "../providers/googleSheet.js";
 import { fetchNewsForSymbol } from "../news/cafefNews.js";
 
 const router = Router();
@@ -138,6 +138,14 @@ router.get(
     // view, short enough that an edit to the sheet shows up on the site
     // without a deploy.
     const data = await cached(`investment-outlook:${gid ?? "default"}`, 300, () => fetchInvestmentOutlook(gid));
+    res.json(data);
+  })
+);
+
+router.get(
+  "/bank-pb-history",
+  asyncHandler(async (_req, res) => {
+    const data = await cached("bank-pb-history", 300, () => fetchBankPbHistory());
     res.json(data);
   })
 );
