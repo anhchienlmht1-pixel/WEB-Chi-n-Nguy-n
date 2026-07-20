@@ -1,14 +1,17 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { usePolling } from "../hooks/usePolling";
+import { fetchHistory, fetchQuote } from "../api/client";
 import { BANK_SYMBOL_LIST, CORE_METRIC_KEYS, METRIC_META, fetchBankData, formatMetricValue } from "../utils/bankData";
+import { PB_COMPARE_SYMBOLS, computeBankPbStat, type PbLookbackYears } from "../utils/bankPb";
 import type { BankData, BankMetricKey, BankOverviewRow } from "../types/bank";
 import BankDetailView from "../components/BankDetailView";
 import BankMetricComparisonTable from "../components/BankMetricComparisonTable";
+import BankPbRangeChart from "../components/BankPbRangeChart";
 import CompanyLogo from "../components/CompanyLogo";
 
 type SortDir = "asc" | "desc";
-type Tab = "compare" | "metric" | "detail";
+type Tab = "compare" | "metric" | "detail" | "pb";
 type PeriodType = "quarter" | "year";
 
 const GROUP_ORDER = ["Quốc doanh", "Doanh nghiệp", "Cá nhân", "Quy mô nhỏ", ""];
@@ -47,6 +50,37 @@ export default function BankCompare() {
   const [detailSymbol, setDetailSymbol] = useState<string>(BANK_SYMBOL_LIST[0]);
   const [periodType, setPeriodType] = useState<PeriodType>("quarter");
   const [periodIndex, setPeriodIndex] = useState<number | null>(null);
+  const [pbYears, setPbYears] = useState<PbLookbackYears>(1);
+
+  // Quotes + 5-year price history are only fetched once the "So sánh P/B"
+  // tab is opened, and only once — switching the "Thời gian" (1/3/5 năm)
+  // window below just recomputes stats from this cached data, no refetch.
+  // allSettled (not all) so one bank's provider hiccup only blanks that
+  // one bar instead of failing the whole 16-bank chart.
+  const { data: pbRaw, error: pbError, loading: pbLoading } = usePolling(async () => {
+    if (tab !== "pb") return null;
+    const [quoteResults, historyResults] = await Promise.all([
+      Promise.allSettled(PB_COMPARE_SYMBOLS.map((s) => fetchQuote(s))),
+      Promise.allSettled(PB_COMPARE_SYMBOLS.map((s) => fetchHistory(s, "5Y"))),
+    ]);
+    return { quoteResults, historyResults };
+  }, [tab]);
+
+  const pbStats = useMemo(() => {
+    if (!pbRaw || !banks) return null;
+    const bankBySymbol = new Map(banks.map((b) => [b.symbol, b]));
+    const since = new Date();
+    since.setFullYear(since.getFullYear() - pbYears);
+    return PB_COMPARE_SYMBOLS.map((symbol, i) => {
+      const bank = bankBySymbol.get(symbol);
+      const quoteResult = pbRaw.quoteResults[i];
+      const historyResult = pbRaw.historyResults[i];
+      if (!bank || quoteResult.status !== "fulfilled" || historyResult.status !== "fulfilled") {
+        return { symbol, current: null, average: null, min: null, max: null };
+      }
+      return computeBankPbStat(quoteResult.value, bank, historyResult.value.points, since);
+    });
+  }, [pbRaw, banks, pbYears]);
 
   const periods = useMemo(() => {
     if (!banks || banks.length === 0) return [];
@@ -109,6 +143,7 @@ export default function BankCompare() {
             [
               ["compare", "Bảng so sánh"],
               ["metric", "So sánh chỉ số"],
+              ["pb", "So sánh P/B"],
               ["detail", "Chi tiết mã ngân hàng"],
             ] as [Tab, string][]
           ).map(([value, label]) => (
@@ -158,7 +193,56 @@ export default function BankCompare() {
             </select>
           </div>
         )}
+
+        {tab === "pb" && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Thời gian</span>
+            <div className="flex gap-1 rounded-lg border border-slate-200 p-1 text-xs font-medium dark:border-slate-800">
+              {([1, 3, 5] as PbLookbackYears[]).map((y) => (
+                <button
+                  key={y}
+                  type="button"
+                  onClick={() => setPbYears(y)}
+                  className={`rounded-md px-3 py-1 transition-colors ${
+                    pbYears === y
+                      ? "bg-emerald-500 text-slate-950"
+                      : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                  }`}
+                >
+                  {y} Năm
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
+
+      {tab === "pb" && (
+        <div className="mt-4">
+          {pbLoading && !pbStats && (
+            <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="h-6 w-full animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
+              ))}
+            </div>
+          )}
+          {!pbLoading && (pbError || !pbStats) && (
+            <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-red-500 dark:border-slate-800 dark:bg-slate-900/40 dark:text-red-400">
+              Không tải được dữ liệu P/B{pbError ? `: ${pbError}` : ""}.
+            </div>
+          )}
+          {pbStats && (
+            <>
+              <BankPbRangeChart data={pbStats} title="So sánh P/B ngành ngân hàng" />
+              <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+                P/B lịch sử ước tính từ giá đóng cửa và vốn chủ sở hữu theo quý thực tế, áp dụng số lượng cổ phiếu lưu
+                hành hiện tại cho các mốc thời gian trong quá khứ (không có dữ liệu số lượng cổ phiếu lưu hành lịch
+                sử) — có thể lệch với ngân hàng từng phát hành thêm cổ phiếu đáng kể trong giai đoạn so sánh.
+              </p>
+            </>
+          )}
+        </div>
+      )}
 
       {tab === "metric" && (
         <div className="mt-4 overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
