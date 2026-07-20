@@ -133,11 +133,11 @@ router.get(
 router.get(
   "/investment-outlook",
   asyncHandler(async (req, res) => {
-    const gid = (req.query.gid as string) || "0";
+    const gid = req.query.gid as string | undefined;
     // 5 min TTL — long enough to not hammer Google Sheets on every page
     // view, short enough that an edit to the sheet shows up on the site
     // without a deploy.
-    const data = await cached(`investment-outlook:${gid}`, 300, () => fetchInvestmentOutlook(gid));
+    const data = await cached(`investment-outlook:${gid ?? "default"}`, 300, () => fetchInvestmentOutlook(gid));
     res.json(data);
   })
 );

@@ -5,8 +5,8 @@ import { sendError } from "./_lib/errors.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    const gid = (req.query.gid as string) || "0";
-    const data = await cached(`investment-outlook:${gid}`, 300, () => fetchInvestmentOutlook(gid));
+    const gid = req.query.gid as string | undefined;
+    const data = await cached(`investment-outlook:${gid ?? "default"}`, 300, () => fetchInvestmentOutlook(gid));
     res.status(200).json(data);
   } catch (err) {
     sendError(res, err);
