@@ -16,6 +16,10 @@ type PeriodType = "quarter" | "year";
 
 const GROUP_ORDER = ["Quốc doanh", "Doanh nghiệp", "Cá nhân", "Quy mô nhỏ", ""];
 
+function errorText(reason: unknown): string {
+  return (reason instanceof Error ? reason.message : String(reason)).slice(0, 150);
+}
+
 function buildRow(bank: BankData, periodType: PeriodType, periodIndex: number): BankOverviewRow {
   const periodData = periodType === "quarter" ? bank.quarter : bank.year;
   const idx = Math.min(periodIndex, periodData.periods.length - 1);
@@ -81,6 +85,29 @@ export default function BankCompare() {
       return computeBankPbStat(quoteResult.value, bank, historyResult.value.points, since);
     });
   }, [pbRaw, banks, pbYears]);
+
+  // Every bank came back null — either every request failed, or requests
+  // succeeded but the provider didn't return marketCap for any of them.
+  // Promise.allSettled means neither shows up as a top-level pbError, so
+  // this builds a diagnostic message from the individual results instead
+  // of the chart just rendering empty with no explanation.
+  const pbAllEmpty = pbStats !== null && pbStats.every((s) => s.current == null && s.average == null);
+  const pbDiagnostic = useMemo(() => {
+    if (!pbRaw || !pbAllEmpty) return null;
+    const reasons: string[] = [];
+    let missingMarketCap = 0;
+    PB_COMPARE_SYMBOLS.forEach((symbol, i) => {
+      const q = pbRaw.quoteResults[i];
+      const h = pbRaw.historyResults[i];
+      if (q.status === "rejected") reasons.push(`${symbol} (giá): ${errorText(q.reason)}`);
+      else if (!q.value.marketCap) missingMarketCap++;
+      if (h.status === "rejected") reasons.push(`${symbol} (lịch sử giá): ${errorText(h.reason)}`);
+    });
+    const parts: string[] = [];
+    if (reasons.length > 0) parts.push(reasons.slice(0, 3).join(" | "));
+    if (missingMarketCap > 0) parts.push(`${missingMarketCap}/${PB_COMPARE_SYMBOLS.length} mã tải giá thành công nhưng thiếu vốn hóa thị trường`);
+    return parts.join(". ") || "Không rõ nguyên nhân.";
+  }, [pbRaw, pbAllEmpty]);
 
   const periods = useMemo(() => {
     if (!banks || banks.length === 0) return [];
@@ -231,7 +258,13 @@ export default function BankCompare() {
               Không tải được dữ liệu P/B{pbError ? `: ${pbError}` : ""}.
             </div>
           )}
-          {pbStats && (
+          {!pbLoading && pbStats && pbAllEmpty && (
+            <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-600 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-400">
+              Không tính được P/B cho ngân hàng nào — tất cả nguồn giá/lịch sử giá đều lỗi hoặc thiếu vốn hóa thị
+              trường. Chi tiết: {pbDiagnostic}
+            </div>
+          )}
+          {pbStats && !pbAllEmpty && (
             <>
               <BankPbRangeChart data={pbStats} title="So sánh P/B ngành ngân hàng" />
               <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
