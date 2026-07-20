@@ -8,10 +8,75 @@
 const PUBLISHED_ID =
   "2PACX-1vT81Bi4SZ33zZ6URMkTxl_yB158q89qIwVE27W_8Pxt8gGd2-obA4NV2EPQI_EqYAJn8DzdC34vwzpx";
 
-export interface SheetOutlook {
-  headers: string[];
-  rows: string[][];
+export interface StockOutlookRecord {
+  symbol: string;
   updatedAt: string;
+  outlookText: string;
+  recommendations: { broker: string; price: string }[];
+}
+
+// The sheet is a single-selection dashboard: a "MÃ" dropdown cell picks one
+// stock, and the rest of the sheet (via formulas) shows that stock's data —
+// there is no separate tab listing every stock in row form. So the CSV
+// export always reflects whichever stock is currently selected in the
+// sheet's dropdown, not a full table. Parsing below locates each labeled
+// cell ("MÃ", "Ngày cập nhật", "Triển vọng đầu tư", "Giá khuyến nghị")
+// wherever it lands in the exported grid, rather than assuming fixed
+// row/column positions, since merged cells shift depending on layout.
+function findLabelCell(table: string[][], label: string): { row: number; col: number } | null {
+  const target = label.trim().toUpperCase();
+  for (let r = 0; r < table.length; r++) {
+    for (let c = 0; c < table[r].length; c++) {
+      if ((table[r][c] || "").trim().toUpperCase() === target) return { row: r, col: c };
+    }
+  }
+  return null;
+}
+
+function nextNonEmptyInRow(table: string[][], row: number, afterCol: number): string {
+  const cells = table[row] || [];
+  for (let c = afterCol + 1; c < cells.length; c++) {
+    if ((cells[c] || "").trim() !== "") return cells[c].trim();
+  }
+  return "";
+}
+
+function collectColumnBelow(table: string[][], startRow: number, col: number, stopLabels: string[]): string[] {
+  const stopSet = new Set(stopLabels.map((s) => s.toUpperCase()));
+  const out: string[] = [];
+  for (let r = startRow; r < table.length; r++) {
+    const cell = (table[r][col] || "").trim();
+    if (!cell) continue;
+    if (stopSet.has(cell.toUpperCase())) break;
+    out.push(cell);
+  }
+  return out;
+}
+
+export function parseStockOutlook(table: string[][]): StockOutlookRecord {
+  const symbolLabel = findLabelCell(table, "Mã");
+  const symbol = symbolLabel ? nextNonEmptyInRow(table, symbolLabel.row, symbolLabel.col) : "";
+
+  const dateLabel = findLabelCell(table, "Ngày cập nhật");
+  const updatedAt = dateLabel ? nextNonEmptyInRow(table, dateLabel.row, dateLabel.col) : "";
+
+  const outlookLabel = findLabelCell(table, "Triển vọng đầu tư");
+  const outlookText = outlookLabel
+    ? collectColumnBelow(table, outlookLabel.row + 1, outlookLabel.col, ["Giá khuyến nghị"]).join("\n")
+    : "";
+
+  const recoLabel = findLabelCell(table, "Giá khuyến nghị");
+  const recoLines = recoLabel ? collectColumnBelow(table, recoLabel.row + 1, recoLabel.col, []) : [];
+  const recommendations = recoLines
+    .flatMap((line) => line.split("\n"))
+    .map((line) => line.replace(/^[-•]+\s*/, "").trim())
+    .filter(Boolean)
+    .map((line) => {
+      const m = line.match(/^(.+?)[:\s]{1,4}([\d.,]+)\s*$/);
+      return m ? { broker: m[1].trim(), price: m[2].trim() } : { broker: line, price: "" };
+    });
+
+  return { symbol, updatedAt, outlookText, recommendations };
 }
 
 // Minimal RFC 4180 CSV parser (quoted fields, embedded commas/newlines,
@@ -76,7 +141,7 @@ export function parseCsv(text: string): string[][] {
   return rows.filter((r) => r.some((cell) => cell.trim() !== ""));
 }
 
-export async function fetchInvestmentOutlook(gid?: string): Promise<SheetOutlook> {
+export async function fetchInvestmentOutlook(gid?: string): Promise<StockOutlookRecord> {
   const params = new URLSearchParams({ output: "csv" });
   if (gid) {
     params.set("gid", gid);
@@ -112,6 +177,12 @@ export async function fetchInvestmentOutlook(gid?: string): Promise<SheetOutlook
     throw Object.assign(new Error("Trang tính rỗng."), { status: 502 });
   }
 
-  const [headers, ...rows] = table;
-  return { headers, rows, updatedAt: new Date().toISOString() };
+  const record = parseStockOutlook(table);
+  if (!record.symbol) {
+    throw Object.assign(
+      new Error('Không tìm thấy ô "MÃ" trong trang tính — kiểm tra lại cấu trúc trang tính.'),
+      { status: 502 }
+    );
+  }
+  return record;
 }

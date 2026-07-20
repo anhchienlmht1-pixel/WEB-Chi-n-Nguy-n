@@ -79,13 +79,14 @@ export async function fetchNewsForSymbol(
   return data;
 }
 
-export interface InvestmentOutlook {
-  headers: string[];
-  rows: string[][];
+export interface StockOutlookRecord {
+  symbol: string;
   updatedAt: string;
+  outlookText: string;
+  recommendations: { broker: string; price: string }[];
 }
 
-export async function fetchInvestmentOutlook(gid?: string): Promise<InvestmentOutlook> {
+export async function fetchInvestmentOutlook(gid?: string): Promise<StockOutlookRecord> {
   const { data } = await api.get("/investment-outlook", { params: gid ? { gid } : undefined });
   return data;
 }
