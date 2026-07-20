@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { BankPbStat } from "../utils/bankPb";
+import type { PbStat } from "../utils/pbHistory";
 import ChartHoverTooltip, { type TooltipRow } from "./ChartHoverTooltip";
 
 const WIDTH = 900;
@@ -14,12 +14,13 @@ function formatPb(v: number): string {
   return v.toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-// Range/floating-marker chart matching the "SO SÁNH P/B NGÀNH NGÂN HÀNG"
-// layout: a gray bar spans each bank's min–max P/B over the selected
-// lookback window, a blue square marks the window's average, and a red
-// diamond marks today's P/B (which can sit outside the gray range, since
-// today isn't necessarily within the historical min/max).
-export default function BankPbRangeChart({ data, title }: { data: BankPbStat[]; title: string }) {
+// Range/floating-marker chart matching the "SO SÁNH P/B NGÀNH NGÂN HÀNG" /
+// "SO SÁNH P/B NGÀNH CHỨNG KHOÁN" layout: a gray bar spans each symbol's
+// min–max P/B over the selected lookback window, a blue square marks the
+// window's average, and a red diamond marks today's P/B (which can sit
+// outside the gray range, since today isn't necessarily within the
+// historical min/max).
+export default function PbRangeChart({ data, title }: { data: PbStat[]; title: string }) {
   const [hover, setHover] = useState<number | null>(null);
   const n = data.length;
 

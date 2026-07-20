@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { usePolling } from "../hooks/usePolling";
+import { fetchSecuritiesPbHistory } from "../api/client";
 import {
   CORE_METRIC_KEYS,
   METRIC_META,
@@ -8,13 +9,16 @@ import {
   fetchSecuritiesData,
   formatMetricValue,
 } from "../utils/securitiesData";
+import { computePbStatsFromHistory, type PbLookbackYears } from "../utils/pbHistory";
 import type { SecuritiesCompanyData, SecuritiesMetricKey, SecuritiesOverviewRow } from "../types/securities";
 import SecuritiesDetailView from "../components/SecuritiesDetailView";
+import PbRangeChart from "../components/PbRangeChart";
 import CompanyLogo from "../components/CompanyLogo";
 
 type SortDir = "asc" | "desc";
-type Tab = "compare" | "detail";
+type Tab = "compare" | "detail" | "pb";
 type PeriodType = "quarter" | "year";
+const PB_POLL_MS = 3 * 60 * 1000; // matches the other Sheets-backed pages (server itself caches 5 min)
 
 function buildRow(company: SecuritiesCompanyData, periodType: PeriodType, periodIndex: number): SecuritiesOverviewRow {
   const periodData = periodType === "quarter" ? company.quarter : company.year;
@@ -49,6 +53,25 @@ export default function SecuritiesCompare() {
   const [detailSymbol, setDetailSymbol] = useState<string>(SECURITIES_SYMBOL_LIST[0]);
   const [periodType, setPeriodType] = useState<PeriodType>("quarter");
   const [periodIndex, setPeriodIndex] = useState<number | null>(null);
+  const [pbYears, setPbYears] = useState<PbLookbackYears>(1);
+
+  // The sheet's own "P/B ngành chứng khoán" tab already has real daily P/B
+  // values per company — only fetched while the tab is open, refreshed
+  // every 3 min so edits in the sheet show up without a reload. Switching
+  // "Thời gian" (1/3/5 năm) just recomputes stats client-side, no refetch.
+  const { data: pbHistory, error: pbError, loading: pbLoading } = usePolling(
+    async () => {
+      if (tab !== "pb") return null;
+      return fetchSecuritiesPbHistory();
+    },
+    [tab],
+    PB_POLL_MS
+  );
+
+  const pbStats = useMemo(() => {
+    if (!pbHistory) return null;
+    return computePbStatsFromHistory(pbHistory, pbYears);
+  }, [pbHistory, pbYears]);
 
   const periods = useMemo(() => {
     if (!companies || companies.length === 0) return [];
@@ -100,6 +123,7 @@ export default function SecuritiesCompare() {
           {(
             [
               ["compare", "Bảng so sánh"],
+              ["pb", "So sánh P/B"],
               ["detail", "Chi tiết mã chứng khoán"],
             ] as [Tab, string][]
           ).map(([value, label]) => (
@@ -149,7 +173,55 @@ export default function SecuritiesCompare() {
             </select>
           </div>
         )}
+
+        {tab === "pb" && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Thời gian</span>
+            <div className="flex gap-1 rounded-lg border border-slate-200 p-1 text-xs font-medium dark:border-slate-800">
+              {([1, 3, 5] as PbLookbackYears[]).map((y) => (
+                <button
+                  key={y}
+                  type="button"
+                  onClick={() => setPbYears(y)}
+                  className={`rounded-md px-3 py-1 transition-colors ${
+                    pbYears === y
+                      ? "bg-emerald-500 text-slate-950"
+                      : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                  }`}
+                >
+                  {y} Năm
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
+
+      {tab === "pb" && (
+        <div className="mt-4">
+          {pbLoading && !pbStats && (
+            <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="h-6 w-full animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
+              ))}
+            </div>
+          )}
+          {!pbLoading && (pbError || !pbStats) && (
+            <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-red-500 dark:border-slate-800 dark:bg-slate-900/40 dark:text-red-400">
+              Không tải được dữ liệu P/B{pbError ? `: ${pbError}` : ""}.
+            </div>
+          )}
+          {pbStats && (
+            <>
+              <PbRangeChart data={pbStats} title="So sánh P/B ngành chứng khoán" />
+              <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+                Dữ liệu P/B theo ngày do người quản lý trang tính tự tính và cập nhật, đồng bộ trực tiếp từ Google
+                Sheets — không phải khuyến nghị đầu tư từ hệ thống.
+              </p>
+            </>
+          )}
+        </div>
+      )}
 
       {tab === "detail" && (
         <div className="mt-4 overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">

@@ -91,12 +91,17 @@ export async function fetchInvestmentOutlook(gid?: string): Promise<StockOutlook
   return data;
 }
 
-export interface BankPbHistoryTable {
+export interface PbHistoryTable {
   symbols: string[];
   rows: { date: string; values: (number | null)[] }[];
 }
 
-export async function fetchBankPbHistory(): Promise<BankPbHistoryTable> {
+export async function fetchBankPbHistory(): Promise<PbHistoryTable> {
   const { data } = await api.get("/bank-pb-history");
+  return data;
+}
+
+export async function fetchSecuritiesPbHistory(): Promise<PbHistoryTable> {
+  const { data } = await api.get("/securities-pb-history");
   return data;
 }

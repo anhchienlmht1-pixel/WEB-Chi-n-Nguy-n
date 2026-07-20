@@ -6,7 +6,7 @@ import { topTradedOf, VALID_EXCHANGES } from "../providers/topTraded.js";
 import { KbsPeriodType, KbsReportType } from "../providers/kbsFinancials.js";
 import { fetchFinancialReport } from "../providers/financials.js";
 import { getQuoteWithFallback, getHistoryWithFallback } from "../providers/fallback.js";
-import { fetchInvestmentOutlook, fetchBankPbHistory } from "../providers/googleSheet.js";
+import { fetchInvestmentOutlook, fetchBankPbHistory, fetchSecuritiesPbHistory } from "../providers/googleSheet.js";
 import { fetchNewsForSymbol } from "../news/cafefNews.js";
 
 const router = Router();
@@ -146,6 +146,14 @@ router.get(
   "/bank-pb-history",
   asyncHandler(async (_req, res) => {
     const data = await cached("bank-pb-history", 300, () => fetchBankPbHistory());
+    res.json(data);
+  })
+);
+
+router.get(
+  "/securities-pb-history",
+  asyncHandler(async (_req, res) => {
+    const data = await cached("securities-pb-history", 300, () => fetchSecuritiesPbHistory());
     res.json(data);
   })
 );

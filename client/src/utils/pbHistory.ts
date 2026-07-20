@@ -1,8 +1,8 @@
-import type { BankPbHistoryTable } from "../api/client";
+import type { PbHistoryTable } from "../api/client";
 
 export type PbLookbackYears = 1 | 3 | 5;
 
-export interface BankPbStat {
+export interface PbStat {
   symbol: string;
   current: number | null;
   average: number | null;
@@ -10,8 +10,8 @@ export interface BankPbStat {
   max: number | null;
 }
 
-// dd/MM/yyyy, matching the date format the "P/B ngành ngân hàng" sheet
-// tab writes in its first column.
+// dd/MM/yyyy, matching the date format the sheet's P/B history tabs write
+// in their first column.
 function parseVnDate(s: string): Date | null {
   const m = s.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (!m) return null;
@@ -22,7 +22,7 @@ function parseVnDate(s: string): Date | null {
 // series (real values the sheet's owner computes there), not derived or
 // approximated here — this just picks out the most recent value and folds
 // the window matching the selected lookback into average/min/max.
-export function computeBankPbStatsFromHistory(table: BankPbHistoryTable, years: PbLookbackYears): BankPbStat[] {
+export function computePbStatsFromHistory(table: PbHistoryTable, years: PbLookbackYears): PbStat[] {
   const parsedRows = table.rows
     .map((r) => ({ date: parseVnDate(r.date), values: r.values }))
     .filter((r): r is { date: Date; values: (number | null)[] } => r.date !== null)

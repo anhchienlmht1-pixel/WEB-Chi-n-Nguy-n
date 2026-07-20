@@ -223,22 +223,23 @@ export async function fetchInvestmentOutlook(gid?: string): Promise<StockOutlook
   return record;
 }
 
-// A separate tab ("P/B ngành ngân hàng") the user maintains with real daily
-// P/B values per bank — the sheet's own header row names the banks and
-// each following row is one date, so unlike the single-record outlook tab
-// this genuinely is a database-shaped table already; no label-hunting
-// needed. Reading this directly is far more accurate than deriving P/B
-// ourselves from price × approximate share count.
+// Two sector tabs ("P/B ngành ngân hàng", "P/B ngành chứng khoán") the user
+// maintains with real daily P/B values per symbol — the sheet's own header
+// row names the symbols and each following row is one date, so unlike the
+// single-record outlook tab these genuinely are database-shaped tables
+// already; no label-hunting needed. Reading this directly is far more
+// accurate than deriving P/B ourselves from price × approximate share count.
 const BANK_PB_HISTORY_GID = "492106203";
+const SECURITIES_PB_HISTORY_GID = "1429690230";
 
-export interface BankPbHistoryRow {
+export interface PbHistoryRow {
   date: string;
   values: (number | null)[];
 }
 
-export interface BankPbHistoryTable {
+export interface PbHistoryTable {
   symbols: string[];
-  rows: BankPbHistoryRow[];
+  rows: PbHistoryRow[];
 }
 
 // The sheet displays numbers in Vietnamese locale (comma decimal, dot
@@ -254,10 +255,10 @@ function parseVnNumber(raw: string | undefined): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-export function parseBankPbHistoryTable(table: string[][]): BankPbHistoryTable {
+export function parsePbHistoryTable(table: string[][]): PbHistoryTable {
   const [header, ...dataRows] = table;
   const symbols = (header ?? []).map((h) => h.trim()).filter(Boolean);
-  const rows: BankPbHistoryRow[] = dataRows
+  const rows: PbHistoryRow[] = dataRows
     .map((row) => ({
       date: (row[0] ?? "").trim(),
       values: symbols.map((_, i) => parseVnNumber(row[i + 1])),
@@ -266,15 +267,23 @@ export function parseBankPbHistoryTable(table: string[][]): BankPbHistoryTable {
   return { symbols, rows };
 }
 
-export async function fetchBankPbHistory(): Promise<BankPbHistoryTable> {
-  const table = await fetchPublishedCsvTable(BANK_PB_HISTORY_GID);
-  const parsed = parseBankPbHistoryTable(table);
+async function fetchPbHistory(gid: string, sectorLabel: string): Promise<PbHistoryTable> {
+  const table = await fetchPublishedCsvTable(gid);
+  const parsed = parsePbHistoryTable(table);
   if (parsed.symbols.length === 0 || parsed.rows.length === 0) {
     const preview = JSON.stringify(table.slice(0, 4).map((r) => r.slice(0, 6))).slice(0, 1200);
     throw Object.assign(
-      new Error(`Không đọc được bảng P/B ngân hàng — kiểm tra lại cấu trúc tab. Dữ liệu đọc được: ${preview}`),
+      new Error(`Không đọc được bảng P/B ${sectorLabel} — kiểm tra lại cấu trúc tab. Dữ liệu đọc được: ${preview}`),
       { status: 502 }
     );
   }
   return parsed;
+}
+
+export function fetchBankPbHistory(): Promise<PbHistoryTable> {
+  return fetchPbHistory(BANK_PB_HISTORY_GID, "ngân hàng");
+}
+
+export function fetchSecuritiesPbHistory(): Promise<PbHistoryTable> {
+  return fetchPbHistory(SECURITIES_PB_HISTORY_GID, "chứng khoán");
 }

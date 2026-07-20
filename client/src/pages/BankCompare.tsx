@@ -3,11 +3,11 @@ import { Link } from "react-router-dom";
 import { usePolling } from "../hooks/usePolling";
 import { fetchBankPbHistory } from "../api/client";
 import { BANK_SYMBOL_LIST, CORE_METRIC_KEYS, METRIC_META, fetchBankData, formatMetricValue } from "../utils/bankData";
-import { computeBankPbStatsFromHistory, type PbLookbackYears } from "../utils/bankPb";
+import { computePbStatsFromHistory, type PbLookbackYears } from "../utils/pbHistory";
 import type { BankData, BankMetricKey, BankOverviewRow } from "../types/bank";
 import BankDetailView from "../components/BankDetailView";
 import BankMetricComparisonTable from "../components/BankMetricComparisonTable";
-import BankPbRangeChart from "../components/BankPbRangeChart";
+import PbRangeChart from "../components/PbRangeChart";
 import CompanyLogo from "../components/CompanyLogo";
 
 type SortDir = "asc" | "desc";
@@ -70,7 +70,7 @@ export default function BankCompare() {
 
   const pbStats = useMemo(() => {
     if (!pbHistory) return null;
-    return computeBankPbStatsFromHistory(pbHistory, pbYears);
+    return computePbStatsFromHistory(pbHistory, pbYears);
   }, [pbHistory, pbYears]);
 
   const periods = useMemo(() => {
@@ -224,7 +224,7 @@ export default function BankCompare() {
           )}
           {pbStats && (
             <>
-              <BankPbRangeChart data={pbStats} title="So sánh P/B ngành ngân hàng" />
+              <PbRangeChart data={pbStats} title="So sánh P/B ngành ngân hàng" />
               <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
                 Dữ liệu P/B theo ngày do người quản lý trang tính tự tính và cập nhật, đồng bộ trực tiếp từ Google
                 Sheets — không phải khuyến nghị đầu tư từ hệ thống.
