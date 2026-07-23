@@ -22,13 +22,39 @@ const VALID_RANGES: HistoryRange[] = ["1D", "1W", "1M", "3M", "6M", "1Y", "5Y", 
 const VALID_REPORT_TYPES: KbsReportType[] = ["KQKD", "CDKT", "LCTT", "CSTC"];
 const VALID_PERIOD_TYPES: KbsPeriodType[] = ["year", "quarter"];
 
-function cached<T>(key: string, ttl: number, loader: () => Promise<T>): Promise<T> {
+// Serves the last successfully fetched value instead of throwing when the
+// live fetch fails — separate from the TTL cache above (which never keeps
+// stale entries around). Only opted into by routes backed by Google
+// Sheets' "Publish to web" CSV export, which isn't an SLA'd API and can
+// have transient hiccups; for those (slow-changing, non-time-critical
+// data), serving what we last read successfully beats surfacing a hard
+// error on every request during a blip. Never used for price quotes/
+// history, where silently serving a stale number would be misleading.
+const lastGood = new Map<string, unknown>();
+
+function cached<T>(
+  key: string,
+  ttl: number,
+  loader: () => Promise<T>,
+  opts?: { staleOnError?: boolean }
+): Promise<T> {
   const hit = cache.get<T>(key);
   if (hit !== undefined) return Promise.resolve(hit);
-  return loader().then((value) => {
-    cache.set(key, value, ttl);
-    return value;
-  });
+  return loader()
+    .then((value) => {
+      cache.set(key, value, ttl);
+      if (opts?.staleOnError) lastGood.set(key, value);
+      return value;
+    })
+    .catch((err) => {
+      if (opts?.staleOnError && lastGood.has(key)) {
+        console.error(
+          `[cached] ${key} lỗi, dùng tạm dữ liệu lần tải thành công gần nhất: ${err instanceof Error ? err.message : String(err)}`
+        );
+        return lastGood.get(key) as T;
+      }
+      throw err;
+    });
 }
 
 function asyncHandler(fn: (req: Request, res: Response) => Promise<void>) {
@@ -143,7 +169,9 @@ router.get(
     // 5 min TTL — long enough to not hammer Google Sheets on every page
     // view, short enough that an edit to the sheet shows up on the site
     // without a deploy.
-    const data = await cached(`investment-outlook:${gid ?? "default"}`, 300, () => fetchInvestmentOutlook(gid));
+    const data = await cached(`investment-outlook:${gid ?? "default"}`, 300, () => fetchInvestmentOutlook(gid), {
+      staleOnError: true,
+    });
     res.json(data);
   })
 );
@@ -151,7 +179,7 @@ router.get(
 router.get(
   "/bank-pb-history",
   asyncHandler(async (_req, res) => {
-    const data = await cached("bank-pb-history", 300, () => fetchBankPbHistory());
+    const data = await cached("bank-pb-history", 300, () => fetchBankPbHistory(), { staleOnError: true });
     res.json(data);
   })
 );
@@ -159,7 +187,9 @@ router.get(
 router.get(
   "/securities-pb-history",
   asyncHandler(async (_req, res) => {
-    const data = await cached("securities-pb-history", 300, () => fetchSecuritiesPbHistory());
+    const data = await cached("securities-pb-history", 300, () => fetchSecuritiesPbHistory(), {
+      staleOnError: true,
+    });
     res.json(data);
   })
 );
@@ -167,7 +197,9 @@ router.get(
 router.get(
   "/realestate-pb-history",
   asyncHandler(async (_req, res) => {
-    const data = await cached("realestate-pb-history", 300, () => fetchRealEstatePbHistory());
+    const data = await cached("realestate-pb-history", 300, () => fetchRealEstatePbHistory(), {
+      staleOnError: true,
+    });
     res.json(data);
   })
 );
