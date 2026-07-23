@@ -193,17 +193,30 @@ async function fetchHistoryBars(symbol: string, range: HistoryRange): Promise<Hi
     return scaleDown ? v / 1000 : v;
   };
   const points: HistoryPoint[] = [];
+  let skipped = 0;
   for (const bar of bars) {
     const rawClose = num(bar.c);
-    if (rawClose == null) continue;
-    points.push({
-      time: new Date(bar.t).toISOString(),
-      open: scale(num(bar.o), rawClose),
-      high: scale(num(bar.h), rawClose),
-      low: scale(num(bar.l), rawClose),
-      close: scale(rawClose, rawClose),
-      volume: num(bar.v) ?? 0,
-    });
+    if (rawClose == null || rawClose <= 0) {
+      skipped++;
+      continue;
+    }
+    const open = scale(num(bar.o), rawClose);
+    const high = scale(num(bar.h), rawClose);
+    const low = scale(num(bar.l), rawClose);
+    const close = scale(rawClose, rawClose);
+    // KBS's "today" row on data_day is live/in-flux until end-of-day
+    // settlement finalizes — right around and after market close it can
+    // briefly come back with a degenerate bar (0/negative OHLC, or high <
+    // low). That single bad point wrecks the whole chart's autoscale, so
+    // reject it here rather than let a broken candle through.
+    if (open <= 0 || high <= 0 || low <= 0 || high < low) {
+      skipped++;
+      continue;
+    }
+    points.push({ time: new Date(bar.t).toISOString(), open, high, low, close, volume: num(bar.v) ?? 0 });
+  }
+  if (skipped > 0) {
+    console.error(`[kbs-market] skipped ${skipped} invalid bar(s) for ${upperSymbol} (${dataKey})`);
   }
   points.sort((a, b) => a.time.localeCompare(b.time));
   return points;
