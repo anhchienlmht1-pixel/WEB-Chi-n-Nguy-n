@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { usePolling } from "../hooks/usePolling";
 import { fetchBankPbHistory } from "../api/client";
 import { BANK_SYMBOL_LIST, CORE_METRIC_KEYS, METRIC_META, fetchBankData, formatMetricValue } from "../utils/bankData";
-import { computePbStatsFromHistory, type PbLookbackYears } from "../utils/pbHistory";
+import { computePbStatsFromHistory, getPbDataCoverage, pbWindowExceedsCoverage, type PbLookbackYears } from "../utils/pbHistory";
 import type { BankData, BankMetricKey, BankOverviewRow } from "../types/bank";
 import BankDetailView from "../components/BankDetailView";
 import BankMetricComparisonTable from "../components/BankMetricComparisonTable";
@@ -72,6 +72,9 @@ export default function BankCompare() {
     if (!pbHistory) return null;
     return computePbStatsFromHistory(pbHistory, pbYears);
   }, [pbHistory, pbYears]);
+
+  const pbCoverage = useMemo(() => (pbHistory ? getPbDataCoverage(pbHistory) : null), [pbHistory]);
+  const pbWindowCapped = pbCoverage !== null && pbWindowExceedsCoverage(pbCoverage, pbYears);
 
   const periods = useMemo(() => {
     if (!banks || banks.length === 0) return [];
@@ -204,6 +207,11 @@ export default function BankCompare() {
                 </button>
               ))}
             </div>
+            {pbCoverage && (
+              <span className="text-xs text-slate-400 dark:text-slate-500">
+                Dữ liệu: {pbCoverage.earliestLabel} – {pbCoverage.latestLabel}
+              </span>
+            )}
           </div>
         )}
       </div>
@@ -220,6 +228,13 @@ export default function BankCompare() {
           {!pbLoading && (pbError || !pbStats) && (
             <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-red-500 dark:border-slate-800 dark:bg-slate-900/40 dark:text-red-400">
               Không tải được dữ liệu P/B{pbError ? `: ${pbError}` : ""}.
+            </div>
+          )}
+          {pbStats && pbCoverage && pbWindowCapped && (
+            <div className="mb-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-400">
+              Trang tính hiện chỉ có dữ liệu P/B từ <strong>{pbCoverage.earliestLabel}</strong> — khoảng "{pbYears} Năm"
+              đã hiển thị toàn bộ lịch sử có sẵn, nên có thể giống với khoảng thời gian ngắn hơn cho tới khi sheet có
+              thêm dữ liệu cũ hơn.
             </div>
           )}
           {pbStats && (
