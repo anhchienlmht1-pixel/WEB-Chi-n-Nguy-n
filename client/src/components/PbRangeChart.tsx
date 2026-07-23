@@ -3,7 +3,7 @@ import type { PbStat } from "../utils/pbHistory";
 import ChartHoverTooltip, { type TooltipRow } from "./ChartHoverTooltip";
 
 const WIDTH = 900;
-const HEIGHT = 320;
+const HEIGHT = 260;
 const PAD = { top: 16, right: 16, bottom: 28, left: 44 };
 
 const COLOR_RANGE = "#cbd5e1";

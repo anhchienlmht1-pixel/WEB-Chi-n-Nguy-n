@@ -2,7 +2,7 @@ import { pickLabelIndices } from "../utils/chartTicks";
 import { periodGrowth } from "../utils/financials";
 
 const WIDTH = 560;
-const HEIGHT = 220;
+const HEIGHT = 180;
 const PAD = { top: 16, right: 40, bottom: 26, left: 44 };
 const BAR_COLOR = "#3b82f6";
 const LINE_COLOR = "#a78bfa";

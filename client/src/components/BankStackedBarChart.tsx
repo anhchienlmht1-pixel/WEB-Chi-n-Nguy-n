@@ -3,7 +3,7 @@ import { pickLabelIndices } from "../utils/chartTicks";
 import ChartHoverTooltip, { type TooltipRow } from "./ChartHoverTooltip";
 
 const WIDTH = 800;
-const HEIGHT = 240;
+const HEIGHT = 190;
 const PAD = { top: 16, right: 44, bottom: 28, left: 44 };
 
 interface Series {

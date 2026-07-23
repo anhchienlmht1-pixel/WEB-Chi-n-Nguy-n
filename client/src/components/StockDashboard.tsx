@@ -2,16 +2,13 @@ import { useState } from "react";
 import type { FinancialPeriodType } from "../types";
 import ProfitBarLineChart from "./ProfitBarLineChart";
 import AssetsBarLineChart from "./AssetsBarLineChart";
-import ProfitPriceCorrelationChart from "./ProfitPriceCorrelationChart";
 
 // Bar (absolute value) + line (growth %) combo panels, one shared Quý/Năm
 // toggle governing the profit and assets panels — matching the layout used
 // by VN brokerage report pages (KAFI, FiinTrade, VNDirect...) rather than
 // each panel picking its own period type independently. The growth line
 // always compares to the immediately previous column, which reads as QoQ
-// in the quarterly view and YoY in the yearly view. The correlation chart
-// below runs its own Quý/Năm toggle instead of following this one — see
-// its own comment for why.
+// in the quarterly view and YoY in the yearly view.
 export default function StockDashboard({ symbol }: { symbol: string }) {
   const [periodType, setPeriodType] = useState<FinancialPeriodType>("year");
 
@@ -40,9 +37,6 @@ export default function StockDashboard({ symbol }: { symbol: string }) {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <ProfitBarLineChart symbol={symbol} periodType={periodType} />
         <AssetsBarLineChart symbol={symbol} periodType={periodType} />
-        <div className="lg:col-span-2">
-          <ProfitPriceCorrelationChart symbol={symbol} />
-        </div>
       </div>
     </div>
   );
