@@ -1,5 +1,6 @@
 import type { HistoryPoint } from "../types";
 import { toSeconds } from "./indicatorCatalog";
+import { dedupeSameDay } from "./aggregate";
 
 export interface ReturnPoint {
   time: number;
@@ -14,10 +15,14 @@ export interface ReturnSeries {
 /** Converts a price series into cumulative % return from its first bar. */
 export function toCumulativeReturns(symbol: string, points: HistoryPoint[]): ReturnSeries {
   if (points.length === 0) return { symbol, points: [] };
-  const base = points[0].close;
+  // Same-day duplicate bars (see dedupeSameDay) break lightweight-charts'
+  // line rendering the same way they break the candlestick chart — this
+  // page feeds points to it directly rather than through aggregatePoints.
+  const deduped = dedupeSameDay(points);
+  const base = deduped[0].close;
   return {
     symbol,
-    points: points.map((p) => ({ time: toSeconds(p), value: base ? ((p.close - base) / base) * 100 : 0 })),
+    points: deduped.map((p) => ({ time: toSeconds(p), value: base ? ((p.close - base) / base) * 100 : 0 })),
   };
 }
 

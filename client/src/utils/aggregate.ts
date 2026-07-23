@@ -10,6 +10,27 @@ function dayKey(date: Date): string {
   return `${date.getUTCFullYear()}-${date.getUTCMonth()}-${date.getUTCDate()}`;
 }
 
+// The daily feed occasionally carries two bars for the same calendar day
+// (the "today" row can arrive more than once while it's still settling,
+// right around market close) — collapse those here, keeping the later
+// snapshot. Shared by both the candlestick chart (aggregatePoints below)
+// and the % return comparison chart (utils/portfolio.ts), since both feed
+// raw daily points straight to lightweight-charts, which requires
+// strictly increasing, unique bar times and silently fails to render on a
+// same-day collision.
+export function dedupeSameDay(points: HistoryPoint[]): HistoryPoint[] {
+  const deduped: HistoryPoint[] = [];
+  for (const point of points) {
+    const prev = deduped[deduped.length - 1];
+    if (prev && dayKey(new Date(prev.time)) === dayKey(new Date(point.time))) {
+      deduped[deduped.length - 1] = point;
+    } else {
+      deduped.push(point);
+    }
+  }
+  return deduped;
+}
+
 function bucketKey(date: Date, resolution: ChartResolution): string {
   if (resolution === "M") return `${date.getUTCFullYear()}-${date.getUTCMonth()}`;
   const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
@@ -28,23 +49,7 @@ function bucketKey(date: Date, resolution: ChartResolution): string {
 export function aggregatePoints(points: HistoryPoint[], resolution: ChartResolution): HistoryPoint[] {
   if (points.length === 0) return points;
 
-  // The feed occasionally carries two bars for the same calendar day (the
-  // "today" row can arrive more than once while it's still settling, right
-  // around market close) — collapse those here, keeping the later snapshot.
-  // Week/month aggregation below merges same-day entries into one bucket
-  // anyway, so only day resolution (a straight pass-through) actually needs
-  // this: lightweight-charts requires strictly increasing, unique bar
-  // times, and a same-day duplicate silently breaks rendering.
-  const deduped: HistoryPoint[] = [];
-  for (const point of points) {
-    const prev = deduped[deduped.length - 1];
-    if (prev && dayKey(new Date(prev.time)) === dayKey(new Date(point.time))) {
-      deduped[deduped.length - 1] = point;
-    } else {
-      deduped.push(point);
-    }
-  }
-
+  const deduped = dedupeSameDay(points);
   if (resolution === "D") return deduped;
 
   const buckets: HistoryPoint[] = [];
