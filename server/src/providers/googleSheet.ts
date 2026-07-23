@@ -239,7 +239,7 @@ export async function fetchInvestmentOutlook(gid?: string): Promise<StockOutlook
 // as literally [["Thời gian","<n> Năm"]]. Reverted to the original
 // raw-data tabs (still capped at ~3 years) until given the actual
 // underlying data tables for the fuller history, if those exist.
-const BANK_PB_HISTORY_GID = "492106203";
+const BANK_PB_HISTORY_GID = "234525846";
 const SECURITIES_PB_HISTORY_GID = "1429690230";
 const REAL_ESTATE_PB_HISTORY_GID = "454354295";
 
