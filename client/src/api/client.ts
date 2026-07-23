@@ -110,3 +110,42 @@ export async function fetchRealEstatePbHistory(): Promise<PbHistoryTable> {
   const { data } = await api.get("/realestate-pb-history");
   return data;
 }
+
+export interface CompanyOfficer {
+  fromDate: string | null;
+  position: string | null;
+  name: string | null;
+}
+
+export interface CompanyShareholder {
+  name: string | null;
+  updateDate: string | null;
+  sharesOwned: number | null;
+  ownershipPercent: number | null;
+}
+
+export interface KbsCompanyProfile {
+  symbol: string;
+  businessModel: string | null;
+  foundedDate: string | null;
+  charterCapital: number | null;
+  numberOfEmployees: number | null;
+  listingDate: string | null;
+  parValue: number | null;
+  exchange: string | null;
+  ceoName: string | null;
+  ceoPosition: string | null;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+  history: string | null;
+  outstandingShares: number | null;
+  officers: CompanyOfficer[];
+  shareholders: CompanyShareholder[];
+}
+
+export async function fetchKbsCompanyProfile(symbol: string): Promise<KbsCompanyProfile> {
+  const { data } = await api.get(`/company-profile/${encodeURIComponent(symbol)}`);
+  return data;
+}

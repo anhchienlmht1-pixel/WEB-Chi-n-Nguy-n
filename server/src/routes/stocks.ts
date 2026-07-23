@@ -13,6 +13,7 @@ import {
   fetchRealEstatePbHistory,
 } from "../providers/googleSheet.js";
 import { fetchNewsForSymbol } from "../news/cafefNews.js";
+import { fetchKbsCompanyProfile } from "../providers/kbsCompany.js";
 
 const router = Router();
 const cache = new NodeCache({ stdTTL: 20, checkperiod: 30 });
@@ -167,6 +168,18 @@ router.get(
   "/realestate-pb-history",
   asyncHandler(async (_req, res) => {
     const data = await cached("realestate-pb-history", 300, () => fetchRealEstatePbHistory());
+    res.json(data);
+  })
+);
+
+router.get(
+  "/company-profile/:symbol",
+  asyncHandler(async (req, res) => {
+    const symbol = String(req.params.symbol).toUpperCase();
+    // Company profile info (business model, CEO, address, leadership,
+    // shareholders...) barely changes day to day, unlike price/financials
+    // — a long 6h TTL avoids hammering KBS on every page view.
+    const data = await cached(`company-profile:${symbol}`, 6 * 60 * 60, () => fetchKbsCompanyProfile(symbol));
     res.json(data);
   })
 );

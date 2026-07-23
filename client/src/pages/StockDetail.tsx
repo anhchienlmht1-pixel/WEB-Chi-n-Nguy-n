@@ -13,7 +13,6 @@ import { isBankSymbol } from "../utils/bankData";
 import SecuritiesFundamentals from "../components/SecuritiesFundamentals";
 import { isSecuritiesSymbol } from "../utils/securitiesData";
 import CompanyProfileCard from "../components/CompanyProfileCard";
-import { COMPANY_PROFILES } from "../data/companyProfiles";
 import ForeignFlowPanel from "../components/ForeignFlowPanel";
 import StockOutlookPanel from "../components/StockOutlookPanel";
 
@@ -90,9 +89,7 @@ export default function StockDetail() {
             </div>
 
             <div className="space-y-4">
-              {(COMPANY_PROFILES[quote.symbol.toUpperCase()] || isBankSymbol(quote.symbol) || isSecuritiesSymbol(quote.symbol)) && (
-                <CompanyProfileCard symbol={quote.symbol} />
-              )}
+              {!isIndexOrFutures && <CompanyProfileCard symbol={quote.symbol} fallbackName={quote.name} />}
               {!isIndexOrFutures && <StockOutlookPanel symbol={quote.symbol} />}
               {!isIndexOrFutures && <ForeignFlowPanel quote={quote} />}
             </div>
