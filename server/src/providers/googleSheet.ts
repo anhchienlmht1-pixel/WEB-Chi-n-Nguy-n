@@ -231,15 +231,16 @@ export async function fetchInvestmentOutlook(gid?: string): Promise<StockOutlook
 // needed. Reading this directly is far more accurate than deriving P/B
 // ourselves from price × approximate share count.
 //
-// The user later pointed these at three other tabs meant to hold a fuller
-// 5-year history, but those turned out to be chart/dashboard tabs (just a
-// "Thời gian" selector cell — a chart itself doesn't export via CSV), not
-// raw data tables: confirmed live when the real-estate one's CSV export
-// came back as literally just [["Thời gian","5 Năm"]]. Reverted to the
-// original raw-data tabs (still capped at ~3 years) until given the
-// actual underlying data tables for the fuller history, if those exist.
+// The user later pointed these at other tabs meant to hold a fuller
+// 5-year history, but every one of those turned out to be a chart/
+// dashboard tab (just a "Thời gian" selector cell — a chart itself
+// doesn't export via CSV), not a raw data table: confirmed live for
+// real-estate (1676846069) and securities (2087389393), both coming back
+// as literally [["Thời gian","<n> Năm"]]. Reverted to the original
+// raw-data tabs (still capped at ~3 years) until given the actual
+// underlying data tables for the fuller history, if those exist.
 const BANK_PB_HISTORY_GID = "492106203";
-const SECURITIES_PB_HISTORY_GID = "2087389393";
+const SECURITIES_PB_HISTORY_GID = "1429690230";
 const REAL_ESTATE_PB_HISTORY_GID = "454354295";
 
 export interface PbHistoryRow {
