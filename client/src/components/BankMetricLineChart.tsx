@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { pickLabelIndices } from "../utils/chartTicks";
+import { smoothPath } from "../utils/smoothPath";
 import ChartHoverTooltip, { type TooltipRow } from "./ChartHoverTooltip";
 
 const WIDTH = 800;
@@ -149,12 +150,12 @@ export default function BankMetricLineChart({
 
             {lines.map((line) => {
               const pts = line.values
-                .map((v, i) => (v == null || !Number.isFinite(v) ? null : `${xScale(i)},${yScale(v)}`))
-                .filter((p): p is string => p !== null);
+                .map((v, i) => (v == null || !Number.isFinite(v) ? null : { x: xScale(i), y: yScale(v) }))
+                .filter((p): p is { x: number; y: number } => p !== null);
               return (
-                <polyline
+                <path
                   key={line.label}
-                  points={pts.join(" ")}
+                  d={smoothPath(pts)}
                   fill="none"
                   stroke={line.color}
                   strokeWidth={2}
