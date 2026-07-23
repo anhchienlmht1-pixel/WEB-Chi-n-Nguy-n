@@ -72,7 +72,7 @@ export default function StockDetail() {
                   🧪 Backtest {quote.symbol}
                 </Link>
               </div>
-              <TechnicalChartPanel symbol={symbol} preferSource={quote.source} />
+              <TechnicalChartPanel symbol={symbol} preferSource={quote.source} height={320} />
 
               <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
                 <Stat label="Mở cửa" value={formatPrice(quote.open, quote.currency)} />

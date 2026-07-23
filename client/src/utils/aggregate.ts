@@ -6,6 +6,10 @@ import type { HistoryPoint } from "../types";
 // chart looks.
 export type ChartResolution = "D" | "W" | "M";
 
+function dayKey(date: Date): string {
+  return `${date.getUTCFullYear()}-${date.getUTCMonth()}-${date.getUTCDate()}`;
+}
+
 function bucketKey(date: Date, resolution: ChartResolution): string {
   if (resolution === "M") return `${date.getUTCFullYear()}-${date.getUTCMonth()}`;
   const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
@@ -22,12 +26,31 @@ function bucketKey(date: Date, resolution: ChartResolution): string {
  * summed. `points` must already be sorted ascending by time.
  */
 export function aggregatePoints(points: HistoryPoint[], resolution: ChartResolution): HistoryPoint[] {
-  if (resolution === "D" || points.length === 0) return points;
+  if (points.length === 0) return points;
+
+  // The feed occasionally carries two bars for the same calendar day (the
+  // "today" row can arrive more than once while it's still settling, right
+  // around market close) — collapse those here, keeping the later snapshot.
+  // Week/month aggregation below merges same-day entries into one bucket
+  // anyway, so only day resolution (a straight pass-through) actually needs
+  // this: lightweight-charts requires strictly increasing, unique bar
+  // times, and a same-day duplicate silently breaks rendering.
+  const deduped: HistoryPoint[] = [];
+  for (const point of points) {
+    const prev = deduped[deduped.length - 1];
+    if (prev && dayKey(new Date(prev.time)) === dayKey(new Date(point.time))) {
+      deduped[deduped.length - 1] = point;
+    } else {
+      deduped.push(point);
+    }
+  }
+
+  if (resolution === "D") return deduped;
 
   const buckets: HistoryPoint[] = [];
   let currentKey: string | null = null;
 
-  for (const point of points) {
+  for (const point of deduped) {
     const date = new Date(point.time);
     const key = bucketKey(date, resolution);
     if (key !== currentKey) {
