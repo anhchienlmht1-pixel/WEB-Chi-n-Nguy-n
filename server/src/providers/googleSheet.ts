@@ -232,7 +232,9 @@ export async function fetchInvestmentOutlook(gid?: string): Promise<StockOutlook
 // ourselves from price × approximate share count.
 const BANK_PB_HISTORY_GID = "492106203";
 const SECURITIES_PB_HISTORY_GID = "1429690230";
-const REAL_ESTATE_PB_HISTORY_GID = "454354295";
+// The original real-estate tab (454354295) only went back ~3 years; the
+// user replaced it with a tab holding a full 5-year history instead.
+const REAL_ESTATE_PB_HISTORY_GID = "1676846069";
 
 export interface PbHistoryRow {
   date: string;
