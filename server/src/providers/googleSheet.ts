@@ -168,6 +168,15 @@ export function parseCsv(text: string): string[][] {
   return rows.filter((r) => r.some((cell) => cell.trim() !== ""));
 }
 
+// Google's "Publish to web" export has no SLA and can occasionally be slow
+// rather than outright erroring — with no timeout of our own, a stalled
+// request would hang until Vercel's own function limit (30s, vercel.json)
+// kills it, which returns a platform error page instead of the JSON error
+// this module would otherwise produce, defeating both the specific error
+// message AND the stale-data fallback in routes/stocks.ts's cached().
+// Failing fast here (well under that 30s ceiling) means both actually work.
+const FETCH_TIMEOUT_MS = 10_000;
+
 async function fetchPublishedCsvTable(gid?: string): Promise<string[][]> {
   const params = new URLSearchParams({ output: "csv" });
   if (gid) {
@@ -175,7 +184,21 @@ async function fetchPublishedCsvTable(gid?: string): Promise<string[][]> {
     params.set("single", "true");
   }
   const url = `https://docs.google.com/spreadsheets/d/e/${PUBLISHED_ID}/pub?${params.toString()}`;
-  const res = await fetch(url, { redirect: "follow" });
+
+  let res: Response;
+  try {
+    res = await fetch(url, { redirect: "follow", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+  } catch (err) {
+    const timedOut = err instanceof Error && err.name === "TimeoutError";
+    throw Object.assign(
+      new Error(
+        timedOut
+          ? `Google Sheets phản hồi quá chậm (quá ${FETCH_TIMEOUT_MS / 1000}s), đã huỷ yêu cầu.`
+          : `Không kết nối được tới Google Sheets: ${err instanceof Error ? err.message : String(err)}`
+      ),
+      { status: 502 }
+    );
+  }
 
   if (!res.ok) {
     throw Object.assign(
