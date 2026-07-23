@@ -230,10 +230,10 @@ export async function fetchInvestmentOutlook(gid?: string): Promise<StockOutlook
 // these genuinely are database-shaped tables already; no label-hunting
 // needed. Reading this directly is far more accurate than deriving P/B
 // ourselves from price × approximate share count.
-const BANK_PB_HISTORY_GID = "492106203";
-// Original tabs for securities/real-estate P/B only went back ~3 years,
-// the source of the earlier "3 Năm and 5 Năm look identical" report; the
-// user replaced both with tabs holding a full 5-year history instead.
+// Original tabs for all three sectors' P/B only went back ~3 years, the
+// source of the earlier "3 Năm and 5 Năm look identical" report; the user
+// replaced all three with tabs holding a full 5-year history instead.
+const BANK_PB_HISTORY_GID = "234525846";
 const SECURITIES_PB_HISTORY_GID = "2087389393";
 const REAL_ESTATE_PB_HISTORY_GID = "1676846069";
 
