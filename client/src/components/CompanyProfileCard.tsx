@@ -3,7 +3,7 @@ import { usePolling } from "../hooks/usePolling";
 import { COMPANY_PROFILES } from "../data/companyProfiles";
 import { fetchBankData, isBankSymbol } from "../utils/bankData";
 import { fetchSecuritiesData, isSecuritiesSymbol } from "../utils/securitiesData";
-import { fetchKbsCompanyProfile } from "../api/client";
+import { fetchCompanyProfile } from "../api/client";
 import CompanyLogo from "./CompanyLogo";
 
 interface KeyFigure {
@@ -32,9 +32,12 @@ function formatShares(v: number | null): string {
 // - data/companyProfiles.ts: static reference info, hand-compiled for ~93
 //   symbols (cafef.vn is unreachable from this environment).
 // - the user's own Excel exports (bank/securities key figures).
-// - KBS's live company-profile endpoint (business model, founding date,
+// - a live company-profile endpoint (business model, founding date,
 //   address, CEO, leadership, major shareholders) — covers effectively any
-//   listed symbol, not just the curated 93. Used as the fallback for the
+//   listed symbol, not just the curated 93. Tries KBS first, falls back to
+//   VCI if KBS has nothing for the symbol (see companyProfileFallback.ts on
+//   the server); whichever one actually answered is named in `source` and
+//   disclosed in the footer caption. Used as the fallback for the
 //   descriptive fields when the static profile doesn't have them, and as
 //   the only source for CEO/leadership/shareholders (the static list and
 //   Excel exports don't carry those at all).
@@ -53,11 +56,11 @@ export default function CompanyProfileCard({ symbol, fallbackName }: { symbol: s
     [upper, isSecurities]
   );
   // Swallows failures into `null` rather than surfacing an error state —
-  // KBS not having a profile for some symbol, or being unreachable, should
-  // just mean this section quietly falls back to the other two sources,
-  // not block the whole card.
-  const { data: kbsProfile } = usePolling(
-    () => fetchKbsCompanyProfile(upper).catch(() => null),
+  // KBS/VCI not having a profile for some symbol, or being unreachable,
+  // should just mean this section quietly falls back to the other two
+  // sources, not block the whole card.
+  const { data: liveProfile } = usePolling(
+    () => fetchCompanyProfile(upper).catch(() => null),
     [upper]
   );
 
@@ -97,14 +100,14 @@ export default function CompanyProfileCard({ symbol, fallbackName }: { symbol: s
     return { figures: [], period: null, displayName: null };
   }, [bankData, securitiesData]);
 
-  const founded = profile?.founded ?? kbsProfile?.foundedDate ?? null;
-  const headquarters = profile?.headquarters ?? kbsProfile?.address ?? null;
-  const website = profile?.website ?? kbsProfile?.website ?? null;
-  const description = profile?.description ?? kbsProfile?.businessModel ?? null;
-  const hasLeadership = (kbsProfile?.officers.length ?? 0) > 0 || kbsProfile?.ceoName;
-  const hasShareholders = (kbsProfile?.shareholders.length ?? 0) > 0;
+  const founded = profile?.founded ?? liveProfile?.foundedDate ?? null;
+  const headquarters = profile?.headquarters ?? liveProfile?.address ?? null;
+  const website = profile?.website ?? liveProfile?.website ?? null;
+  const description = profile?.description ?? liveProfile?.businessModel ?? null;
+  const hasLeadership = (liveProfile?.officers.length ?? 0) > 0 || liveProfile?.ceoName;
+  const hasShareholders = (liveProfile?.shareholders.length ?? 0) > 0;
 
-  if (!profile && figures.length === 0 && !kbsProfile) return null;
+  if (!profile && figures.length === 0 && !liveProfile) return null;
 
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
@@ -125,9 +128,9 @@ export default function CompanyProfileCard({ symbol, fallbackName }: { symbol: s
             <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
               {founded && <span>Thành lập {founded}</span>}
               {headquarters && <span>Trụ sở: {headquarters}</span>}
-              {kbsProfile?.ceoName && (
+              {liveProfile?.ceoName && (
                 <span>
-                  {kbsProfile.ceoPosition ?? "CEO"}: {kbsProfile.ceoName}
+                  {liveProfile.ceoPosition ?? "CEO"}: {liveProfile.ceoName}
                 </span>
               )}
               {website && (
@@ -165,7 +168,7 @@ export default function CompanyProfileCard({ symbol, fallbackName }: { symbol: s
             <div className="bg-white p-3 dark:bg-slate-900">
               <div className="mb-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">Ban lãnh đạo</div>
               <ul className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
-                {kbsProfile!.officers.slice(0, 5).map((o, i) => (
+                {liveProfile!.officers.slice(0, 5).map((o, i) => (
                   <li key={i} className="flex justify-between gap-2">
                     <span className="truncate">{o.position ?? "—"}</span>
                     <span className="shrink-0 font-medium text-slate-900 dark:text-slate-100">{o.name ?? "—"}</span>
@@ -178,7 +181,7 @@ export default function CompanyProfileCard({ symbol, fallbackName }: { symbol: s
             <div className="bg-white p-3 dark:bg-slate-900">
               <div className="mb-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">Cổ đông lớn</div>
               <ul className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
-                {kbsProfile!.shareholders.slice(0, 5).map((s, i) => (
+                {liveProfile!.shareholders.slice(0, 5).map((s, i) => (
                   <li key={i} className="flex justify-between gap-2">
                     <span className="truncate">{s.name ?? "—"}</span>
                     <span className="shrink-0 font-medium tabular-nums text-slate-900 dark:text-slate-100">
@@ -192,11 +195,14 @@ export default function CompanyProfileCard({ symbol, fallbackName }: { symbol: s
         </div>
       )}
 
-      {(period || kbsProfile) && (
+      {(period || liveProfile) && (
         <div className="border-t border-slate-200 px-4 py-2 text-[11px] text-slate-400 dark:border-slate-800 dark:text-slate-500">
           {period && `Số liệu tại kỳ ${period} — nguồn: dữ liệu tự tổng hợp (Excel).`}
-          {period && kbsProfile && " "}
-          {kbsProfile && "Thông tin hồ sơ công ty — nguồn: KB Securities (KBS)."}
+          {period && liveProfile && " "}
+          {liveProfile &&
+            `Thông tin hồ sơ công ty — nguồn: ${
+              liveProfile.source === "VCI" ? "Vietcap (VCI)" : "KB Securities (KBS)"
+            }.`}
         </div>
       )}
     </div>

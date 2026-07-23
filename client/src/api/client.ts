@@ -124,7 +124,7 @@ export interface CompanyShareholder {
   ownershipPercent: number | null;
 }
 
-export interface KbsCompanyProfile {
+export interface CompanyProfile {
   symbol: string;
   businessModel: string | null;
   foundedDate: string | null;
@@ -143,9 +143,12 @@ export interface KbsCompanyProfile {
   outstandingShares: number | null;
   officers: CompanyOfficer[];
   shareholders: CompanyShareholder[];
+  // Which live provider this profile actually came from (KBS tried first,
+  // VCI as fallback) — surfaced in the UI so the source is always disclosed.
+  source: "KBS" | "VCI";
 }
 
-export async function fetchKbsCompanyProfile(symbol: string): Promise<KbsCompanyProfile> {
+export async function fetchCompanyProfile(symbol: string): Promise<CompanyProfile> {
   const { data } = await api.get(`/company-profile/${encodeURIComponent(symbol)}`);
   return data;
 }

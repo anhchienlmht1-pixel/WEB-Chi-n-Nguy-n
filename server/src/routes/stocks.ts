@@ -13,7 +13,7 @@ import {
   fetchRealEstatePbHistory,
 } from "../providers/googleSheet.js";
 import { fetchNewsForSymbol } from "../news/cafefNews.js";
-import { fetchKbsCompanyProfile } from "../providers/kbsCompany.js";
+import { getCompanyProfileWithFallback } from "../providers/companyProfileFallback.js";
 
 const router = Router();
 const cache = new NodeCache({ stdTTL: 20, checkperiod: 30 });
@@ -178,8 +178,8 @@ router.get(
     const symbol = String(req.params.symbol).toUpperCase();
     // Company profile info (business model, CEO, address, leadership,
     // shareholders...) barely changes day to day, unlike price/financials
-    // — a long 6h TTL avoids hammering KBS on every page view.
-    const data = await cached(`company-profile:${symbol}`, 6 * 60 * 60, () => fetchKbsCompanyProfile(symbol));
+    // — a long 6h TTL avoids hammering KBS/VCI on every page view.
+    const data = await cached(`company-profile:${symbol}`, 6 * 60 * 60, () => getCompanyProfileWithFallback(symbol));
     res.json(data);
   })
 );
