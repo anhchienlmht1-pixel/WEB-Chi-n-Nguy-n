@@ -16,8 +16,20 @@ const api = axios.create({ baseURL: "/api", timeout: 30000 });
 
 // Prefer the server's JSON error message ({"error": "..."}) over axios's
 // generic "Request failed with status code 500" so users see what's wrong.
+// Normally axios auto-parses a JSON response into `.data` as an object,
+// but if the response's Content-Type ever isn't exactly application/json
+// (seen on Vercel's serverless runtime for reasons not reproducible in
+// local dev), `.data` arrives as a raw string instead — handle that case
+// too instead of silently falling back to the generic message.
 api.interceptors.response.use(undefined, (error) => {
-  const serverMessage = error?.response?.data?.error;
+  let serverMessage: unknown = error?.response?.data?.error;
+  if (serverMessage === undefined && typeof error?.response?.data === "string") {
+    try {
+      serverMessage = JSON.parse(error.response.data)?.error;
+    } catch {
+      // Not JSON after all — fall through and keep axios's default message.
+    }
+  }
   if (typeof serverMessage === "string" && serverMessage) {
     error.message = serverMessage;
   }
