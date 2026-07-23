@@ -63,48 +63,40 @@ export default function StockDetail() {
             </div>
           </div>
 
-          <div className="mb-4">
-            <div className="mb-2 flex justify-end">
-              <Link
-                to={`/backtest?symbol=${encodeURIComponent(quote.symbol)}`}
-                className="whitespace-nowrap rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:border-emerald-500 hover:text-emerald-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-emerald-400 dark:hover:text-emerald-400"
-              >
-                🧪 Backtest {quote.symbol}
-              </Link>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
+            <div>
+              <div className="mb-2 flex justify-end">
+                <Link
+                  to={`/backtest?symbol=${encodeURIComponent(quote.symbol)}`}
+                  className="whitespace-nowrap rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:border-emerald-500 hover:text-emerald-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-emerald-400 dark:hover:text-emerald-400"
+                >
+                  🧪 Backtest {quote.symbol}
+                </Link>
+              </div>
+              <TechnicalChartPanel symbol={symbol} preferSource={quote.source} />
+
+              <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+                <Stat label="Mở cửa" value={formatPrice(quote.open, quote.currency)} />
+                <Stat label="Cao nhất" value={formatPrice(quote.high, quote.currency)} />
+                <Stat label="Thấp nhất" value={formatPrice(quote.low, quote.currency)} />
+                <Stat label="Đóng cửa trước" value={formatPrice(quote.prevClose, quote.currency)} />
+                <Stat label="Khối lượng" value={formatVolume(quote.volume)} />
+                {!isIndexOrFutures && <Stat label="Vốn hóa" value={formatMarketCap(quote.marketCap, quote.currency)} />}
+              </div>
+
+              <p className="mt-4 text-xs text-slate-400 dark:text-slate-600">
+                Cập nhật lúc {new Date(quote.updatedAt).toLocaleTimeString("vi-VN")}
+              </p>
             </div>
-            <TechnicalChartPanel symbol={symbol} preferSource={quote.source} />
+
+            <div className="space-y-4">
+              {(COMPANY_PROFILES[quote.symbol.toUpperCase()] || isBankSymbol(quote.symbol) || isSecuritiesSymbol(quote.symbol)) && (
+                <CompanyProfileCard symbol={quote.symbol} />
+              )}
+              {!isIndexOrFutures && <StockOutlookPanel symbol={quote.symbol} />}
+              {!isIndexOrFutures && <ForeignFlowPanel quote={quote} />}
+            </div>
           </div>
-
-          <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-            <Stat label="Mở cửa" value={formatPrice(quote.open, quote.currency)} />
-            <Stat label="Cao nhất" value={formatPrice(quote.high, quote.currency)} />
-            <Stat label="Thấp nhất" value={formatPrice(quote.low, quote.currency)} />
-            <Stat label="Đóng cửa trước" value={formatPrice(quote.prevClose, quote.currency)} />
-            <Stat label="Khối lượng" value={formatVolume(quote.volume)} />
-            {!isIndexOrFutures && <Stat label="Vốn hóa" value={formatMarketCap(quote.marketCap, quote.currency)} />}
-          </div>
-
-          <p className="mt-6 text-xs text-slate-400 dark:text-slate-600">
-            Cập nhật lúc {new Date(quote.updatedAt).toLocaleTimeString("vi-VN")}
-          </p>
-
-          {(COMPANY_PROFILES[quote.symbol.toUpperCase()] || isBankSymbol(quote.symbol) || isSecuritiesSymbol(quote.symbol)) && (
-            <div className="mt-6">
-              <CompanyProfileCard symbol={quote.symbol} />
-            </div>
-          )}
-
-          {!isIndexOrFutures && (
-            <div className="mt-6">
-              <StockOutlookPanel symbol={quote.symbol} />
-            </div>
-          )}
-
-          {!isIndexOrFutures && (
-            <div className="mt-6">
-              <ForeignFlowPanel quote={quote} />
-            </div>
-          )}
 
           {!isIndexOrFutures && (
             <div className="mt-6">
