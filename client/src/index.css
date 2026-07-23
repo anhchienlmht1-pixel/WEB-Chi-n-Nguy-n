@@ -5,6 +5,9 @@
 
 html {
   color-scheme: light;
+  /* Shrinks every rem-based Tailwind text size (text-sm, text-xs, etc.)
+     proportionally, since they're all relative to this root size. */
+  font-size: 14px;
 }
 html.dark {
   color-scheme: dark;
