@@ -53,7 +53,7 @@ export default function Header() {
         </nav>
 
         <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-2 sm:flex-none sm:gap-3">
-          <div className="min-w-0 flex-1 sm:w-56 sm:flex-none md:w-72">
+          <div className="min-w-0 flex-1 sm:w-40 sm:flex-none md:w-52">
             <SearchBox />
           </div>
           <button
