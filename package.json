@@ -8,7 +8,7 @@
     "node-cache": "^5.1.2"
   },
   "devDependencies": {
-    "@vercel/node": "^3.2.24",
+    "@vercel/node": "^5.8.26",
     "tsx": "^4.23.1",
     "typescript": "^5.6.2"
   }
