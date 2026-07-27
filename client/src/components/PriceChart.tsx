@@ -148,7 +148,11 @@ const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
       );
       mainSeries.setData(candleData);
     }
-    mainSeries.priceScale().applyOptions({ scaleMargins: { top: 0.05, bottom: 0.25 } });
+    // Bottom margin only needs to clear the volume histogram's own
+    // dedicated scale (top: 0.82 below) — 0.25 was reserving far more space
+    // than that, showing as a large blank gap under the candles with the
+    // price axis extrapolating ticks (even negative ones) into it.
+    mainSeries.priceScale().applyOptions({ scaleMargins: { top: 0.05, bottom: 0.1 } });
     mainSeriesRef.current = mainSeries;
 
     if (signals.length > 0) {

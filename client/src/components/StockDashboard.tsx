@@ -10,7 +10,7 @@ import AssetsBarLineChart from "./AssetsBarLineChart";
 // always compares to the immediately previous column, which reads as QoQ
 // in the quarterly view and YoY in the yearly view.
 export default function StockDashboard({ symbol }: { symbol: string }) {
-  const [periodType, setPeriodType] = useState<FinancialPeriodType>("year");
+  const [periodType, setPeriodType] = useState<FinancialPeriodType>("quarter");
 
   return (
     <div>

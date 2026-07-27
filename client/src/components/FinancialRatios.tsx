@@ -17,7 +17,7 @@ const REPORT_TABS: { value: FinancialReportType; label: string }[] = [
 
 export default function FinancialRatios({ symbol }: { symbol: string }) {
   const [reportType, setReportType] = useState<FinancialReportType>("CSTC");
-  const [periodType, setPeriodType] = useState<FinancialPeriodType>("year");
+  const [periodType, setPeriodType] = useState<FinancialPeriodType>("quarter");
   // Ids of collapsed parent rows (Excel-style outline groups) — a row with
   // children can be toggled shut to hide its subtree without losing the
   // subtotal line itself.
