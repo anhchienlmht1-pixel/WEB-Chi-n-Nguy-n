@@ -101,6 +101,15 @@ function foreignRoomPercent(item: any): number | undefined {
   return (room / listedShares) * 100;
 }
 
+// price × listed shares — KBS's price-board CP field is already true VND
+// (not the x1000-scaled convention the history-bar endpoint uses), so no
+// extra scaling is needed here.
+function marketCap(item: any, price: number): number | undefined {
+  const listedShares = num(item?.LS);
+  if (listedShares == null || listedShares <= 0) return undefined;
+  return price * listedShares;
+}
+
 function quoteFromBoardItem(item: any): Quote | null {
   const symbol = String(item?.SB ?? "").toUpperCase();
   const price = num(item?.CP);
@@ -125,6 +134,7 @@ function quoteFromBoardItem(item: any): Quote | null {
     low: num(item?.LO) ?? price,
     prevClose,
     volume: num(item?.TT) ?? 0,
+    marketCap: idxInfo ? undefined : marketCap(item, price),
     updatedAt: new Date().toISOString(),
     // Foreign-investor fields only apply to stocks (KBS's index/futures rows
     // don't carry them) — verified against KBS explorer's _PRICE_BOARD_MAP:
