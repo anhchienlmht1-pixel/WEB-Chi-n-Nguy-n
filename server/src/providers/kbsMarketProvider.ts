@@ -83,6 +83,13 @@ async function fetchPriceBoard(symbols: string[]): Promise<any[]> {
   return list;
 }
 
+function foreignOwnershipPercent(item: any): number | undefined {
+  const foreignShares = num(item?.FO);
+  const listedShares = num(item?.LS);
+  if (foreignShares == null || listedShares == null || listedShares <= 0) return undefined;
+  return (foreignShares / listedShares) * 100;
+}
+
 function quoteFromBoardItem(item: any): Quote | null {
   const symbol = String(item?.SB ?? "").toUpperCase();
   const price = num(item?.CP);
@@ -110,11 +117,16 @@ function quoteFromBoardItem(item: any): Quote | null {
     updatedAt: new Date().toISOString(),
     // Foreign-investor fields only apply to stocks (KBS's index/futures rows
     // don't carry them) — verified against KBS explorer's _PRICE_BOARD_MAP:
-    // FB=foreign_buy_volume, FS=foreign_sell_volume, FO=foreign_ownership_ratio,
-    // FR=foreign_room (remaining room before the ownership cap).
+    // FB=foreign_buy_volume, FS=foreign_sell_volume, FR=foreign_room (shares
+    // remaining before the ownership cap). FO is labeled "foreign_ownership_
+    // ratio" in that mapping, but the value KBS actually returns is a raw
+    // share count (foreign-held shares), not a ratio — confirmed live: ACB
+    // came back with FO ≈ 1.74 billion, matching its real foreign-held share
+    // count, not a percentage. LS (listed_shares, i.e. total shares
+    // outstanding) is on the same price-board row, so divide it out here.
     foreignBuyVolume: idxInfo ? undefined : num(item?.FB),
     foreignSellVolume: idxInfo ? undefined : num(item?.FS),
-    foreignOwnershipPercent: idxInfo ? undefined : num(item?.FO),
+    foreignOwnershipPercent: idxInfo ? undefined : foreignOwnershipPercent(item),
     foreignRoom: idxInfo ? undefined : num(item?.FR),
   };
 }
