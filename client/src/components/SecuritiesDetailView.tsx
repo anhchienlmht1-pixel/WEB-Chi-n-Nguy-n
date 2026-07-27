@@ -19,7 +19,12 @@ export default function SecuritiesDetailView({
   onSymbolChange,
 }: {
   symbol: string;
-  onSymbolChange: (symbol: string) => void;
+  // Optional — omitted when this is embedded on a single stock's own detail
+  // page (StockDetail.tsx), where the symbol is already fixed by the URL
+  // and a second picker would be redundant. Still required (and rendered)
+  // on the "So sánh chứng khoán" comparison page, where this view is one of
+  // several tabs and switching companies without leaving the tab is the point.
+  onSymbolChange?: (symbol: string) => void;
 }) {
   const [periodType, setPeriodType] = useState<PeriodType>("quarter");
   const { data, error, loading } = usePolling(() => fetchSecuritiesDetail(symbol), [symbol]);
@@ -52,17 +57,19 @@ export default function SecuritiesDetailView({
               </button>
             ))}
           </div>
-          <select
-            value={symbol}
-            onChange={(e) => onSymbolChange(e.target.value)}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-          >
-            {SECURITIES_SYMBOL_LIST.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
+          {onSymbolChange && (
+            <select
+              value={symbol}
+              onChange={(e) => onSymbolChange(e.target.value)}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            >
+              {SECURITIES_SYMBOL_LIST.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       </div>
 

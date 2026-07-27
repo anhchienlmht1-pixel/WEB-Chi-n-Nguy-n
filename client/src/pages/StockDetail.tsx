@@ -11,6 +11,7 @@ import StockDashboard from "../components/StockDashboard";
 import BankFundamentals from "../components/BankFundamentals";
 import { isBankSymbol } from "../utils/bankData";
 import SecuritiesFundamentals from "../components/SecuritiesFundamentals";
+import SecuritiesDetailView from "../components/SecuritiesDetailView";
 import { isSecuritiesSymbol } from "../utils/securitiesData";
 import CompanyProfileCard from "../components/CompanyProfileCard";
 import ForeignFlowPanel from "../components/ForeignFlowPanel";
@@ -110,6 +111,12 @@ export default function StockDetail() {
           {isSecuritiesSymbol(quote.symbol) && (
             <div className="mt-6">
               <SecuritiesFundamentals symbol={quote.symbol} />
+            </div>
+          )}
+
+          {isSecuritiesSymbol(quote.symbol) && (
+            <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
+              <SecuritiesDetailView symbol={quote.symbol} />
             </div>
           )}
 
