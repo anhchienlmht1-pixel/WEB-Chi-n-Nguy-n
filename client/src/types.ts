@@ -20,6 +20,8 @@ export interface Quote {
   /** Absolute count of shares currently held by foreign investors. */
   foreignSharesOwned?: number;
   foreignRoom?: number;
+  /** foreignRoom as a % of total shares outstanding. */
+  foreignRoomPercent?: number;
   /** Which provider answered this request (kbs/vndirect/vnstock) — lets a
    * caller pin a related request (e.g. history for the same symbol) to the
    * same source instead of independently re-resolving the fallback chain. */

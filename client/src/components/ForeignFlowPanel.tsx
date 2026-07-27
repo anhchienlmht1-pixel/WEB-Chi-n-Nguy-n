@@ -71,7 +71,7 @@ export default function ForeignFlowPanel({ quote }: { quote: Quote }) {
     <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
       <h4 className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">Giao dịch khối ngoại</h4>
 
-      <div className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-5">
         <div>
           <div className="text-xs text-slate-400 dark:text-slate-500">Mua</div>
           <div className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">
@@ -96,6 +96,15 @@ export default function ForeignFlowPanel({ quote }: { quote: Quote }) {
               <span className="ml-1 text-xs font-normal text-slate-400">
                 (đã sở hữu {formatVolume(quote.foreignSharesOwned)})
               </span>
+            )}
+          </div>
+        </div>
+        <div>
+          <div className="text-xs text-slate-400 dark:text-slate-500">Room còn lại</div>
+          <div className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+            {quote.foreignRoomPercent != null ? formatPercent(quote.foreignRoomPercent).replace("+", "") : "—"}
+            {quote.foreignRoom != null && (
+              <span className="ml-1 text-xs font-normal text-slate-400">({formatVolume(quote.foreignRoom)})</span>
             )}
           </div>
         </div>

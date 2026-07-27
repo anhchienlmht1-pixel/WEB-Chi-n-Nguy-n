@@ -90,6 +90,17 @@ function foreignOwnershipPercent(item: any): number | undefined {
   return (foreignShares / listedShares) * 100;
 }
 
+// Same LS (listed_shares) denominator as foreignOwnershipPercent, but for
+// FR (foreign_room — shares still available to foreign buyers before the
+// ownership cap) instead of FO, giving "% room còn lại" rather than "%
+// already owned".
+function foreignRoomPercent(item: any): number | undefined {
+  const room = num(item?.FR);
+  const listedShares = num(item?.LS);
+  if (room == null || listedShares == null || listedShares <= 0) return undefined;
+  return (room / listedShares) * 100;
+}
+
 function quoteFromBoardItem(item: any): Quote | null {
   const symbol = String(item?.SB ?? "").toUpperCase();
   const price = num(item?.CP);
@@ -129,6 +140,7 @@ function quoteFromBoardItem(item: any): Quote | null {
     foreignOwnershipPercent: idxInfo ? undefined : foreignOwnershipPercent(item),
     foreignSharesOwned: idxInfo ? undefined : num(item?.FO),
     foreignRoom: idxInfo ? undefined : num(item?.FR),
+    foreignRoomPercent: idxInfo ? undefined : foreignRoomPercent(item),
   };
 }
 

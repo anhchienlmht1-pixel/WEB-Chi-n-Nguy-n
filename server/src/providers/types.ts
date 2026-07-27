@@ -20,6 +20,8 @@ export interface Quote {
   /** Absolute count of shares currently held by foreign investors. */
   foreignSharesOwned?: number;
   foreignRoom?: number;
+  /** foreignRoom as a % of total shares outstanding. */
+  foreignRoomPercent?: number;
 }
 
 export interface HistoryPoint {
