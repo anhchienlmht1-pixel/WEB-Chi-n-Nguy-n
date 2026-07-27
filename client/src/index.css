@@ -3,6 +3,34 @@
 /* Class-based dark mode: `dark:` variants apply when <html class="dark">. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Softer pastel palette overrides for the default slate and emerald
+   colors. Every bg-slate, text-emerald, etc utility across the app picks
+   these up automatically since they override the same CSS variable
+   names those utilities read from. Slate becomes a gentle lavender-navy
+   tint instead of pure gray/near-black; emerald keeps the same green
+   hue as before, just softer and a touch brighter. */
+@theme {
+  --color-slate-50: #f7f8fc;
+  --color-slate-100: #eef1f8;
+  --color-slate-200: #e1e6f0;
+  --color-slate-300: #c9d1e3;
+  --color-slate-400: #96a2c2;
+  --color-slate-500: #6d78a0;
+  --color-slate-600: #525d80;
+  --color-slate-700: #3b4463;
+  --color-slate-800: #272e48;
+  --color-slate-900: #1a2038;
+  --color-slate-950: #11152a;
+
+  --color-emerald-50: #eefcf6;
+  --color-emerald-100: #d2f8e7;
+  --color-emerald-300: #7de3bd;
+  --color-emerald-400: #4ed0a5;
+  --color-emerald-500: #2fb98e;
+  --color-emerald-600: #229c78;
+  --color-emerald-700: #1b7c61;
+}
+
 html {
   color-scheme: light;
   /* Shrinks every rem-based Tailwind text size (text-sm, text-xs, etc.)
