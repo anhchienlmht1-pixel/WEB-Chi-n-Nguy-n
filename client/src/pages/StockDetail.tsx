@@ -17,6 +17,7 @@ import CompanyProfileCard from "../components/CompanyProfileCard";
 import ForeignFlowPanel from "../components/ForeignFlowPanel";
 import StockOutlookPanel from "../components/StockOutlookPanel";
 import TrendSignalScanner from "../components/TrendSignalScanner";
+import IndustryRankingPanel from "../components/IndustryRankingPanel";
 
 export default function StockDetail() {
   const { symbol = "" } = useParams();
@@ -94,6 +95,7 @@ export default function StockDetail() {
               {!isIndexOrFutures && <CompanyProfileCard symbol={quote.symbol} fallbackName={quote.name} />}
               {!isIndexOrFutures && <StockOutlookPanel symbol={quote.symbol} />}
               {!isIndexOrFutures && <ForeignFlowPanel quote={quote} />}
+              {!isIndexOrFutures && <IndustryRankingPanel symbol={quote.symbol} />}
               {!isIndexOrFutures && <TrendSignalScanner />}
             </div>
           </div>
