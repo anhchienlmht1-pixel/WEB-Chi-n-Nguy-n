@@ -17,6 +17,8 @@ export interface Quote {
   foreignBuyVolume?: number;
   foreignSellVolume?: number;
   foreignOwnershipPercent?: number;
+  /** Absolute count of shares currently held by foreign investors. */
+  foreignSharesOwned?: number;
   foreignRoom?: number;
 }
 

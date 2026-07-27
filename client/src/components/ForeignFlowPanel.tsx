@@ -92,8 +92,10 @@ export default function ForeignFlowPanel({ quote }: { quote: Quote }) {
           <div className="text-xs text-slate-400 dark:text-slate-500">Sở hữu NN</div>
           <div className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">
             {quote.foreignOwnershipPercent != null ? formatPercent(quote.foreignOwnershipPercent).replace("+", "") : "—"}
-            {quote.foreignRoom != null && (
-              <span className="ml-1 text-xs font-normal text-slate-400">(room {formatVolume(quote.foreignRoom)})</span>
+            {quote.foreignSharesOwned != null && (
+              <span className="ml-1 text-xs font-normal text-slate-400">
+                (đã sở hữu {formatVolume(quote.foreignSharesOwned)})
+              </span>
             )}
           </div>
         </div>

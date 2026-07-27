@@ -127,6 +127,7 @@ function quoteFromBoardItem(item: any): Quote | null {
     foreignBuyVolume: idxInfo ? undefined : num(item?.FB),
     foreignSellVolume: idxInfo ? undefined : num(item?.FS),
     foreignOwnershipPercent: idxInfo ? undefined : foreignOwnershipPercent(item),
+    foreignSharesOwned: idxInfo ? undefined : num(item?.FO),
     foreignRoom: idxInfo ? undefined : num(item?.FR),
   };
 }
