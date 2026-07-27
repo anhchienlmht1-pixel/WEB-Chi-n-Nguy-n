@@ -46,5 +46,13 @@ export function useWatchlist() {
     setSymbols(symbols.filter((s) => s !== symbol));
   }, []);
 
-  return { symbols: current, isWatched, toggle, remove };
+  // Idempotent add — unlike toggle(), never removes an already-watched
+  // symbol, so it's safe to call in bulk (e.g. "add all of these") without
+  // accidentally un-watching ones the user already added themselves.
+  const addMany = useCallback((toAdd: string[]) => {
+    const additions = toAdd.filter((s) => !symbols.includes(s));
+    if (additions.length > 0) setSymbols([...symbols, ...additions]);
+  }, []);
+
+  return { symbols: current, isWatched, toggle, remove, addMany };
 }
