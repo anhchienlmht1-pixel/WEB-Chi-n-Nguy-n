@@ -14,6 +14,7 @@ import {
 } from "../providers/googleSheet.js";
 import { fetchNewsForSymbol } from "../news/cafefNews.js";
 import { getCompanyProfileWithFallback } from "../providers/companyProfileFallback.js";
+import { scanBuySignals } from "../signals/trendScanner.js";
 
 const router = Router();
 const cache = new NodeCache({ stdTTL: 20, checkperiod: 30 });
@@ -213,6 +214,20 @@ router.get(
     // — a long 6h TTL avoids hammering KBS/VCI on every page view.
     const data = await cached(`company-profile:${symbol}`, 6 * 60 * 60, () => getCompanyProfileWithFallback(symbol));
     res.json(data);
+  })
+);
+
+router.get(
+  "/trend-signals",
+  asyncHandler(async (_req, res) => {
+    // Same daily-bar trend-following combo as the chart's own Mua/Bán
+    // markers, scanned across the whole stock universe — a 1h TTL is
+    // plenty since this only moves at most once per trading day (it's
+    // computed off daily closes), and re-scanning ~70 symbols on every
+    // request would be needlessly slow and hammer the price-history
+    // provider for no benefit.
+    const data = await cached("trend-signals", 60 * 60, () => scanBuySignals(), { staleOnError: true });
+    res.json({ items: data });
   })
 );
 

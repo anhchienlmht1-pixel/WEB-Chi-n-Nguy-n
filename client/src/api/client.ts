@@ -164,3 +164,23 @@ export async function fetchCompanyProfile(symbol: string): Promise<CompanyProfil
   const { data } = await api.get(`/company-profile/${encodeURIComponent(symbol)}`);
   return data;
 }
+
+export interface TrendBuySignal {
+  symbol: string;
+  name: string;
+  exchange: string;
+  currency: string;
+  price: number;
+  changePercent: number;
+  // ISO date the current uninterrupted buy streak started.
+  signalSince: string;
+}
+
+// Same trend-following combo as a chart's own Mua/Bán markers (SMA20 >
+// SMA50, ADX(14) > 25, Supertrend(10,3) uptrend), scanned across the whole
+// stock universe server-side and cached for an hour — see
+// server/src/signals/trendScanner.ts.
+export async function fetchTrendBuySignals(): Promise<TrendBuySignal[]> {
+  const { data } = await api.get("/trend-signals");
+  return data.items;
+}
