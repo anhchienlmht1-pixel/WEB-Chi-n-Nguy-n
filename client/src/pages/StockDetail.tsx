@@ -64,7 +64,7 @@ export default function StockDetail() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
+          <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[2fr_1fr]">
             <div>
               <div className="mb-2 flex justify-end">
                 <Link
@@ -74,7 +74,7 @@ export default function StockDetail() {
                   🧪 Backtest {quote.symbol}
                 </Link>
               </div>
-              <TechnicalChartPanel symbol={symbol} preferSource={quote.source} height={320} />
+              <TechnicalChartPanel symbol={symbol} preferSource={quote.source} height={440} />
 
               <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
                 <Stat label="Mở cửa" value={formatPrice(quote.open, quote.currency)} />
