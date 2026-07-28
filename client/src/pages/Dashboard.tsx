@@ -9,8 +9,9 @@ import MarketMovers from "../components/MarketMovers";
 import TechnicalChartPanel from "../components/TechnicalChartPanel";
 import Hero from "../components/Hero";
 import TrendSignalScanner from "../components/TrendSignalScanner";
+import MarketIndexPanel from "../components/MarketIndexPanel";
 
-const DEFAULT_SYMBOL = "VCB";
+const DEFAULT_SYMBOL = "VNINDEX";
 
 export default function Dashboard() {
   const { data, error, loading } = usePolling(fetchMarketOverview, [], 30000);
@@ -41,7 +42,10 @@ export default function Dashboard() {
             // picks up a source the moment that endpoint gains one too.
             preferSource={data?.quotes.find((q) => q.symbol === chartSymbol)?.source}
           />
-          <TrendSignalScanner />
+          <div className="space-y-4">
+            <MarketIndexPanel symbol={chartSymbol} />
+            <TrendSignalScanner />
+          </div>
         </div>
       </div>
 
