@@ -23,6 +23,17 @@ function netClass(net: number): string {
   return "text-slate-500 dark:text-slate-400";
 }
 
+// KBS's price board only carries foreign buy/sell VOLUME (shares), not a
+// separate value field — so "giá trị" here is volume × current price, an
+// estimate (each foreign trade may have matched at a different price during
+// the session), not the exchange's own reported turnover value.
+function formatValueVnd(value: number): string {
+  const billions = value / 1_000_000_000;
+  if (billions >= 1) return `${billions.toLocaleString("vi-VN", { maximumFractionDigits: 1 })} tỷ`;
+  const millions = value / 1_000_000;
+  return `${millions.toLocaleString("vi-VN", { maximumFractionDigits: 0 })} triệu`;
+}
+
 // KBS's live price board exposes today's foreign buy/sell volume, but
 // there's no historical daily foreign-flow endpoint available in this
 // environment (CafeF's own "Giao dịch khối ngoại" history page and VCI/VND's
@@ -71,7 +82,7 @@ export default function ForeignFlowPanel({ quote }: { quote: Quote }) {
     <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
       <h4 className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">Giao dịch khối ngoại</h4>
 
-      <div className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-5">
+      <div className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
         <div>
           <div className="text-xs text-slate-400 dark:text-slate-500">Mua</div>
           <div className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">
@@ -79,9 +90,21 @@ export default function ForeignFlowPanel({ quote }: { quote: Quote }) {
           </div>
         </div>
         <div>
+          <div className="text-xs text-slate-400 dark:text-slate-500">Giá trị mua</div>
+          <div className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+            {formatValueVnd(snapshot.buy * quote.price)}
+          </div>
+        </div>
+        <div>
           <div className="text-xs text-slate-400 dark:text-slate-500">Bán</div>
           <div className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">
             {formatVolume(snapshot.sell)}
+          </div>
+        </div>
+        <div>
+          <div className="text-xs text-slate-400 dark:text-slate-500">Giá trị bán</div>
+          <div className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+            {formatValueVnd(snapshot.sell * quote.price)}
           </div>
         </div>
         <div>
@@ -109,6 +132,11 @@ export default function ForeignFlowPanel({ quote }: { quote: Quote }) {
           </div>
         </div>
       </div>
+
+      <p className="mb-3 text-[10px] text-slate-400 dark:text-slate-500">
+        Giá trị mua/bán = khối lượng × giá hiện tại (ước tính, KBS không cung cấp giá trị khớp lệnh thực của khối
+        ngoại).
+      </p>
 
       {history.length >= 2 && (
         <>
