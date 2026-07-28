@@ -4,6 +4,13 @@ import { fetchMaScan, MA_PERIODS, type MaPeriod } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { useWatchlist } from "../hooks/useWatchlist";
 import { formatPercent, formatPrice, trendClass } from "../utils/format";
+import { COMPANY_PROFILES } from "../data/companyProfiles";
+
+const ALL_SECTORS = "__all__";
+
+function sectorOf(symbol: string): string | undefined {
+  return COMPANY_PROFILES[symbol]?.sector;
+}
 
 const POLL_MS = 5 * 60 * 1000; // server caches the scan for 1h — no point polling faster
 
@@ -24,6 +31,17 @@ export default function MaFilter() {
   const { addMany } = useWatchlist();
   const [period, setPeriod] = useState<MaPeriod>(20);
   const [direction, setDirection] = useState<Direction>("above");
+  const [sector, setSector] = useState<string>(ALL_SECTORS);
+
+  const sectors = useMemo(() => {
+    if (!hits) return [];
+    const set = new Set<string>();
+    for (const h of hits) {
+      const s = sectorOf(h.symbol);
+      if (s) set.add(s);
+    }
+    return [...set].sort((a, b) => a.localeCompare(b, "vi"));
+  }, [hits]);
 
   const filtered = useMemo(() => {
     if (!hits) return [];
@@ -32,12 +50,13 @@ export default function MaFilter() {
         const ma = h.ma[period];
         if (ma == null || ma <= 0) return null;
         const gapPercent = ((h.price - ma) / ma) * 100;
-        return { ...h, ma, gapPercent };
+        return { ...h, ma, gapPercent, sector: sectorOf(h.symbol) };
       })
       .filter((h): h is NonNullable<typeof h> => h !== null)
       .filter((h) => (direction === "above" ? h.price > h.ma : h.price < h.ma))
+      .filter((h) => sector === ALL_SECTORS || h.sector === sector)
       .sort((a, b) => (direction === "above" ? b.gapPercent - a.gapPercent : a.gapPercent - b.gapPercent));
-  }, [hits, period, direction]);
+  }, [hits, period, direction, sector]);
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-6">
@@ -90,6 +109,19 @@ export default function MaFilter() {
           </button>
         </div>
 
+        <select
+          value={sector}
+          onChange={(e) => setSector(e.target.value)}
+          className="rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 focus:border-emerald-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+        >
+          <option value={ALL_SECTORS}>Tất cả ngành</option>
+          {sectors.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
+
         {filtered.length > 0 && (
           <button
             type="button"
@@ -118,6 +150,7 @@ export default function MaFilter() {
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-medium text-slate-500 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-400">
                 <th className="px-4 py-3">Mã</th>
+                <th className="px-4 py-3">Ngành</th>
                 <th className="px-4 py-3 text-right">Giá</th>
                 <th className="px-4 py-3 text-right">% Thay đổi</th>
                 <th className="px-4 py-3 text-right">MA{period}</th>
@@ -127,7 +160,7 @@ export default function MaFilter() {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
+                  <td colSpan={6} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
                     Không có mã nào khớp điều kiện.
                   </td>
                 </tr>
@@ -143,6 +176,7 @@ export default function MaFilter() {
                         <span className="text-xs text-slate-400 dark:text-slate-500">{h.exchange}</span>
                       </Link>
                     </td>
+                    <td className="px-4 py-2.5 text-xs text-slate-500 dark:text-slate-400">{h.sector ?? "—"}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums font-medium text-slate-900 dark:text-slate-100">
                       {formatPrice(h.price, h.currency)}
                     </td>
