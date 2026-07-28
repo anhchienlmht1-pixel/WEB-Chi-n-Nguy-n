@@ -23,6 +23,11 @@ function netClass(net: number): string {
   return "text-slate-500 dark:text-slate-400";
 }
 
+function formatNetValue(net: number): string {
+  const sign = net > 0 ? "+" : net < 0 ? "−" : "";
+  return `${sign}${formatValueVnd(Math.abs(net))}`;
+}
+
 // KBS's price board only carries foreign buy/sell VOLUME (shares), not a
 // separate value field — so "giá trị" here is volume × current price, an
 // estimate (each foreign trade may have matched at a different price during
@@ -67,6 +72,9 @@ export default function ForeignFlowPanel({ quote }: { quote: Quote }) {
 
   const snapshot = { buy: quote.foreignBuyVolume, sell: quote.foreignSellVolume };
   const net = snapshot.buy - snapshot.sell;
+  const buyValue = snapshot.buy * quote.price;
+  const sellValue = snapshot.sell * quote.price;
+  const netValue = buyValue - sellValue;
 
   const plotW = W - PAD.left - PAD.right;
   const plotH = H - PAD.top - PAD.bottom;
@@ -82,35 +90,44 @@ export default function ForeignFlowPanel({ quote }: { quote: Quote }) {
     <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
       <h4 className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">Giao dịch khối ngoại</h4>
 
-      <div className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <div>
-          <div className="text-xs text-slate-400 dark:text-slate-500">Mua</div>
-          <div className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">
-            {formatVolume(snapshot.buy)}
-          </div>
-        </div>
-        <div>
-          <div className="text-xs text-slate-400 dark:text-slate-500">Giá trị mua</div>
-          <div className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">
-            {formatValueVnd(snapshot.buy * quote.price)}
-          </div>
-        </div>
-        <div>
-          <div className="text-xs text-slate-400 dark:text-slate-500">Bán</div>
-          <div className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">
-            {formatVolume(snapshot.sell)}
-          </div>
-        </div>
-        <div>
-          <div className="text-xs text-slate-400 dark:text-slate-500">Giá trị bán</div>
-          <div className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">
-            {formatValueVnd(snapshot.sell * quote.price)}
-          </div>
-        </div>
-        <div>
-          <div className="text-xs text-slate-400 dark:text-slate-500">Ròng</div>
-          <div className={`font-semibold tabular-nums ${netClass(net)}`}>{formatNet(net)}</div>
-        </div>
+      <div className="mb-3 overflow-hidden rounded-md border border-slate-200 dark:border-slate-800">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-slate-200 bg-slate-50 text-xs font-medium text-slate-500 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-400">
+              <th className="px-3 py-2 text-left"></th>
+              <th className="px-3 py-2 text-right">Mua</th>
+              <th className="px-3 py-2 text-right">Bán</th>
+              <th className="px-3 py-2 text-right">Mua-Bán</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="border-b border-slate-100 dark:border-slate-900">
+              <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400">KL</th>
+              <td className="px-3 py-2 text-right tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">
+                {formatVolume(snapshot.buy)}
+              </td>
+              <td className="px-3 py-2 text-right tabular-nums font-semibold text-red-500 dark:text-red-400">
+                {formatVolume(snapshot.sell)}
+              </td>
+              <td className={`px-3 py-2 text-right tabular-nums font-semibold ${netClass(net)}`}>{formatNet(net)}</td>
+            </tr>
+            <tr>
+              <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400">GT</th>
+              <td className="px-3 py-2 text-right tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">
+                {formatValueVnd(buyValue)}
+              </td>
+              <td className="px-3 py-2 text-right tabular-nums font-semibold text-red-500 dark:text-red-400">
+                {formatValueVnd(sellValue)}
+              </td>
+              <td className={`px-3 py-2 text-right tabular-nums font-semibold ${netClass(netValue)}`}>
+                {formatNetValue(netValue)}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mb-3 grid grid-cols-2 gap-3">
         <div>
           <div className="text-xs text-slate-400 dark:text-slate-500">Sở hữu NN</div>
           <div className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">
@@ -134,8 +151,7 @@ export default function ForeignFlowPanel({ quote }: { quote: Quote }) {
       </div>
 
       <p className="mb-3 text-[10px] text-slate-400 dark:text-slate-500">
-        Giá trị mua/bán = khối lượng × giá hiện tại (ước tính, KBS không cung cấp giá trị khớp lệnh thực của khối
-        ngoại).
+        GT Mua/Bán = khối lượng × giá hiện tại (ước tính, KBS không cung cấp giá trị khớp lệnh thực của khối ngoại).
       </p>
 
       {history.length >= 2 && (
