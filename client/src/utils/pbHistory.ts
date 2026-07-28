@@ -10,12 +10,27 @@ export interface PbStat {
   max: number | null;
 }
 
-// dd/MM/yyyy, matching the date format the sheet's P/B history tabs write
-// in their first column.
+// P/B history rows now carry fiscal-period labels from VCI's ratio endpoint
+// ("Q1 2024" or, for annual-only rows, "2024") rather than the old sheet's
+// daily "dd/MM/yyyy" — each quarter is mapped to its fiscal quarter-end
+// date (annual rows to year-end) so the lookback-window math below (which
+// just compares real Date objects) keeps working unchanged.
+const QUARTER_END_MONTH_DAY: Record<number, [number, number]> = {
+  1: [2, 31], // March (0-indexed month 2), 31st
+  2: [5, 30],
+  3: [8, 30],
+  4: [11, 31],
+};
+
 function parseVnDate(s: string): Date | null {
-  const m = s.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (!m) return null;
-  return new Date(Date.UTC(Number(m[3]), Number(m[2]) - 1, Number(m[1])));
+  const q = /^Q(\d)\s+(\d{4})$/.exec(s.trim());
+  if (q) {
+    const [month, day] = QUARTER_END_MONTH_DAY[Number(q[1])];
+    return new Date(Date.UTC(Number(q[2]), month, day));
+  }
+  const y = /^(\d{4})$/.exec(s.trim());
+  if (y) return new Date(Date.UTC(Number(y[1]), 11, 31));
+  return null;
 }
 
 function formatVnDate(d: Date): string {
@@ -52,10 +67,10 @@ export function pbWindowExceedsCoverage(coverage: PbDataCoverage, years: PbLookb
   return since <= coverage.earliest;
 }
 
-// current/average/min/max come straight from the sheet's own daily P/B
-// series (real values the sheet's owner computes there), not derived or
-// approximated here — this just picks out the most recent value and folds
-// the window matching the selected lookback into average/min/max.
+// current/average/min/max come straight from VCI's own quarterly P/B
+// series (real ratio values from the exchange's own reports), not derived
+// or approximated here — this just picks out the most recent value and
+// folds the window matching the selected lookback into average/min/max.
 export function computePbStatsFromHistory(table: PbHistoryTable, years: PbLookbackYears): PbStat[] {
   const parsedRows = table.rows
     .map((r) => ({ date: parseVnDate(r.date), values: r.values }))

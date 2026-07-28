@@ -6,16 +6,12 @@ import { topTradedOf, VALID_EXCHANGES } from "../providers/topTraded.js";
 import { KbsPeriodType, KbsReportType } from "../providers/kbsFinancials.js";
 import { fetchFinancialReport } from "../providers/financials.js";
 import { getQuoteWithFallback, getHistoryWithFallback } from "../providers/fallback.js";
-import {
-  fetchInvestmentOutlook,
-  fetchBankPbHistory,
-  fetchSecuritiesPbHistory,
-  fetchRealEstatePbHistory,
-} from "../providers/googleSheet.js";
+import { fetchInvestmentOutlook } from "../providers/googleSheet.js";
 import { fetchNewsForSymbol } from "../news/cafefNews.js";
 import { getCompanyProfileWithFallback } from "../providers/companyProfileFallback.js";
 import { scanBuySignals } from "../signals/trendScanner.js";
 import { scanMovingAverages } from "../signals/maScanner.js";
+import { scanPbComparison, BANK_SYMBOLS, SECURITIES_SYMBOLS, REAL_ESTATE_SYMBOLS } from "../signals/pbScanner.js";
 
 const router = Router();
 const cache = new NodeCache({ stdTTL: 20, checkperiod: 30 });
@@ -181,7 +177,14 @@ router.get(
 router.get(
   "/bank-pb-history",
   asyncHandler(async (_req, res) => {
-    const data = await cached("bank-pb-history", 300, () => fetchBankPbHistory(), { staleOnError: true });
+    // P/B pulled live from VCI's verified ratio endpoint (quarterly) across
+    // every bank symbol — replaces the earlier Google-Sheet-backed daily
+    // series. A 1h TTL matches the other sector-wide scans (trend-signals,
+    // ma-scan): fanning out over ~27 symbols on every request would be slow
+    // and unnecessary since quarterly ratios don't change intraday.
+    const data = await cached("bank-pb-history", 60 * 60, () => scanPbComparison(BANK_SYMBOLS), {
+      staleOnError: true,
+    });
     res.json(data);
   })
 );
@@ -189,7 +192,7 @@ router.get(
 router.get(
   "/securities-pb-history",
   asyncHandler(async (_req, res) => {
-    const data = await cached("securities-pb-history", 300, () => fetchSecuritiesPbHistory(), {
+    const data = await cached("securities-pb-history", 60 * 60, () => scanPbComparison(SECURITIES_SYMBOLS), {
       staleOnError: true,
     });
     res.json(data);
@@ -199,7 +202,7 @@ router.get(
 router.get(
   "/realestate-pb-history",
   asyncHandler(async (_req, res) => {
-    const data = await cached("realestate-pb-history", 300, () => fetchRealEstatePbHistory(), {
+    const data = await cached("realestate-pb-history", 60 * 60, () => scanPbComparison(REAL_ESTATE_SYMBOLS), {
       staleOnError: true,
     });
     res.json(data);

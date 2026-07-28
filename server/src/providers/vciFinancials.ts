@@ -31,20 +31,31 @@ const REST_HEADERS = {
 // (vnstock/explorer/vci/financial.py Finance._handshake) — cheap to
 // replicate and matches the verified reference exactly, so it's done here
 // too rather than assuming the REST endpoints work cookie-less.
+//
+// Cached module-wide for a few minutes rather than re-handshaking on every
+// single call — a sector-wide P/B scan (pbComparison.ts) fans this out
+// across 13-27 symbols at once, and re-fetching /priceboard that many times
+// for what should be the same session cookie would just be wasted latency.
+let cachedCookie: { value: string | undefined; expiresAt: number } | null = null;
+const COOKIE_TTL_MS = 5 * 60 * 1000;
+
 async function handshakeCookies(): Promise<string | undefined> {
+  if (cachedCookie && cachedCookie.expiresAt > Date.now()) return cachedCookie.value;
+  let value: string | undefined;
   try {
     const res = await fetch(HANDSHAKE_URL, { headers: REST_HEADERS, signal: AbortSignal.timeout(5000) });
     const cookies = res.headers.getSetCookie?.() ?? [];
-    if (cookies.length === 0) return undefined;
     // Each Set-Cookie value is "name=value; Path=...; HttpOnly..." — only
     // the name=value pair before the first ";" is meaningful for the next
     // request's own Cookie header.
-    return cookies.map((c) => c.split(";")[0]).join("; ");
+    value = cookies.length > 0 ? cookies.map((c) => c.split(";")[0]).join("; ") : undefined;
   } catch {
     // Best-effort — vnstock itself just logs a warning and continues
     // without cookies on handshake failure, so this does too.
-    return undefined;
+    value = undefined;
   }
+  cachedCookie = { value, expiresAt: Date.now() + COOKIE_TTL_MS };
+  return value;
 }
 
 async function restGet(path: string, params: Record<string, string>, symbolForError: string): Promise<any> {

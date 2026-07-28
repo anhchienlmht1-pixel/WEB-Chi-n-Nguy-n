@@ -15,7 +15,7 @@ type Tab = "compare" | "metric" | "detail" | "pb";
 type PeriodType = "quarter" | "year";
 
 const GROUP_ORDER = ["Quốc doanh", "Doanh nghiệp", "Cá nhân", "Quy mô nhỏ", ""];
-const PB_POLL_MS = 3 * 60 * 1000; // matches the other Sheets-backed pages (server itself caches 5 min)
+const PB_POLL_MS = 5 * 60 * 1000; // server caches the underlying VCI scan for 1h — no point polling faster
 
 function buildRow(bank: BankData, periodType: PeriodType, periodIndex: number): BankOverviewRow {
   const periodData = periodType === "quarter" ? bank.quarter : bank.year;
@@ -53,12 +53,10 @@ export default function BankCompare() {
   const [periodIndex, setPeriodIndex] = useState<number | null>(null);
   const [pbYears, setPbYears] = useState<PbLookbackYears>(1);
 
-  // The sheet's own "P/B ngành ngân hàng" tab already has real daily P/B
-  // values per bank — only fetched while the tab is open, refreshed every
-  // 3 min like the other Sheets-backed pages so edits in the sheet show up
-  // without the user having to reload. Switching "Thời gian" (1/3/5 năm)
-  // below just recomputes current/average/min/max client-side from
-  // whatever table is already cached, no extra fetch.
+  // P/B pulled live from VCI's ratio endpoint (quarterly) for every bank —
+  // only fetched while the tab is open, refreshed every 5 min. Switching
+  // "Thời gian" (1/3/5 năm) below just recomputes current/average/min/max
+  // client-side from whatever table is already cached, no extra fetch.
   const { data: pbHistory, error: pbError, loading: pbLoading } = usePolling(
     async () => {
       if (tab !== "pb") return null;
@@ -232,17 +230,16 @@ export default function BankCompare() {
           )}
           {pbStats && pbCoverage && pbWindowCapped && (
             <div className="mb-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-400">
-              Trang tính hiện chỉ có dữ liệu P/B từ <strong>{pbCoverage.earliestLabel}</strong> — khoảng "{pbYears} Năm"
-              đã hiển thị toàn bộ lịch sử có sẵn, nên có thể giống với khoảng thời gian ngắn hơn cho tới khi sheet có
-              thêm dữ liệu cũ hơn.
+              Nguồn dữ liệu hiện chỉ có P/B từ <strong>{pbCoverage.earliestLabel}</strong> — khoảng "{pbYears} Năm"
+              đã hiển thị toàn bộ lịch sử có sẵn, nên có thể giống với khoảng thời gian ngắn hơn.
             </div>
           )}
           {pbStats && (
             <>
               <PbRangeChart data={pbStats} title="So sánh P/B ngành ngân hàng" />
               <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
-                Dữ liệu P/B theo ngày do người quản lý trang tính tự tính và cập nhật, đồng bộ trực tiếp từ Google
-                Sheets — không phải khuyến nghị đầu tư từ hệ thống.
+                Dữ liệu P/B theo quý, lấy trực tiếp từ báo cáo tài chính công bố (nguồn: Vietcap) — không phải khuyến
+                nghị đầu tư từ hệ thống.
               </p>
             </>
           )}
