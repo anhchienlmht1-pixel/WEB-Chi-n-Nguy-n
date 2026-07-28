@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { fetchQuote } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { formatChange, formatMarketCap, formatPercent, formatPrice, formatVolume, trendClass } from "../utils/format";
@@ -65,14 +65,6 @@ export default function StockDetail() {
 
           <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[2fr_1fr]">
             <div>
-              <div className="mb-2 flex justify-end">
-                <Link
-                  to={`/backtest?symbol=${encodeURIComponent(quote.symbol)}`}
-                  className="whitespace-nowrap rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:border-emerald-500 hover:text-emerald-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-emerald-400 dark:hover:text-emerald-400"
-                >
-                  🧪 Backtest {quote.symbol}
-                </Link>
-              </div>
               <TechnicalChartPanel symbol={symbol} preferSource={quote.source} height={440} />
 
               <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">

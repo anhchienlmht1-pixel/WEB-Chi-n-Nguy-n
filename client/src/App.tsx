@@ -7,7 +7,6 @@ import PerformanceCompare from './pages/PerformanceCompare'
 import BankCompare from './pages/BankCompare'
 import SecuritiesCompare from './pages/SecuritiesCompare'
 import RealEstateCompare from './pages/RealEstateCompare'
-import Backtest from './pages/Backtest'
 import InvestmentOutlook from './pages/InvestmentOutlook'
 import MaFilter from './pages/MaFilter'
 
@@ -23,7 +22,6 @@ function App() {
         <Route path="/so-sanh-ngan-hang" element={<BankCompare />} />
         <Route path="/so-sanh-chung-khoan" element={<SecuritiesCompare />} />
         <Route path="/so-sanh-bat-dong-san" element={<RealEstateCompare />} />
-        <Route path="/backtest" element={<Backtest />} />
         <Route path="/loc-ma" element={<MaFilter />} />
         <Route path="/trien-vong-dau-tu" element={<InvestmentOutlook />} />
         <Route path="*" element={<Dashboard />} />
