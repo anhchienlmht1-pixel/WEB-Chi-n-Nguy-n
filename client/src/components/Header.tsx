@@ -15,7 +15,7 @@ const NAV_ITEMS = [
 ];
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-  `text-sm font-medium transition-colors ${
+  `shrink-0 whitespace-nowrap text-xs font-medium transition-colors ${
     isActive
       ? "text-emerald-600 dark:text-emerald-400"
       : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
@@ -44,7 +44,7 @@ export default function Header() {
           <span className="hidden sm:inline">Chiến Nguyễn Invest</span>
         </NavLink>
 
-        <nav className="hidden items-center gap-5 md:flex">
+        <nav className="hidden min-w-0 items-center gap-2 overflow-x-auto md:flex">
           {NAV_ITEMS.map((item) => (
             <NavLink key={item.to} to={item.to} end={item.end} className={navLinkClass}>
               {item.label}
