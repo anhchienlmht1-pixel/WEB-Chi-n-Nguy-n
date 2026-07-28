@@ -39,3 +39,20 @@ export function formatFinancialValue(value: number | null, unit?: string): strin
   }
   return value.toLocaleString("vi-VN", { maximumFractionDigits: 2 });
 }
+
+/** Compact VND amount for large sums, e.g. avg. trading value: 245300000000 -> "245,3 tỷ đ". */
+export function formatCompactVnd(value: number | null): string {
+  if (value === null || !Number.isFinite(value)) return "--";
+  return `${value.toLocaleString("vi-VN", { notation: "compact", maximumFractionDigits: 2 })}đ`;
+}
+
+export function formatDateTime(unixSeconds: number): string {
+  if (!Number.isFinite(unixSeconds)) return "--";
+  return new Date(unixSeconds * 1000).toLocaleString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
