@@ -4,7 +4,6 @@ import { usePolling } from "../hooks/usePolling";
 import { formatChange, formatMarketCap, formatPercent, formatPrice, formatVolume, trendClass } from "../utils/format";
 import TechnicalChartPanel from "../components/TechnicalChartPanel";
 import WatchButton from "../components/WatchButton";
-import FinancialRatios from "../components/FinancialRatios";
 import SeasonalityHeatmap from "../components/SeasonalityHeatmap";
 import NewsFeed from "../components/NewsFeed";
 import StockDashboard from "../components/StockDashboard";
@@ -119,13 +118,6 @@ export default function StockDetail() {
           <div className="mt-6">
             <NewsFeed symbol={quote.symbol} />
           </div>
-
-          {/* Indices/futures aren't companies — no financial statements to show. */}
-          {!isIndexOrFutures && (
-            <div className="mt-6">
-              <FinancialRatios symbol={quote.symbol} />
-            </div>
-          )}
         </>
       )}
     </div>
