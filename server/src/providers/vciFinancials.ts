@@ -4,33 +4,19 @@ import type { FinancialLineItem, FinancialReport, KbsPeriodType, KbsReportType }
 // VNDirect and KBS (financials.ts picks whichever answers with the most
 // periods).
 //
-// CSTC (ratio) requests hit a REST endpoint verified directly against
-// vnstock's open-source VCI explorer (github.com/thinh-vu/vnstock,
-// vnstock/explorer/vci/{financial,const}.py — the `Finance._get_report`
-// RATIO branch, and RATIO_COLUMN_MAP_VI/EN for field labels), cloned and
-// read locally since this sandbox can't reach vietcap.com.vn directly to
-// test the live response. The endpoint path, request shape (plain GET, no
-// body), and field names are taken verbatim from that source — genuinely
-// verified, not guessed. What's NOT verified (vnstock's own code doesn't
-// pin this down cleanly either) is exactly how year/quarter rows are mixed
-// in the response for a given period type; see the defensive grouping
-// logic in parseRatioRows below and its comment.
-//
-// KQKD/CDKT/LCTT (income statement / balance sheet / cash flow) still use
-// the older GraphQL query further below — that part remains reconstructed
-// from memory, not verified, same caveat as before.
+// Every report type here (KQKD/CDKT/LCTT/CSTC) hits a REST endpoint
+// verified directly against vnstock's open-source VCI explorer
+// (github.com/thinh-vu/vnstock, vnstock/explorer/vci/{financial,const}.py —
+// the `Finance` class's `_get_report`/`_get_ratio_dict` methods and the
+// RATIO_COLUMN_MAP_VI/EN constants), cloned and read locally since this
+// sandbox can't reach vietcap.com.vn directly to test the live response.
+// The endpoint paths, request shapes (plain GET, no body), and field names
+// are taken verbatim from that source — genuinely verified, not guessed.
+// What's NOT verified (vnstock's own code doesn't pin this down cleanly
+// either) is the exact response shape for edge cases — see comments at each
+// parsing step for where a defensive assumption was made.
 const VCIQ_BASE = "https://iq.vietcap.com.vn/api/iq-insight-service";
 const HANDSHAKE_URL = "https://trading.vietcap.com.vn/priceboard";
-const VCI_GRAPHQL_URL = "https://api.vietcap.com.vn/data-mt/graphql";
-
-const GRAPHQL_HEADERS = {
-  "Content-Type": "application/json",
-  Accept: "application/json",
-  "User-Agent":
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-  Origin: "https://trading.vietcap.com.vn",
-  Referer: "https://trading.vietcap.com.vn/",
-};
 
 const REST_HEADERS = {
   Accept: "application/json, text/plain, */*",
@@ -44,7 +30,7 @@ const REST_HEADERS = {
 // resulting session cookies into every subsequent request's headers
 // (vnstock/explorer/vci/financial.py Finance._handshake) — cheap to
 // replicate and matches the verified reference exactly, so it's done here
-// too rather than assuming the REST endpoint works cookie-less.
+// too rather than assuming the REST endpoints work cookie-less.
 async function handshakeCookies(): Promise<string | undefined> {
   try {
     const res = await fetch(HANDSHAKE_URL, { headers: REST_HEADERS, signal: AbortSignal.timeout(5000) });
@@ -61,57 +47,36 @@ async function handshakeCookies(): Promise<string | undefined> {
   }
 }
 
-const QUERY_NAME: Record<KbsReportType, string> = {
-  KQKD: "CompanyIncomeStatement",
-  CDKT: "CompanyBalanceSheet",
-  LCTT: "CompanyCashFlow",
-  CSTC: "CompanyFinancialRatio",
-};
+async function restGet(path: string, params: Record<string, string>, symbolForError: string): Promise<any> {
+  const cookie = await handshakeCookies();
+  const headers = cookie ? { ...REST_HEADERS, Cookie: cookie } : REST_HEADERS;
+  const query = new URLSearchParams(params).toString();
+  const url = `${VCIQ_BASE}${path}${query ? `?${query}` : ""}`;
 
-// Best-effort guess at the field set each query exposes — a flat set of
-// scalar metrics per period rather than KBS/VNDirect's arbitrary line-item
-// list, since VCI's ratio/statement endpoints are documented (via vnstock
-// usage examples) as fixed-column tables, not open-ended item rows.
-const FIELD_SET: Record<KbsReportType, string[]> = {
-  KQKD: ["revenue", "revenue_growth", "net_profit", "net_profit_growth", "gross_profit", "operating_profit"],
-  CDKT: ["total_assets", "total_assets_growth", "total_liabilities", "total_equity", "cash", "short_term_debt"],
-  LCTT: ["net_cash_flow_from_operating", "net_cash_flow_from_investing", "net_cash_flow_from_financing"],
-  CSTC: ["pe", "pb", "roe", "roa", "eps", "bvps", "dividend"],
-};
-
-const FIELD_LABEL: Record<string, string> = {
-  revenue: "Doanh thu",
-  revenue_growth: "Tăng trưởng doanh thu",
-  net_profit: "Lợi nhuận sau thuế",
-  net_profit_growth: "Tăng trưởng lợi nhuận",
-  gross_profit: "Lợi nhuận gộp",
-  operating_profit: "Lợi nhuận hoạt động",
-  total_assets: "Tổng tài sản",
-  total_assets_growth: "Tăng trưởng tổng tài sản",
-  total_liabilities: "Tổng nợ phải trả",
-  total_equity: "Vốn chủ sở hữu",
-  cash: "Tiền và tương đương tiền",
-  short_term_debt: "Nợ ngắn hạn",
-  net_cash_flow_from_operating: "Lưu chuyển tiền từ HĐKD",
-  net_cash_flow_from_investing: "Lưu chuyển tiền từ HĐĐT",
-  net_cash_flow_from_financing: "Lưu chuyển tiền từ HĐTC",
-  pe: "P/E",
-  pb: "P/B",
-  roe: "ROE",
-  roa: "ROA",
-  eps: "EPS",
-  bvps: "BVPS",
-  dividend: "Cổ tức",
-};
-
-function buildQuery(reportType: KbsReportType): string {
-  const name = QUERY_NAME[reportType];
-  const fields = ["ticker", "year", "quarter", ...FIELD_SET[reportType]];
-  return `query Query($ticker: String!, $period: String!) {
-  ${name}(ticker: $ticker, period: $period) {
-    ${fields.join("\n    ")}
+  let res: Response;
+  try {
+    res = await fetch(url, { headers, signal: AbortSignal.timeout(8000) });
+  } catch (err) {
+    const cause = err instanceof Error ? err.message : String(err);
+    throw Object.assign(new Error(`VCI không phản hồi cho ${symbolForError} (${path}): ${cause}`), { status: 504 });
   }
-}`;
+  const rawBody = await res.text();
+
+  if (!res.ok) {
+    throw Object.assign(
+      new Error(`VCI trả lỗi HTTP ${res.status} cho ${symbolForError} (${path}). Nội dung: ${rawBody.slice(0, 400)}`),
+      { status: 502 }
+    );
+  }
+
+  try {
+    return JSON.parse(rawBody);
+  } catch {
+    throw Object.assign(
+      new Error(`VCI trả dữ liệu không phải JSON cho ${symbolForError} (${path}): ${rawBody.slice(0, 200)}`),
+      { status: 502 }
+    );
+  }
 }
 
 function toNumber(raw: unknown): number | null {
@@ -123,104 +88,8 @@ function toNumber(raw: unknown): number | null {
   return null;
 }
 
-// A quarter of 0/null/missing means the row is an annual figure — only
-// values 1-4 are an actual quarter.
-function rowQuarter(row: any): number | null {
-  const q = Number(row.quarter);
-  return Number.isFinite(q) && q >= 1 && q <= 4 ? q : null;
-}
-
-function periodSortKey(row: any): number {
-  const year = Number(row.year) || 0;
-  return year * 4 + (rowQuarter(row) ?? 4);
-}
-
-function periodLabel(row: any): string {
-  const year = Number(row.year);
-  const quarter = rowQuarter(row);
-  return quarter ? `Q${quarter} ${year}` : String(year);
-}
-
-async function fetchVciReportGraphQL(
-  symbol: string,
-  reportType: KbsReportType,
-  periodType: KbsPeriodType
-): Promise<FinancialReport> {
-  const query = buildQuery(reportType);
-  const variables = { ticker: symbol, period: periodType === "quarter" ? "quarterly" : "yearly" };
-
-  let res: Response;
-  try {
-    res = await fetch(VCI_GRAPHQL_URL, {
-      method: "POST",
-      headers: GRAPHQL_HEADERS,
-      body: JSON.stringify({ query, variables }),
-      signal: AbortSignal.timeout(6000),
-    });
-  } catch (err) {
-    const cause = err instanceof Error ? err.message : String(err);
-    throw Object.assign(new Error(`VCI không phản hồi cho ${symbol} (${reportType}): ${cause}`), { status: 504 });
-  }
-  const rawBody = await res.text();
-
-  if (!res.ok) {
-    throw Object.assign(
-      new Error(`VCI trả lỗi HTTP ${res.status} cho ${symbol} (${reportType}). Nội dung: ${rawBody.slice(0, 400)}`),
-      { status: 502 }
-    );
-  }
-
-  let data: any;
-  try {
-    data = JSON.parse(rawBody);
-  } catch {
-    throw Object.assign(
-      new Error(`VCI trả dữ liệu không phải JSON cho ${symbol} (${reportType}): ${rawBody.slice(0, 200)}`),
-      { status: 502 }
-    );
-  }
-
-  if (Array.isArray(data?.errors) && data.errors.length > 0) {
-    const messages = data.errors.map((e: any) => e?.message ?? JSON.stringify(e)).join(" | ");
-    throw Object.assign(new Error(`VCI GraphQL báo lỗi cho ${symbol} (${reportType}): ${messages}`), {
-      status: 502,
-    });
-  }
-
-  const rows: any[] = data?.data?.[QUERY_NAME[reportType]];
-  if (!Array.isArray(rows) || rows.length === 0) {
-    throw Object.assign(
-      new Error(
-        `VCI trả về rỗng hoặc sai cấu trúc cho ${symbol} (${reportType}). Raw: ${JSON.stringify(data).slice(0, 400)}`
-      ),
-      { status: 502 }
-    );
-  }
-
-  const sorted = [...rows].sort((a, b) => periodSortKey(a) - periodSortKey(b));
-  const periods = sorted.map(periodLabel);
-  const fields = FIELD_SET[reportType];
-
-  const items: FinancialLineItem[] = fields.map((field) => ({
-    id: field,
-    name: FIELD_LABEL[field] ?? field,
-    nameEn: field,
-    unit: field.endsWith("_growth") || ["pe", "pb", "roe", "roa"].includes(field) ? "%" : "Tỷ VNĐ",
-    levels: 0,
-    values: sorted.map((row) => toNumber(row[field])),
-  }));
-
-  const hasAnyValue = items.some((it) => it.values.some((v) => v !== null));
-  if (!hasAnyValue) {
-    throw Object.assign(
-      new Error(`VCI trả về ${items.length} chỉ tiêu cho ${symbol} (${reportType}) nhưng toàn bộ giá trị rỗng.`),
-      { status: 502 }
-    );
-  }
-
-  return { periods, items };
-}
-
+// ---------------------------------------------------------------------------
+// CSTC (ratio) — GET /v1/company/{symbol}/statistics-financial, no params.
 // Field labels/units below are copied verbatim from vnstock's
 // RATIO_COLUMN_MAP_VI/EN (vnstock/explorer/vci/const.py) — a curated subset
 // of the ~50 fields that endpoint returns, matching what this app's own
@@ -229,6 +98,7 @@ async function fetchVciReportGraphQL(
 // labels via substring/regex, so reusing them verbatim keeps this source
 // compatible with existing UI code for free) plus a few more commonly
 // useful ones (market cap, margins, leverage).
+// ---------------------------------------------------------------------------
 const RATIO_FIELDS: { key: string; nameVi: string; nameEn: string; unit: string }[] = [
   { key: "pe", nameVi: "P/E", nameEn: "P/E", unit: "Lần" },
   { key: "pb", nameVi: "P/B", nameEn: "P/B", unit: "Lần" },
@@ -274,6 +144,10 @@ function selectRatioRows(rows: any[], periodType: KbsPeriodType): any[] {
   return annual.length > 0 ? annual : quarterly;
 }
 
+function periodSortValue(row: any): number {
+  return (ratioRowYear(row) ?? 0) * 4 + (ratioRowQuarter(row) ?? 4);
+}
+
 function ratioPeriodLabel(row: any): string {
   const year = ratioRowYear(row);
   const quarter = ratioRowQuarter(row);
@@ -281,43 +155,13 @@ function ratioPeriodLabel(row: any): string {
 }
 
 async function fetchVciRatioReport(symbol: string, periodType: KbsPeriodType): Promise<FinancialReport> {
-  const cookie = await handshakeCookies();
-  const headers = cookie ? { ...REST_HEADERS, Cookie: cookie } : REST_HEADERS;
-  const url = `${VCIQ_BASE}/v1/company/${encodeURIComponent(symbol)}/statistics-financial`;
-
-  let res: Response;
-  try {
-    res = await fetch(url, { headers, signal: AbortSignal.timeout(8000) });
-  } catch (err) {
-    const cause = err instanceof Error ? err.message : String(err);
-    throw Object.assign(new Error(`VCI không phản hồi cho ${symbol} (CSTC): ${cause}`), { status: 504 });
-  }
-  const rawBody = await res.text();
-
-  if (!res.ok) {
-    throw Object.assign(
-      new Error(`VCI trả lỗi HTTP ${res.status} cho ${symbol} (CSTC). Nội dung: ${rawBody.slice(0, 400)}`),
-      { status: 502 }
-    );
-  }
-
-  let parsed: any;
-  try {
-    parsed = JSON.parse(rawBody);
-  } catch {
-    throw Object.assign(new Error(`VCI trả dữ liệu không phải JSON cho ${symbol} (CSTC): ${rawBody.slice(0, 200)}`), {
-      status: 502,
-    });
-  }
-
+  const parsed = await restGet(`/v1/company/${encodeURIComponent(symbol)}/statistics-financial`, {}, symbol);
   const rows: any[] = parsed?.data;
   if (!Array.isArray(rows) || rows.length === 0) {
     throw Object.assign(new Error(`VCI trả về rỗng cho ${symbol} (CSTC).`), { status: 502 });
   }
 
-  const selected = selectRatioRows(rows, periodType).sort(
-    (a, b) => (ratioRowYear(a) ?? 0) * 4 + (ratioRowQuarter(a) ?? 4) - ((ratioRowYear(b) ?? 0) * 4 + (ratioRowQuarter(b) ?? 4))
-  );
+  const selected = selectRatioRows(rows, periodType).sort((a, b) => periodSortValue(a) - periodSortValue(b));
   const periods = selected.map(ratioPeriodLabel);
 
   const items: FinancialLineItem[] = RATIO_FIELDS.map(({ key, nameVi, nameEn, unit }) => ({
@@ -339,11 +183,139 @@ async function fetchVciRatioReport(symbol: string, periodType: KbsPeriodType): P
   return { periods, items };
 }
 
+// ---------------------------------------------------------------------------
+// KQKD/CDKT/LCTT (income statement / balance sheet / cash flow) —
+// GET /v1/company/{symbol}/financial-statement?section={SECTION}, response
+// shaped as { data: { years: [...], quarters: [...] } } — one flat row per
+// period, field codes as keys. Field codes aren't self-describing (no
+// English/Vietnamese label on the row itself), so a second call to
+// /v1/company/{symbol}/financial-statement/metrics fetches the code→label
+// dictionary vnstock's _get_ratio_dict() also relies on.
+// ---------------------------------------------------------------------------
+const SECTION: Record<"KQKD" | "CDKT" | "LCTT", string> = {
+  KQKD: "INCOME_STATEMENT",
+  CDKT: "BALANCE_SHEET",
+  LCTT: "CASH_FLOW",
+};
+
+// Columns present on every period row that are metadata, not line items —
+// excluded from the item list even though they're not in the field
+// dictionary either (dictionary only covers actual financial-statement
+// codes).
+const NON_ITEM_KEYS = new Set(["year", "yearReport", "quarter", "lengthReport", "reportPeriod", "ticker"]);
+
+interface FieldDict {
+  vi: Record<string, string>;
+  en: Record<string, string>;
+}
+
+async function fetchFieldDict(symbol: string): Promise<FieldDict> {
+  const parsed = await restGet(`/v1/company/${encodeURIComponent(symbol)}/financial-statement/metrics`, {}, symbol);
+  const data = parsed?.data;
+  const vi: Record<string, string> = {};
+  const en: Record<string, string> = {};
+  if (data && typeof data === "object") {
+    // The metrics response groups fields by report section
+    // (balance_sheet/income_statement/cash_flow) — merge every group into
+    // one flat code→label lookup since a report row only ever carries
+    // codes from its own section anyway.
+    for (const group of Object.values(data)) {
+      if (!Array.isArray(group)) continue;
+      for (const entry of group as any[]) {
+        const field = entry?.field;
+        if (typeof field !== "string" || !field) continue;
+        if (typeof entry?.titleVi === "string" && entry.titleVi) vi[field] = entry.titleVi;
+        if (typeof entry?.titleEn === "string" && entry.titleEn) en[field] = entry.titleEn;
+      }
+    }
+  }
+  return { vi, en };
+}
+
+function statementRowQuarter(row: any): number | null {
+  const raw = row?.quarter ?? row?.lengthReport;
+  const q = Number(raw);
+  return Number.isFinite(q) && q >= 1 && q <= 4 ? q : null;
+}
+
+function statementRowYear(row: any): number | null {
+  const raw = row?.year ?? row?.yearReport;
+  const y = Number(raw);
+  return Number.isFinite(y) && y > 0 ? y : null;
+}
+
+function statementPeriodLabel(row: any, periodType: KbsPeriodType): string {
+  const year = statementRowYear(row);
+  const quarter = statementRowQuarter(row);
+  return quarter && periodType === "quarter" ? `Q${quarter} ${year}` : String(year ?? "?");
+}
+
+async function fetchVciStatementReport(
+  symbol: string,
+  reportType: "KQKD" | "CDKT" | "LCTT",
+  periodType: KbsPeriodType
+): Promise<FinancialReport> {
+  const section = SECTION[reportType];
+  const [parsed, fieldDict] = await Promise.all([
+    restGet(`/v1/company/${encodeURIComponent(symbol)}/financial-statement`, { section }, symbol),
+    fetchFieldDict(symbol),
+  ]);
+
+  const data = parsed?.data;
+  const targetKey = periodType === "year" ? "years" : "quarters";
+  const rows: any[] = Array.isArray(data?.[targetKey]) ? data[targetKey] : [];
+  if (rows.length === 0) {
+    throw Object.assign(new Error(`VCI trả về rỗng cho ${symbol} (${reportType}, ${targetKey}).`), { status: 502 });
+  }
+
+  const sorted = [...rows].sort(
+    (a, b) =>
+      (statementRowYear(a) ?? 0) * 4 +
+      (statementRowQuarter(a) ?? 4) -
+      ((statementRowYear(b) ?? 0) * 4 + (statementRowQuarter(b) ?? 4))
+  );
+  const periods = sorted.map((row) => statementPeriodLabel(row, periodType));
+
+  // Item columns: keys present on the first row that also have a label in
+  // the field dictionary, in the order the API returned them.
+  const itemKeys = Object.keys(sorted[0] ?? {}).filter((k) => !NON_ITEM_KEYS.has(k) && (fieldDict.vi[k] || fieldDict.en[k]));
+
+  const items: FinancialLineItem[] = itemKeys.map((key) => ({
+    id: key,
+    name: fieldDict.vi[key] ?? fieldDict.en[key] ?? key,
+    nameEn: fieldDict.en[key] ?? key,
+    // No per-field unit code is exposed by the metrics endpoint — every
+    // KQKD/CDKT/LCTT line item is a monetary figure, so this defaults to
+    // "Tỷ VNĐ" (billion VND), matching how KBS/VNDirect's own statement
+    // rows are labeled elsewhere in this app.
+    unit: "Tỷ VNĐ",
+    levels: 0,
+    values: sorted.map((row) => toNumber(row[key])),
+  }));
+
+  if (items.length === 0) {
+    throw Object.assign(
+      new Error(`VCI trả về ${sorted.length} kỳ cho ${symbol} (${reportType}) nhưng không khớp được tên chỉ tiêu nào.`),
+      { status: 502 }
+    );
+  }
+
+  const hasAnyValue = items.some((it) => it.values.some((v) => v !== null));
+  if (!hasAnyValue) {
+    throw Object.assign(
+      new Error(`VCI trả về ${items.length} chỉ tiêu cho ${symbol} (${reportType}) nhưng toàn bộ giá trị rỗng.`),
+      { status: 502 }
+    );
+  }
+
+  return { periods, items };
+}
+
 export async function fetchVciReport(
   symbol: string,
   reportType: KbsReportType,
   periodType: KbsPeriodType
 ): Promise<FinancialReport> {
   if (reportType === "CSTC") return fetchVciRatioReport(symbol, periodType);
-  return fetchVciReportGraphQL(symbol, reportType, periodType);
+  return fetchVciStatementReport(symbol, reportType, periodType);
 }
