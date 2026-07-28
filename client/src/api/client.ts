@@ -184,3 +184,25 @@ export async function fetchTrendBuySignals(): Promise<TrendBuySignal[]> {
   const { data } = await api.get("/trend-signals");
   return data.items;
 }
+
+export const MA_PERIODS = [10, 20, 50, 100, 200] as const;
+export type MaPeriod = (typeof MA_PERIODS)[number];
+
+export interface MaScanHit {
+  symbol: string;
+  name: string;
+  exchange: string;
+  currency: string;
+  price: number;
+  changePercent: number;
+  ma: Partial<Record<MaPeriod, number | null>>;
+}
+
+// Every supported MA period (10/20/50/100/200) computed in one pass across
+// the whole stock universe server-side — see server/src/signals/maScanner.ts.
+// The filter (above/below a chosen period) is applied client-side so
+// switching periods doesn't need a fresh request.
+export async function fetchMaScan(): Promise<MaScanHit[]> {
+  const { data } = await api.get("/ma-scan");
+  return data.items;
+}

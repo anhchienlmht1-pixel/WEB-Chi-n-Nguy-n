@@ -15,6 +15,7 @@ import {
 import { fetchNewsForSymbol } from "../news/cafefNews.js";
 import { getCompanyProfileWithFallback } from "../providers/companyProfileFallback.js";
 import { scanBuySignals } from "../signals/trendScanner.js";
+import { scanMovingAverages } from "../signals/maScanner.js";
 
 const router = Router();
 const cache = new NodeCache({ stdTTL: 20, checkperiod: 30 });
@@ -227,6 +228,19 @@ router.get(
     // request would be needlessly slow and hammer the price-history
     // provider for no benefit.
     const data = await cached("trend-signals", 60 * 60, () => scanBuySignals(), { staleOnError: true });
+    res.json({ items: data });
+  })
+);
+
+router.get(
+  "/ma-scan",
+  asyncHandler(async (_req, res) => {
+    // Same daily-bar computation across the whole stock universe as
+    // trend-signals — every supported MA period (10/20/50/100/200) is
+    // computed in one pass per symbol so the client can switch periods
+    // without a fresh scan, cached for an hour since this only moves once
+    // per trading day.
+    const data = await cached("ma-scan", 60 * 60, () => scanMovingAverages(), { staleOnError: true });
     res.json({ items: data });
   })
 );
