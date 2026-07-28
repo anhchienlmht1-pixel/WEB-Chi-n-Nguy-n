@@ -28,6 +28,7 @@ export default function TechnicalChartPanel({
   symbol,
   height = 420,
   preferSource,
+  onSymbolChange,
 }: {
   symbol: string;
   height?: number;
@@ -35,6 +36,11 @@ export default function TechnicalChartPanel({
    * (see api/client.ts fetchHistory) — avoids the chart silently landing on
    * a different source than the price header shown next to it. */
   preferSource?: string;
+  /** Shows a symbol search box right in the chart's own toolbar when set —
+   * only meaningful where the symbol is local component state (the market
+   * page's standalone chart), not where it comes from the URL (stock
+   * detail's own chart, driven by react-router's :symbol param). */
+  onSymbolChange?: (symbol: string) => void;
 }) {
   const [resolution, setResolution] = useState<ChartResolution>("D");
   const [indicators, setIndicators] = useState<ActiveIndicator[]>(DEFAULT_INDICATORS);
@@ -117,6 +123,8 @@ export default function TechnicalChartPanel({
       >
         <ChartToolbar
           symbol={`${symbol} (${resolution})`}
+          plainSymbol={symbol}
+          onSymbolChange={onSymbolChange}
           resolution={resolution}
           onResolutionChange={setResolution}
           chartType={chartType}

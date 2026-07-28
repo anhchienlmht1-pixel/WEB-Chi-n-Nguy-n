@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { ChartResolution } from "../utils/aggregate";
 import type { ChartType } from "./PriceChart";
+import SymbolPicker from "./SymbolPicker";
 
 const RESOLUTIONS: { value: ChartResolution; label: string }[] = [
   { value: "D", label: "Ngày" },
@@ -17,6 +18,8 @@ const CHART_TYPES: { value: ChartType; label: string }[] = [
 
 export default function ChartToolbar({
   symbol,
+  plainSymbol,
+  onSymbolChange,
   resolution,
   onResolutionChange,
   chartType,
@@ -28,6 +31,13 @@ export default function ChartToolbar({
   onFullscreen,
 }: {
   symbol: string;
+  /** Raw symbol (no "(D)" resolution suffix) for the search box's value —
+   * only needed when `onSymbolChange` is provided. */
+  plainSymbol?: string;
+  /** Lets the chart switch symbol from right inside its own toolbar
+   * (e.g. the market page's standalone chart) — omitted on pages like
+   * stock detail where the symbol comes from the URL instead. */
+  onSymbolChange?: (symbol: string) => void;
   resolution: ChartResolution;
   onResolutionChange: (r: ChartResolution) => void;
   chartType: ChartType;
@@ -49,7 +59,7 @@ export default function ChartToolbar({
   }
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-white px-2 py-1.5 dark:border-slate-800 dark:bg-slate-900/40">
+    <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 bg-white px-2 py-1.5 dark:border-slate-800 dark:bg-slate-900/40">
       <div className="flex flex-wrap items-center gap-2">
         <span className="rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
           {symbol}
@@ -125,7 +135,13 @@ export default function ChartToolbar({
         </button>
       </div>
 
-      <div className="flex items-center gap-1">
+      {onSymbolChange && (
+        <div className="min-w-[160px] flex-1">
+          <SymbolPicker value={plainSymbol ?? ""} onChange={onSymbolChange} />
+        </div>
+      )}
+
+      <div className="ml-auto flex items-center gap-1">
         <button
           type="button"
           title="Chụp ảnh biểu đồ"

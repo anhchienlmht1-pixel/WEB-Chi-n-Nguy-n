@@ -7,7 +7,6 @@ import StockTable from "../components/StockTable";
 import TopTraded from "../components/TopTraded";
 import MarketMovers from "../components/MarketMovers";
 import TechnicalChartPanel from "../components/TechnicalChartPanel";
-import SymbolPicker from "../components/SymbolPicker";
 import Hero from "../components/Hero";
 import TrendSignalScanner from "../components/TrendSignalScanner";
 
@@ -25,20 +24,18 @@ export default function Dashboard() {
       <div className="mb-6">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Biểu đồ kỹ thuật</h1>
-          <div className="flex items-center gap-2">
-            <SymbolPicker value={chartSymbol} onChange={setChartSymbol} />
-            <Link
-              to={`/backtest?symbol=${encodeURIComponent(chartSymbol)}`}
-              className="whitespace-nowrap rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:border-emerald-500 hover:text-emerald-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-emerald-400 dark:hover:text-emerald-400"
-            >
-              🧪 Backtest {chartSymbol}
-            </Link>
-          </div>
+          <Link
+            to={`/backtest?symbol=${encodeURIComponent(chartSymbol)}`}
+            className="whitespace-nowrap rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:border-emerald-500 hover:text-emerald-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-emerald-400 dark:hover:text-emerald-400"
+          >
+            🧪 Backtest {chartSymbol}
+          </Link>
         </div>
         <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[2fr_1fr]">
           <TechnicalChartPanel
             symbol={chartSymbol}
             height={600}
+            onSymbolChange={setChartSymbol}
             // /market/overview isn't behind the quote/history fallback chain
             // yet, so this is undefined today — kept so the chart already
             // picks up a source the moment that endpoint gains one too.
