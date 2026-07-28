@@ -33,9 +33,15 @@
 
 html {
   color-scheme: light;
-  /* Shrinks every rem-based Tailwind text size (text-sm, text-xs, etc.)
-     proportionally, since they're all relative to this root size. */
-  font-size: 13px;
+  /* Whole-page view at 67% instead of the browser's normal 100% — like
+     manually setting browser zoom to 67%, but as the site's own default so
+     visitors don't have to do it themselves. `zoom` (not `transform: scale`)
+     is used deliberately: it re-lays-out the page at the smaller size
+     (borders, canvas-based charts, fixed/absolute-positioned dropdowns all
+     scale correctly) rather than rasterizing an already-rendered page,
+     which `transform: scale` would do and which also breaks `position:
+     fixed` elements by creating a new containing block for them. */
+  zoom: 0.67;
 }
 html.dark {
   color-scheme: dark;
