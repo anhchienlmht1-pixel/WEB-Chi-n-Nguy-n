@@ -9,7 +9,6 @@ import MarketMovers from "../components/MarketMovers";
 import TechnicalChartPanel from "../components/TechnicalChartPanel";
 import Hero from "../components/Hero";
 import TrendSignalScanner from "../components/TrendSignalScanner";
-import MarketIndexPanel from "../components/MarketIndexPanel";
 
 const DEFAULT_SYMBOL = "VNINDEX";
 
@@ -42,10 +41,7 @@ export default function Dashboard() {
             // picks up a source the moment that endpoint gains one too.
             preferSource={data?.quotes.find((q) => q.symbol === chartSymbol)?.source}
           />
-          <div className="space-y-4">
-            <MarketIndexPanel symbol={chartSymbol} />
-            <TrendSignalScanner />
-          </div>
+          <TrendSignalScanner />
         </div>
       </div>
 
