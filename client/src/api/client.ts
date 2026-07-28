@@ -184,31 +184,3 @@ export async function fetchTrendBuySignals(): Promise<TrendBuySignal[]> {
   const { data } = await api.get("/trend-signals");
   return data.items;
 }
-
-export interface IndustryRankingPeer {
-  symbol: string;
-  name: string;
-  roe: number | null;
-}
-
-export interface IndustryRanking {
-  symbol: string;
-  industry: string;
-  rank: number | null;
-  rankedCount: number;
-  peers: IndustryRankingPeer[];
-}
-
-// Ranks a symbol by latest annual ROE against its ICB-industry peers within
-// this app's stock universe — see server/src/signals/industryRanking.ts for
-// why this is a simple single-metric ranking, not FiinTrade's proprietary
-// scoring. Returns null if the symbol has no known industry.
-export async function fetchIndustryRanking(symbol: string): Promise<IndustryRanking | null> {
-  try {
-    const { data } = await api.get(`/industry-ranking/${encodeURIComponent(symbol)}`);
-    return data;
-  } catch (err: any) {
-    if (err?.response?.status === 404) return null;
-    throw err;
-  }
-}

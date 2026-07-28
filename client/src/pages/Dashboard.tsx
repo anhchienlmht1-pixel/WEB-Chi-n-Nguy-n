@@ -9,6 +9,7 @@ import MarketMovers from "../components/MarketMovers";
 import TechnicalChartPanel from "../components/TechnicalChartPanel";
 import SymbolPicker from "../components/SymbolPicker";
 import Hero from "../components/Hero";
+import TrendSignalScanner from "../components/TrendSignalScanner";
 
 const DEFAULT_SYMBOL = "VCB";
 
@@ -34,14 +35,17 @@ export default function Dashboard() {
             </Link>
           </div>
         </div>
-        <TechnicalChartPanel
-          symbol={chartSymbol}
-          height={600}
-          // /market/overview isn't behind the quote/history fallback chain
-          // yet, so this is undefined today — kept so the chart already
-          // picks up a source the moment that endpoint gains one too.
-          preferSource={data?.quotes.find((q) => q.symbol === chartSymbol)?.source}
-        />
+        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[2fr_1fr]">
+          <TechnicalChartPanel
+            symbol={chartSymbol}
+            height={600}
+            // /market/overview isn't behind the quote/history fallback chain
+            // yet, so this is undefined today — kept so the chart already
+            // picks up a source the moment that endpoint gains one too.
+            preferSource={data?.quotes.find((q) => q.symbol === chartSymbol)?.source}
+          />
+          <TrendSignalScanner />
+        </div>
       </div>
 
       <TopTraded />

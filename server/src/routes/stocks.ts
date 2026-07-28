@@ -15,7 +15,6 @@ import {
 import { fetchNewsForSymbol } from "../news/cafefNews.js";
 import { getCompanyProfileWithFallback } from "../providers/companyProfileFallback.js";
 import { scanBuySignals } from "../signals/trendScanner.js";
-import { rankIndustry } from "../signals/industryRanking.js";
 
 const router = Router();
 const cache = new NodeCache({ stdTTL: 20, checkperiod: 30 });
@@ -229,24 +228,6 @@ router.get(
     // provider for no benefit.
     const data = await cached("trend-signals", 60 * 60, () => scanBuySignals(), { staleOnError: true });
     res.json({ items: data });
-  })
-);
-
-router.get(
-  "/industry-ranking/:symbol",
-  asyncHandler(async (req, res) => {
-    const symbol = String(req.params.symbol).toUpperCase();
-    // ROE barely moves day to day (it's derived from annual financials) and
-    // fetching it for a whole peer group is the slowest part of this route
-    // — a long TTL avoids re-doing that fan-out on every page view.
-    const data = await cached(`industry-ranking:${symbol}`, 6 * 60 * 60, () => rankIndustry(symbol), {
-      staleOnError: true,
-    });
-    if (!data) {
-      res.status(404).json({ error: `Không có dữ liệu phân ngành cho mã ${symbol}` });
-      return;
-    }
-    res.json(data);
   })
 );
 
