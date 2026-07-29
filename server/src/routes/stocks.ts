@@ -13,6 +13,8 @@ import { scanBuySignals } from "../signals/trendScanner.js";
 import { scanMovingAverages } from "../signals/maScanner.js";
 import { scanPbComparison, BANK_SYMBOLS, SECURITIES_SYMBOLS, REAL_ESTATE_SYMBOLS } from "../signals/pbScanner.js";
 import { fetchVndirectLogos } from "../providers/vndirectLogos.js";
+import { fetchDomainFavicons } from "../providers/domainFavicons.js";
+import { COMPANY_DOMAINS } from "../data/companyDomains.js";
 
 const router = Router();
 const cache = new NodeCache({ stdTTL: 20, checkperiod: 30 });
@@ -214,10 +216,37 @@ router.get(
   "/company-logos",
   asyncHandler(async (_req, res) => {
     // Logos change essentially never — a long TTL keeps this to one bulk
-    // VNDirect fetch (~2800 companies) a day, and a transient upstream
-    // failure just serves yesterday's map (staleOnError) rather than
-    // breaking every logo on the site.
-    const data = await cached("company-logos", 24 * 60 * 60, fetchVndirectLogos, { staleOnError: true });
+    // VNDirect fetch (~2800 companies) plus one favicon-verification pass
+    // (~91 curated domains) a day, and a transient upstream failure just
+    // serves yesterday's map (staleOnError) rather than breaking every
+    // logo on the site.
+    const data = await cached(
+      "company-logos",
+      24 * 60 * 60,
+      async () => {
+        const vndirect: Record<string, { logoUrl: string | null }> = await fetchVndirectLogos().catch((err) => {
+          console.error(`[company-logos] VNDirect lỗi: ${err instanceof Error ? err.message : String(err)}`);
+          return {};
+        });
+
+        // Only chase a favicon for symbols VNDirect gave us nothing for —
+        // its bulk logo is preferred when available.
+        const missingDomains = Object.fromEntries(
+          Object.entries(COMPANY_DOMAINS).filter(([symbol]) => !vndirect[symbol]?.logoUrl)
+        );
+        const favicons: Record<string, string> = await fetchDomainFavicons(missingDomains).catch((err) => {
+          console.error(`[company-logos] favicon fallback lỗi: ${err instanceof Error ? err.message : String(err)}`);
+          return {};
+        });
+
+        const merged: Record<string, { logoUrl: string | null }> = { ...vndirect };
+        for (const [symbol, url] of Object.entries(favicons)) {
+          merged[symbol] = { logoUrl: url };
+        }
+        return merged;
+      },
+      { staleOnError: true }
+    );
     res.json(data);
   })
 );
