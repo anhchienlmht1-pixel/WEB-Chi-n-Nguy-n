@@ -16,6 +16,7 @@ import { fetchVndirectLogos, fetchVndirectCompanyProfilesRaw } from "../provider
 import { fetchDomainFavicons, debugFaviconForDomain } from "../providers/domainFavicons.js";
 import { COMPANY_DOMAINS } from "../data/companyDomains.js";
 import { buildDailyDigest } from "../digest/marketDigest.js";
+import { enrichDailyDigest } from "../digest/enrich.js";
 
 const router = Router();
 const cache = new NodeCache({ stdTTL: 20, checkperiod: 30 });
@@ -96,7 +97,8 @@ router.get(
     const today = new Date().toISOString().slice(0, 10);
     const data = await cached(`daily-digest:${today}`, 6 * 60 * 60, async () => {
       const quotes = await provider.getMarketOverview();
-      return buildDailyDigest(quotes, provider.id);
+      const digest = buildDailyDigest(quotes, provider.id);
+      return enrichDailyDigest(digest);
     });
     res.json(data);
   })

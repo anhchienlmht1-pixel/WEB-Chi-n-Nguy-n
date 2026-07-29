@@ -103,13 +103,54 @@ export interface DigestStockRef {
   volume: number;
 }
 
+export interface DigestHeroStat {
+  value: string;
+  label: string;
+}
+
+export interface DigestMarketPulse {
+  advancers: number;
+  decliners: number;
+  unchanged: number;
+  total: number;
+  avgChange: number;
+  median: number;
+}
+
+export interface CompanySnapshot {
+  symbol: string;
+  name: string;
+  exchange: string;
+  sector: string | null;
+  businessModel: string | null;
+  charterCapitalText: string | null;
+  listingDate: string | null;
+  valuation: { pe: number | null; pb: number | null; roe: number | null };
+}
+
+export type TrendStance = "MUA" | "DUNG_NGOAI";
+
+export interface TrendAction {
+  symbol: string;
+  stance: TrendStance;
+  stanceLabel: string;
+  signalSince: string | null;
+  reasoning: string;
+}
+
 export interface DailyDigest {
   date: string;
   provider: string;
   topic: DigestTopic;
   topicLabel: string;
   title: string;
+  hookLines: [string, string];
   paragraphs: string[];
   highlights: DigestHighlight[];
+  heroStat: DigestHeroStat;
+  marketPulse: DigestMarketPulse;
   relatedStocks: DigestStockRef[];
+  primarySymbol: string | null;
+  company: CompanySnapshot | null;
+  action: TrendAction | null;
 }
