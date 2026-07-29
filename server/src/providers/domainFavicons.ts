@@ -99,6 +99,87 @@ async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T)
   return results;
 }
 
+export interface FaviconDebugTrace {
+  domain: string;
+  homepage: { url: string; ok: boolean; status?: number; contentType?: string | null; error?: string };
+  iconTagFound: string | null;
+  candidateUrl: string;
+  candidateVerified: boolean;
+  candidateError?: string;
+  fallbackUrl: string;
+  fallbackVerified: boolean | null; // null = never tried (candidate already worked)
+  fallbackError?: string;
+  finalUrl: string | null;
+}
+
+// Same steps as faviconForDomain, but reports what happened at each one
+// instead of just the final yes/no — for diagnosing a specific symbol's
+// "no logo showing" report without needing live network access here.
+export async function debugFaviconForDomain(domain: string): Promise<FaviconDebugTrace> {
+  const homepageUrl = `https://${domain}/`;
+  const trace: FaviconDebugTrace = {
+    domain,
+    homepage: { url: homepageUrl, ok: false },
+    iconTagFound: null,
+    candidateUrl: "",
+    candidateVerified: false,
+    fallbackUrl: `https://${domain}/favicon.ico`,
+    fallbackVerified: null,
+    finalUrl: null,
+  };
+
+  try {
+    const res = await fetchWithTimeout(homepageUrl);
+    trace.homepage.ok = res.ok;
+    trace.homepage.status = res.status;
+    trace.homepage.contentType = res.headers.get("content-type");
+    if (res.ok && (trace.homepage.contentType ?? "").includes("text/html")) {
+      const html = await res.text();
+      const linkTags = Array.from(html.matchAll(/<link\b[^>]*>/gi)).map((m) => m[0]);
+      const candidates = linkTags
+        .map((tag) => {
+          const relMatch = /rel=["']([^"']+)["']/i.exec(tag);
+          const hrefMatch = /href=["']([^"']+)["']/i.exec(tag);
+          const rel = relMatch?.[1]?.toLowerCase() ?? "";
+          const href = hrefMatch?.[1];
+          if (!href || !/icon/.test(rel)) return null;
+          return { href, priority: rel.includes("apple-touch-icon") ? 0 : rel === "icon" ? 1 : 2 };
+        })
+        .filter((c): c is { href: string; priority: number } => c !== null)
+        .sort((a, b) => a.priority - b.priority);
+      for (const c of candidates) {
+        const resolved = resolveUrl(c.href, homepageUrl);
+        if (resolved) {
+          trace.iconTagFound = resolved;
+          break;
+        }
+      }
+    }
+  } catch (err) {
+    trace.homepage.error = err instanceof Error ? err.message : String(err);
+  }
+
+  trace.candidateUrl = trace.iconTagFound ?? trace.fallbackUrl;
+  try {
+    trace.candidateVerified = await verifyImage(trace.candidateUrl);
+  } catch (err) {
+    trace.candidateError = err instanceof Error ? err.message : String(err);
+  }
+
+  if (trace.candidateVerified) {
+    trace.finalUrl = trace.candidateUrl;
+  } else if (trace.candidateUrl !== trace.fallbackUrl) {
+    try {
+      trace.fallbackVerified = await verifyImage(trace.fallbackUrl);
+      if (trace.fallbackVerified) trace.finalUrl = trace.fallbackUrl;
+    } catch (err) {
+      trace.fallbackError = err instanceof Error ? err.message : String(err);
+    }
+  }
+
+  return trace;
+}
+
 /** symbol -> verified favicon URL, only for symbols where a domain was given and a real image was confirmed. */
 export async function fetchDomainFavicons(symbolDomains: Record<string, string>): Promise<Record<string, string>> {
   const entries = Object.entries(symbolDomains);

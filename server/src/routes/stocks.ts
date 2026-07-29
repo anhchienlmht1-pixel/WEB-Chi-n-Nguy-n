@@ -12,8 +12,8 @@ import { getCompanyProfileWithFallback } from "../providers/companyProfileFallba
 import { scanBuySignals } from "../signals/trendScanner.js";
 import { scanMovingAverages } from "../signals/maScanner.js";
 import { scanPbComparison, BANK_SYMBOLS, SECURITIES_SYMBOLS, REAL_ESTATE_SYMBOLS } from "../signals/pbScanner.js";
-import { fetchVndirectLogos } from "../providers/vndirectLogos.js";
-import { fetchDomainFavicons } from "../providers/domainFavicons.js";
+import { fetchVndirectLogos, fetchVndirectCompanyProfilesRaw } from "../providers/vndirectLogos.js";
+import { fetchDomainFavicons, debugFaviconForDomain } from "../providers/domainFavicons.js";
 import { COMPANY_DOMAINS } from "../data/companyDomains.js";
 
 const router = Router();
@@ -209,6 +209,38 @@ router.get(
       staleOnError: true,
     });
     res.json(data);
+  })
+);
+
+router.get(
+  "/company-logos/debug/:symbol",
+  asyncHandler(async (req, res) => {
+    // Bypasses the 24h cache entirely — a live trace of exactly what
+    // happened for one symbol (VNDirect's raw record, then each step of
+    // the domain-favicon fallback), for diagnosing a "no logo" report
+    // without needing live network access from wherever this is edited.
+    // Not linked from the UI anywhere; safe to leave in.
+    const symbol = String(req.params.symbol).toUpperCase();
+
+    let vndirectRecord: unknown = null;
+    let vndirectError: string | null = null;
+    try {
+      const rows = await fetchVndirectCompanyProfilesRaw();
+      vndirectRecord =
+        rows.find((r) => typeof r?.code === "string" && r.code.trim().toUpperCase() === symbol) ?? null;
+    } catch (err) {
+      vndirectError = err instanceof Error ? err.message : String(err);
+    }
+
+    const domain = COMPANY_DOMAINS[symbol] ?? null;
+    const faviconTrace = domain ? await debugFaviconForDomain(domain) : null;
+
+    res.json({
+      symbol,
+      vndirect: { record: vndirectRecord, error: vndirectError },
+      domain,
+      faviconTrace,
+    });
   })
 );
 

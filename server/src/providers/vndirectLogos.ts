@@ -30,7 +30,7 @@ export interface CompanyLogoEntry {
 
 export type CompanyLogoMap = Record<string, CompanyLogoEntry>;
 
-export async function fetchVndirectLogos(): Promise<CompanyLogoMap> {
+export async function fetchVndirectCompanyProfilesRaw(): Promise<Record<string, unknown>[]> {
   const url = `${VND_COMPANY_PROFILES_URL}?size=10000&page=1`;
   const res = await fetch(url, { headers: HEADERS });
   const rawBody = await res.text();
@@ -51,11 +51,15 @@ export async function fetchVndirectLogos(): Promise<CompanyLogoMap> {
     });
   }
 
-  const rows = Array.isArray((parsed as { data?: unknown })?.data) ? ((parsed as { data: unknown[] }).data) : [];
+  const rows = Array.isArray((parsed as { data?: unknown })?.data) ? (parsed as { data: unknown[] }).data : [];
+  return rows as Record<string, unknown>[];
+}
+
+export async function fetchVndirectLogos(): Promise<CompanyLogoMap> {
+  const rows = await fetchVndirectCompanyProfilesRaw();
 
   const map: CompanyLogoMap = {};
-  for (const row of rows) {
-    const r = row as Record<string, unknown>;
+  for (const r of rows) {
     const code = typeof r?.code === "string" ? r.code.trim().toUpperCase() : "";
     if (!code) continue;
     const logo = typeof r?.logo === "string" ? r.logo.trim() : "";
