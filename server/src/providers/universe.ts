@@ -25,6 +25,7 @@ export const STOCK_UNIVERSE: StockSeed[] = [
   { symbol: "VIB", name: "Ngân hàng TMCP Quốc tế Việt Nam", exchange: "HOSE", currency: "VND", basePrice: 19500 },
   { symbol: "EIB", name: "Ngân hàng TMCP Xuất Nhập khẩu Việt Nam", exchange: "HOSE", currency: "VND", basePrice: 18900 },
   { symbol: "MSB", name: "Ngân hàng TMCP Hàng Hải Việt Nam", exchange: "HOSE", currency: "VND", basePrice: 13200 },
+  { symbol: "LPB", name: "Ngân hàng TMCP Lộc Phát Việt Nam", exchange: "HOSE", currency: "VND", basePrice: 52600 },
 
   // Bất động sản
   { symbol: "VIC", name: "Tập đoàn Vingroup", exchange: "HOSE", currency: "VND", basePrice: 45200 },
