@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { to: "/so-sanh-pb", label: "So sánh P/B", end: false },
   { to: "/ban-tin", label: "Bản tin", end: false },
   { to: "/dong-tien", label: "Dòng tiền", end: false },
+  { to: "/suc-manh-co-phieu", label: "Sức mạnh CP", end: false },
 ];
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>

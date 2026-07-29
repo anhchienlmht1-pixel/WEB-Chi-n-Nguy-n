@@ -18,6 +18,7 @@ import { fetchDomainFavicons, debugFaviconForDomain } from "../providers/domainF
 import { COMPANY_DOMAINS } from "../data/companyDomains.js";
 import { buildDailyDigest } from "../digest/marketDigest.js";
 import { enrichDailyDigest } from "../digest/enrich.js";
+import { fetchStockStrength } from "../providers/stockStrength.js";
 
 const router = Router();
 const cache = new NodeCache({ stdTTL: 20, checkperiod: 30 });
@@ -207,6 +208,17 @@ router.get(
     const data = await cached(`money-flow:${gid ?? "default"}`, 300, () => fetchMoneyFlowTable(gid), {
       staleOnError: true,
     });
+    res.json(data);
+  })
+);
+
+router.get(
+  "/stock-strength",
+  asyncHandler(async (_req, res) => {
+    // Same 5 min TTL reasoning as investment-outlook — the sheet's owner
+    // can edit it and see the change on the site fairly quickly, without
+    // hammering Google Sheets on every page view.
+    const data = await cached("stock-strength", 300, fetchStockStrength, { staleOnError: true });
     res.json(data);
   })
 );

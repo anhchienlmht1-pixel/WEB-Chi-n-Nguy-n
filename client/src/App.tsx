@@ -5,6 +5,7 @@ import StockDetail from './pages/StockDetail'
 import PbCompare from './pages/PbCompare'
 import DailyDigest from './pages/DailyDigest'
 import MoneyFlow from './pages/MoneyFlow'
+import StockStrength from './pages/StockStrength'
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/so-sanh-pb" element={<PbCompare />} />
         <Route path="/ban-tin" element={<DailyDigest />} />
         <Route path="/dong-tien" element={<MoneyFlow />} />
+        <Route path="/suc-manh-co-phieu" element={<StockStrength />} />
         <Route path="*" element={<Dashboard />} />
       </Routes>
     </div>

@@ -125,6 +125,26 @@ export async function fetchInvestmentOutlook(gid?: string): Promise<StockOutlook
   return data;
 }
 
+export interface StockStrengthEntry {
+  symbol: string;
+  score: number;
+}
+
+export interface StockStrengthSector {
+  sector: string;
+  stocks: StockStrengthEntry[];
+}
+
+export interface StockStrengthSheet {
+  asOfDate: string | null;
+  sectors: StockStrengthSector[];
+}
+
+export async function fetchStockStrength(): Promise<StockStrengthSheet> {
+  const { data } = await api.get("/stock-strength");
+  return data;
+}
+
 export interface PbHistoryTable {
   symbols: string[];
   rows: { date: string; values: (number | null)[] }[];
