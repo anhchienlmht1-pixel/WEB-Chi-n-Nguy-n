@@ -9,39 +9,6 @@ export function findProfitItem(report: FinancialReport): FinancialLineItem | nul
   return [...candidates].sort((a, b) => a.levels - b.levels || a.name.length - b.name.length)[0];
 }
 
-// Prefers "doanh thu thuần" (net revenue, the standard top-line figure)
-// over "tổng doanh thu"/"doanh thu bán hàng" variants some report layouts
-// use instead, and excludes financial/other income rows that also contain
-// "doanh thu" but aren't the operating top line.
-export function findRevenueItem(report: FinancialReport): FinancialLineItem | null {
-  const candidates = report.items.filter(
-    (it) => /doanh thu thuần|doanh thu bán hàng|tổng doanh thu/i.test(it.name) && !/tài chính|khác/i.test(it.name)
-  );
-  if (candidates.length === 0) return null;
-  const netRevenue = candidates.filter((it) => /doanh thu thuần/i.test(it.name));
-  const pool = netRevenue.length > 0 ? netRevenue : candidates;
-  return [...pool].sort((a, b) => a.levels - b.levels || a.name.length - b.name.length)[0];
-}
-
-// Requires the "tổng (cộng) tài sản" prefix so this doesn't match subtotal
-// rows like "Tài sản ngắn hạn" / "Tài sản dài hạn", which contain "tài sản"
-// but aren't the balance-sheet total.
-export function findTotalAssetsItem(report: FinancialReport): FinancialLineItem | null {
-  const candidates = report.items.filter((it) => /tổng\s*(cộng\s*)?tài sản/i.test(it.name));
-  if (candidates.length === 0) return null;
-  return [...candidates].sort((a, b) => a.levels - b.levels || a.name.length - b.name.length)[0];
-}
-
-// "Nguồn vốn" (funding side of the balance sheet) — shows owners' equity
-// specifically rather than "tổng cộng nguồn vốn", which is always
-// numerically identical to total assets (assets = liabilities + equity by
-// definition) and so wouldn't be a useful second chart next to it.
-export function findEquityItem(report: FinancialReport): FinancialLineItem | null {
-  const candidates = report.items.filter((it) => /vốn chủ sở hữu/i.test(it.name));
-  if (candidates.length === 0) return null;
-  return [...candidates].sort((a, b) => a.levels - b.levels || a.name.length - b.name.length)[0];
-}
-
 export interface FinancialTreeNode {
   item: FinancialLineItem;
   children: FinancialTreeNode[];

@@ -6,14 +6,13 @@ import type {
 } from "../types/securities";
 import type { SecuritiesDetail } from "../types/securitiesDetail";
 
-// The "Chứng khoán" (Securities) section only has data for these 16
-// listed securities companies — exported once from a hand-maintained
-// Excel model (see scripts/export-securities-data.py /
-// export-securities-detail.py), not a live API.
-export const SECURITIES_SYMBOLS = new Set([
-  "SSI", "VND", "HCM", "VCI", "VIX", "MBS", "FTS", "SHS",
-  "BSI", "DSE", "CTS", "VDS", "ORS", "VCK", "VPX", "TCX",
-]);
+// The "Chứng khoán" (Securities) section only has data for symbols listed
+// here — sourced from a hand-maintained Excel model (see
+// scripts/export-securities-data.py / export-securities-detail.py).
+// Cleared at the user's request (the exported JSON files under
+// client/public/data/securities/ were deleted too) so this can be set up
+// fresh.
+export const SECURITIES_SYMBOLS = new Set<string>([]);
 
 export function isSecuritiesSymbol(symbol: string): boolean {
   return SECURITIES_SYMBOLS.has(symbol.toUpperCase());

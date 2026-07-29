@@ -48,7 +48,7 @@ export default function BankCompare() {
   const [sortKey, setSortKey] = useState<BankMetricKey>("roe4q");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [tab, setTab] = useState<Tab>("compare");
-  const [detailSymbol, setDetailSymbol] = useState<string>(BANK_SYMBOL_LIST[0]);
+  const [detailSymbol, setDetailSymbol] = useState<string>(BANK_SYMBOL_LIST[0] ?? "");
   const [periodType, setPeriodType] = useState<PeriodType>("quarter");
   const [periodIndex, setPeriodIndex] = useState<number | null>(null);
   const [pbYears, setPbYears] = useState<PbLookbackYears>(1);

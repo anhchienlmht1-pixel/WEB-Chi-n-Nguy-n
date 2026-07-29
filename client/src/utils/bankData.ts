@@ -1,16 +1,13 @@
 import type { BankData, BankMeta, BankMetricKey, BankStatement } from "../types/bank";
 import type { BankDetail } from "../types/bankDetail";
 
-// The "Cơ bản" (Fundamentals) section only has data for these 27 banks —
-// exported once from the user's own hand-maintained Excel model (see
-// scripts/export-bank-data.py), not a live API. Hardcoded here (rather than
-// fetched from meta.json) so pages can synchronously decide whether to show
-// the section without waiting on a network round-trip.
-export const BANK_SYMBOLS = new Set([
-  "VCB", "BID", "CTG", "TCB", "VPB", "MBB", "ACB", "LPB", "HDB", "STB",
-  "VIB", "TPB", "EIB", "SHB", "MSB", "OCB", "SSB", "NAB", "BAB", "ABB",
-  "PGB", "BVB", "VBB", "VAB", "NVB", "KLB", "SGB",
-]);
+// The "Cơ bản" (Fundamentals) section only has data for symbols listed
+// here — sourced from the user's own hand-maintained Excel model (see
+// scripts/export-bank-data.py), not a live API. Cleared at the user's
+// request (the exported JSON files under client/public/data/banks/ were
+// deleted too) so this can be set up fresh; the bank-fundamentals UI
+// already hides itself for any symbol not in this set.
+export const BANK_SYMBOLS = new Set<string>([]);
 
 export function isBankSymbol(symbol: string): boolean {
   return BANK_SYMBOLS.has(symbol.toUpperCase());

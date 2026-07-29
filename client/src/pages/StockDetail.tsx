@@ -6,7 +6,6 @@ import TechnicalChartPanel from "../components/TechnicalChartPanel";
 import WatchButton from "../components/WatchButton";
 import SeasonalityHeatmap from "../components/SeasonalityHeatmap";
 import NewsFeed from "../components/NewsFeed";
-import StockDashboard from "../components/StockDashboard";
 import BankFundamentals from "../components/BankFundamentals";
 import { isBankSymbol } from "../utils/bankData";
 import SecuritiesFundamentals from "../components/SecuritiesFundamentals";
@@ -86,12 +85,6 @@ export default function StockDetail() {
               {!isIndexOrFutures && <ForeignFlowPanel quote={quote} />}
             </div>
           </div>
-
-          {!isIndexOrFutures && (
-            <div className="mt-6">
-              <StockDashboard symbol={quote.symbol} />
-            </div>
-          )}
 
           {isBankSymbol(quote.symbol) && (
             <div className="mt-6">

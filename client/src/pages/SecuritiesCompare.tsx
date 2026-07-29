@@ -50,7 +50,7 @@ export default function SecuritiesCompare() {
   const [sortKey, setSortKey] = useState<SecuritiesMetricKey>("roe");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [tab, setTab] = useState<Tab>("compare");
-  const [detailSymbol, setDetailSymbol] = useState<string>(SECURITIES_SYMBOL_LIST[0]);
+  const [detailSymbol, setDetailSymbol] = useState<string>(SECURITIES_SYMBOL_LIST[0] ?? "");
   const [periodType, setPeriodType] = useState<PeriodType>("quarter");
   const [periodIndex, setPeriodIndex] = useState<number | null>(null);
   const [pbYears, setPbYears] = useState<PbLookbackYears>(1);
