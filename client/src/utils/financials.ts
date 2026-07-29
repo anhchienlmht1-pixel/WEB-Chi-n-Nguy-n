@@ -32,6 +32,16 @@ export function findTotalAssetsItem(report: FinancialReport): FinancialLineItem 
   return [...candidates].sort((a, b) => a.levels - b.levels || a.name.length - b.name.length)[0];
 }
 
+// "Nguồn vốn" (funding side of the balance sheet) — shows owners' equity
+// specifically rather than "tổng cộng nguồn vốn", which is always
+// numerically identical to total assets (assets = liabilities + equity by
+// definition) and so wouldn't be a useful second chart next to it.
+export function findEquityItem(report: FinancialReport): FinancialLineItem | null {
+  const candidates = report.items.filter((it) => /vốn chủ sở hữu/i.test(it.name));
+  if (candidates.length === 0) return null;
+  return [...candidates].sort((a, b) => a.levels - b.levels || a.name.length - b.name.length)[0];
+}
+
 export interface FinancialTreeNode {
   item: FinancialLineItem;
   children: FinancialTreeNode[];

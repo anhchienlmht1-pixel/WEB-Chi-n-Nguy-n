@@ -1,10 +1,10 @@
 import { useMemo } from "react";
 import type { FinancialReport } from "../types";
-import { findTotalAssetsItem } from "../utils/financials";
+import { findEquityItem } from "../utils/financials";
 import { sortPeriodIndices } from "../utils/period";
 import BarLineComboChart from "./BarLineComboChart";
 
-export default function AssetsBarLineChart({
+export default function EquityBarLineChart({
   data,
   loading,
   error,
@@ -15,7 +15,7 @@ export default function AssetsBarLineChart({
 }) {
   const chart = useMemo(() => {
     if (!data) return null;
-    const item = findTotalAssetsItem(data);
+    const item = findEquityItem(data);
     if (!item) return null;
     const order = sortPeriodIndices(data.periods, "asc");
     return {
@@ -29,7 +29,7 @@ export default function AssetsBarLineChart({
   if (error || !chart) return null;
   return (
     <BarLineComboChart
-      title="Tổng tài sản"
+      title="Vốn chủ sở hữu"
       periods={chart.periods}
       values={chart.values}
       unit={chart.unit}
