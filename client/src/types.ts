@@ -80,9 +80,11 @@ export type FinancialPeriodType = "year" | "quarter";
 
 export interface MoneyFlowRecord {
   symbol: string;
-  primaryLabel: string | null;
-  primaryValue: string | null;
-  metrics: Record<string, string>;
+  sector: string;
+  score: number;
+  /** 1-based position within its sector, already ranked descending by
+   * score in the sheet itself — highest score first. */
+  rank: number;
 }
 
 export interface NewsItem {

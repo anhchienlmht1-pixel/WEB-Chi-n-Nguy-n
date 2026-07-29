@@ -127,9 +127,6 @@ export default function StockTable({
           {sorted.map((q) => {
             const r = ratios?.[q.symbol];
             const mf = moneyFlow?.[q.symbol];
-            const otherMetrics = mf
-              ? Object.entries(mf.metrics).filter(([label]) => label !== mf.primaryLabel)
-              : [];
             return (
               <tr
                 key={q.symbol}
@@ -179,13 +176,9 @@ export default function StockTable({
                 {hasMoneyFlow && (
                   <td
                     className="px-4 py-3 text-right font-medium text-slate-700 dark:text-slate-300"
-                    title={
-                      otherMetrics.length > 0
-                        ? otherMetrics.map(([label, value]) => `${label}: ${value}`).join("\n")
-                        : undefined
-                    }
+                    title={mf ? `${mf.sector} — hạng ${mf.rank}` : undefined}
                   >
-                    {mf?.primaryValue ?? "—"}
+                    {mf ? mf.score : "—"}
                   </td>
                 )}
                 <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>

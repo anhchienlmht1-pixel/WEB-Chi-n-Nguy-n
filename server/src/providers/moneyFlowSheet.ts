@@ -1,105 +1,133 @@
 import { fetchPublishedCsvTable } from "./googleSheet.js";
 
 // A second "Publish to web" Google Sheet (separate from googleSheet.ts's
-// investment-outlook one — different sheet, different published link),
-// listing one row per symbol with one or more "money flow strength"
-// columns. Column names aren't known ahead of time (this integration was
-// wired up without live network access to the sheet itself — the sandbox
-// this was built in blocks docs.google.com entirely, same limitation the
-// README already documents for other data sources), so parsing below finds
-// the header row and symbol column generically instead of assuming fixed
-// positions, and carries every other column through verbatim under its own
-// sheet-given label rather than guessing which one is "the" score.
+// investment-outlook one). Its actual layout — confirmed from a live error
+// preview after the first (wrong) generic-table parser attempt below found
+// nothing — is NOT a "Mã | metric columns" table. It's several sector
+// groups laid out side by side as (symbol, score) column pairs, each
+// sector already ranked descending by score within its own pair:
+//
+//   THÉP          BĐS           CHỨNG KHOÁN   NGÂN HÀNG
+//   NKG 309       VIC 515       HCM 520       MSB 525
+//   HSG 303       VHM 420       ORS 430       LPB 486
+//   HPG 278       NVL 375       VND 352       STB 467
+//   VGS 186       ASM 343       VCI 295       ACB 450
+//                 DTD 251       SHS 288       HDB 358
+//                 NLG 234       MBS 283       OCB 293
+//
+// Sector names and count of sectors aren't hard-coded — a sector's column
+// pair is detected generically (a non-ticker header cell whose column,
+// one row down, holds a ticker+number), so adding/removing/renaming a
+// sector column in the sheet doesn't require a code change.
 const PUBLISHED_ID =
   "2PACX-1vR1J67anMdtDHEkz7g60hMenqJs3BbC0bRacN9PTPP_KLopSR4XY1uUm34vJ64fxkeSK9kDBBi-yy-J";
 
 // The sheet's edit URL was shared as .../edit?gid=621128686 — a specific
-// tab, not the workbook's default one. Without this, fetchPublishedCsvTable
-// silently reads whichever tab "pub" treats as default, which is very
-// possibly a different (e.g. empty, or a different sheet's) tab — that
-// mismatch is the leading suspect for the money-flow column not showing up
-// live at all despite parsing degrading gracefully.
+// tab, not the workbook's default one.
 const DEFAULT_GID = "621128686";
 
 export interface MoneyFlowRecord {
   symbol: string;
-  /** Best-guess "main" column (header containing "dòng tiền"/"sức mạnh"/
-   * "mfi"/"money flow"), so the Dashboard can show one value per row
-   * without needing to know the sheet's exact column name. */
-  primaryLabel: string | null;
-  primaryValue: string | null;
-  /** Every other column on that row, keyed by its own header text as-is —
-   * nothing is dropped even if primaryLabel guessed wrong. */
-  metrics: Record<string, string>;
+  sector: string;
+  score: number;
+  /** 1-based position within its sector's column, already ranked
+   * descending by score in the sheet itself — highest score first. */
+  rank: number;
 }
 
-function normalize(s: string): string {
-  return s.normalize("NFC").trim().toLowerCase();
+// Real VN tickers are plain ASCII letters/digits, no diacritics or spaces —
+// which is exactly what distinguishes a symbol cell ("NKG") from a sector
+// name cell ("BĐS", "CHỨNG KHOÁN"): Vietnamese sector names always carry a
+// diacritic or a space, so they fail this check and a ticker cell passes.
+const looksLikeTicker = (v: string) => /^[A-Z0-9]{2,10}$/.test(v.trim().toUpperCase());
+
+function parseNumber(v: string): number | null {
+  const n = Number(v.trim().replace(/,/g, ""));
+  return Number.isFinite(n) ? n : null;
 }
 
-const looksLikeTicker = (v: string) => /^[A-Z0-9]{1,10}$/.test(v.trim().toUpperCase());
+interface SectorColumn {
+  headerRow: number;
+  sector: string;
+  symbolCol: number;
+  scoreCol: number;
+}
 
-const PRIMARY_KEYWORDS = ["dòng tiền", "dong tien", "sức mạnh", "suc manh", "mfi", "money flow"];
+// A sector column pair is (headerCell, blank) directly above a (ticker,
+// number) row — found by scanning every cell rather than assuming a fixed
+// header row index, since there's a title/date row above it in the real
+// sheet.
+function findSectorColumns(table: string[][]): SectorColumn[] {
+  const columns: SectorColumn[] = [];
+  for (let r = 0; r < table.length - 1; r++) {
+    const row = table[r];
+    for (let c = 0; c < row.length - 1; c++) {
+      const headerCell = (row[c] || "").trim();
+      if (!headerCell || looksLikeTicker(headerCell)) continue;
 
-function findHeaderRow(table: string[][]): { rowIdx: number; symbolCol: number } | null {
-  for (let r = 0; r < table.length; r++) {
-    for (let c = 0; c < table[r].length; c++) {
-      const cell = normalize(table[r][c] || "");
-      if (cell === "mã" || cell === "ma" || cell === "symbol" || cell === "ticker" || cell === "mã cp") {
-        return { rowIdx: r, symbolCol: c };
+      const nextRow = table[r + 1] || [];
+      const belowSymbol = (nextRow[c] || "").trim();
+      const belowScore = (nextRow[c + 1] || "").trim();
+      if (looksLikeTicker(belowSymbol) && parseNumber(belowScore) !== null) {
+        columns.push({ headerRow: r, sector: headerCell, symbolCol: c, scoreCol: c + 1 });
       }
+    }
+  }
+  return columns;
+}
+
+export function parseMoneyFlowTable(table: string[][]): MoneyFlowRecord[] {
+  const sectorColumns = findSectorColumns(table);
+  const records: MoneyFlowRecord[] = [];
+
+  for (const { headerRow, sector, symbolCol, scoreCol } of sectorColumns) {
+    let rank = 0;
+    for (let r = headerRow + 1; r < table.length; r++) {
+      const row = table[r];
+      const symbolRaw = (row[symbolCol] || "").trim().toUpperCase();
+      if (!symbolRaw) continue; // this sector's column can run shorter than others
+      if (!looksLikeTicker(symbolRaw)) continue;
+      const score = parseNumber(row[scoreCol] || "");
+      if (score === null) continue;
+      rank += 1;
+      records.push({ symbol: symbolRaw, sector, score, rank });
+    }
+  }
+
+  return records;
+}
+
+/** First cell in the table that looks like a DD/MM/YYYY date, if any. */
+function findUpdatedAt(table: string[][]): string | null {
+  for (const row of table) {
+    for (const cell of row) {
+      if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test((cell || "").trim())) return cell.trim();
     }
   }
   return null;
 }
 
-export function parseMoneyFlowTable(table: string[][]): MoneyFlowRecord[] {
-  const header = findHeaderRow(table);
-  if (!header) return [];
-  const { rowIdx, symbolCol } = header;
-  const headerRow = table[rowIdx];
-
-  const columns = headerRow
-    .map((label, col) => ({ col, label: (label || "").trim() }))
-    .filter(({ col, label }) => col !== symbolCol && label !== "");
-
-  const primaryCol =
-    columns.find(({ label }) => PRIMARY_KEYWORDS.some((kw) => normalize(label).includes(kw))) ?? columns[0];
-
-  const records: MoneyFlowRecord[] = [];
-  for (let r = rowIdx + 1; r < table.length; r++) {
-    const row = table[r];
-    const symbolRaw = (row[symbolCol] || "").trim().toUpperCase();
-    if (!symbolRaw || !looksLikeTicker(symbolRaw)) continue;
-
-    const metrics: Record<string, string> = {};
-    for (const { col, label } of columns) {
-      const value = (row[col] || "").trim();
-      if (value) metrics[label] = value;
-    }
-
-    const primaryValue = primaryCol ? (row[primaryCol.col] || "").trim() : "";
-
-    records.push({
-      symbol: symbolRaw,
-      primaryLabel: primaryCol?.label ?? null,
-      primaryValue: primaryValue || null,
-      metrics,
-    });
-  }
-
-  return records;
+export interface MoneyFlowTable {
+  items: MoneyFlowRecord[];
+  sectors: string[];
+  updatedAt: string | null;
 }
 
-export async function fetchMoneyFlowTable(gid?: string): Promise<MoneyFlowRecord[]> {
+export async function fetchMoneyFlowTable(gid?: string): Promise<MoneyFlowTable> {
   const table = await fetchPublishedCsvTable(PUBLISHED_ID, gid ?? DEFAULT_GID);
-  const records = parseMoneyFlowTable(table);
-  if (records.length === 0) {
+  const items = parseMoneyFlowTable(table);
+  if (items.length === 0) {
     const preview = JSON.stringify(table.slice(0, 8).map((r) => r.slice(0, 8))).slice(0, 1200);
     throw Object.assign(
-      new Error(`Không tìm thấy cột "Mã" hoặc không có hàng dữ liệu nào trong trang tính. Dữ liệu đọc được: ${preview}`),
+      new Error(`Không nhận diện được nhóm ngành/mã nào trong trang tính. Dữ liệu đọc được: ${preview}`),
       { status: 502 }
     );
   }
-  return records;
+
+  const sectors: string[] = [];
+  for (const item of items) {
+    if (!sectors.includes(item.sector)) sectors.push(item.sector);
+  }
+
+  return { items, sectors, updatedAt: findUpdatedAt(table) };
 }

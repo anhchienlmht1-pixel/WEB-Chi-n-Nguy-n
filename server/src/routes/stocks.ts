@@ -207,7 +207,7 @@ router.get(
     const data = await cached(`money-flow:${gid ?? "default"}`, 300, () => fetchMoneyFlowTable(gid), {
       staleOnError: true,
     });
-    res.json({ items: data });
+    res.json(data);
   })
 );
 

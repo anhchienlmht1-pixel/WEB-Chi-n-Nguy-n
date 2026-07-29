@@ -54,7 +54,11 @@ export async function fetchDailyDigest(): Promise<DailyDigest> {
 // "Sức mạnh dòng tiền" — reads a separately published Google Sheet
 // (server/src/providers/moneyFlowSheet.ts), one row per symbol, column
 // names as authored in the sheet (not fixed ahead of time).
-export async function fetchMoneyFlow(): Promise<{ items: MoneyFlowRecord[] }> {
+export async function fetchMoneyFlow(): Promise<{
+  items: MoneyFlowRecord[];
+  sectors: string[];
+  updatedAt: string | null;
+}> {
   const { data } = await api.get("/money-flow");
   return data;
 }

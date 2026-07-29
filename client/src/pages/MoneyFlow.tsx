@@ -1,78 +1,26 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { fetchMoneyFlow } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
-
-type SortDir = "asc" | "desc";
 
 export default function MoneyFlow() {
   // Matches the server's own 5 min cache TTL (server/src/routes/stocks.ts's
   // /money-flow) — no point polling faster than the sheet can change.
   const { data, error, loading } = usePolling(fetchMoneyFlow, [], 5 * 60 * 1000);
-  const navigate = useNavigate();
-  const [sortKey, setSortKey] = useState<string>("symbol");
-  const [sortDir, setSortDir] = useState<SortDir>("asc");
-
-  // Column set + order come straight from the sheet's own header row
-  // (server/src/providers/moneyFlowSheet.ts) instead of being hard-coded —
-  // whatever the sheet is actually called, this shows it as-is.
-  const columns = useMemo(() => {
-    const first = data?.items.find((r) => Object.keys(r.metrics).length > 0);
-    return first ? Object.keys(first.metrics) : [];
-  }, [data]);
-
-  const sorted = useMemo(() => {
-    if (!data) return [];
-    const list = [...data.items];
-    list.sort((a, b) => {
-      const av = sortKey === "symbol" ? a.symbol : a.metrics[sortKey] ?? "";
-      const bv = sortKey === "symbol" ? b.symbol : b.metrics[sortKey] ?? "";
-      const an = Number(av.replace(/,/g, ""));
-      const bn = Number(bv.replace(/,/g, ""));
-      const cmp =
-        Number.isFinite(an) && Number.isFinite(bn) && av !== "" && bv !== ""
-          ? an - bn
-          : av.localeCompare(bv, "vi");
-      return sortDir === "asc" ? cmp : -cmp;
-    });
-    return list;
-  }, [data, sortKey, sortDir]);
-
-  function toggleSort(key: string) {
-    if (key === sortKey) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortKey(key);
-      setSortDir("asc");
-    }
-  }
-
-  function SortHeader({ label, keyValue }: { label: string; keyValue: string }) {
-    return (
-      <th className="px-4 py-3 text-right font-medium">
-        <button
-          type="button"
-          onClick={() => toggleSort(keyValue)}
-          className={`inline-flex items-center gap-1 transition-colors ${
-            sortKey === keyValue
-              ? "text-emerald-600 dark:text-emerald-400"
-              : "hover:text-slate-900 dark:hover:text-slate-100"
-          }`}
-        >
-          {label}
-          {sortKey === keyValue && <span>{sortDir === "asc" ? "▲" : "▼"}</span>}
-        </button>
-      </th>
-    );
-  }
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-6">
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Sức mạnh dòng tiền</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Dữ liệu cập nhật từ Google Sheet, một hàng mỗi mã.
-        </p>
+      <div className="mb-6 flex flex-wrap items-baseline justify-between gap-2">
+        <div>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Sức mạnh dòng tiền</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Xếp hạng theo nhóm ngành, điểm cao nhất đứng đầu — dữ liệu từ Google Sheet.
+          </p>
+        </div>
+        {data?.updatedAt && (
+          <span className="rounded-full border border-slate-300 px-2.5 py-1 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+            Cập nhật: {data.updatedAt}
+          </span>
+        )}
       </div>
 
       {loading && !data && <p className="text-slate-500 dark:text-slate-400">Đang tải dữ liệu...</p>}
@@ -89,51 +37,49 @@ export default function MoneyFlow() {
       )}
 
       {data && data.items.length > 0 && (
-        <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
-          <table className="w-full min-w-[480px] border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800">
-                <th className="px-4 py-3 font-medium">
-                  <button
-                    type="button"
-                    onClick={() => toggleSort("symbol")}
-                    className={`inline-flex items-center gap-1 transition-colors ${
-                      sortKey === "symbol"
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : "hover:text-slate-900 dark:hover:text-slate-100"
-                    }`}
-                  >
-                    Mã
-                    {sortKey === "symbol" && <span>{sortDir === "asc" ? "▲" : "▼"}</span>}
-                  </button>
-                </th>
-                {columns.map((c) => (
-                  <SortHeader key={c} label={c} keyValue={c} />
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {sorted.map((r) => (
-                <tr
-                  key={r.symbol}
-                  onClick={() => navigate(`/stock/${r.symbol}`)}
-                  className="cursor-pointer border-b border-slate-100 last:border-0 hover:bg-slate-50 dark:border-slate-900 dark:hover:bg-slate-900/60"
-                >
-                  <td className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">{r.symbol}</td>
-                  {columns.map((c) => (
-                    <td
-                      key={c}
-                      className={`px-4 py-3 text-right tabular-nums text-slate-700 dark:text-slate-300 ${
-                        c === r.primaryLabel ? "font-semibold text-slate-900 dark:text-slate-100" : ""
-                      }`}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {data.sectors.map((sector) => {
+            const items = data.items
+              .filter((r) => r.sector === sector)
+              .sort((a, b) => a.rank - b.rank);
+            const maxScore = Math.max(...items.map((r) => r.score), 1);
+
+            return (
+              <div
+                key={sector}
+                className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"
+              >
+                <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-900 dark:text-slate-100">
+                  {sector}
+                </h2>
+                <div className="space-y-2">
+                  {items.map((r) => (
+                    <Link
+                      key={r.symbol}
+                      to={`/stock/${r.symbol}`}
+                      className="flex items-center gap-2 rounded-md px-1.5 py-1 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
                     >
-                      {r.metrics[c] ?? "—"}
-                    </td>
+                      <span className="w-4 shrink-0 text-right text-xs text-slate-400 dark:text-slate-500">
+                        {r.rank}
+                      </span>
+                      <span className="w-12 shrink-0 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                        {r.symbol}
+                      </span>
+                      <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                        <span
+                          className="block h-full rounded-full bg-emerald-500"
+                          style={{ width: `${(r.score / maxScore) * 100}%` }}
+                        />
+                      </span>
+                      <span className="w-10 shrink-0 text-right text-sm tabular-nums text-slate-600 dark:text-slate-300">
+                        {r.score}
+                      </span>
+                    </Link>
                   ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
