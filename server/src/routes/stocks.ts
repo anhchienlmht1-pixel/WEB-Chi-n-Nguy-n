@@ -12,6 +12,7 @@ import { getCompanyProfileWithFallback } from "../providers/companyProfileFallba
 import { scanBuySignals } from "../signals/trendScanner.js";
 import { scanMovingAverages } from "../signals/maScanner.js";
 import { scanPbComparison, BANK_SYMBOLS, SECURITIES_SYMBOLS, REAL_ESTATE_SYMBOLS } from "../signals/pbScanner.js";
+import { fetchVndirectLogos } from "../providers/vndirectLogos.js";
 
 const router = Router();
 const cache = new NodeCache({ stdTTL: 20, checkperiod: 30 });
@@ -205,6 +206,18 @@ router.get(
     const data = await cached("realestate-pb-history", 60 * 60, () => scanPbComparison(REAL_ESTATE_SYMBOLS), {
       staleOnError: true,
     });
+    res.json(data);
+  })
+);
+
+router.get(
+  "/company-logos",
+  asyncHandler(async (_req, res) => {
+    // Logos change essentially never — a long TTL keeps this to one bulk
+    // VNDirect fetch (~2800 companies) a day, and a transient upstream
+    // failure just serves yesterday's map (staleOnError) rather than
+    // breaking every logo on the site.
+    const data = await cached("company-logos", 24 * 60 * 60, fetchVndirectLogos, { staleOnError: true });
     res.json(data);
   })
 );
