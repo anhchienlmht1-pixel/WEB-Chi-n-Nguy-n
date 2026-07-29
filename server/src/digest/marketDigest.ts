@@ -21,6 +21,7 @@ export type DigestTopic = "spotlight" | "sector" | "liquidity" | "breadth";
 export interface DigestHeroStat {
   value: string;
   label: string;
+  tone: "up" | "down" | "neutral";
 }
 
 export interface DigestMarketPulse {
@@ -234,7 +235,7 @@ function buildSpotlightArticle(spotlight: Quote, all: Quote[], pulseCtx: PulseCt
         contrarian ? "Ngược dòng thị trường." : "Dẫn đầu thị trường.",
       ],
       paragraphs,
-      heroStat: { value: pct(spotlight.changePercent), label: `${spotlight.symbol} hôm nay` },
+      heroStat: { value: pct(spotlight.changePercent), label: `${spotlight.symbol} hôm nay`, tone: tone(spotlight.changePercent) },
       highlights: [
         { label: "Mã tâm điểm", value: spotlight.symbol, tone: tone(spotlight.changePercent) },
         { label: "Biến động", value: pct(spotlight.changePercent), tone: tone(spotlight.changePercent) },
@@ -273,7 +274,7 @@ function buildSectorArticle(top: SectorAgg, pulseCtx: PulseCtx): () => ArticleBo
         : `Dòng tiền ${top.avg >= 0 ? "đổ vào" : "rút khỏi"} ngành ${top.sector}, bình quân ${pct(top.avg)}`,
       hookLines: [`Ngành ${top.sector} ${top.avg >= 0 ? "tăng" : "giảm"} ${pctAbs(top.avg)}.`, contrarian ? "Ngược dòng thị trường." : "Dẫn sóng thị trường."],
       paragraphs,
-      heroStat: { value: pct(top.avg), label: `Ngành ${top.sector}` },
+      heroStat: { value: pct(top.avg), label: `Ngành ${top.sector}`, tone: tone(top.avg) },
       highlights: [
         { label: "Nhóm ngành", value: top.sector, tone: "neutral" },
         { label: "Bình quân ngành", value: pct(top.avg), tone: tone(top.avg) },
@@ -318,7 +319,7 @@ function buildLiquidityArticle(top: Quote, all: Quote[], pulseCtx: PulseCtx): ()
         : `${top.symbol} dẫn đầu thanh khoản, giá trị giao dịch vượt trội toàn thị trường`,
       hookLines: [`${top.symbol} hút ${vndValue(top.price, top.volume)}.`, flat ? "Giá gần như đứng yên." : `Giá ${pct(top.changePercent)}.`],
       paragraphs,
-      heroStat: { value: vndValue(top.price, top.volume), label: `Giá trị GD ${top.symbol}` },
+      heroStat: { value: vndValue(top.price, top.volume), label: `Giá trị GD ${top.symbol}`, tone: tone(top.changePercent) },
       highlights: [
         { label: "Mã thanh khoản cao nhất", value: top.symbol, tone: "neutral" },
         { label: "Giá trị giao dịch", value: vndValue(top.price, top.volume), tone: "neutral" },
@@ -352,7 +353,11 @@ function buildBreadthArticle(pulseCtx: PulseCtx, byMoveDesc: Quote[]): () => Art
       title: `Thị trường ${mood} phiên hôm nay, ${advancers} mã tăng / ${decliners} mã giảm`,
       hookLines: [`${advancers}/${total} mã tăng, ${decliners}/${total} mã giảm.`, `Thị trường ${mood}.`],
       paragraphs,
-      heroStat: { value: `${advancers}/${total}`, label: "Mã tăng giá" },
+      heroStat: {
+        value: `${advancers}/${total}`,
+        label: "Mã tăng giá",
+        tone: advancers > decliners ? "up" : decliners > advancers ? "down" : "neutral",
+      },
       highlights: [
         { label: "Mã tăng giá", value: String(advancers), tone: "up" },
         { label: "Mã giảm giá", value: String(decliners), tone: "down" },

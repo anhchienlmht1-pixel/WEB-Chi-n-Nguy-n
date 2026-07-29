@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import type { DigestMarketPulse } from "../types";
 import { fetchDailyDigest } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { formatPercent, formatPrice, formatVolume } from "../utils/format";
@@ -21,16 +22,48 @@ function formatRatio(v: number | null): string {
   return v.toLocaleString("vi-VN", { maximumFractionDigits: 2 });
 }
 
+// Decorative "at a glance" graphic for the thumbnail — two bars sized off
+// today's advancers/decliners split, plus a trend line/dot in the hero's
+// tone. Illustrative (matches the article's overall mood), not a literal
+// price chart for any one symbol.
+function ThumbnailChart({ pulse, up }: { pulse: DigestMarketPulse; up: boolean }) {
+  const maxCount = Math.max(pulse.advancers, pulse.decliners, 1);
+  const barH = (n: number) => 8 + (n / maxCount) * 42;
+  const lineColor = up ? "#34d399" : "#fb7185";
+  const linePoints = up
+    ? "70,54 92,44 114,34 136,16"
+    : "70,16 92,26 114,38 136,54";
+  const dot = up ? { x: 136, y: 16 } : { x: 136, y: 54 };
+
+  return (
+    <svg viewBox="0 0 150 64" className="h-16 w-full max-w-[170px]" role="presentation" aria-hidden="true">
+      <rect x="16" y={60 - barH(pulse.decliners)} width="16" height={barH(pulse.decliners)} rx="2" fill="#f43f5e" opacity="0.55" />
+      <rect x="40" y={60 - barH(pulse.advancers)} width="16" height={barH(pulse.advancers)} rx="2" fill="#10b981" opacity="0.8" />
+      <polyline points={linePoints} fill="none" stroke={lineColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={dot.x} cy={dot.y} r="4" fill={lineColor} />
+    </svg>
+  );
+}
+
 export default function DailyDigest() {
   // Refetching every few minutes is enough — the server already pins one
   // article per calendar day, so this is only here to pick up a fresh topic
   // right after midnight without a manual page reload.
   const { data, error, loading } = usePolling(fetchDailyDigest, [], 5 * 60 * 1000);
 
+  const dateLabel = data
+    ? new Date(data.date).toLocaleDateString("vi-VN", {
+        weekday: "long",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+    : "";
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Bản tin thị trường</h1>
+        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Bài viết &amp; Phân tích</h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           Mỗi ngày một chủ đề, chọn tự động dựa trên biến động thực tế của thị trường trong phiên.
         </p>
@@ -47,45 +80,56 @@ export default function DailyDigest() {
 
       {data && (
         <article className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          {/* Hero stat block — big number + two-line hook, mirrors a "market
-              pulse" glance before the reader commits to the full article. */}
-          <div className="bg-slate-900 p-5 text-white dark:bg-black">
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-medium">{data.topicLabel}</span>
-              <span className="flex items-center gap-2 text-xs text-slate-400">
-                <span className="text-emerald-400">{data.marketPulse.advancers} tăng</span>
-                <span className="text-red-400">{data.marketPulse.decliners} giảm</span>
-              </span>
+          {/* Thumbnail teaser — dark stat card + title/excerpt/CTA, laid out
+              like a blog listing's featured-post card. */}
+          <div className="flex flex-col sm:flex-row">
+            <div className="flex shrink-0 flex-col justify-between bg-slate-900 p-5 text-white dark:bg-black sm:w-[280px]">
+              <div>
+                <div className="text-3xl font-black leading-none tracking-tight">{data.heroStat.value}</div>
+                <div className="mt-1 text-xs text-slate-400">{data.heroStat.label}</div>
+                <ThumbnailChart pulse={data.marketPulse} up={data.heroStat.tone !== "down"} />
+                <div className="space-y-0.5">
+                  <p className="text-xl font-bold leading-snug">{data.hookLines[0]}</p>
+                  <p
+                    className={`text-xl font-bold leading-snug ${
+                      data.heroStat.tone === "down" ? "text-rose-400" : "text-slate-300"
+                    }`}
+                  >
+                    {data.hookLines[1]}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 flex items-center gap-2">
+                <img src="/logo-bull.png" alt="" className="h-7 w-7 shrink-0 rounded-full bg-white/10 object-contain p-0.5" />
+                <span className="text-xs font-semibold tracking-wide text-slate-200">CHIẾN NGUYỄN INVEST</span>
+              </div>
             </div>
-            <div className="text-4xl font-black leading-none tracking-tight">{data.heroStat.value}</div>
-            <div className="mt-1 text-xs text-slate-400">{data.heroStat.label}</div>
-            <div className="mt-4 space-y-0.5">
-              <p className="text-lg font-bold leading-snug">{data.hookLines[0]}</p>
-              <p className="text-lg font-bold leading-snug text-slate-300">{data.hookLines[1]}</p>
+
+            <div className="flex flex-1 flex-col justify-center gap-2 p-5">
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                    TOPIC_BADGE_CLASS[data.topic] ?? TOPIC_BADGE_CLASS.breadth
+                  }`}
+                >
+                  {data.topicLabel}
+                </span>
+                <span className="text-xs text-slate-400 dark:text-slate-500">{dateLabel}</span>
+              </div>
+              <h2 className="text-lg font-bold leading-snug text-slate-900 dark:text-slate-100">{data.title}</h2>
+              <p className="line-clamp-3 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                {data.paragraphs[0]}
+              </p>
+              <a
+                href="#noi-dung"
+                className="mt-1 inline-flex w-fit items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-700"
+              >
+                Đọc tiếp →
+              </a>
             </div>
           </div>
 
-          <div className="p-5">
-            <div className="mb-3 flex flex-wrap items-center gap-2">
-              <span
-                className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                  TOPIC_BADGE_CLASS[data.topic] ?? TOPIC_BADGE_CLASS.breadth
-                }`}
-              >
-                {data.topicLabel}
-              </span>
-              <span className="text-xs text-slate-400 dark:text-slate-500">
-                {new Date(data.date).toLocaleDateString("vi-VN", {
-                  weekday: "long",
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                })}
-              </span>
-            </div>
-
-            <h2 className="mb-4 text-lg font-bold leading-snug text-slate-900 dark:text-slate-100">{data.title}</h2>
-
+          <div id="noi-dung" className="scroll-mt-20 border-t border-slate-200 p-5 dark:border-slate-800">
             {data.highlights.length > 0 && (
               <div className="mb-4 grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-3 dark:bg-slate-800/50 sm:grid-cols-4">
                 {data.highlights.map((h) => (

@@ -106,6 +106,7 @@ export interface DigestStockRef {
 export interface DigestHeroStat {
   value: string;
   label: string;
+  tone: "up" | "down" | "neutral";
 }
 
 export interface DigestMarketPulse {
