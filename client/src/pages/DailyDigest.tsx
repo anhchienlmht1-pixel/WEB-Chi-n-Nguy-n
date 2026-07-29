@@ -1,3 +1,4 @@
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { DigestMarketPulse } from "../types";
 import { fetchDailyDigest } from "../api/client";
@@ -50,6 +51,15 @@ export default function DailyDigest() {
   // article per calendar day, so this is only here to pick up a fresh topic
   // right after midnight without a manual page reload.
   const { data, error, loading } = usePolling(fetchDailyDigest, [], 5 * 60 * 1000);
+  // Thumbnail + title show first — the rest of the article only renders
+  // once the reader clicks through, like a blog listing's teaser card.
+  const [expanded, setExpanded] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  function openArticle() {
+    setExpanded(true);
+    requestAnimationFrame(() => contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }
 
   const dateLabel = data
     ? new Date(data.date).toLocaleDateString("vi-VN", {
@@ -120,16 +130,20 @@ export default function DailyDigest() {
               <p className="line-clamp-3 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
                 {data.paragraphs[0]}
               </p>
-              <a
-                href="#noi-dung"
-                className="mt-1 inline-flex w-fit items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-700"
-              >
-                Đọc tiếp →
-              </a>
+              {!expanded && (
+                <button
+                  type="button"
+                  onClick={openArticle}
+                  className="mt-1 inline-flex w-fit items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-700"
+                >
+                  Đọc tiếp →
+                </button>
+              )}
             </div>
           </div>
 
-          <div id="noi-dung" className="scroll-mt-20 border-t border-slate-200 p-5 dark:border-slate-800">
+          {expanded && (
+          <div ref={contentRef} className="scroll-mt-20 border-t border-slate-200 p-5 dark:border-slate-800">
             {data.highlights.length > 0 && (
               <div className="mb-4 grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-3 dark:bg-slate-800/50 sm:grid-cols-4">
                 {data.highlights.map((h) => (
@@ -249,6 +263,7 @@ export default function DailyDigest() {
               tắc trend-following cố định, không phải khuyến nghị đầu tư.
             </p>
           </div>
+          )}
         </article>
       )}
     </div>
