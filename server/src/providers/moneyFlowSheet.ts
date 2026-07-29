@@ -13,6 +13,14 @@ import { fetchPublishedCsvTable } from "./googleSheet.js";
 const PUBLISHED_ID =
   "2PACX-1vR1J67anMdtDHEkz7g60hMenqJs3BbC0bRacN9PTPP_KLopSR4XY1uUm34vJ64fxkeSK9kDBBi-yy-J";
 
+// The sheet's edit URL was shared as .../edit?gid=621128686 — a specific
+// tab, not the workbook's default one. Without this, fetchPublishedCsvTable
+// silently reads whichever tab "pub" treats as default, which is very
+// possibly a different (e.g. empty, or a different sheet's) tab — that
+// mismatch is the leading suspect for the money-flow column not showing up
+// live at all despite parsing degrading gracefully.
+const DEFAULT_GID = "621128686";
+
 export interface MoneyFlowRecord {
   symbol: string;
   /** Best-guess "main" column (header containing "dòng tiền"/"sức mạnh"/
@@ -84,7 +92,7 @@ export function parseMoneyFlowTable(table: string[][]): MoneyFlowRecord[] {
 }
 
 export async function fetchMoneyFlowTable(gid?: string): Promise<MoneyFlowRecord[]> {
-  const table = await fetchPublishedCsvTable(PUBLISHED_ID, gid);
+  const table = await fetchPublishedCsvTable(PUBLISHED_ID, gid ?? DEFAULT_GID);
   const records = parseMoneyFlowTable(table);
   if (records.length === 0) {
     const preview = JSON.stringify(table.slice(0, 8).map((r) => r.slice(0, 8))).slice(0, 1200);

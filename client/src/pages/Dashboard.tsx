@@ -16,7 +16,7 @@ export default function Dashboard() {
   // "Sức mạnh dòng tiền" sheet barely changes intraday — 5 min matches the
   // server's own cache TTL (server/src/routes/stocks.ts's /money-flow), no
   // point polling faster than the data can actually change.
-  const { data: moneyFlowData } = usePolling(fetchMoneyFlow, [], 5 * 60 * 1000);
+  const { data: moneyFlowData, error: moneyFlowError } = usePolling(fetchMoneyFlow, [], 5 * 60 * 1000);
   const moneyFlow = useMemo(() => {
     if (!moneyFlowData) return undefined;
     return Object.fromEntries(moneyFlowData.items.map((r) => [r.symbol, r]));
@@ -75,6 +75,14 @@ export default function Dashboard() {
       )}
       {data && data.quotes.length === 0 && (
         <p className="text-slate-500 dark:text-slate-400">Không có mã nào để hiển thị.</p>
+      )}
+      {/* Surfaced instead of silently hidden — a failed money-flow fetch
+          used to just make the "Dòng tiền" column vanish with no clue why. */}
+      {moneyFlowError && !moneyFlowData && (
+        <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
+          <span className="font-medium">Không tải được cột "Sức mạnh dòng tiền": </span>
+          {moneyFlowError}
+        </div>
       )}
       {data && data.quotes.length > 0 && <StockTable quotes={data.quotes} moneyFlow={moneyFlow} />}
     </div>
