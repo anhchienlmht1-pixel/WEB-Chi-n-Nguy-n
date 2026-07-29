@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard'
 import StockDetail from './pages/StockDetail'
 import PbCompare from './pages/PbCompare'
 import DailyDigest from './pages/DailyDigest'
+import MoneyFlow from './pages/MoneyFlow'
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/stock/:symbol" element={<StockDetail />} />
         <Route path="/so-sanh-pb" element={<PbCompare />} />
         <Route path="/ban-tin" element={<DailyDigest />} />
+        <Route path="/dong-tien" element={<MoneyFlow />} />
         <Route path="*" element={<Dashboard />} />
       </Routes>
     </div>
