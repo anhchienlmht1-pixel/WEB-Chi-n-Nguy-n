@@ -50,7 +50,7 @@ export default function StockDashboard({ symbol }: { symbol: string }) {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <RevenueBarLineChart symbol={symbol} data={kqkd ?? null} loading={kqkdLoading} error={kqkdError} />
-        <ProfitBarLineChart symbol={symbol} data={kqkd ?? null} loading={kqkdLoading} error={kqkdError} />
+        <ProfitBarLineChart data={kqkd ?? null} loading={kqkdLoading} error={kqkdError} />
         <AssetsBarLineChart symbol={symbol} periodType={periodType} />
       </div>
     </div>

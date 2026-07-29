@@ -4,13 +4,15 @@ import { findProfitItem } from "../utils/financials";
 import { sortPeriodIndices } from "../utils/period";
 import BarLineComboChart from "./BarLineComboChart";
 
+// Some symbols (VIC among them) have no row KBS's KQKD report matches as
+// "lợi nhuận sau thuế" at all — rather than taking up a grid slot with a
+// permanent "no data" placeholder, this just renders nothing for those,
+// so the grid reflows around it instead of showing an empty box.
 export default function ProfitBarLineChart({
-  symbol,
   data,
   loading,
   error,
 }: {
-  symbol: string;
   data: FinancialReport | null;
   loading: boolean;
   error: string | null;
@@ -28,13 +30,7 @@ export default function ProfitBarLineChart({
   }, [data]);
 
   if (loading) return <div className="h-[260px] animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800" />;
-  if (error || !chart) {
-    return (
-      <div className="flex h-[260px] items-center justify-center rounded-lg border border-slate-200 text-sm text-slate-400 dark:border-slate-800 dark:text-slate-500">
-        Chưa có đủ dữ liệu lợi nhuận cho {symbol}.
-      </div>
-    );
-  }
+  if (error || !chart) return null;
   return (
     <BarLineComboChart
       title="Lợi nhuận sau thuế"
