@@ -7,6 +7,7 @@ import { KbsPeriodType, KbsReportType } from "../providers/kbsFinancials.js";
 import { fetchFinancialReport } from "../providers/financials.js";
 import { getQuoteWithFallback, getHistoryWithFallback } from "../providers/fallback.js";
 import { fetchInvestmentOutlook } from "../providers/googleSheet.js";
+import { fetchMoneyFlowTable } from "../providers/moneyFlowSheet.js";
 import { fetchNewsForSymbol } from "../news/cafefNews.js";
 import { getCompanyProfileWithFallback } from "../providers/companyProfileFallback.js";
 import { scanBuySignals } from "../signals/trendScanner.js";
@@ -193,6 +194,20 @@ router.get(
       staleOnError: true,
     });
     res.json(data);
+  })
+);
+
+router.get(
+  "/money-flow",
+  asyncHandler(async (req, res) => {
+    const gid = req.query.gid as string | undefined;
+    // Same 5 min TTL rationale as /investment-outlook — long enough to not
+    // hammer Google Sheets on every page view, short enough that an edit to
+    // the sheet shows up without a deploy.
+    const data = await cached(`money-flow:${gid ?? "default"}`, 300, () => fetchMoneyFlowTable(gid), {
+      staleOnError: true,
+    });
+    res.json({ items: data });
   })
 );
 

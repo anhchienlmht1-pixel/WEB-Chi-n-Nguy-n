@@ -6,6 +6,7 @@ import type {
   FinancialReportType,
   HistoryPoint,
   HistoryRange,
+  MoneyFlowRecord,
   NewsItem,
   Quote,
   SearchResult,
@@ -47,6 +48,14 @@ export async function fetchMarketOverview(): Promise<{ provider: string; quotes:
 // overall breadth) from the day's quotes. See server/src/digest/marketDigest.ts.
 export async function fetchDailyDigest(): Promise<DailyDigest> {
   const { data } = await api.get("/market/daily-digest");
+  return data;
+}
+
+// "Sức mạnh dòng tiền" — reads a separately published Google Sheet
+// (server/src/providers/moneyFlowSheet.ts), one row per symbol, column
+// names as authored in the sheet (not fixed ahead of time).
+export async function fetchMoneyFlow(): Promise<{ items: MoneyFlowRecord[] }> {
+  const { data } = await api.get("/money-flow");
   return data;
 }
 

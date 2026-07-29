@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { Quote } from "../types";
+import type { MoneyFlowRecord, Quote } from "../types";
 import { formatChange, formatPercent, formatPrice, formatVolume, trendClass } from "../utils/format";
 import type { KeyRatios } from "../utils/ratios";
 import WatchButton from "./WatchButton";
@@ -21,11 +21,25 @@ function formatRatio(v: number | null): string {
 // worth the request fan-out), so those columns just don't render there.
 // Watchlist already fetches ratios per symbol anyway, so it gets a genuine
 // sortable P/E · ROE · ROA valuation comparison for free.
-export default function StockTable({ quotes, ratios }: { quotes: Quote[]; ratios?: Record<string, KeyRatios> }) {
+//
+// `moneyFlow` is likewise optional and keyed by symbol — one column showing
+// whichever column the sheet's own header called "sức mạnh dòng tiền" (see
+// server/src/providers/moneyFlowSheet.ts), title-tooltip on hover for the
+// rest of that row's columns from the sheet.
+export default function StockTable({
+  quotes,
+  ratios,
+  moneyFlow,
+}: {
+  quotes: Quote[];
+  ratios?: Record<string, KeyRatios>;
+  moneyFlow?: Record<string, MoneyFlowRecord>;
+}) {
   const navigate = useNavigate();
   const [sortKey, setSortKey] = useState<SortKey>("symbol");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const hasRatios = Boolean(ratios);
+  const hasMoneyFlow = Boolean(moneyFlow);
 
   function toggleSort(key: SortKey) {
     if (key === sortKey) {
@@ -105,12 +119,17 @@ export default function StockTable({ quotes, ratios }: { quotes: Quote[]; ratios
             {hasRatios && <SortHeader label="P/B" sortKeyValue="pb" />}
             {hasRatios && <SortHeader label="ROE" sortKeyValue="roe" />}
             {hasRatios && <SortHeader label="ROA" sortKeyValue="roa" />}
+            {hasMoneyFlow && <th className="px-4 py-3 text-right font-medium">Dòng tiền</th>}
             <th className="px-4 py-3"></th>
           </tr>
         </thead>
         <tbody>
           {sorted.map((q) => {
             const r = ratios?.[q.symbol];
+            const mf = moneyFlow?.[q.symbol];
+            const otherMetrics = mf
+              ? Object.entries(mf.metrics).filter(([label]) => label !== mf.primaryLabel)
+              : [];
             return (
               <tr
                 key={q.symbol}
@@ -155,6 +174,18 @@ export default function StockTable({ quotes, ratios }: { quotes: Quote[]; ratios
                   <td className="px-4 py-3 text-right tabular-nums text-slate-700 dark:text-slate-300">
                     {formatRatio(ratioValue(r, "roa"))}
                     {r?.roa && <span className="ml-0.5 text-[10px] text-slate-400">%</span>}
+                  </td>
+                )}
+                {hasMoneyFlow && (
+                  <td
+                    className="px-4 py-3 text-right font-medium text-slate-700 dark:text-slate-300"
+                    title={
+                      otherMetrics.length > 0
+                        ? otherMetrics.map(([label, value]) => `${label}: ${value}`).join("\n")
+                        : undefined
+                    }
+                  >
+                    {mf?.primaryValue ?? "—"}
                   </td>
                 )}
                 <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>

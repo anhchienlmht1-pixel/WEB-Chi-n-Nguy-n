@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { fetchMarketOverview } from "../api/client";
+import { useMemo, useState } from "react";
+import { fetchMarketOverview, fetchMoneyFlow } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { useWatchlist } from "../hooks/useWatchlist";
 import StockTable from "../components/StockTable";
@@ -13,6 +13,14 @@ const DEFAULT_SYMBOL = "VNINDEX";
 
 export default function Dashboard() {
   const { data, error, loading } = usePolling(fetchMarketOverview, [], 30000);
+  // "Sức mạnh dòng tiền" sheet barely changes intraday — 5 min matches the
+  // server's own cache TTL (server/src/routes/stocks.ts's /money-flow), no
+  // point polling faster than the data can actually change.
+  const { data: moneyFlowData } = usePolling(fetchMoneyFlow, [], 5 * 60 * 1000);
+  const moneyFlow = useMemo(() => {
+    if (!moneyFlowData) return undefined;
+    return Object.fromEntries(moneyFlowData.items.map((r) => [r.symbol, r]));
+  }, [moneyFlowData]);
   const { symbols: watchlist } = useWatchlist();
   const [chartSymbol, setChartSymbol] = useState(watchlist[0] ?? DEFAULT_SYMBOL);
 
@@ -68,7 +76,7 @@ export default function Dashboard() {
       {data && data.quotes.length === 0 && (
         <p className="text-slate-500 dark:text-slate-400">Không có mã nào để hiển thị.</p>
       )}
-      {data && data.quotes.length > 0 && <StockTable quotes={data.quotes} />}
+      {data && data.quotes.length > 0 && <StockTable quotes={data.quotes} moneyFlow={moneyFlow} />}
     </div>
   );
 }

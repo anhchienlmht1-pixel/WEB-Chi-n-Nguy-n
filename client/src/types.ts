@@ -78,6 +78,13 @@ export interface FinancialReport {
 export type FinancialReportType = "KQKD" | "CDKT" | "LCTT" | "CSTC";
 export type FinancialPeriodType = "year" | "quarter";
 
+export interface MoneyFlowRecord {
+  symbol: string;
+  primaryLabel: string | null;
+  primaryValue: string | null;
+  metrics: Record<string, string>;
+}
+
 export interface NewsItem {
   title: string;
   link: string;

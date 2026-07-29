@@ -177,13 +177,18 @@ export function parseCsv(text: string): string[][] {
 // Failing fast here (well under that 30s ceiling) means both actually work.
 const FETCH_TIMEOUT_MS = 10_000;
 
-async function fetchPublishedCsvTable(gid?: string): Promise<string[][]> {
+// Generalized so any "Publish to web" sheet can reuse the same fetch +
+// timeout + CSV/HTML-fallback error handling — `publishedId` is the
+// `/d/e/{PUBLISHED_ID}/` segment of that sheet's own published link, which
+// is distinct per sheet (see moneyFlowSheet.ts for a second sheet reusing
+// this same helper with its own ID).
+export async function fetchPublishedCsvTable(publishedId: string, gid?: string): Promise<string[][]> {
   const params = new URLSearchParams({ output: "csv" });
   if (gid) {
     params.set("gid", gid);
     params.set("single", "true");
   }
-  const url = `https://docs.google.com/spreadsheets/d/e/${PUBLISHED_ID}/pub?${params.toString()}`;
+  const url = `https://docs.google.com/spreadsheets/d/e/${publishedId}/pub?${params.toString()}`;
 
   let res: Response;
   try {
@@ -230,7 +235,7 @@ async function fetchPublishedCsvTable(gid?: string): Promise<string[][]> {
 }
 
 export async function fetchInvestmentOutlook(gid?: string): Promise<StockOutlookRecord> {
-  const table = await fetchPublishedCsvTable(gid);
+  const table = await fetchPublishedCsvTable(PUBLISHED_ID, gid);
   const record = parseStockOutlook(table);
   if (!record.symbol) {
     // Surface a preview of what was actually read back in the error text —
