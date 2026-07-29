@@ -15,6 +15,7 @@ import { scanPbComparison, BANK_SYMBOLS, SECURITIES_SYMBOLS, REAL_ESTATE_SYMBOLS
 import { fetchVndirectLogos, fetchVndirectCompanyProfilesRaw } from "../providers/vndirectLogos.js";
 import { fetchDomainFavicons, debugFaviconForDomain } from "../providers/domainFavicons.js";
 import { COMPANY_DOMAINS } from "../data/companyDomains.js";
+import { buildDailyDigest } from "../digest/marketDigest.js";
 
 const router = Router();
 const cache = new NodeCache({ stdTTL: 20, checkperiod: 30 });
@@ -82,6 +83,22 @@ router.get(
     const provider = getProvider();
     const data = await cached("overview", 30, () => provider.getMarketOverview());
     res.json({ provider: provider.id, quotes: data });
+  })
+);
+
+router.get(
+  "/market/daily-digest",
+  asyncHandler(async (_req, res) => {
+    const provider = getProvider();
+    // Cache key includes today's date, so the same article is served all day
+    // (one topic per day, as intended) and a fresh one is picked right after
+    // midnight without needing a separate cron/scheduler.
+    const today = new Date().toISOString().slice(0, 10);
+    const data = await cached(`daily-digest:${today}`, 6 * 60 * 60, async () => {
+      const quotes = await provider.getMarketOverview();
+      return buildDailyDigest(quotes, provider.id);
+    });
+    res.json(data);
   })
 );
 

@@ -3,6 +3,7 @@ import Header from './components/Header'
 import Dashboard from './pages/Dashboard'
 import StockDetail from './pages/StockDetail'
 import PbCompare from './pages/PbCompare'
+import DailyDigest from './pages/DailyDigest'
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/stock/:symbol" element={<StockDetail />} />
         <Route path="/so-sanh-pb" element={<PbCompare />} />
+        <Route path="/ban-tin" element={<DailyDigest />} />
         <Route path="*" element={<Dashboard />} />
       </Routes>
     </div>

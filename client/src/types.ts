@@ -85,3 +85,31 @@ export interface NewsItem {
   description?: string;
   source: string;
 }
+
+export type DigestTopic = "spotlight" | "sector" | "liquidity" | "breadth";
+
+export interface DigestHighlight {
+  label: string;
+  value: string;
+  tone: "up" | "down" | "neutral";
+}
+
+export interface DigestStockRef {
+  symbol: string;
+  name: string;
+  exchange: string;
+  price: number;
+  changePercent: number;
+  volume: number;
+}
+
+export interface DailyDigest {
+  date: string;
+  provider: string;
+  topic: DigestTopic;
+  topicLabel: string;
+  title: string;
+  paragraphs: string[];
+  highlights: DigestHighlight[];
+  relatedStocks: DigestStockRef[];
+}

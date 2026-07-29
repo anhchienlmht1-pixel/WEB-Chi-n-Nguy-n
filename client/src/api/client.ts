@@ -1,5 +1,6 @@
 import axios from "axios";
 import type {
+  DailyDigest,
   FinancialPeriodType,
   FinancialReport,
   FinancialReportType,
@@ -38,6 +39,14 @@ api.interceptors.response.use(undefined, (error) => {
 
 export async function fetchMarketOverview(): Promise<{ provider: string; quotes: Quote[] }> {
   const { data } = await api.get("/market/overview");
+  return data;
+}
+
+// One auto-generated market note per day — server picks the single most
+// notable topic (spotlight mover / leading sector / liquidity spike /
+// overall breadth) from the day's quotes. See server/src/digest/marketDigest.ts.
+export async function fetchDailyDigest(): Promise<DailyDigest> {
+  const { data } = await api.get("/market/daily-digest");
   return data;
 }
 
