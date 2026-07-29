@@ -7,9 +7,7 @@ const NAV_ITEMS = [
   { to: "/", label: "Thị trường", end: true },
   { to: "/watchlist", label: "Theo dõi", end: false },
   { to: "/so-sanh", label: "So sánh", end: false },
-  { to: "/so-sanh-ngan-hang", label: "So sánh ngân hàng", end: false },
-  { to: "/so-sanh-chung-khoan", label: "So sánh chứng khoán", end: false },
-  { to: "/so-sanh-bat-dong-san", label: "So sánh bất động sản", end: false },
+  { to: "/co-ban-doanh-nghiep", label: "Cơ bản doanh nghiệp", end: false },
   { to: "/loc-ma", label: "Lọc MA", end: false },
   { to: "/trien-vong-dau-tu", label: "Triển vọng đầu tư", end: false },
 ];

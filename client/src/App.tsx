@@ -4,9 +4,7 @@ import Dashboard from './pages/Dashboard'
 import StockDetail from './pages/StockDetail'
 import Watchlist from './pages/Watchlist'
 import PerformanceCompare from './pages/PerformanceCompare'
-import BankCompare from './pages/BankCompare'
-import SecuritiesCompare from './pages/SecuritiesCompare'
-import RealEstateCompare from './pages/RealEstateCompare'
+import CompanyFundamentalsCompare from './pages/CompanyFundamentalsCompare'
 import InvestmentOutlook from './pages/InvestmentOutlook'
 import MaFilter from './pages/MaFilter'
 
@@ -19,9 +17,7 @@ function App() {
         <Route path="/stock/:symbol" element={<StockDetail />} />
         <Route path="/watchlist" element={<Watchlist />} />
         <Route path="/so-sanh" element={<PerformanceCompare />} />
-        <Route path="/so-sanh-ngan-hang" element={<BankCompare />} />
-        <Route path="/so-sanh-chung-khoan" element={<SecuritiesCompare />} />
-        <Route path="/so-sanh-bat-dong-san" element={<RealEstateCompare />} />
+        <Route path="/co-ban-doanh-nghiep" element={<CompanyFundamentalsCompare />} />
         <Route path="/loc-ma" element={<MaFilter />} />
         <Route path="/trien-vong-dau-tu" element={<InvestmentOutlook />} />
         <Route path="*" element={<Dashboard />} />
