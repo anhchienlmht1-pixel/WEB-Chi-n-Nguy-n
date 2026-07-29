@@ -1,10 +1,10 @@
 import { useMemo } from "react";
 import type { FinancialReport } from "../types";
-import { findProfitItem } from "../utils/financials";
+import { findRevenueItem } from "../utils/financials";
 import { sortPeriodIndices } from "../utils/period";
 import BarLineComboChart from "./BarLineComboChart";
 
-export default function ProfitBarLineChart({
+export default function RevenueBarLineChart({
   symbol,
   data,
   loading,
@@ -17,7 +17,7 @@ export default function ProfitBarLineChart({
 }) {
   const chart = useMemo(() => {
     if (!data) return null;
-    const item = findProfitItem(data);
+    const item = findRevenueItem(data);
     if (!item) return null;
     const order = sortPeriodIndices(data.periods, "asc");
     return {
@@ -31,13 +31,13 @@ export default function ProfitBarLineChart({
   if (error || !chart) {
     return (
       <div className="flex h-[260px] items-center justify-center rounded-lg border border-slate-200 text-sm text-slate-400 dark:border-slate-800 dark:text-slate-500">
-        Chưa có đủ dữ liệu lợi nhuận cho {symbol}.
+        Chưa có đủ dữ liệu doanh thu cho {symbol}.
       </div>
     );
   }
   return (
     <BarLineComboChart
-      title="Lợi nhuận sau thuế"
+      title="Doanh thu thuần"
       periods={chart.periods}
       values={chart.values}
       unit={chart.unit}
