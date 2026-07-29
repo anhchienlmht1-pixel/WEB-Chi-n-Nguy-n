@@ -49,7 +49,7 @@ body {
 
 body {
   margin: 0;
-  font-family: "Montserrat", system-ui, "Segoe UI", Roboto, sans-serif;
+  font-family: "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   touch-action: manipulation;
