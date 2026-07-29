@@ -1,4 +1,5 @@
 import type { FinancialLineItem, FinancialReport } from "../types";
+import { sortPeriodIndices } from "./period";
 
 export interface RatioValue {
   value: number;
@@ -14,8 +15,11 @@ export interface KeyRatios {
 
 export const PE_MATCH = (n: string) => /p\s*\/\s*e/.test(n);
 export const PB_MATCH = (n: string) => /p\s*\/\s*b/.test(n);
-export const ROE_MATCH = (n: string) => n.includes("roe");
-export const ROA_MATCH = (n: string) => n.includes("roa");
+// Word-boundary, not substring — KBS's CSTC report can carry both "ROE" and
+// a distinct "ROEA" (average) row, and a bare .includes("roe") would match
+// either one depending on which happens to come first in the response.
+export const ROE_MATCH = (n: string) => /\broe\b/.test(n);
+export const ROA_MATCH = (n: string) => /\broa\b/.test(n);
 
 // KBS doesn't document exact CSTC row IDs, so P/E and ROE are found by name
 // match (same approach used elsewhere for KBS reports) — "P/E" and "ROE" are
@@ -27,12 +31,17 @@ export function findRatioItem(report: FinancialReport, test: (name: string) => b
   );
 }
 
+// KBS's raw period array isn't guaranteed to be oldest-first (see period.ts
+// — a live report already caught this exact assumption being wrong for a
+// chart's timeline), so "latest" has to be resolved by actually parsing the
+// period labels rather than trusting periods[periods.length - 1].
 function findLatest(report: FinancialReport, test: (name: string) => boolean): RatioValue | null {
-  const lastIdx = report.periods.length - 1;
-  if (lastIdx < 0) return null;
+  const order = sortPeriodIndices(report.periods, "asc");
+  const latestIdx = order[order.length - 1];
+  if (latestIdx === undefined) return null;
   const item = findRatioItem(report, test);
   if (!item) return null;
-  const v = item.values[lastIdx];
+  const v = item.values[latestIdx];
   if (v == null || !Number.isFinite(v)) return null;
   return { value: v, unit: item.unit ?? "" };
 }
