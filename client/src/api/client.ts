@@ -103,26 +103,6 @@ export async function fetchInvestmentOutlook(gid?: string): Promise<StockOutlook
   return data;
 }
 
-export interface PbHistoryTable {
-  symbols: string[];
-  rows: { date: string; values: (number | null)[] }[];
-}
-
-export async function fetchBankPbHistory(): Promise<PbHistoryTable> {
-  const { data } = await api.get("/bank-pb-history");
-  return data;
-}
-
-export async function fetchSecuritiesPbHistory(): Promise<PbHistoryTable> {
-  const { data } = await api.get("/securities-pb-history");
-  return data;
-}
-
-export async function fetchRealEstatePbHistory(): Promise<PbHistoryTable> {
-  const { data } = await api.get("/realestate-pb-history");
-  return data;
-}
-
 export interface CompanyOfficer {
   fromDate: string | null;
   position: string | null;
