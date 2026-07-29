@@ -103,6 +103,26 @@ export async function fetchInvestmentOutlook(gid?: string): Promise<StockOutlook
   return data;
 }
 
+export interface PbHistoryTable {
+  symbols: string[];
+  rows: { date: string; values: (number | null)[] }[];
+}
+
+export async function fetchBankPbHistory(): Promise<PbHistoryTable> {
+  const { data } = await api.get("/bank-pb-history");
+  return data;
+}
+
+export async function fetchSecuritiesPbHistory(): Promise<PbHistoryTable> {
+  const { data } = await api.get("/securities-pb-history");
+  return data;
+}
+
+export async function fetchRealEstatePbHistory(): Promise<PbHistoryTable> {
+  const { data } = await api.get("/realestate-pb-history");
+  return data;
+}
+
 export interface CompanyOfficer {
   fromDate: string | null;
   position: string | null;
@@ -162,27 +182,5 @@ export interface TrendBuySignal {
 // server/src/signals/trendScanner.ts.
 export async function fetchTrendBuySignals(): Promise<TrendBuySignal[]> {
   const { data } = await api.get("/trend-signals");
-  return data.items;
-}
-
-export const MA_PERIODS = [10, 20, 50, 100, 200] as const;
-export type MaPeriod = (typeof MA_PERIODS)[number];
-
-export interface MaScanHit {
-  symbol: string;
-  name: string;
-  exchange: string;
-  currency: string;
-  price: number;
-  changePercent: number;
-  ma: Partial<Record<MaPeriod, number | null>>;
-}
-
-// Every supported MA period (10/20/50/100/200) computed in one pass across
-// the whole stock universe server-side — see server/src/signals/maScanner.ts.
-// The filter (above/below a chosen period) is applied client-side so
-// switching periods doesn't need a fresh request.
-export async function fetchMaScan(): Promise<MaScanHit[]> {
-  const { data } = await api.get("/ma-scan");
   return data.items;
 }

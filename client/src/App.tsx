@@ -2,10 +2,7 @@ import { Route, Routes } from 'react-router-dom'
 import Header from './components/Header'
 import Dashboard from './pages/Dashboard'
 import StockDetail from './pages/StockDetail'
-import Watchlist from './pages/Watchlist'
-import PerformanceCompare from './pages/PerformanceCompare'
-import InvestmentOutlook from './pages/InvestmentOutlook'
-import MaFilter from './pages/MaFilter'
+import PbCompare from './pages/PbCompare'
 
 function App() {
   return (
@@ -14,10 +11,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/stock/:symbol" element={<StockDetail />} />
-        <Route path="/watchlist" element={<Watchlist />} />
-        <Route path="/so-sanh" element={<PerformanceCompare />} />
-        <Route path="/loc-ma" element={<MaFilter />} />
-        <Route path="/trien-vong-dau-tu" element={<InvestmentOutlook />} />
+        <Route path="/so-sanh-pb" element={<PbCompare />} />
         <Route path="*" element={<Dashboard />} />
       </Routes>
     </div>

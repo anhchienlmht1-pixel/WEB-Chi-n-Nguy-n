@@ -5,10 +5,7 @@ import { useTheme } from "../hooks/useTheme";
 
 const NAV_ITEMS = [
   { to: "/", label: "Thị trường", end: true },
-  { to: "/watchlist", label: "Theo dõi", end: false },
-  { to: "/so-sanh", label: "So sánh", end: false },
-  { to: "/loc-ma", label: "Lọc MA", end: false },
-  { to: "/trien-vong-dau-tu", label: "Triển vọng đầu tư", end: false },
+  { to: "/so-sanh-pb", label: "So sánh P/B", end: false },
 ];
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
