@@ -51,30 +51,68 @@ function ThumbnailChart({ pulse, up }: { pulse: DigestMarketPulse; up: boolean }
   );
 }
 
-function FundamentalRow({ label, metric }: { label: string; metric: FundamentalMetric | null }) {
-  if (!metric) return null;
+function shortPeriodLabel(label: string): string {
+  const m = label.match(/^Q(\d)\s+(\d{4})$/);
+  return m ? `Q${m[1]}/${m[2].slice(2)}` : label;
+}
+
+// Compact bar chart for a revenue/profit trend — up to 8 periods, all bars
+// grow from the baseline (height ∝ |value|), colored by sign so a loss
+// quarter still reads at a glance even though it isn't drawn below a zero
+// line. Deliberately lighter-weight than components/ProfitChart.tsx, which
+// is built for a full-width dedicated panel rather than sitting inside a
+// digest card alongside other content.
+function FundamentalChart({ label, metric }: { label: string; metric: FundamentalMetric | null }) {
+  if (!metric || metric.history.length === 0) return null;
   const growth = metric.yoyGrowthPercent ?? metric.qoqGrowthPercent;
   const growthLabel = metric.yoyGrowthPercent !== null ? "so với cùng kỳ" : "so với kỳ trước";
+  const CHART_H = 56;
+  const maxAbs = Math.max(1, ...metric.history.map((h) => Math.abs(h.value)));
+
   return (
-    <div className="flex items-center justify-between gap-2 py-1">
-      <span className="text-xs text-slate-500 dark:text-slate-400">
-        {label} <span className="text-slate-400 dark:text-slate-500">({metric.periodLabel})</span>
-      </span>
-      <span className="flex items-center gap-1.5 text-sm">
-        <span className="font-semibold text-slate-800 dark:text-slate-100">
-          {metric.value.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}
-          {metric.unit ? ` ${metric.unit}` : ""}
+    <div className="py-2">
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <span className="text-xs text-slate-500 dark:text-slate-400">
+          {label} <span className="text-slate-400 dark:text-slate-500">({metric.periodLabel})</span>
         </span>
-        {growth !== null && (
-          <span
-            className={growth >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}
-            title={growthLabel}
-          >
-            {growth >= 0 ? "+" : ""}
-            {growth.toFixed(1)}%
+        <span className="flex items-center gap-1.5 text-sm">
+          <span className="font-semibold text-slate-800 dark:text-slate-100">
+            {metric.value.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}
+            {metric.unit ? ` ${metric.unit}` : ""}
           </span>
-        )}
-      </span>
+          {growth !== null && (
+            <span
+              className={growth >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}
+              title={growthLabel}
+            >
+              {growth >= 0 ? "+" : ""}
+              {growth.toFixed(1)}%
+            </span>
+          )}
+        </span>
+      </div>
+      <div className="flex items-end gap-1.5" style={{ height: CHART_H }}>
+        {metric.history.map((h) => (
+          <div
+            key={h.periodLabel}
+            className="flex flex-1 items-end justify-center"
+            style={{ height: CHART_H }}
+            title={`${h.periodLabel}: ${h.value.toLocaleString("vi-VN")}${metric.unit ? ` ${metric.unit}` : ""}`}
+          >
+            <div
+              className={`w-full rounded-t ${h.value >= 0 ? "bg-emerald-500" : "bg-red-500"}`}
+              style={{ height: Math.max(3, (Math.abs(h.value) / maxAbs) * CHART_H) }}
+            />
+          </div>
+        ))}
+      </div>
+      <div className="mt-1 flex gap-1.5">
+        {metric.history.map((h) => (
+          <div key={h.periodLabel} className="flex-1 truncate text-center text-[9px] text-slate-400 dark:text-slate-500">
+            {shortPeriodLabel(h.periodLabel)}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -358,8 +396,8 @@ export default function DailyDigest() {
 
                 {(data.company.revenue || data.company.profit) && (
                   <div className="mb-3 divide-y divide-slate-100 border-y border-slate-100 dark:divide-slate-800 dark:border-slate-800">
-                    <FundamentalRow label="Doanh thu" metric={data.company.revenue} />
-                    <FundamentalRow label="Lợi nhuận sau thuế" metric={data.company.profit} />
+                    <FundamentalChart label="Doanh thu" metric={data.company.revenue} />
+                    <FundamentalChart label="Lợi nhuận sau thuế" metric={data.company.profit} />
                   </div>
                 )}
 

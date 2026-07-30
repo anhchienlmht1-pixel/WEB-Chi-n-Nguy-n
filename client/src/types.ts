@@ -140,6 +140,7 @@ export interface FundamentalMetric {
   unit: string;
   qoqGrowthPercent: number | null;
   yoyGrowthPercent: number | null;
+  history: { periodLabel: string; value: number }[];
 }
 
 export interface CompanySnapshot {

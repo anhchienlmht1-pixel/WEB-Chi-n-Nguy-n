@@ -39,6 +39,9 @@ export interface FundamentalMetric {
   unit: string;
   qoqGrowthPercent: number | null;
   yoyGrowthPercent: number | null;
+  /** Up to the last 8 periods with data, oldest first — for charting the
+   * trend rather than just the single latest figure. */
+  history: { periodLabel: string; value: number }[];
 }
 
 export interface CompanySnapshot {

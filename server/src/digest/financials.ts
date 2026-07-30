@@ -27,10 +27,14 @@ function growthPercent(current: number, prior: number | null | undefined): numbe
   return ((current - prior) / Math.abs(prior)) * 100;
 }
 
-/** The most recent period's value for `item`, plus QoQ and YoY growth —
- * "latest" resolved by parsing period labels (sortPeriodIndices), not by
- * trusting array position (see period.ts's history comment for why that
- * assumption already broke a chart's timeline once before). */
+const CHART_PERIODS = 8;
+
+/** The most recent period's value for `item`, plus QoQ and YoY growth, plus
+ * a short chronological history (up to the last 8 periods with a value) for
+ * charting the trend — not just the single latest figure. "Latest" is
+ * resolved by parsing period labels (sortPeriodIndices), not by trusting
+ * array position (see period.ts's history comment for why that assumption
+ * already broke a chart's timeline once before). */
 export function latestPeriodMetric(report: FinancialReport, item: FinancialLineItem): FundamentalMetric | null {
   const order = sortPeriodIndices(report.periods, "asc");
   if (order.length === 0) return null;
@@ -47,5 +51,10 @@ export function latestPeriodMetric(report: FinancialReport, item: FinancialLineI
   const yoyIdx = yoyLabel !== null ? report.periods.indexOf(yoyLabel) : -1;
   const yoyGrowthPercent = yoyIdx >= 0 ? growthPercent(value, item.values[yoyIdx]) : null;
 
-  return { periodLabel, value, unit: item.unit ?? "", qoqGrowthPercent, yoyGrowthPercent };
+  const history = order
+    .map((i) => ({ periodLabel: report.periods[i], value: item.values[i] }))
+    .filter((p): p is { periodLabel: string; value: number } => p.value != null && Number.isFinite(p.value))
+    .slice(-CHART_PERIODS);
+
+  return { periodLabel, value, unit: item.unit ?? "", qoqGrowthPercent, yoyGrowthPercent, history };
 }
