@@ -1,46 +1,9 @@
 import { fetchFinancialReport } from "../providers/financials.js";
-import { getCompanyProfileWithFallback } from "../providers/companyProfileFallback.js";
 import { getHistoryWithFallback } from "../providers/fallback.js";
 import { latestBuySince } from "../signals/trendScanner.js";
-import { SECTOR_MAP } from "../data/sectorMap.js";
 import { extractKeyRatios } from "./ratios.js";
-import { findProfitItem, findRevenueItem, latestPeriodMetric } from "./financials.js";
-import type { CompanySnapshot, DailyDigest, FundamentalMetric, TrendAction } from "./marketDigest.js";
-
-function vndMagnitude(value: number): string {
-  if (value >= 1_000_000_000_000) return `${(value / 1_000_000_000_000).toFixed(2)} nghìn tỷ đ`;
-  if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)} tỷ đ`;
-  return `${Math.round(value).toLocaleString("vi-VN")} đ`;
-}
-
-function ratioText(v: number | null, unit: string): string {
-  if (v === null) return "—";
-  return `${v.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}${unit === "%" ? "%" : ""}`;
-}
-
-// "cùng kỳ" (YoY) is the standard apples-to-apples read for a quarterly
-// figure — used whenever the same quarter last year is actually in the
-// report; falls back to QoQ, then to just the raw figure with no growth
-// framing if neither comparison period is available.
-function growthPhrase(metric: FundamentalMetric | null, label: string): string | null {
-  if (!metric) return null;
-  const valueText = `${metric.value.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}${
-    metric.unit ? ` ${metric.unit}` : ""
-  }`;
-  if (metric.yoyGrowthPercent !== null) {
-    const dir = metric.yoyGrowthPercent >= 0 ? "tăng" : "giảm";
-    return `${label} ${metric.periodLabel} đạt ${valueText}, ${dir} ${Math.abs(metric.yoyGrowthPercent).toFixed(
-      1
-    )}% so với cùng kỳ`;
-  }
-  if (metric.qoqGrowthPercent !== null) {
-    const dir = metric.qoqGrowthPercent >= 0 ? "tăng" : "giảm";
-    return `${label} ${metric.periodLabel} đạt ${valueText}, ${dir} ${Math.abs(metric.qoqGrowthPercent).toFixed(
-      1
-    )}% so với kỳ trước`;
-  }
-  return `${label} ${metric.periodLabel} đạt ${valueText}`;
-}
+import { findProfitItem, latestPeriodMetric } from "./financials.js";
+import type { DailyDigest, TrendAction } from "./marketDigest.js";
 
 // Same trend-following rule as the price chart's own Mua/Bán markers and
 // the /trend-signals scan (SMA20 > SMA50, ADX(14) > 25, Supertrend(10,3)
@@ -65,99 +28,71 @@ async function computeTrendAction(symbol: string): Promise<TrendAction> {
   };
 }
 
-async function computeCompanySnapshot(symbol: string, name: string, exchange: string): Promise<CompanySnapshot | null> {
-  const [ratiosResult, kqkdResult, profileResult] = await Promise.allSettled([
+// One short "P/E X · ROE Y · LNST tăng/giảm Z% svck" line per symbol — a
+// terse valuation + business-result read, not a full company profile.
+// Any piece missing (ratios, or a matching profit line item) just drops
+// out of the sentence rather than failing the whole blurb.
+async function computeSymbolBlurb(symbol: string): Promise<string | null> {
+  const [ratiosResult, kqkdResult] = await Promise.allSettled([
     fetchFinancialReport(symbol, "CSTC", "year"),
     fetchFinancialReport(symbol, "KQKD", "quarter"),
-    getCompanyProfileWithFallback(symbol),
   ]);
 
-  const valuation =
-    ratiosResult.status === "fulfilled" ? extractKeyRatios(ratiosResult.value) : { pe: null, pb: null, roe: null };
+  const bits: string[] = [];
 
-  let revenue: FundamentalMetric | null = null;
-  let profit: FundamentalMetric | null = null;
+  if (ratiosResult.status === "fulfilled") {
+    const { pe, roe } = extractKeyRatios(ratiosResult.value);
+    if (pe?.value != null) bits.push(`P/E ${pe.value.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}x`);
+    if (roe?.value != null) bits.push(`ROE ${roe.value.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}%`);
+  }
+
   if (kqkdResult.status === "fulfilled") {
-    const report = kqkdResult.value;
-    const revenueItem = findRevenueItem(report);
-    const profitItem = findProfitItem(report);
-    revenue = revenueItem ? latestPeriodMetric(report, revenueItem) : null;
-    profit = profitItem ? latestPeriodMetric(report, profitItem) : null;
-  }
-
-  if (
-    ratiosResult.status !== "fulfilled" &&
-    profileResult.status !== "fulfilled" &&
-    kqkdResult.status !== "fulfilled"
-  ) {
-    return null;
-  }
-
-  const profile = profileResult.status === "fulfilled" ? profileResult.value : null;
-
-  return {
-    symbol,
-    name,
-    exchange: profile?.exchange ?? exchange,
-    sector: SECTOR_MAP[symbol] ?? null,
-    businessModel: profile?.businessModel ? profile.businessModel.slice(0, 320) : null,
-    charterCapitalText: profile?.charterCapital ? vndMagnitude(profile.charterCapital) : null,
-    listingDate: profile?.listingDate ?? null,
-    valuation: {
-      pe: valuation.pe?.value ?? null,
-      pb: valuation.pb?.value ?? null,
-      roe: valuation.roe?.value ?? null,
-    },
-    revenue,
-    profit,
-  };
-}
-
-/**
- * Adds the "about the company" + "my action" sections for the digest's
- * primary symbol — two extra async fetches (financials + company profile
- * for valuation/fundamentals, price history for the trend-following call)
- * beyond the synchronous topic-selection in marketDigest.ts. Degrades
- * gracefully: any of the three failing (e.g. a source being down) still
- * leaves the rest of the article intact, just without that section.
- */
-export async function enrichDailyDigest(digest: DailyDigest): Promise<DailyDigest> {
-  const symbol = digest.primarySymbol;
-  if (!symbol) return digest;
-
-  const ref = digest.relatedStocks.find((r) => r.symbol === symbol);
-  const [companyResult, actionResult] = await Promise.allSettled([
-    computeCompanySnapshot(symbol, ref?.name ?? symbol, ref?.exchange ?? ""),
-    computeTrendAction(symbol),
-  ]);
-
-  const company = companyResult.status === "fulfilled" ? companyResult.value : null;
-  const action = actionResult.status === "fulfilled" ? actionResult.value : null;
-
-  const paragraphs = [...digest.paragraphs];
-
-  if (company) {
-    const val = company.valuation;
-    const valuationBits: string[] = [];
-    if (val.pe !== null) valuationBits.push(`P/E ${ratioText(val.pe, "")}`);
-    if (val.pb !== null) valuationBits.push(`P/B ${ratioText(val.pb, "")}`);
-    if (val.roe !== null) valuationBits.push(`ROE ${ratioText(val.roe, "%")}`);
-    const valuationText = valuationBits.length > 0 ? valuationBits.join(", ") : "chưa có đủ dữ liệu định giá";
-
-    paragraphs.push(
-      `Về doanh nghiệp: ${symbol}${company.sector ? ` (ngành ${company.sector})` : ""}${
-        company.businessModel ? ` — ${company.businessModel}` : ""
-      }${company.charterCapitalText ? `. Vốn điều lệ ${company.charterCapitalText}` : ""}. Định giá hiện tại: ${valuationText}.`
-    );
-
-    const revenuePhrase = growthPhrase(company.revenue, "Doanh thu");
-    const profitPhrase = growthPhrase(company.profit, "lợi nhuận sau thuế");
-    if (revenuePhrase || profitPhrase) {
-      paragraphs.push(`Kết quả kinh doanh: ${[revenuePhrase, profitPhrase].filter(Boolean).join("; ")}.`);
+    const profitItem = findProfitItem(kqkdResult.value);
+    const metric = profitItem ? latestPeriodMetric(kqkdResult.value, profitItem) : null;
+    if (metric) {
+      const growth = metric.yoyGrowthPercent ?? metric.qoqGrowthPercent;
+      if (growth !== null) {
+        const dir = growth >= 0 ? "tăng" : "giảm";
+        const vs = metric.yoyGrowthPercent !== null ? "svck" : "so quý trước";
+        bits.push(`LNST ${metric.periodLabel} ${dir} ${Math.abs(growth).toFixed(1)}% ${vs}`);
+      } else {
+        bits.push(`LNST ${metric.periodLabel} ${metric.value.toLocaleString("vi-VN")}${metric.unit ? ` ${metric.unit}` : ""}`);
+      }
     }
   }
 
-  // The action itself is rendered as its own callout below the article
-  // (see DailyDigest.tsx) rather than repeated again here as a paragraph.
-  return { ...digest, company, action, paragraphs };
+  return bits.length > 0 ? bits.join(" · ") : null;
+}
+
+async function computeLiquidityCommentary(symbols: string[]): Promise<Record<string, string>> {
+  const results = await Promise.allSettled(symbols.map(computeSymbolBlurb));
+  const out: Record<string, string> = {};
+  symbols.forEach((symbol, i) => {
+    const r = results[i];
+    if (r.status === "fulfilled" && r.value) out[symbol] = r.value;
+  });
+  return out;
+}
+
+/**
+ * Adds the "my action" callout for the digest's primary symbol (price
+ * history + trend-following rule) and a short valuation/earnings blurb for
+ * each of the day's top-5 by-liquidity symbols (marketSnapshot.topTraded) —
+ * no full per-company profile/ratio card, just a terse line per stock next
+ * to the "Top thanh khoản" list. Degrades gracefully per-symbol: a source
+ * being down for one stock just drops that stock's blurb, not the rest.
+ */
+export async function enrichDailyDigest(digest: DailyDigest): Promise<DailyDigest> {
+  const symbol = digest.primarySymbol;
+  const liquiditySymbols = digest.marketSnapshot.topTraded.slice(0, 5).map((s) => s.symbol);
+
+  const [actionResult, commentaryResult] = await Promise.allSettled([
+    symbol ? computeTrendAction(symbol) : Promise.resolve(null),
+    computeLiquidityCommentary(liquiditySymbols),
+  ]);
+
+  const action = actionResult.status === "fulfilled" ? actionResult.value : null;
+  const liquidityCommentary = commentaryResult.status === "fulfilled" ? commentaryResult.value : {};
+
+  return { ...digest, action, liquidityCommentary };
 }

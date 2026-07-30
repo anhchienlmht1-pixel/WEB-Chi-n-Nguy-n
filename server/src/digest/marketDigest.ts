@@ -39,22 +39,6 @@ export interface FundamentalMetric {
   unit: string;
   qoqGrowthPercent: number | null;
   yoyGrowthPercent: number | null;
-  /** Up to the last 8 periods with data, oldest first — for charting the
-   * trend rather than just the single latest figure. */
-  history: { periodLabel: string; value: number }[];
-}
-
-export interface CompanySnapshot {
-  symbol: string;
-  name: string;
-  exchange: string;
-  sector: string | null;
-  businessModel: string | null;
-  charterCapitalText: string | null;
-  listingDate: string | null;
-  valuation: { pe: number | null; pb: number | null; roe: number | null };
-  revenue: FundamentalMetric | null;
-  profit: FundamentalMetric | null;
 }
 
 export type TrendStance = "MUA" | "DUNG_NGOAI";
@@ -95,12 +79,15 @@ export interface DailyDigest {
    * alongside whatever the day's single narrative topic is. */
   marketSnapshot: MarketSnapshot;
   relatedStocks: DigestStockRef[];
-  /** Symbol the "company"/"action" sections below are about, if any — set
-   * synchronously here, then server/src/digest/enrich.ts fetches the actual
-   * fundamentals/valuation/trend-signal data for it and fills those in. */
+  /** Symbol the "action" callout below is about, if any — set synchronously
+   * here, then server/src/digest/enrich.ts fetches the actual trend-signal
+   * data for it and fills that in. */
   primarySymbol: string | null;
-  company: CompanySnapshot | null;
   action: TrendAction | null;
+  /** Short "P/E · ROE · LNST tăng/giảm X% svck" line per symbol, keyed by
+   * symbol, for marketSnapshot.topTraded's top 5 — filled in by
+   * server/src/digest/enrich.ts. Empty until then. */
+  liquidityCommentary: Record<string, string>;
 }
 
 function isoDate(d: Date): string {
@@ -516,7 +503,7 @@ export function buildDailyDigest(quotes: Quote[], providerId: string, now: Date 
       median: pulseCtx.marketMedian,
     },
     primarySymbol: article.primarySymbol,
-    company: null,
     action: null,
+    liquidityCommentary: {},
   };
 }

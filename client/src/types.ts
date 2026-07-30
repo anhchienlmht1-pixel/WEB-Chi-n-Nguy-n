@@ -134,28 +134,6 @@ export interface MarketSnapshot {
   mostActive: DigestStockRef | null;
 }
 
-export interface FundamentalMetric {
-  periodLabel: string;
-  value: number;
-  unit: string;
-  qoqGrowthPercent: number | null;
-  yoyGrowthPercent: number | null;
-  history: { periodLabel: string; value: number }[];
-}
-
-export interface CompanySnapshot {
-  symbol: string;
-  name: string;
-  exchange: string;
-  sector: string | null;
-  businessModel: string | null;
-  charterCapitalText: string | null;
-  listingDate: string | null;
-  valuation: { pe: number | null; pb: number | null; roe: number | null };
-  revenue: FundamentalMetric | null;
-  profit: FundamentalMetric | null;
-}
-
 export interface DigestHistoryItem {
   date: string;
   topic: DigestTopic;
@@ -187,6 +165,6 @@ export interface DailyDigest {
   marketSnapshot: MarketSnapshot;
   relatedStocks: DigestStockRef[];
   primarySymbol: string | null;
-  company: CompanySnapshot | null;
   action: TrendAction | null;
+  liquidityCommentary: Record<string, string>;
 }

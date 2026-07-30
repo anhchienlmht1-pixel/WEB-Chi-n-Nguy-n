@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import type { DigestMarketPulse, DigestStockRef, FundamentalMetric, MarketSnapshot } from "../types";
+import type { DigestMarketPulse, DigestStockRef, MarketSnapshot } from "../types";
 import { fetchDailyDigest, fetchDailyDigestByDate, fetchDailyDigestHistory } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { formatPercent, formatPrice, formatVolume } from "../utils/format";
@@ -17,11 +17,6 @@ const TONE_CLASS: Record<string, string> = {
   down: "text-red-600 dark:text-red-400",
   neutral: "text-slate-600 dark:text-slate-300",
 };
-
-function formatRatio(v: number | null): string {
-  if (v === null) return "—";
-  return v.toLocaleString("vi-VN", { maximumFractionDigits: 2 });
-}
 
 function shortDate(iso: string): string {
   const d = new Date(iso);
@@ -51,88 +46,25 @@ function ThumbnailChart({ pulse, up }: { pulse: DigestMarketPulse; up: boolean }
   );
 }
 
-function shortPeriodLabel(label: string): string {
-  const m = label.match(/^Q(\d)\s+(\d{4})$/);
-  return m ? `Q${m[1]}/${m[2].slice(2)}` : label;
-}
-
-// Compact bar chart for a revenue/profit trend — up to 8 periods, all bars
-// grow from the baseline (height ∝ |value|), colored by sign so a loss
-// quarter still reads at a glance even though it isn't drawn below a zero
-// line. Deliberately lighter-weight than components/ProfitChart.tsx, which
-// is built for a full-width dedicated panel rather than sitting inside a
-// digest card alongside other content.
-function FundamentalChart({ label, metric }: { label: string; metric: FundamentalMetric | null }) {
-  if (!metric || metric.history.length === 0) return null;
-  const growth = metric.yoyGrowthPercent ?? metric.qoqGrowthPercent;
-  const growthLabel = metric.yoyGrowthPercent !== null ? "so với cùng kỳ" : "so với kỳ trước";
-  const CHART_H = 56;
-  const maxAbs = Math.max(1, ...metric.history.map((h) => Math.abs(h.value)));
-
+function StockMiniRow({ s, valueLabel, blurb }: { s: DigestStockRef; valueLabel?: string; blurb?: string }) {
   return (
-    <div className="py-2">
-      <div className="mb-1.5 flex items-center justify-between gap-2">
-        <span className="text-xs text-slate-500 dark:text-slate-400">
-          {label} <span className="text-slate-400 dark:text-slate-500">({metric.periodLabel})</span>
-        </span>
-        <span className="flex items-center gap-1.5 text-sm">
-          <span className="font-semibold text-slate-800 dark:text-slate-100">
-            {metric.value.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}
-            {metric.unit ? ` ${metric.unit}` : ""}
-          </span>
-          {growth !== null && (
-            <span
-              className={growth >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}
-              title={growthLabel}
-            >
-              {growth >= 0 ? "+" : ""}
-              {growth.toFixed(1)}%
+    <Link
+      to={`/stock/${s.symbol}`}
+      className="block rounded-md px-1.5 py-1 text-xs transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
+    >
+      <div className="flex items-center justify-between">
+        <span className="font-semibold text-slate-800 dark:text-slate-100">{s.symbol}</span>
+        <span className="flex items-center gap-2">
+          {valueLabel ? (
+            <span className="text-slate-500 dark:text-slate-400">{valueLabel}</span>
+          ) : (
+            <span className={s.changePercent >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}>
+              {formatPercent(s.changePercent)}
             </span>
           )}
         </span>
       </div>
-      <div className="flex items-end gap-1.5" style={{ height: CHART_H }}>
-        {metric.history.map((h) => (
-          <div
-            key={h.periodLabel}
-            className="flex flex-1 items-end justify-center"
-            style={{ height: CHART_H }}
-            title={`${h.periodLabel}: ${h.value.toLocaleString("vi-VN")}${metric.unit ? ` ${metric.unit}` : ""}`}
-          >
-            <div
-              className={`w-full rounded-t ${h.value >= 0 ? "bg-emerald-500" : "bg-red-500"}`}
-              style={{ height: Math.max(3, (Math.abs(h.value) / maxAbs) * CHART_H) }}
-            />
-          </div>
-        ))}
-      </div>
-      <div className="mt-1 flex gap-1.5">
-        {metric.history.map((h) => (
-          <div key={h.periodLabel} className="flex-1 truncate text-center text-[9px] text-slate-400 dark:text-slate-500">
-            {shortPeriodLabel(h.periodLabel)}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function StockMiniRow({ s, valueLabel }: { s: DigestStockRef; valueLabel?: string }) {
-  return (
-    <Link
-      to={`/stock/${s.symbol}`}
-      className="flex items-center justify-between rounded-md px-1.5 py-1 text-xs transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
-    >
-      <span className="font-semibold text-slate-800 dark:text-slate-100">{s.symbol}</span>
-      <span className="flex items-center gap-2">
-        {valueLabel ? (
-          <span className="text-slate-500 dark:text-slate-400">{valueLabel}</span>
-        ) : (
-          <span className={s.changePercent >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}>
-            {formatPercent(s.changePercent)}
-          </span>
-        )}
-      </span>
+      {blurb && <div className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">{blurb}</div>}
     </Link>
   );
 }
@@ -145,8 +77,17 @@ function tradedValueLabel(s: DigestStockRef): string {
 }
 
 // Always-present "market at a glance" block — top movers + top liquidity —
-// alongside whatever the day's single narrative topic is.
-function MarketSnapshotSection({ snapshot }: { snapshot: MarketSnapshot }) {
+// alongside whatever the day's single narrative topic is. The top-5-by-
+// liquidity list gets a short valuation/earnings blurb per stock
+// (liquidityCommentary, from server/src/digest/enrich.ts); everything
+// else is just price/value, no per-symbol fundamentals fetch.
+function MarketSnapshotSection({
+  snapshot,
+  commentary,
+}: {
+  snapshot: MarketSnapshot;
+  commentary: Record<string, string>;
+}) {
   const hasMovers = snapshot.topGainers.length > 0 || snapshot.topLosers.length > 0;
   if (!hasMovers && snapshot.topTraded.length === 0) return null;
 
@@ -169,38 +110,41 @@ function MarketSnapshotSection({ snapshot }: { snapshot: MarketSnapshot }) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {snapshot.topGainers.length > 0 && (
-          <div>
-            <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
-              Top tăng giá
+      {hasMovers && (
+        <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {snapshot.topGainers.length > 0 && (
+            <div>
+              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
+                Top tăng giá
+              </div>
+              {snapshot.topGainers.map((s) => (
+                <StockMiniRow key={s.symbol} s={s} />
+              ))}
             </div>
-            {snapshot.topGainers.map((s) => (
-              <StockMiniRow key={s.symbol} s={s} />
-            ))}
-          </div>
-        )}
-        {snapshot.topLosers.length > 0 && (
-          <div>
-            <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-red-600 dark:text-red-400">
-              Top giảm giá
+          )}
+          {snapshot.topLosers.length > 0 && (
+            <div>
+              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-red-600 dark:text-red-400">
+                Top giảm giá
+              </div>
+              {snapshot.topLosers.map((s) => (
+                <StockMiniRow key={s.symbol} s={s} />
+              ))}
             </div>
-            {snapshot.topLosers.map((s) => (
-              <StockMiniRow key={s.symbol} s={s} />
-            ))}
+          )}
+        </div>
+      )}
+
+      {snapshot.topTraded.length > 0 && (
+        <div>
+          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            Top 5 thanh khoản — hút tiền nhiều nhất
           </div>
-        )}
-        {snapshot.topTraded.length > 0 && (
-          <div>
-            <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              Top thanh khoản
-            </div>
-            {snapshot.topTraded.slice(0, 5).map((s) => (
-              <StockMiniRow key={s.symbol} s={s} valueLabel={tradedValueLabel(s)} />
-            ))}
-          </div>
-        )}
-      </div>
+          {snapshot.topTraded.slice(0, 5).map((s) => (
+            <StockMiniRow key={s.symbol} s={s} valueLabel={tradedValueLabel(s)} blurb={commentary[s.symbol]} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -365,54 +309,7 @@ export default function DailyDigest() {
               ))}
             </div>
 
-            <MarketSnapshotSection snapshot={data.marketSnapshot} />
-
-            {data.company && (
-              <div className="mt-5 rounded-lg border border-slate-200 p-4 dark:border-slate-800">
-                <div className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                  Thông tin doanh nghiệp — {data.company.symbol}
-                </div>
-                <div className="mb-3 grid grid-cols-3 gap-3">
-                  <div>
-                    <div className="text-[11px] text-slate-400 dark:text-slate-500">P/E</div>
-                    <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                      {formatRatio(data.company.valuation.pe)}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-[11px] text-slate-400 dark:text-slate-500">P/B</div>
-                    <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                      {formatRatio(data.company.valuation.pb)}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-[11px] text-slate-400 dark:text-slate-500">ROE</div>
-                    <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                      {formatRatio(data.company.valuation.roe)}
-                      {data.company.valuation.roe !== null ? "%" : ""}
-                    </div>
-                  </div>
-                </div>
-
-                {(data.company.revenue || data.company.profit) && (
-                  <div className="mb-3 divide-y divide-slate-100 border-y border-slate-100 dark:divide-slate-800 dark:border-slate-800">
-                    <FundamentalChart label="Doanh thu" metric={data.company.revenue} />
-                    <FundamentalChart label="Lợi nhuận sau thuế" metric={data.company.profit} />
-                  </div>
-                )}
-
-                {data.company.businessModel && (
-                  <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                    {data.company.businessModel}
-                  </p>
-                )}
-                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-400 dark:text-slate-500">
-                  {data.company.sector && <span>Ngành: {data.company.sector}</span>}
-                  {data.company.charterCapitalText && <span>Vốn điều lệ: {data.company.charterCapitalText}</span>}
-                  {data.company.listingDate && <span>Niêm yết: {data.company.listingDate}</span>}
-                </div>
-              </div>
-            )}
+            <MarketSnapshotSection snapshot={data.marketSnapshot} commentary={data.liquidityCommentary} />
 
             {data.action && (
               <div
