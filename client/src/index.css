@@ -3,12 +3,13 @@
 /* Class-based dark mode: `dark:` variants apply when <html class="dark">. */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Softer pastel palette overrides for the default slate and emerald
-   colors. Every bg-slate, text-emerald, etc utility across the app picks
-   these up automatically since they override the same CSS variable
-   names those utilities read from. Slate becomes a gentle lavender-navy
-   tint instead of pure gray/near-black; emerald keeps the same green
-   hue as before, just softer and a touch brighter. */
+/* Slate keeps its gentle lavender-navy tint. Emerald is remapped to a
+   neon lime-green (crypto-dashboard style: bold dark-mode CTAs, high-
+   contrast accent) — every bg-emerald, text-emerald, border-emerald,
+   etc. utility across the app picks this up automatically since it's
+   the same CSS variable those utilities read from. Solid emerald-500/
+   600 buttons pair with dark text (text-slate-950), not white — a
+   bright neon background needs dark text to stay readable. */
 @theme {
   --color-slate-50: #f7f8fc;
   --color-slate-100: #eef1f8;
@@ -22,13 +23,16 @@
   --color-slate-900: #1a2038;
   --color-slate-950: #11152a;
 
-  --color-emerald-50: #eefcf6;
-  --color-emerald-100: #d2f8e7;
-  --color-emerald-300: #7de3bd;
-  --color-emerald-400: #4ed0a5;
-  --color-emerald-500: #2fb98e;
-  --color-emerald-600: #229c78;
-  --color-emerald-700: #1b7c61;
+  --color-emerald-50: #f7ffe5;
+  --color-emerald-100: #ecffc2;
+  --color-emerald-200: #dbff8c;
+  --color-emerald-300: #c6fa4f;
+  --color-emerald-400: #b0f228;
+  --color-emerald-500: #97e00d;
+  --color-emerald-600: #78b80a;
+  --color-emerald-700: #5c8f08;
+  --color-emerald-900: #2d4405;
+  --color-emerald-950: #182602;
 }
 
 html {

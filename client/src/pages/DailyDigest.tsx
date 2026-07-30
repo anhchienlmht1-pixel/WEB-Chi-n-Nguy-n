@@ -280,7 +280,7 @@ export default function DailyDigest() {
                 <button
                   type="button"
                   onClick={openArticle}
-                  className="mt-1 inline-flex w-fit items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-700"
+                  className="mt-1 inline-flex w-fit items-center gap-1 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-slate-950 transition-colors hover:bg-emerald-400"
                 >
                   Đọc tiếp →
                 </button>
@@ -326,7 +326,7 @@ export default function DailyDigest() {
                   <span
                     className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
                       data.action.stance === "MUA"
-                        ? "bg-emerald-600 text-white"
+                        ? "bg-emerald-500 text-slate-950"
                         : "bg-slate-500 text-white dark:bg-slate-600"
                     }`}
                   >

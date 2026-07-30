@@ -27,7 +27,7 @@ function cellClass(score: number): string {
   const band = bandFor(score);
   if (band.label === "Yếu") return "bg-sky-200 text-sky-900 dark:bg-sky-500/25 dark:text-sky-100";
   if (band.label === "Khá") return "bg-emerald-200 text-emerald-900 dark:bg-emerald-500/30 dark:text-emerald-100";
-  if (band.label === "Khỏe") return "bg-emerald-500 text-white dark:bg-emerald-600 dark:text-white";
+  if (band.label === "Khỏe") return "bg-emerald-500 text-slate-950 dark:bg-emerald-600 dark:text-slate-950";
   if (band.label === "Rất khỏe") return "bg-purple-300 text-purple-950 dark:bg-purple-500/40 dark:text-purple-100";
   return "text-slate-700 dark:text-slate-300";
 }

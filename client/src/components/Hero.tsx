@@ -10,11 +10,11 @@ export default function Hero() {
       {/* Warm glow accents — no external assets, just layered radial gradients. */}
       <div
         className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full opacity-40 blur-3xl"
-        style={{ background: "radial-gradient(circle, #10b981 0%, transparent 70%)" }}
+        style={{ background: "radial-gradient(circle, #97e00d 0%, transparent 70%)" }}
       />
       <div
         className="pointer-events-none absolute -bottom-32 -left-16 h-72 w-72 rounded-full opacity-20 blur-3xl"
-        style={{ background: "radial-gradient(circle, #10b981 0%, transparent 70%)" }}
+        style={{ background: "radial-gradient(circle, #97e00d 0%, transparent 70%)" }}
       />
 
       <div className="relative">
