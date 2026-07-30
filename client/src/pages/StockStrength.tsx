@@ -54,8 +54,9 @@ export default function StockStrength() {
 
   const visibleSectors = useMemo(() => {
     if (!data) return [];
-    if (!activeBand) return data.sectors;
-    return data.sectors
+    const base = data.sectors.filter((s) => s.sector.trim() !== "" && s.stocks.length > 0);
+    if (!activeBand) return base;
+    return base
       .map((s) => ({ ...s, stocks: s.stocks.filter((st) => bandFor(st.score).label === activeBand) }))
       .filter((s) => s.stocks.length > 0);
   }, [data, activeBand]);
@@ -101,7 +102,7 @@ export default function StockStrength() {
         )}
 
         {data && data.sectors.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-start gap-2">
             {visibleSectors.map((s) => (
               <div
                 key={s.sector}
