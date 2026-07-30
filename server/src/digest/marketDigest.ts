@@ -64,6 +64,18 @@ export interface TrendAction {
   reasoning: string;
 }
 
+export interface MarketSnapshot {
+  topGainers: DigestStockRef[];
+  topLosers: DigestStockRef[];
+  /** Top symbols by trading value (price × volume), highest first. */
+  topTraded: DigestStockRef[];
+  /** topTraded[0], surfaced separately as the "most attention" stock —
+   * liquidity is the only signal available (no real social-media/forum
+   * data source is connected), so this is explicitly NOT a social-buzz
+   * metric even though it's presented as "most talked about" in the UI. */
+  mostActive: DigestStockRef | null;
+}
+
 export interface DailyDigest {
   date: string; // YYYY-MM-DD
   provider: string;
@@ -75,6 +87,10 @@ export interface DailyDigest {
   highlights: DigestHighlight[];
   heroStat: DigestHeroStat;
   marketPulse: DigestMarketPulse;
+  /** Always populated regardless of which topic above got picked — a
+   * standing "market at a glance" section (top movers, top liquidity)
+   * alongside whatever the day's single narrative topic is. */
+  marketSnapshot: MarketSnapshot;
   relatedStocks: DigestStockRef[];
   /** Symbol the "company"/"action" sections below are about, if any — set
    * synchronously here, then server/src/digest/enrich.ts fetches the actual
@@ -469,6 +485,13 @@ export function buildDailyDigest(quotes: Quote[], providerId: string, now: Date 
   const chosen = candidates[0];
   const article = chosen.build();
 
+  const marketSnapshot: MarketSnapshot = {
+    topGainers: [...advancers].sort((a, b) => b.changePercent - a.changePercent).slice(0, 5).map(toRef),
+    topLosers: [...decliners].sort((a, b) => a.changePercent - b.changePercent).slice(0, 5).map(toRef),
+    topTraded: byValueDesc.slice(0, 10).map(toRef),
+    mostActive: byValueDesc[0] ? toRef(byValueDesc[0]) : null,
+  };
+
   return {
     date: isoDate(now),
     provider: providerId,
@@ -480,6 +503,7 @@ export function buildDailyDigest(quotes: Quote[], providerId: string, now: Date 
     highlights: article.highlights,
     heroStat: article.heroStat,
     relatedStocks: article.relatedStocks,
+    marketSnapshot,
     marketPulse: {
       advancers: pulseCtx.advancers,
       decliners: pulseCtx.decliners,

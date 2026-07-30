@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import type { DigestMarketPulse, FundamentalMetric } from "../types";
+import type { DigestMarketPulse, DigestStockRef, FundamentalMetric, MarketSnapshot } from "../types";
 import { fetchDailyDigest, fetchDailyDigestByDate, fetchDailyDigestHistory } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { formatPercent, formatPrice, formatVolume } from "../utils/format";
@@ -75,6 +75,94 @@ function FundamentalRow({ label, metric }: { label: string; metric: FundamentalM
           </span>
         )}
       </span>
+    </div>
+  );
+}
+
+function StockMiniRow({ s, valueLabel }: { s: DigestStockRef; valueLabel?: string }) {
+  return (
+    <Link
+      to={`/stock/${s.symbol}`}
+      className="flex items-center justify-between rounded-md px-1.5 py-1 text-xs transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
+    >
+      <span className="font-semibold text-slate-800 dark:text-slate-100">{s.symbol}</span>
+      <span className="flex items-center gap-2">
+        {valueLabel ? (
+          <span className="text-slate-500 dark:text-slate-400">{valueLabel}</span>
+        ) : (
+          <span className={s.changePercent >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}>
+            {formatPercent(s.changePercent)}
+          </span>
+        )}
+      </span>
+    </Link>
+  );
+}
+
+function tradedValueLabel(s: DigestStockRef): string {
+  const value = s.price * s.volume;
+  if (value >= 1_000_000_000_000) return `${(value / 1_000_000_000_000).toFixed(2)} nghìn tỷ đ`;
+  if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)} tỷ đ`;
+  return `${Math.round(value).toLocaleString("vi-VN")} đ`;
+}
+
+// Always-present "market at a glance" block — top movers + top liquidity —
+// alongside whatever the day's single narrative topic is.
+function MarketSnapshotSection({ snapshot }: { snapshot: MarketSnapshot }) {
+  const hasMovers = snapshot.topGainers.length > 0 || snapshot.topLosers.length > 0;
+  if (!hasMovers && snapshot.topTraded.length === 0) return null;
+
+  return (
+    <div className="mt-5 rounded-lg border border-slate-200 p-4 dark:border-slate-800">
+      <div className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+        Diễn biến thị trường hôm nay
+      </div>
+
+      {snapshot.mostActive && (
+        <div className="mb-4 rounded-md bg-amber-50 p-2.5 text-xs dark:bg-amber-500/10">
+          <span className="font-semibold text-amber-800 dark:text-amber-300">
+            Mã được chú ý nhất: {snapshot.mostActive.symbol}
+          </span>
+          <span className="text-amber-700/80 dark:text-amber-400/80">
+            {" "}
+            — đo theo thanh khoản giao dịch cao nhất phiên ({tradedValueLabel(snapshot.mostActive)}), không phải dữ
+            liệu mạng xã hội thật.
+          </span>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {snapshot.topGainers.length > 0 && (
+          <div>
+            <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
+              Top tăng giá
+            </div>
+            {snapshot.topGainers.map((s) => (
+              <StockMiniRow key={s.symbol} s={s} />
+            ))}
+          </div>
+        )}
+        {snapshot.topLosers.length > 0 && (
+          <div>
+            <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-red-600 dark:text-red-400">
+              Top giảm giá
+            </div>
+            {snapshot.topLosers.map((s) => (
+              <StockMiniRow key={s.symbol} s={s} />
+            ))}
+          </div>
+        )}
+        {snapshot.topTraded.length > 0 && (
+          <div>
+            <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              Top thanh khoản
+            </div>
+            {snapshot.topTraded.slice(0, 5).map((s) => (
+              <StockMiniRow key={s.symbol} s={s} valueLabel={tradedValueLabel(s)} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -238,6 +326,8 @@ export default function DailyDigest() {
                 <p key={i}>{p}</p>
               ))}
             </div>
+
+            <MarketSnapshotSection snapshot={data.marketSnapshot} />
 
             {data.company && (
               <div className="mt-5 rounded-lg border border-slate-200 p-4 dark:border-slate-800">

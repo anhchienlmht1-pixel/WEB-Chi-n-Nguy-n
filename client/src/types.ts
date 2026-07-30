@@ -127,6 +127,13 @@ export interface DigestMarketPulse {
   median: number;
 }
 
+export interface MarketSnapshot {
+  topGainers: DigestStockRef[];
+  topLosers: DigestStockRef[];
+  topTraded: DigestStockRef[];
+  mostActive: DigestStockRef | null;
+}
+
 export interface FundamentalMetric {
   periodLabel: string;
   value: number;
@@ -176,6 +183,7 @@ export interface DailyDigest {
   highlights: DigestHighlight[];
   heroStat: DigestHeroStat;
   marketPulse: DigestMarketPulse;
+  marketSnapshot: MarketSnapshot;
   relatedStocks: DigestStockRef[];
   primarySymbol: string | null;
   company: CompanySnapshot | null;
