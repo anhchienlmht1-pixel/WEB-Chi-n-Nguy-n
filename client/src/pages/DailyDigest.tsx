@@ -246,7 +246,7 @@ export default function DailyDigest() {
     : "";
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-6">
+    <div className="mx-auto max-w-4xl px-4 py-6">
       <div className="mb-6">
         <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Bài viết &amp; Phân tích</h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
