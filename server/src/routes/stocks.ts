@@ -88,6 +88,15 @@ router.get(
   })
 );
 
+const DAILY_DIGEST_PREFIX = "daily-digest:";
+// Long-lived so a day's article survives to be read as "history" well after
+// that day — this is still only an in-memory (per server process) cache,
+// though, not durable storage: a redeploy or a long-idle cold start can
+// still lose older entries. Good enough for "browse recent days" on a
+// single-instance deploy; a real guarantee would need e.g. Vercel KV.
+const DAILY_DIGEST_TTL = 45 * 24 * 60 * 60;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
 router.get(
   "/market/daily-digest",
   asyncHandler(async (_req, res) => {
@@ -96,12 +105,55 @@ router.get(
     // (one topic per day, as intended) and a fresh one is picked right after
     // midnight without needing a separate cron/scheduler.
     const today = new Date().toISOString().slice(0, 10);
-    const data = await cached(`daily-digest:${today}`, 6 * 60 * 60, async () => {
+    const data = await cached(`${DAILY_DIGEST_PREFIX}${today}`, DAILY_DIGEST_TTL, async () => {
       const quotes = await provider.getMarketOverview();
       const digest = buildDailyDigest(quotes, provider.id);
       return enrichDailyDigest(digest);
     });
     res.json(data);
+  })
+);
+
+router.get(
+  "/market/daily-digest/history",
+  asyncHandler(async (_req, res) => {
+    // Whatever days happen to still be in the process's cache — see the
+    // durability caveat on DAILY_DIGEST_TTL above.
+    const items = cache
+      .keys()
+      .filter((k) => k.startsWith(DAILY_DIGEST_PREFIX))
+      .map((k) => {
+        const digest = cache.get<{ topic: string; topicLabel: string; title: string }>(k);
+        if (!digest) return null;
+        return {
+          date: k.slice(DAILY_DIGEST_PREFIX.length),
+          topic: digest.topic,
+          topicLabel: digest.topicLabel,
+          title: digest.title,
+        };
+      })
+      .filter((x): x is NonNullable<typeof x> => x !== null)
+      .sort((a, b) => b.date.localeCompare(a.date));
+    res.json({ items });
+  })
+);
+
+router.get(
+  "/market/daily-digest/:date",
+  asyncHandler(async (req, res) => {
+    const date = String(req.params.date);
+    if (!DATE_RE.test(date)) {
+      res.status(400).json({ error: "Ngày không hợp lệ, dùng định dạng YYYY-MM-DD." });
+      return;
+    }
+    const digest = cache.get(`${DAILY_DIGEST_PREFIX}${date}`);
+    if (!digest) {
+      res.status(404).json({
+        error: `Không còn lưu bài viết ngày ${date} — có thể server đã khởi động lại, hoặc ngày đó chưa từng có ai xem trang Bản tin.`,
+      });
+      return;
+    }
+    res.json(digest);
   })
 );
 

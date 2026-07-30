@@ -1,6 +1,7 @@
 import axios from "axios";
 import type {
   DailyDigest,
+  DigestHistoryItem,
   FinancialPeriodType,
   FinancialReport,
   FinancialReportType,
@@ -48,6 +49,19 @@ export async function fetchMarketOverview(): Promise<{ provider: string; quotes:
 // overall breadth) from the day's quotes. See server/src/digest/marketDigest.ts.
 export async function fetchDailyDigest(): Promise<DailyDigest> {
   const { data } = await api.get("/market/daily-digest");
+  return data;
+}
+
+// Whatever past days' articles the server still has cached — best-effort,
+// not a durable archive (see server/src/routes/stocks.ts's DAILY_DIGEST_TTL
+// comment: a redeploy/cold start can lose older entries).
+export async function fetchDailyDigestHistory(): Promise<{ items: DigestHistoryItem[] }> {
+  const { data } = await api.get("/market/daily-digest/history");
+  return data;
+}
+
+export async function fetchDailyDigestByDate(date: string): Promise<DailyDigest> {
+  const { data } = await api.get(`/market/daily-digest/${date}`);
   return data;
 }
 

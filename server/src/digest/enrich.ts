@@ -4,7 +4,8 @@ import { getHistoryWithFallback } from "../providers/fallback.js";
 import { latestBuySince } from "../signals/trendScanner.js";
 import { SECTOR_MAP } from "../data/sectorMap.js";
 import { extractKeyRatios } from "./ratios.js";
-import type { CompanySnapshot, DailyDigest, TrendAction } from "./marketDigest.js";
+import { findProfitItem, findRevenueItem, latestPeriodMetric } from "./financials.js";
+import type { CompanySnapshot, DailyDigest, FundamentalMetric, TrendAction } from "./marketDigest.js";
 
 function vndMagnitude(value: number): string {
   if (value >= 1_000_000_000_000) return `${(value / 1_000_000_000_000).toFixed(2)} nghìn tỷ đ`;
@@ -15,6 +16,30 @@ function vndMagnitude(value: number): string {
 function ratioText(v: number | null, unit: string): string {
   if (v === null) return "—";
   return `${v.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}${unit === "%" ? "%" : ""}`;
+}
+
+// "cùng kỳ" (YoY) is the standard apples-to-apples read for a quarterly
+// figure — used whenever the same quarter last year is actually in the
+// report; falls back to QoQ, then to just the raw figure with no growth
+// framing if neither comparison period is available.
+function growthPhrase(metric: FundamentalMetric | null, label: string): string | null {
+  if (!metric) return null;
+  const valueText = `${metric.value.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}${
+    metric.unit ? ` ${metric.unit}` : ""
+  }`;
+  if (metric.yoyGrowthPercent !== null) {
+    const dir = metric.yoyGrowthPercent >= 0 ? "tăng" : "giảm";
+    return `${label} ${metric.periodLabel} đạt ${valueText}, ${dir} ${Math.abs(metric.yoyGrowthPercent).toFixed(
+      1
+    )}% so với cùng kỳ`;
+  }
+  if (metric.qoqGrowthPercent !== null) {
+    const dir = metric.qoqGrowthPercent >= 0 ? "tăng" : "giảm";
+    return `${label} ${metric.periodLabel} đạt ${valueText}, ${dir} ${Math.abs(metric.qoqGrowthPercent).toFixed(
+      1
+    )}% so với kỳ trước`;
+  }
+  return `${label} ${metric.periodLabel} đạt ${valueText}`;
 }
 
 // Same trend-following rule as the price chart's own Mua/Bán markers and
@@ -41,17 +66,32 @@ async function computeTrendAction(symbol: string): Promise<TrendAction> {
 }
 
 async function computeCompanySnapshot(symbol: string, name: string, exchange: string): Promise<CompanySnapshot | null> {
-  const [financialsResult, profileResult] = await Promise.allSettled([
+  const [ratiosResult, kqkdResult, profileResult] = await Promise.allSettled([
     fetchFinancialReport(symbol, "CSTC", "year"),
+    fetchFinancialReport(symbol, "KQKD", "quarter"),
     getCompanyProfileWithFallback(symbol),
   ]);
 
   const valuation =
-    financialsResult.status === "fulfilled"
-      ? extractKeyRatios(financialsResult.value)
-      : { pe: null, pb: null, roe: null };
+    ratiosResult.status === "fulfilled" ? extractKeyRatios(ratiosResult.value) : { pe: null, pb: null, roe: null };
 
-  if (profileResult.status !== "fulfilled" && financialsResult.status !== "fulfilled") return null;
+  let revenue: FundamentalMetric | null = null;
+  let profit: FundamentalMetric | null = null;
+  if (kqkdResult.status === "fulfilled") {
+    const report = kqkdResult.value;
+    const revenueItem = findRevenueItem(report);
+    const profitItem = findProfitItem(report);
+    revenue = revenueItem ? latestPeriodMetric(report, revenueItem) : null;
+    profit = profitItem ? latestPeriodMetric(report, profitItem) : null;
+  }
+
+  if (
+    ratiosResult.status !== "fulfilled" &&
+    profileResult.status !== "fulfilled" &&
+    kqkdResult.status !== "fulfilled"
+  ) {
+    return null;
+  }
 
   const profile = profileResult.status === "fulfilled" ? profileResult.value : null;
 
@@ -68,6 +108,8 @@ async function computeCompanySnapshot(symbol: string, name: string, exchange: st
       pb: valuation.pb?.value ?? null,
       roe: valuation.roe?.value ?? null,
     },
+    revenue,
+    profit,
   };
 }
 
@@ -107,6 +149,12 @@ export async function enrichDailyDigest(digest: DailyDigest): Promise<DailyDiges
         company.businessModel ? ` — ${company.businessModel}` : ""
       }${company.charterCapitalText ? `. Vốn điều lệ ${company.charterCapitalText}` : ""}. Định giá hiện tại: ${valuationText}.`
     );
+
+    const revenuePhrase = growthPhrase(company.revenue, "Doanh thu");
+    const profitPhrase = growthPhrase(company.profit, "lợi nhuận sau thuế");
+    if (revenuePhrase || profitPhrase) {
+      paragraphs.push(`Kết quả kinh doanh: ${[revenuePhrase, profitPhrase].filter(Boolean).join("; ")}.`);
+    }
   }
 
   // The action itself is rendered as its own callout below the article

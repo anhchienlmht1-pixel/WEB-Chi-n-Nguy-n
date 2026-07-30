@@ -1,7 +1,7 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import type { DigestMarketPulse } from "../types";
-import { fetchDailyDigest } from "../api/client";
+import type { DigestMarketPulse, FundamentalMetric } from "../types";
+import { fetchDailyDigest, fetchDailyDigestByDate, fetchDailyDigestHistory } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { formatPercent, formatPrice, formatVolume } from "../utils/format";
 
@@ -21,6 +21,11 @@ const TONE_CLASS: Record<string, string> = {
 function formatRatio(v: number | null): string {
   if (v === null) return "—";
   return v.toLocaleString("vi-VN", { maximumFractionDigits: 2 });
+}
+
+function shortDate(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
 }
 
 // Decorative "at a glance" graphic for the thumbnail — two bars sized off
@@ -46,15 +51,59 @@ function ThumbnailChart({ pulse, up }: { pulse: DigestMarketPulse; up: boolean }
   );
 }
 
+function FundamentalRow({ label, metric }: { label: string; metric: FundamentalMetric | null }) {
+  if (!metric) return null;
+  const growth = metric.yoyGrowthPercent ?? metric.qoqGrowthPercent;
+  const growthLabel = metric.yoyGrowthPercent !== null ? "so với cùng kỳ" : "so với kỳ trước";
+  return (
+    <div className="flex items-center justify-between gap-2 py-1">
+      <span className="text-xs text-slate-500 dark:text-slate-400">
+        {label} <span className="text-slate-400 dark:text-slate-500">({metric.periodLabel})</span>
+      </span>
+      <span className="flex items-center gap-1.5 text-sm">
+        <span className="font-semibold text-slate-800 dark:text-slate-100">
+          {metric.value.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}
+          {metric.unit ? ` ${metric.unit}` : ""}
+        </span>
+        {growth !== null && (
+          <span
+            className={growth >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}
+            title={growthLabel}
+          >
+            {growth >= 0 ? "+" : ""}
+            {growth.toFixed(1)}%
+          </span>
+        )}
+      </span>
+    </div>
+  );
+}
+
+const todayIso = () => new Date().toISOString().slice(0, 10);
+
 export default function DailyDigest() {
-  // Refetching every few minutes is enough — the server already pins one
-  // article per calendar day, so this is only here to pick up a fresh topic
-  // right after midnight without a manual page reload.
-  const { data, error, loading } = usePolling(fetchDailyDigest, [], 5 * 60 * 1000);
+  // null = today (live, polled); a date string = browsing history (fetched
+  // once, no polling needed since a past day's article never changes).
+  const [viewDate, setViewDate] = useState<string | null>(null);
+  const { data, error, loading } = usePolling(
+    () => (viewDate ? fetchDailyDigestByDate(viewDate) : fetchDailyDigest()),
+    [viewDate],
+    viewDate ? 0 : 5 * 60 * 1000
+  );
+  // Best-effort list of past days still held in the server's cache — see
+  // the durability caveat in server/src/routes/stocks.ts (DAILY_DIGEST_TTL).
+  const { data: history } = usePolling(fetchDailyDigestHistory, [], 5 * 60 * 1000);
+
   // Thumbnail + title show first — the rest of the article only renders
   // once the reader clicks through, like a blog listing's teaser card.
   const [expanded, setExpanded] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  // Switching to a different day (today <-> history) should re-show that
+  // day's own teaser rather than staying expanded from whatever was open.
+  useEffect(() => {
+    setExpanded(false);
+  }, [data?.date]);
 
   function openArticle() {
     setExpanded(true);
@@ -78,6 +127,33 @@ export default function DailyDigest() {
           Mỗi ngày một chủ đề, chọn tự động dựa trên biến động thực tế của thị trường trong phiên.
         </p>
       </div>
+
+      {history && history.items.length > 1 && (
+        <div className="mb-5">
+          <div className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            Bài viết trước
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {history.items.map((h) => (
+              <button
+                key={h.date}
+                type="button"
+                onClick={() => setViewDate(h.date === todayIso() ? null : h.date)}
+                className={`flex shrink-0 flex-col items-start gap-0.5 rounded-lg border px-3 py-1.5 text-left transition-colors ${
+                  (viewDate ?? todayIso()) === h.date
+                    ? "border-emerald-500 bg-emerald-50 dark:border-emerald-500 dark:bg-emerald-500/10"
+                    : "border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800"
+                }`}
+              >
+                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                  {shortDate(h.date)}
+                </span>
+                <span className="max-w-[160px] truncate text-xs text-slate-700 dark:text-slate-300">{h.title}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {loading && !data && <p className="text-slate-500 dark:text-slate-400">Đang tải bản tin...</p>}
 
@@ -189,6 +265,14 @@ export default function DailyDigest() {
                     </div>
                   </div>
                 </div>
+
+                {(data.company.revenue || data.company.profit) && (
+                  <div className="mb-3 divide-y divide-slate-100 border-y border-slate-100 dark:divide-slate-800 dark:border-slate-800">
+                    <FundamentalRow label="Doanh thu" metric={data.company.revenue} />
+                    <FundamentalRow label="Lợi nhuận sau thuế" metric={data.company.profit} />
+                  </div>
+                )}
+
                 {data.company.businessModel && (
                   <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
                     {data.company.businessModel}

@@ -33,6 +33,14 @@ export interface DigestMarketPulse {
   median: number;
 }
 
+export interface FundamentalMetric {
+  periodLabel: string;
+  value: number;
+  unit: string;
+  qoqGrowthPercent: number | null;
+  yoyGrowthPercent: number | null;
+}
+
 export interface CompanySnapshot {
   symbol: string;
   name: string;
@@ -42,6 +50,8 @@ export interface CompanySnapshot {
   charterCapitalText: string | null;
   listingDate: string | null;
   valuation: { pe: number | null; pb: number | null; roe: number | null };
+  revenue: FundamentalMetric | null;
+  profit: FundamentalMetric | null;
 }
 
 export type TrendStance = "MUA" | "DUNG_NGOAI";

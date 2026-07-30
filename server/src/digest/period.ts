@@ -20,3 +20,14 @@ export function sortPeriodIndices(periods: string[], direction: "asc" | "desc" =
   if (direction === "desc") indices.reverse();
   return indices;
 }
+
+/** The label of the same reporting period one year earlier — "Q2 2026" ->
+ * "Q2 2025", bare "2026" -> "2025" — for a "cùng kỳ" (year-over-year)
+ * comparison. Null if the label doesn't parse as either shape. */
+export function samePeriodLastYearLabel(label: string): string | null {
+  const q = label.match(/^Q(\d)\s+(\d{4})$/i);
+  if (q) return `Q${q[1]} ${Number(q[2]) - 1}`;
+  const y = label.match(/^(\d{4})$/);
+  if (y) return String(Number(y[1]) - 1);
+  return null;
+}
