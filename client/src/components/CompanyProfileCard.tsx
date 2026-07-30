@@ -106,6 +106,7 @@ export default function CompanyProfileCard({ symbol, fallbackName }: { symbol: s
   const description = profile?.description ?? liveProfile?.businessModel ?? null;
   const hasLeadership = (liveProfile?.officers.length ?? 0) > 0 || liveProfile?.ceoName;
   const hasShareholders = (liveProfile?.shareholders.length ?? 0) > 0;
+  const hasSubsidiaries = (liveProfile?.subsidiaries.length ?? 0) > 0;
 
   if (!profile && figures.length === 0 && !liveProfile) return null;
 
@@ -162,8 +163,8 @@ export default function CompanyProfileCard({ symbol, fallbackName }: { symbol: s
         </div>
       )}
 
-      {(hasLeadership || hasShareholders) && (
-        <div className="grid grid-cols-1 gap-px border-t border-slate-200 bg-slate-200 dark:border-slate-800 dark:bg-slate-800 sm:grid-cols-2">
+      {(hasLeadership || hasShareholders || hasSubsidiaries) && (
+        <div className="grid grid-cols-1 gap-px border-t border-slate-200 bg-slate-200 dark:border-slate-800 dark:bg-slate-800 sm:grid-cols-2 lg:grid-cols-3">
           {hasLeadership && (
             <div className="bg-white p-3 dark:bg-slate-900">
               <div className="mb-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">Ban lãnh đạo</div>
@@ -184,6 +185,25 @@ export default function CompanyProfileCard({ symbol, fallbackName }: { symbol: s
                 {liveProfile!.shareholders.slice(0, 5).map((s, i) => (
                   <li key={i} className="flex justify-between gap-2">
                     <span className="truncate">{s.name ?? "—"}</span>
+                    <span className="shrink-0 font-medium tabular-nums text-slate-900 dark:text-slate-100">
+                      {s.ownershipPercent != null ? `${s.ownershipPercent.toLocaleString("vi-VN")}%` : "—"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {hasSubsidiaries && (
+            <div className="bg-white p-3 dark:bg-slate-900">
+              <div className="mb-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                Công ty con / liên kết
+              </div>
+              <ul className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
+                {liveProfile!.subsidiaries.slice(0, 5).map((s, i) => (
+                  <li key={i} className="flex justify-between gap-2">
+                    <span className="truncate" title={s.type}>
+                      {s.name ?? "—"}
+                    </span>
                     <span className="shrink-0 font-medium tabular-nums text-slate-900 dark:text-slate-100">
                       {s.ownershipPercent != null ? `${s.ownershipPercent.toLocaleString("vi-VN")}%` : "—"}
                     </span>

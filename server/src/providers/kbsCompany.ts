@@ -33,6 +33,18 @@ export interface CompanyShareholder {
   ownershipPercent: number | null;
 }
 
+export interface CompanySubsidiary {
+  name: string | null;
+  updateDate: string | null;
+  charterCapital: number | null;
+  ownershipPercent: number | null;
+  currency: string | null;
+  /** ownershipPercent > 50 = "công ty con", otherwise "công ty liên kết" —
+   * same threshold vnstock's own KBS explorer uses (explorer/kbs/company.py
+   * subsidiaries()/affiliate()). */
+  type: "công ty con" | "công ty liên kết";
+}
+
 export interface CompanyProfile {
   symbol: string;
   businessModel: string | null;
@@ -52,6 +64,7 @@ export interface CompanyProfile {
   outstandingShares: number | null;
   officers: CompanyOfficer[];
   shareholders: CompanyShareholder[];
+  subsidiaries: CompanySubsidiary[];
 }
 
 function num(v: unknown): number | null {
@@ -102,6 +115,20 @@ export function parseCompanyProfile(symbol: string, data: any): CompanyProfile {
       }))
     : [];
 
+  const subsidiaries: CompanySubsidiary[] = Array.isArray(data?.Subsidiaries)
+    ? data.Subsidiaries.map((s: any) => {
+        const ownershipPercent = num(s?.OR);
+        return {
+          name: str(s?.NM),
+          updateDate: str(s?.D),
+          charterCapital: num(s?.CC),
+          ownershipPercent,
+          currency: str(s?.CR),
+          type: (ownershipPercent ?? 0) > 50 ? "công ty con" : "công ty liên kết",
+        } as CompanySubsidiary;
+      })
+    : [];
+
   return {
     symbol: upper,
     businessModel: stripHtml(data?.SM),
@@ -121,6 +148,7 @@ export function parseCompanyProfile(symbol: string, data: any): CompanyProfile {
     outstandingShares: num(data?.KLCPLH),
     officers,
     shareholders,
+    subsidiaries,
   };
 }
 

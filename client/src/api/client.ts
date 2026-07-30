@@ -172,6 +172,15 @@ export interface CompanyShareholder {
   ownershipPercent: number | null;
 }
 
+export interface CompanySubsidiary {
+  name: string | null;
+  updateDate: string | null;
+  charterCapital: number | null;
+  ownershipPercent: number | null;
+  currency: string | null;
+  type: "công ty con" | "công ty liên kết";
+}
+
 export interface CompanyProfile {
   symbol: string;
   businessModel: string | null;
@@ -191,6 +200,7 @@ export interface CompanyProfile {
   outstandingShares: number | null;
   officers: CompanyOfficer[];
   shareholders: CompanyShareholder[];
+  subsidiaries: CompanySubsidiary[];
   // Which live provider this profile actually came from (KBS tried first,
   // VCI as fallback) — surfaced in the UI so the source is always disclosed.
   source: "KBS" | "VCI";
@@ -198,6 +208,30 @@ export interface CompanyProfile {
 
 export async function fetchCompanyProfile(symbol: string): Promise<CompanyProfile> {
   const { data } = await api.get(`/company-profile/${encodeURIComponent(symbol)}`);
+  return data;
+}
+
+// Corporate events, dividends, and insider trading all come from KBS
+// endpoints vnstock's own KBS explorer doesn't map to named fields (see
+// server/src/providers/kbsEvents.ts) — each item is passed through as
+// whatever raw key/value pairs KBS returns, rendered generically rather
+// than guessed at.
+export type RawRecord = Record<string, unknown>;
+
+export async function fetchCompanyEvents(symbol: string, eventType?: number): Promise<{ items: RawRecord[] }> {
+  const { data } = await api.get(`/company-events/${encodeURIComponent(symbol)}`, {
+    params: eventType !== undefined ? { type: eventType } : undefined,
+  });
+  return data;
+}
+
+export async function fetchCompanyDividends(symbol: string): Promise<{ items: RawRecord[] }> {
+  const { data } = await api.get(`/company-dividends/${encodeURIComponent(symbol)}`);
+  return data;
+}
+
+export async function fetchCompanyInsiderTrading(symbol: string): Promise<{ items: RawRecord[] }> {
+  const { data } = await api.get(`/company-insider-trading/${encodeURIComponent(symbol)}`);
   return data;
 }
 

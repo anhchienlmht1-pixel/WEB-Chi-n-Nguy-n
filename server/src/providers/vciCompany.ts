@@ -123,6 +123,11 @@ export function parseVciCompanyProfile(symbol: string, details: any, shareholder
     outstandingShares: num(details?.numberOfSharesMktCap),
     officers,
     shareholders,
+    // VCI is only the fallback source (used when KBS has nothing for a
+    // symbol) — its own subsidiaries endpoint isn't wired up here yet,
+    // same as several other KBS-only fields above (foundedDate, ceoName,
+    // ...) that VCI's response doesn't carry.
+    subsidiaries: [],
   };
 }
 

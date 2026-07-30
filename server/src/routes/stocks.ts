@@ -18,6 +18,7 @@ import { fetchDomainFavicons, debugFaviconForDomain } from "../providers/domainF
 import { COMPANY_DOMAINS } from "../data/companyDomains.js";
 import { buildDailyDigest } from "../digest/marketDigest.js";
 import { enrichDailyDigest } from "../digest/enrich.js";
+import { EVENT_TYPES, fetchKbsDividends, fetchKbsEvents, fetchKbsInsiderTrading } from "../providers/kbsEvents.js";
 
 const router = Router();
 const cache = new NodeCache({ stdTTL: 20, checkperiod: 30 });
@@ -378,6 +379,36 @@ router.get(
     // — a long 6h TTL avoids hammering KBS/VCI on every page view.
     const data = await cached(`company-profile:${symbol}`, 6 * 60 * 60, () => getCompanyProfileWithFallback(symbol));
     res.json(data);
+  })
+);
+
+router.get(
+  "/company-events/:symbol",
+  asyncHandler(async (req, res) => {
+    const symbol = String(req.params.symbol).toUpperCase();
+    const eventType = req.query.type !== undefined ? Number(req.query.type) : undefined;
+    const data = await cached(`company-events:${symbol}:${eventType ?? "all"}`, 6 * 60 * 60, () =>
+      fetchKbsEvents(symbol, eventType)
+    );
+    res.json({ symbol, eventTypes: EVENT_TYPES, items: data });
+  })
+);
+
+router.get(
+  "/company-dividends/:symbol",
+  asyncHandler(async (req, res) => {
+    const symbol = String(req.params.symbol).toUpperCase();
+    const data = await cached(`company-dividends:${symbol}`, 6 * 60 * 60, () => fetchKbsDividends(symbol));
+    res.json({ symbol, items: data });
+  })
+);
+
+router.get(
+  "/company-insider-trading/:symbol",
+  asyncHandler(async (req, res) => {
+    const symbol = String(req.params.symbol).toUpperCase();
+    const data = await cached(`company-insider-trading:${symbol}`, 6 * 60 * 60, () => fetchKbsInsiderTrading(symbol));
+    res.json({ symbol, items: data });
   })
 );
 

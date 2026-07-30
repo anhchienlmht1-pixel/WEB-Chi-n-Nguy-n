@@ -14,6 +14,7 @@ import { isSecuritiesSymbol } from "../utils/securitiesData";
 import CompanyProfileCard from "../components/CompanyProfileCard";
 import ForeignFlowPanel from "../components/ForeignFlowPanel";
 import StockOutlookPanel from "../components/StockOutlookPanel";
+import CorporateEventsPanel from "../components/CorporateEventsPanel";
 
 export default function StockDetail() {
   const { symbol = "" } = useParams();
@@ -107,6 +108,14 @@ export default function StockDetail() {
           <div className="mt-6">
             <SeasonalityHeatmap symbol={quote.symbol} />
           </div>
+
+          {!isIndexOrFutures && (
+            <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+              <CorporateEventsPanel symbol={quote.symbol} kind="dividends" />
+              <CorporateEventsPanel symbol={quote.symbol} kind="events" />
+              <CorporateEventsPanel symbol={quote.symbol} kind="insider" />
+            </div>
+          )}
 
           <div className="mt-6">
             <NewsFeed symbol={quote.symbol} />
