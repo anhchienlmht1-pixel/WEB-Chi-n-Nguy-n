@@ -2,10 +2,15 @@ import { Router, Request, Response, NextFunction } from "express";
 import NodeCache from "node-cache";
 import { getProvider } from "../providers/index.js";
 import { HistoryRange, TopExchange } from "../providers/types.js";
-import { topTradedOf, VALID_EXCHANGES } from "../providers/topTraded.js";
+import { VALID_EXCHANGES } from "../providers/topTraded.js";
 import { KbsPeriodType, KbsReportType } from "../providers/kbsFinancials.js";
 import { fetchFinancialReport } from "../providers/financials.js";
-import { getQuoteWithFallback, getHistoryWithFallback } from "../providers/fallback.js";
+import {
+  getQuoteWithFallback,
+  getHistoryWithFallback,
+  getMarketOverviewWithFallback,
+  getTopTradedWithFallback,
+} from "../providers/fallback.js";
 import { fetchInvestmentOutlook } from "../providers/googleSheet.js";
 import { fetchMoneyFlowTable } from "../providers/moneyFlowSheet.js";
 import { fetchNewsForSymbol } from "../news/cafefNews.js";
@@ -69,37 +74,34 @@ function asyncHandler(fn: (req: Request, res: Response) => Promise<void>) {
 router.get(
   "/market/top",
   asyncHandler(async (req, res) => {
-    const provider = getProvider();
     const exchange = String(req.query.exchange || "ALL").toUpperCase() as TopExchange;
     if (!VALID_EXCHANGES.includes(exchange)) {
       res.status(400).json({ error: `Sàn không hợp lệ. Dùng: ${VALID_EXCHANGES.join(", ")}` });
       return;
     }
-    const data = await cached(`top:${exchange}`, 60, () => topTradedOf(provider, exchange));
-    res.json({ provider: provider.id, exchange, items: data });
+    const { items, source } = await cached(`top:${exchange}`, 60, () => getTopTradedWithFallback(exchange));
+    res.json({ provider: source, exchange, items });
   })
 );
 
 router.get(
   "/market/overview",
   asyncHandler(async (_req, res) => {
-    const provider = getProvider();
-    const data = await cached("overview", 30, () => provider.getMarketOverview());
-    res.json({ provider: provider.id, quotes: data });
+    const { quotes, source } = await cached("overview", 30, () => getMarketOverviewWithFallback());
+    res.json({ provider: source, quotes });
   })
 );
 
 router.get(
   "/market/daily-digest",
   asyncHandler(async (_req, res) => {
-    const provider = getProvider();
     // Cache key includes today's date, so the same article is served all day
     // (one topic per day, as intended) and a fresh one is picked right after
     // midnight without needing a separate cron/scheduler.
     const today = new Date().toISOString().slice(0, 10);
     const data = await cached(`daily-digest:${today}`, 6 * 60 * 60, async () => {
-      const quotes = await provider.getMarketOverview();
-      const digest = buildDailyDigest(quotes, provider.id);
+      const { quotes, source } = await getMarketOverviewWithFallback();
+      const digest = buildDailyDigest(quotes, source);
       return enrichDailyDigest(digest);
     });
     res.json(data);

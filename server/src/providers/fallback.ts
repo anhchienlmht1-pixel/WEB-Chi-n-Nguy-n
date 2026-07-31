@@ -2,7 +2,8 @@ import { getProvider, type StockProvider } from "./index.js";
 import { kbsMarketProvider } from "./kbsMarketProvider.js";
 import { vndirectProvider } from "./vndirectProvider.js";
 import { vnstockProvider } from "./vnstockProvider.js";
-import type { HistoryPoint, HistoryRange, Quote } from "./types.js";
+import { topTradedOf } from "./topTraded.js";
+import type { HistoryPoint, HistoryRange, Quote, TopExchange, TopTradedItem } from "./types.js";
 
 // Financials already has a multi-source fallback (financials.ts: vndirect/
 // kbs/vci/cafef); quote/history had none — a single provider failing meant
@@ -75,6 +76,52 @@ export async function getHistoryWithFallback(
   }
   throw Object.assign(
     new Error(`Tất cả nguồn lịch sử giá đều lỗi cho ${symbol} (${range}). ${errors.join(" | ")}`),
+    { status: 502 }
+  );
+}
+
+export interface MarketOverviewWithSource {
+  quotes: Quote[];
+  source: string;
+}
+
+// Batch board data (the main "Thị trường" table) previously called
+// getProvider() directly with no fallback — a single misconfigured/down
+// source took down the whole page even though getQuote/getHistory already
+// had a fallback chain. Reuses the same ordering so the board and the
+// per-symbol detail view tend to agree on which source answered.
+export async function getMarketOverviewWithFallback(): Promise<MarketOverviewWithSource> {
+  const errors: string[] = [];
+  for (const provider of orderedProviders()) {
+    try {
+      const quotes = await provider.getMarketOverview();
+      if (quotes.length > 0) return { quotes, source: provider.id };
+      errors.push(`${provider.id}: dữ liệu rỗng`);
+    } catch (err) {
+      errors.push(`${provider.id}: ${errorMessage(err).slice(0, 150)}`);
+    }
+  }
+  throw Object.assign(new Error(`Tất cả nguồn bảng giá đều lỗi. ${errors.join(" | ")}`), { status: 502 });
+}
+
+export interface TopTradedWithSource {
+  items: TopTradedItem[];
+  source: string;
+}
+
+export async function getTopTradedWithFallback(exchange: TopExchange): Promise<TopTradedWithSource> {
+  const errors: string[] = [];
+  for (const provider of orderedProviders()) {
+    try {
+      const items = await topTradedOf(provider, exchange);
+      if (items.length > 0) return { items, source: provider.id };
+      errors.push(`${provider.id}: dữ liệu rỗng`);
+    } catch (err) {
+      errors.push(`${provider.id}: ${errorMessage(err).slice(0, 150)}`);
+    }
+  }
+  throw Object.assign(
+    new Error(`Tất cả nguồn top giao dịch đều lỗi (${exchange}). ${errors.join(" | ")}`),
     { status: 502 }
   );
 }
