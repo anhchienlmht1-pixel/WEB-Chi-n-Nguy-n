@@ -41,6 +41,13 @@ export interface FundamentalMetric {
   yoyGrowthPercent: number | null;
 }
 
+export interface NewsCitation {
+  title: string;
+  link: string;
+  source: string;
+  pubDate: string | null;
+}
+
 export type TrendStance = "MUA" | "DUNG_NGOAI";
 
 export interface TrendAction {
@@ -88,6 +95,12 @@ export interface DailyDigest {
    * symbol, for marketSnapshot.topTraded's top 5 — filled in by
    * server/src/digest/enrich.ts. Empty until then. */
   liquidityCommentary: Record<string, string>;
+  /** Real news headlines mentioning primarySymbol (CafeF, scraped/RSS —
+   * see server/src/news/cafefNews.ts), so a move/liquidity-spike claim about
+   * that stock is backed by an actual cited source instead of asserted with
+   * no evidence. Empty when nothing recent mentions the symbol — never
+   * fabricated. Filled in by server/src/digest/enrich.ts. */
+  newsCitations: NewsCitation[];
 }
 
 function isoDate(d: Date): string {
@@ -505,5 +518,6 @@ export function buildDailyDigest(quotes: Quote[], providerId: string, now: Date 
     primarySymbol: article.primarySymbol,
     action: null,
     liquidityCommentary: {},
+    newsCitations: [],
   };
 }

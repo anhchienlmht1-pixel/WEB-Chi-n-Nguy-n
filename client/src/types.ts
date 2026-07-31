@@ -151,6 +151,13 @@ export interface TrendAction {
   reasoning: string;
 }
 
+export interface NewsCitation {
+  title: string;
+  link: string;
+  source: string;
+  pubDate: string | null;
+}
+
 export interface DailyDigest {
   date: string;
   provider: string;
@@ -167,4 +174,5 @@ export interface DailyDigest {
   primarySymbol: string | null;
   action: TrendAction | null;
   liquidityCommentary: Record<string, string>;
+  newsCitations: NewsCitation[];
 }

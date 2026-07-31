@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import type { DigestMarketPulse, DigestStockRef, MarketSnapshot } from "../types";
+import type { DigestMarketPulse, DigestStockRef, MarketSnapshot, NewsCitation } from "../types";
 import { fetchDailyDigest, fetchDailyDigestByDate, fetchDailyDigestHistory } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { formatPercent, formatPrice, formatVolume } from "../utils/format";
@@ -145,6 +145,39 @@ function MarketSnapshotSection({
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// Real headlines backing up whatever the article's primary symbol did
+// today (a "why", not just the "what") — see server/src/digest/enrich.ts.
+// Empty when nothing recent actually mentions the symbol; never a
+// fabricated reason.
+function NewsCitationsSection({ symbol, items }: { symbol: string | null; items: NewsCitation[] }) {
+  if (!symbol || items.length === 0) return null;
+  return (
+    <div className="mt-4 rounded-lg border border-slate-200 p-4 dark:border-slate-800">
+      <div className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+        Tin tức liên quan tới {symbol}
+      </div>
+      <ul className="space-y-2">
+        {items.map((n) => (
+          <li key={n.link}>
+            <a
+              href={n.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-emerald-600 hover:underline dark:text-emerald-400"
+            >
+              {n.title}
+            </a>
+            <div className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">
+              {n.source}
+              {n.pubDate && ` · ${new Date(n.pubDate).toLocaleDateString("vi-VN")}`}
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -336,6 +369,8 @@ export default function DailyDigest() {
                 <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-300">{data.action.reasoning}</p>
               </div>
             )}
+
+            <NewsCitationsSection symbol={data.primarySymbol} items={data.newsCitations} />
 
             {data.relatedStocks.length > 0 && (
               <div className="mt-5 border-t border-slate-200 pt-4 dark:border-slate-800">
