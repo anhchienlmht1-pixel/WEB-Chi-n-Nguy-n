@@ -113,6 +113,11 @@ export async function fetchNewsForSymbol(
   return data;
 }
 
+export async function fetchMarketNews(limit = 30): Promise<{ items: NewsItem[] }> {
+  const { data } = await api.get("/market/news", { params: { limit } });
+  return data;
+}
+
 export interface StockOutlookRecord {
   symbol: string;
   updatedAt: string;

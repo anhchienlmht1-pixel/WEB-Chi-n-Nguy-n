@@ -13,7 +13,7 @@ import {
 } from "../providers/fallback.js";
 import { fetchInvestmentOutlook } from "../providers/googleSheet.js";
 import { fetchMoneyFlowTable } from "../providers/moneyFlowSheet.js";
-import { fetchNewsForSymbol } from "../news/cafefNews.js";
+import { fetchNewsForSymbol, fetchCafefNews } from "../news/cafefNews.js";
 import { getCompanyProfileWithFallback } from "../providers/companyProfileFallback.js";
 import { scanBuySignals } from "../signals/trendScanner.js";
 import { scanMovingAverages } from "../signals/maScanner.js";
@@ -183,6 +183,15 @@ router.get(
     const limit = Math.min(30, Math.max(1, Number(req.query.limit) || 10));
     const data = await cached(`news:${symbol}`, 600, () => fetchNewsForSymbol(symbol, limit));
     res.json({ symbol, ...data });
+  })
+);
+
+router.get(
+  "/market/news",
+  asyncHandler(async (req, res) => {
+    const limit = Math.min(60, Math.max(1, Number(req.query.limit) || 30));
+    const items = await cached(`market-news:${limit}`, 600, () => fetchCafefNews(limit));
+    res.json({ items });
   })
 );
 
