@@ -340,3 +340,33 @@ export const vnstockProvider: StockProvider = {
     return ranked.slice(0, 10);
   },
 };
+
+// Full-exchange board (all ~1,600 HOSE/HNX/UPCOM tickers, not just the
+// curated STOCK_UNIVERSE) — reuses the same cached fetchFullBoard()/
+// fetchGroupSymbols() infrastructure getTopTraded() already relies on, and
+// the same quoteFromBoardItem() mapping getQuote/getQuotes use, so a symbol
+// outside STOCK_UNIVERSE still gets a real name (Vietcap's own organName)
+// instead of falling back to just its ticker. Kept as a standalone export
+// (not part of the StockProvider interface) since only this VCI-backed
+// source has a verified "list every symbol in an exchange" endpoint — KBS's
+// board API only returns quotes for symbols you already know to ask for.
+export async function getFullMarketQuotes(exchange: TopExchange = "ALL"): Promise<Quote[]> {
+  const [items, bySymbolExchange] = await Promise.all([fetchFullBoard(), fetchGroupSymbols()]);
+  const quotes: Quote[] = [];
+  for (const item of items) {
+    const quote = quoteFromBoardItem(item);
+    if (!quote) continue;
+    const ex = bySymbolExchange.get(quote.symbol);
+    if (ex) quote.exchange = ex;
+    if (exchange !== "ALL" && quote.exchange !== exchange) continue;
+    quotes.push(quote);
+  }
+  if (quotes.length === 0 && items.length > 0) {
+    const preview = JSON.stringify(items[0]).slice(0, 400);
+    throw Object.assign(
+      new Error(`Vietcap trả về ${items.length} dòng nhưng không dòng nào hợp lệ. Raw item mẫu: ${preview}`),
+      { status: 502 }
+    );
+  }
+  return quotes;
+}

@@ -3,6 +3,7 @@ import NodeCache from "node-cache";
 import { getProvider } from "../providers/index.js";
 import { HistoryRange, TopExchange } from "../providers/types.js";
 import { VALID_EXCHANGES } from "../providers/topTraded.js";
+import { getFullMarketQuotes } from "../providers/vnstockProvider.js";
 import { KbsPeriodType, KbsReportType } from "../providers/kbsFinancials.js";
 import { fetchFinancialReport } from "../providers/financials.js";
 import {
@@ -89,6 +90,24 @@ router.get(
   asyncHandler(async (_req, res) => {
     const { quotes, source } = await cached("overview", 30, () => getMarketOverviewWithFallback());
     res.json({ provider: source, quotes });
+  })
+);
+
+// Full exchange board (~1,600 HOSE/HNX/UPCOM tickers), separate from
+// /market/overview's curated ~70-symbol watchlist. Only the vnstock (VCI)
+// source has a verified "list every symbol" endpoint, so this always uses
+// that one directly rather than going through the configured DATA_PROVIDER/
+// fallback chain — disclosed via the response's own "provider" field.
+router.get(
+  "/market/board",
+  asyncHandler(async (req, res) => {
+    const exchange = String(req.query.exchange || "ALL").toUpperCase() as TopExchange;
+    if (!VALID_EXCHANGES.includes(exchange)) {
+      res.status(400).json({ error: `Sàn không hợp lệ. Dùng: ${VALID_EXCHANGES.join(", ")}` });
+      return;
+    }
+    const quotes = await cached(`board:${exchange}`, 60, () => getFullMarketQuotes(exchange));
+    res.json({ provider: "vnstock", exchange, quotes });
   })
 );
 
