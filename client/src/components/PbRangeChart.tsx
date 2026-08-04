@@ -6,8 +6,12 @@ const WIDTH = 900;
 const HEIGHT = 260;
 const PAD = { top: 16, right: 16, bottom: 28, left: 44 };
 
-const COLOR_RANGE = "#cbd5e1";
-const COLOR_AVERAGE = "#10b981"; // site's primary/emerald brand color
+// Three deliberately contrasting hues (blue / green / red) so Range,
+// Average, and current P/B stay visually distinct at a glance — Average
+// keeps the site's primary emerald, Range moved off its old washed-out
+// gray to a blue that reads clearly against both the markers and the page.
+const COLOR_RANGE = "#3b82f6";
+const COLOR_AVERAGE = "#10b981";
 const COLOR_CURRENT = "#dc2626";
 
 function formatPb(v: number): string {
@@ -130,6 +134,7 @@ export default function PbRangeChart({ data, title }: { data: PbStat[]; title: s
                     width={barWidth}
                     height={Math.max(1, y(d.min) - y(d.max))}
                     fill={COLOR_RANGE}
+                    fillOpacity={0.35}
                     rx={2}
                   />
                 )}
