@@ -7,7 +7,7 @@ const HEIGHT = 260;
 const PAD = { top: 16, right: 16, bottom: 28, left: 44 };
 
 const COLOR_RANGE = "#cbd5e1";
-const COLOR_AVERAGE = "#1d4ed8";
+const COLOR_AVERAGE = "#10b981"; // site's primary/emerald brand color
 const COLOR_CURRENT = "#dc2626";
 
 function formatPb(v: number): string {
