@@ -34,6 +34,15 @@ export default function Hero() {
           nghiệp — tất cả trong một nơi duy nhất.
         </p>
 
+        <a
+          href="https://www.youtube.com/watch?v=CyUYSWOAavw"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-6 inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-5 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-emerald-400"
+        >
+          ▶️ Hướng dẫn mở tài khoản chứng khoán
+        </a>
+
         <div className="mt-8 flex flex-wrap gap-8 sm:gap-12">
           {STATS.map((s) => (
             <div key={s.label}>
