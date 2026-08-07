@@ -102,11 +102,16 @@ export default function StockStrength() {
         )}
 
         {data && data.sectors.length > 0 && (
-          <div className="flex flex-wrap items-start gap-2">
+          // CSS multi-column (not flexbox) so short sector blocks pack up
+          // next to each other and the board balances into a compact
+          // rectangle, instead of one tall column (e.g. "BDS" with 20+
+          // mã) setting the row height and leaving big gaps under every
+          // shorter column next to it.
+          <div className="columns-[120px] gap-2">
             {visibleSectors.map((s) => (
               <div
                 key={s.sector}
-                className="w-28 shrink-0 overflow-hidden rounded-md border border-slate-200 dark:border-slate-800"
+                className="mb-2 w-full break-inside-avoid overflow-hidden rounded-md border border-slate-200 dark:border-slate-800"
               >
                 <div className="border-b border-slate-200 bg-slate-100 px-1.5 py-1 text-center text-[10px] font-bold uppercase leading-tight tracking-wide text-slate-700 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-200">
                   {s.sector}
