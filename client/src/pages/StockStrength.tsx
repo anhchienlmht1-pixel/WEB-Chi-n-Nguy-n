@@ -1,10 +1,49 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { usePolling } from "../hooks/usePolling";
-import { fetchStockStrength } from "../api/client";
+import { fetchStockStrength, type StockStrengthSector } from "../api/client";
 import { STRENGTH_BANDS, bandFor } from "../utils/stockStrength";
 
 const POLL_MS = 5 * 60 * 1000; // server caches the underlying sheet read for 5 min
+
+// CSS multi-column (column-count/column-width) can't be trusted to fill
+// the card edge-to-edge here: its own balance algorithm is free to decide
+// fewer columns already balance the content and leave the rest of the
+// container's width as a blank trailing gap — confirmed by testing it
+// directly, not just assumed. So the column split is done by hand: pick a
+// column count from viewport width, then greedily drop each sector into
+// whichever column is currently shortest (classic multiprocessor
+// scheduling heuristic), and render the result as a CSS grid with `1fr`
+// tracks — grid tracks always stretch to fill 100% of the row, guaranteed.
+function columnsForWidth(width: number): number {
+  if (width < 640) return 2;
+  if (width < 768) return 3;
+  if (width < 1024) return 4;
+  if (width < 1280) return 5;
+  if (width < 1536) return 7;
+  return 9;
+}
+
+const HEADER_H = 26;
+const ROW_H = 25;
+
+function estimateSectorHeight(s: StockStrengthSector): number {
+  return HEADER_H + s.stocks.length * ROW_H;
+}
+
+function packIntoColumns(sectors: StockStrengthSector[], columnCount: number): StockStrengthSector[][] {
+  const columns: StockStrengthSector[][] = Array.from({ length: columnCount }, () => []);
+  const heights = new Array(columnCount).fill(0);
+  for (const sector of sectors) {
+    let shortest = 0;
+    for (let i = 1; i < columnCount; i++) {
+      if (heights[i] < heights[shortest]) shortest = i;
+    }
+    columns[shortest].push(sector);
+    heights[shortest] += estimateSectorHeight(sector);
+  }
+  return columns;
+}
 
 function bandRangeLabel(min: number | null, max: number | null): string {
   if (min === null) return `<${max}`;
@@ -46,6 +85,15 @@ function LegendChips({
 export default function StockStrength() {
   const { data, error, loading } = usePolling(() => fetchStockStrength(), [], POLL_MS);
   const [activeBand, setActiveBand] = useState<string | null>(null);
+  const [columnCount, setColumnCount] = useState(() => columnsForWidth(window.innerWidth));
+
+  useEffect(() => {
+    function onResize() {
+      setColumnCount(columnsForWidth(window.innerWidth));
+    }
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   const totalCount = useMemo(
     () => (data ? data.sectors.reduce((sum, s) => sum + s.stocks.length, 0) : 0),
@@ -60,6 +108,11 @@ export default function StockStrength() {
       .map((s) => ({ ...s, stocks: s.stocks.filter((st) => bandFor(st.score).label === activeBand) }))
       .filter((s) => s.stocks.length > 0);
   }, [data, activeBand]);
+
+  const packedColumns = useMemo(
+    () => packIntoColumns(visibleSectors, columnCount),
+    [visibleSectors, columnCount]
+  );
 
   return (
     <div className="mx-auto max-w-[1600px] px-4 py-4">
@@ -102,36 +155,40 @@ export default function StockStrength() {
         )}
 
         {data && data.sectors.length > 0 && (
-          // CSS multi-column (not flexbox) so short sector blocks pack up
-          // next to each other and the board balances into a compact
-          // rectangle, instead of one tall column (e.g. "BDS" with 20+
-          // mã) setting the row height and leaving big gaps under every
-          // shorter column next to it.
-          <div className="columns-[120px] gap-2">
-            {visibleSectors.map((s) => (
-              <div
-                key={s.sector}
-                className="mb-2 w-full break-inside-avoid overflow-hidden rounded-md border border-slate-200 dark:border-slate-800"
-              >
-                <div className="border-b border-slate-200 bg-slate-100 px-1.5 py-1 text-center text-[10px] font-bold uppercase leading-tight tracking-wide text-slate-700 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-200">
-                  {s.sector}
-                </div>
-                <div>
-                  {s.stocks.map((st) => {
-                    const band = bandFor(st.score);
-                    return (
-                      <Link
-                        key={st.symbol}
-                        to={`/stock/${st.symbol}`}
-                        title={`${st.symbol} — ${band.label} (${st.score})`}
-                        className={`flex items-center justify-between gap-1 border-b border-slate-100 px-1.5 py-1 text-xs transition-opacity last:border-0 hover:opacity-80 dark:border-slate-900/60 ${band.className}`}
-                      >
-                        <span className="font-semibold">{st.symbol}</span>
-                        <span className="tabular-nums">{st.score}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
+          // Hand-packed masonry (see packIntoColumns above) rendered as a
+          // CSS grid with equal 1fr tracks — every column gets sectors and
+          // every column stretches to fill the row, so the board always
+          // spans the full card width instead of trailing off with a
+          // blank gap on the right.
+          <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))` }}>
+            {packedColumns.map((col, i) => (
+              <div key={i} className="flex flex-col gap-2">
+                {col.map((s) => (
+                  <div
+                    key={s.sector}
+                    className="overflow-hidden rounded-md border border-slate-200 dark:border-slate-800"
+                  >
+                    <div className="border-b border-slate-200 bg-slate-100 px-1.5 py-1 text-center text-[10px] font-bold uppercase leading-tight tracking-wide text-slate-700 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-200">
+                      {s.sector}
+                    </div>
+                    <div>
+                      {s.stocks.map((st) => {
+                        const band = bandFor(st.score);
+                        return (
+                          <Link
+                            key={st.symbol}
+                            to={`/stock/${st.symbol}`}
+                            title={`${st.symbol} — ${band.label} (${st.score})`}
+                            className={`flex items-center justify-between gap-1 border-b border-slate-100 px-1.5 py-1 text-xs transition-opacity last:border-0 hover:opacity-80 dark:border-slate-900/60 ${band.className}`}
+                          >
+                            <span className="font-semibold">{st.symbol}</span>
+                            <span className="tabular-nums">{st.score}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
             ))}
           </div>
