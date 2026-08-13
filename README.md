@@ -107,3 +107,12 @@ Repo đã có sẵn `vercel.json` + thư mục `api/` (Serverless Functions) nê
    - `FIREANT_TOKEN` nếu chuyển sang provider `fireant`
 3. Project Settings → **Deployment Protection**: nếu bật "Vercel Authentication" hoặc "Password Protection", người ngoài truy cập domain sẽ gặp lỗi 403. Tắt đi (hoặc thêm domain vào danh sách bypass) nếu muốn ai cũng xem được.
 4. Redeploy. Vercel sẽ tự nhận `api/*.ts` thành các endpoint `/api/health`, `/api/market/overview`, `/api/market/top`, `/api/quote/:symbol`, `/api/history/:symbol`, `/api/search`, và build `client/` thành site tĩnh theo cấu hình trong `vercel.json`.
+
+### Lưu lịch sử bài viết "Bản tin" (tuỳ chọn)
+
+Mặc định, bài viết "Bản tin" (`/ban-tin`) chỉ được cache tạm trong bộ nhớ server 6 tiếng — qua ngày mới hoặc khi request chạy trên một serverless instance khác là bài cũ mất, không xem lại được. Để lưu lại lịch sử lâu dài:
+
+1. Vercel Dashboard → project → tab **Storage** → **Create Database** → chọn **Blob** → đặt tên rồi **Connect** vào project. Vercel sẽ tự thêm biến môi trường `BLOB_READ_WRITE_TOKEN` — không cần copy token thủ công.
+2. Redeploy. Từ lần chạy tiếp theo, mỗi bài viết mới sẽ tự lưu vào Blob và trang `/ban-tin` sẽ hiện thêm mục "Bài viết trước đó" để đọc lại các ngày cũ.
+
+Không bật bước này thì trang vẫn hoạt động bình thường (chỉ là không lưu lịch sử) — `server/src/digest/digestHistory.ts` tự bỏ qua an toàn khi thiếu `BLOB_READ_WRITE_TOKEN`.

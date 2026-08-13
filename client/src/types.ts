@@ -164,3 +164,14 @@ export interface DailyDigest {
   company: CompanySnapshot | null;
   action: TrendAction | null;
 }
+
+// Lightweight entry from GET /market/daily-digest/history — date/title/
+// topic/heroStat only, not the full article body (see server/src/digest/
+// digestHistory.ts).
+export interface DigestHistoryEntry {
+  date: string;
+  topic: DigestTopic;
+  topicLabel: string;
+  title: string;
+  heroStat: DigestHeroStat;
+}

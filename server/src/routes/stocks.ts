@@ -24,6 +24,7 @@ import { fetchDomainFavicons, debugFaviconForDomain } from "../providers/domainF
 import { COMPANY_DOMAINS } from "../data/companyDomains.js";
 import { buildDailyDigest } from "../digest/marketDigest.js";
 import { enrichDailyDigest } from "../digest/enrich.js";
+import { saveDigestToHistory, listDigestHistory, getDigestFromHistory, isDigestHistoryEnabled } from "../digest/digestHistory.js";
 import { fetchStockStrength } from "../providers/stockStrength.js";
 
 const router = Router();
@@ -111,17 +112,63 @@ router.get(
   })
 );
 
+// Cache key includes today's date, so the same article is served all day
+// (one topic per day, as intended) and a fresh one is picked right after
+// midnight without needing a separate cron/scheduler. The in-memory cache
+// alone doesn't survive a new day / server restart / a different
+// serverless instance though — saveDigestToHistory persists the finished
+// article to Vercel Blob (best-effort, awaited so it finishes before the
+// response goes out — see digest/digestHistory.ts) the moment it's first
+// generated, so past articles stay browsable via /market/daily-digest/:date.
+async function loadTodayDigest() {
+  const today = new Date().toISOString().slice(0, 10);
+  return cached(`daily-digest:${today}`, 6 * 60 * 60, async () => {
+    const { quotes, source } = await getMarketOverviewWithFallback();
+    const digest = buildDailyDigest(quotes, source);
+    const enriched = await enrichDailyDigest(digest);
+    await saveDigestToHistory(enriched);
+    return enriched;
+  });
+}
+
 router.get(
   "/market/daily-digest",
   asyncHandler(async (_req, res) => {
-    // Cache key includes today's date, so the same article is served all day
-    // (one topic per day, as intended) and a fresh one is picked right after
-    // midnight without needing a separate cron/scheduler.
+    res.json(await loadTodayDigest());
+  })
+);
+
+// Lightweight archive list (date/title/topic/heroStat only, no full article
+// bodies) for a "past bài viết" browser — empty (not an error) when Blob
+// storage isn't configured, so the UI can just hide the archive instead.
+router.get(
+  "/market/daily-digest/history",
+  asyncHandler(async (_req, res) => {
+    const items = await cached("daily-digest-history", 300, () => listDigestHistory());
+    res.json({ enabled: isDigestHistoryEnabled(), items });
+  })
+);
+
+// A specific past day's article, read back from the durable archive.
+router.get(
+  "/market/daily-digest/:date",
+  asyncHandler(async (req, res) => {
+    const date = String(req.params.date);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      res.status(400).json({ error: "Ngày không hợp lệ. Định dạng: YYYY-MM-DD" });
+      return;
+    }
     const today = new Date().toISOString().slice(0, 10);
-    const data = await cached(`daily-digest:${today}`, 6 * 60 * 60, async () => {
-      const { quotes, source } = await getMarketOverviewWithFallback();
-      const digest = buildDailyDigest(quotes, source);
-      return enrichDailyDigest(digest);
+    if (date === today) {
+      res.json(await loadTodayDigest());
+      return;
+    }
+    const data = await cached(`daily-digest:${date}`, 24 * 60 * 60, async () => {
+      const found = await getDigestFromHistory(date);
+      if (!found) {
+        throw Object.assign(new Error(`Không tìm thấy bài viết ngày ${date}.`), { status: 404 });
+      }
+      return found;
     });
     res.json(data);
   })

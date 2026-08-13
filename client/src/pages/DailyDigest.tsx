@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { DigestMarketPulse } from "../types";
-import { fetchDailyDigest } from "../api/client";
+import { fetchDailyDigest, fetchDailyDigestByDate, fetchDailyDigestHistory } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { formatPercent, formatPrice, formatVolume } from "../utils/format";
 
@@ -21,6 +21,13 @@ const TONE_CLASS: Record<string, string> = {
 function formatRatio(v: number | null): string {
   if (v === null) return "—";
   return v.toLocaleString("vi-VN", { maximumFractionDigits: 2 });
+}
+
+function formatDateLabel(dateStr: string, style: "long" | "short" = "long"): string {
+  const d = new Date(dateStr);
+  return style === "long"
+    ? d.toLocaleDateString("vi-VN", { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" })
+    : d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
 // Decorative "at a glance" graphic for the thumbnail — two bars sized off
@@ -47,10 +54,22 @@ function ThumbnailChart({ pulse, up }: { pulse: DigestMarketPulse; up: boolean }
 }
 
 export default function DailyDigest() {
-  // Refetching every few minutes is enough — the server already pins one
-  // article per calendar day, so this is only here to pick up a fresh topic
-  // right after midnight without a manual page reload.
-  const { data, error, loading } = usePolling(fetchDailyDigest, [], 5 * 60 * 1000);
+  // null = today's article (the usual case); a date string means the
+  // reader picked a past article from the archive below. Past articles
+  // never change once written, so no point polling those — only "today"
+  // (which the server itself may swap to a new topic after midnight)
+  // needs the periodic refetch.
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const { data, error, loading } = usePolling(
+    () => (selectedDate ? fetchDailyDigestByDate(selectedDate) : fetchDailyDigest()),
+    [selectedDate],
+    selectedDate ? 0 : 5 * 60 * 1000
+  );
+  // Archive list of past articles — persisted server-side to Vercel Blob
+  // (see server/src/digest/digestHistory.ts) so past days' articles stay
+  // readable instead of disappearing once the in-memory "today" cache
+  // moves on to a new date.
+  const { data: history } = usePolling(fetchDailyDigestHistory, [], 0);
   // Thumbnail + title show first — the rest of the article only renders
   // once the reader clicks through, like a blog listing's teaser card.
   const [expanded, setExpanded] = useState(false);
@@ -61,14 +80,21 @@ export default function DailyDigest() {
     requestAnimationFrame(() => contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
 
-  const dateLabel = data
-    ? new Date(data.date).toLocaleDateString("vi-VN", {
-        weekday: "long",
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
-    : "";
+  // Clicking a past article from the archive is already an explicit "read
+  // this" action, so it skips straight to expanded instead of making the
+  // reader click "Đọc tiếp" a second time.
+  function openHistoryEntry(date: string) {
+    setSelectedDate(date);
+    setExpanded(true);
+    requestAnimationFrame(() => contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }
+
+  function backToToday() {
+    setSelectedDate(null);
+    setExpanded(false);
+  }
+
+  const dateLabel = data ? formatDateLabel(data.date) : "";
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
@@ -85,6 +111,21 @@ export default function DailyDigest() {
         <div className="rounded-lg border border-red-300 bg-red-50 p-4 dark:border-red-900/60 dark:bg-red-950/30">
           <p className="font-medium text-red-600 dark:text-red-400">Lỗi tải bản tin</p>
           <p className="mt-1 text-sm text-red-500 dark:text-red-300/90">{error}</p>
+        </div>
+      )}
+
+      {selectedDate && (
+        <div className="mb-3 flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs dark:border-slate-800 dark:bg-slate-800/50">
+          <span className="text-slate-500 dark:text-slate-400">
+            Đang xem bài viết đã lưu ngày {formatDateLabel(selectedDate, "short")}
+          </span>
+          <button
+            type="button"
+            onClick={backToToday}
+            className="font-semibold text-emerald-600 hover:underline dark:text-emerald-400"
+          >
+            ← Bài viết hôm nay
+          </button>
         </div>
       )}
 
@@ -265,6 +306,38 @@ export default function DailyDigest() {
           </div>
           )}
         </article>
+      )}
+
+      {history && history.enabled && history.items.length > 0 && (
+        <div className="mt-8">
+          <h3 className="mb-3 text-sm font-bold text-slate-900 dark:text-slate-100">Bài viết trước đó</h3>
+          <div className="space-y-2">
+            {history.items
+              .filter((h) => h.date !== (data?.date ?? ""))
+              .map((h) => (
+                <button
+                  key={h.date}
+                  type="button"
+                  onClick={() => openHistoryEntry(h.date)}
+                  className="flex w-full flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left text-sm transition-colors hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800/60"
+                >
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                      TOPIC_BADGE_CLASS[h.topic] ?? TOPIC_BADGE_CLASS.breadth
+                    }`}
+                  >
+                    {h.topicLabel}
+                  </span>
+                  <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">
+                    {formatDateLabel(h.date, "short")}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate font-medium text-slate-800 dark:text-slate-100">
+                    {h.title}
+                  </span>
+                </button>
+              ))}
+          </div>
+        </div>
       )}
     </div>
   );

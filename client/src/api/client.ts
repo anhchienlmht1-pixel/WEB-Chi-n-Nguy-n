@@ -1,6 +1,7 @@
 import axios from "axios";
 import type {
   DailyDigest,
+  DigestHistoryEntry,
   FinancialPeriodType,
   FinancialReport,
   FinancialReportType,
@@ -55,6 +56,21 @@ export async function fetchMarketBoard(
 // overall breadth) from the day's quotes. See server/src/digest/marketDigest.ts.
 export async function fetchDailyDigest(): Promise<DailyDigest> {
   const { data } = await api.get("/market/daily-digest");
+  return data;
+}
+
+// Archive of past days' articles (persisted to Vercel Blob server-side —
+// see server/src/digest/digestHistory.ts). `enabled: false` means the
+// server has no Blob store configured yet, not that history is merely
+// empty — callers can use that to hide the archive UI instead of showing
+// an empty list.
+export async function fetchDailyDigestHistory(): Promise<{ enabled: boolean; items: DigestHistoryEntry[] }> {
+  const { data } = await api.get("/market/daily-digest/history");
+  return data;
+}
+
+export async function fetchDailyDigestByDate(date: string): Promise<DailyDigest> {
+  const { data } = await api.get(`/market/daily-digest/${date}`);
   return data;
 }
 
