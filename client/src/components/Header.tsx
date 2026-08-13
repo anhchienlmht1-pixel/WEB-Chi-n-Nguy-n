@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import SearchBox from "./SearchBox";
+import TrendSignalBell from "./TrendSignalBell";
 import { useTheme } from "../hooks/useTheme";
 
 const NAV_ITEMS = [
@@ -52,6 +53,7 @@ export default function Header() {
           <div className="min-w-0 flex-1 sm:w-40 sm:flex-none md:w-52">
             <SearchBox />
           </div>
+          <TrendSignalBell />
           <button
             onClick={toggle}
             title={theme === "dark" ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"}
