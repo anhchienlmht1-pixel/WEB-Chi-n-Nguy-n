@@ -18,6 +18,7 @@ import { fetchDomainFavicons, debugFaviconForDomain } from "../providers/domainF
 import { COMPANY_DOMAINS } from "../data/companyDomains.js";
 import { buildDailyDigest } from "../digest/marketDigest.js";
 import { enrichDailyDigest } from "../digest/enrich.js";
+import { getDigest, isDigestStoreDurable, listDigestDates, saveDigest } from "../digest/digestStore.js";
 import { EVENT_TYPES, fetchKbsDividends, fetchKbsEvents, fetchKbsInsiderTrading } from "../providers/kbsEvents.js";
 
 const router = Router();
@@ -89,28 +90,27 @@ router.get(
   })
 );
 
-const DAILY_DIGEST_PREFIX = "daily-digest:";
-// Long-lived so a day's article survives to be read as "history" well after
-// that day — this is still only an in-memory (per server process) cache,
-// though, not durable storage: a redeploy or a long-idle cold start can
-// still lose older entries. Good enough for "browse recent days" on a
-// single-instance deploy; a real guarantee would need e.g. Vercel KV.
-const DAILY_DIGEST_TTL = 45 * 24 * 60 * 60;
+// Persisted via server/src/digest/digestStore.ts — durable (Upstash Redis)
+// when configured, otherwise the same in-memory-only fallback this used to
+// always be. isDigestStoreDurable is surfaced in the history response so
+// the UI can honestly show which mode is actually active.
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 router.get(
   "/market/daily-digest",
   asyncHandler(async (_req, res) => {
     const provider = getProvider();
-    // Cache key includes today's date, so the same article is served all day
-    // (one topic per day, as intended) and a fresh one is picked right after
+    // Keyed by today's date, so the same article is served all day (one
+    // topic per day, as intended) and a fresh one is picked right after
     // midnight without needing a separate cron/scheduler.
     const today = new Date().toISOString().slice(0, 10);
-    const data = await cached(`${DAILY_DIGEST_PREFIX}${today}`, DAILY_DIGEST_TTL, async () => {
+    let data = await getDigest(today);
+    if (!data) {
       const quotes = await provider.getMarketOverview();
       const digest = buildDailyDigest(quotes, provider.id);
-      return enrichDailyDigest(digest);
-    });
+      data = await enrichDailyDigest(digest);
+      await saveDigest(today, data);
+    }
     res.json(data);
   })
 );
@@ -118,24 +118,17 @@ router.get(
 router.get(
   "/market/daily-digest/history",
   asyncHandler(async (_req, res) => {
-    // Whatever days happen to still be in the process's cache — see the
-    // durability caveat on DAILY_DIGEST_TTL above.
-    const items = cache
-      .keys()
-      .filter((k) => k.startsWith(DAILY_DIGEST_PREFIX))
-      .map((k) => {
-        const digest = cache.get<{ topic: string; topicLabel: string; title: string }>(k);
-        if (!digest) return null;
-        return {
-          date: k.slice(DAILY_DIGEST_PREFIX.length),
-          topic: digest.topic,
-          topicLabel: digest.topicLabel,
-          title: digest.title,
-        };
-      })
-      .filter((x): x is NonNullable<typeof x> => x !== null)
-      .sort((a, b) => b.date.localeCompare(a.date));
-    res.json({ items });
+    const dates = await listDigestDates(60);
+    const items = (
+      await Promise.all(
+        dates.map(async (date) => {
+          const digest = await getDigest(date);
+          if (!digest) return null;
+          return { date, topic: digest.topic, topicLabel: digest.topicLabel, title: digest.title };
+        })
+      )
+    ).filter((x): x is NonNullable<typeof x> => x !== null);
+    res.json({ items, durable: isDigestStoreDurable });
   })
 );
 
@@ -147,10 +140,12 @@ router.get(
       res.status(400).json({ error: "Ngày không hợp lệ, dùng định dạng YYYY-MM-DD." });
       return;
     }
-    const digest = cache.get(`${DAILY_DIGEST_PREFIX}${date}`);
+    const digest = await getDigest(date);
     if (!digest) {
       res.status(404).json({
-        error: `Không còn lưu bài viết ngày ${date} — có thể server đã khởi động lại, hoặc ngày đó chưa từng có ai xem trang Bản tin.`,
+        error: isDigestStoreDurable
+          ? `Không tìm thấy bài viết ngày ${date} — ngày đó có thể chưa từng có ai xem trang Bản tin.`
+          : `Không còn lưu bài viết ngày ${date} — có thể server đã khởi động lại (chưa bật lưu trữ bền vững), hoặc ngày đó chưa từng có ai xem trang Bản tin.`,
       });
       return;
     }

@@ -233,8 +233,18 @@ export default function DailyDigest() {
 
       {history && history.items.length > 1 && (
         <div className="mb-5">
-          <div className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
-            Bài viết trước
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+              Bài viết trước
+            </span>
+            {!history.durable && (
+              <span
+                className="text-[11px] text-amber-600 dark:text-amber-400"
+                title="Server chưa cấu hình lưu trữ bền vững (Redis) — danh sách này có thể mất khi server khởi động lại."
+              >
+                ⚠ chưa bật lưu trữ bền vững
+              </span>
+            )}
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1">
             {history.items.map((h) => (

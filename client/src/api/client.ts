@@ -52,10 +52,12 @@ export async function fetchDailyDigest(): Promise<DailyDigest> {
   return data;
 }
 
-// Whatever past days' articles the server still has cached — best-effort,
-// not a durable archive (see server/src/routes/stocks.ts's DAILY_DIGEST_TTL
-// comment: a redeploy/cold start can lose older entries).
-export async function fetchDailyDigestHistory(): Promise<{ items: DigestHistoryItem[] }> {
+// Past days' articles — durable (survives redeploys/cold starts) when the
+// server has Upstash Redis configured (see server/src/digest/digestStore.ts),
+// otherwise a best-effort in-memory list that's lost on restart. `durable`
+// says which mode actually answered this request, so the UI can disclose it
+// honestly instead of assuming.
+export async function fetchDailyDigestHistory(): Promise<{ items: DigestHistoryItem[]; durable: boolean }> {
   const { data } = await api.get("/market/daily-digest/history");
   return data;
 }

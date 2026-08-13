@@ -5,6 +5,7 @@
   "description": "Vercel serverless API functions for StockDash (shares provider logic with server/)",
   "type": "module",
   "dependencies": {
+    "@upstash/redis": "^1.38.2",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "node-cache": "^5.1.2",
