@@ -238,7 +238,21 @@ const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
       }
     }
 
-    chart.timeScale().fitContent();
+    // fitContent() would zoom out to show the entire fetched history (years
+    // of daily bars for a symbol that's been listed a while) — technically
+    // correct but not a usable default view, since almost every real look
+    // at the chart means immediately zooming back in by hand. Defaulting to
+    // the most recent ~6 months of bars instead gives a readable starting
+    // view; the full history is still one scroll-out away.
+    const DEFAULT_VISIBLE_BARS = 130;
+    if (points.length > DEFAULT_VISIBLE_BARS) {
+      chart.timeScale().setVisibleLogicalRange({
+        from: points.length - DEFAULT_VISIBLE_BARS,
+        to: points.length - 1 + 2, // a couple of bars of right-side breathing room
+      });
+    } else {
+      chart.timeScale().fitContent();
+    }
 
     const pointsByTime = new Map(points.map((p) => [Math.floor(new Date(p.time).getTime() / 1000), p]));
 
