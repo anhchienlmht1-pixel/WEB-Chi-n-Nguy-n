@@ -25,10 +25,15 @@ export default function StockStrength() {
         <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           Biểu đồ kỹ thuật
         </h2>
-        <TechnicalChartPanel symbol={chartSymbol} onSymbolChange={setChartSymbol} height={420} />
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+          <div className="min-w-0 flex-1">
+            <TechnicalChartPanel symbol={chartSymbol} onSymbolChange={setChartSymbol} height={420} />
+          </div>
+          <div className="w-full shrink-0 lg:w-80">
+            <TrendSignalScanner />
+          </div>
+        </div>
       </div>
-
-      <TrendSignalScanner />
     </div>
   );
 }
