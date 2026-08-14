@@ -6,8 +6,10 @@ import { STRENGTH_BANDS, bandFor } from "../utils/stockStrength";
 import { formatPercent, formatPrice, formatVolume, trendClass } from "../utils/format";
 import type { Quote } from "../types";
 import TrendSignalScanner from "../components/TrendSignalScanner";
+import TechnicalChartPanel from "../components/TechnicalChartPanel";
 
 const POLL_MS = 5 * 60 * 1000; // server caches the underlying sheet read for 5 min
+const DEFAULT_CHART_SYMBOL = "VNINDEX";
 
 function bandRangeLabel(min: number | null, max: number | null): string {
   if (min === null) return `<${max}`;
@@ -52,6 +54,7 @@ export default function StockStrength() {
   const { data, error, loading } = usePolling(() => fetchStockStrength(), [], POLL_MS);
   const { data: boardData } = usePolling(() => fetchMarketBoard("ALL"), [], POLL_MS);
   const [activeBand, setActiveBand] = useState<string | null>(null);
+  const [chartSymbol, setChartSymbol] = useState(DEFAULT_CHART_SYMBOL);
   const navigate = useNavigate();
 
   const quoteBySymbol = useMemo(() => {
@@ -76,10 +79,26 @@ export default function StockStrength() {
 
   return (
     <div className="mx-auto max-w-[1600px] px-4 py-4">
-      <div className="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/40">
+      <div className="mb-4">
+        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+          THỰC CHIẾN CỔ PHIẾU
+        </h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          Biểu đồ kỹ thuật, tín hiệu MUA trend-following và sức mạnh cổ phiếu theo ngành — tất cả trong một trang.
+        </p>
+      </div>
+
+      <div className="mb-4">
+        <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          Biểu đồ kỹ thuật
+        </h2>
+        <TechnicalChartPanel symbol={chartSymbol} onSymbolChange={setChartSymbol} height={420} />
+      </div>
+
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/40">
         <div>
           <div className="flex flex-wrap items-baseline gap-2">
-            <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">THỰC CHIẾN CỔ PHIẾU</h1>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Leader Board</h2>
             <span className="text-sm text-slate-500 dark:text-slate-400">sức mạnh cổ phiếu theo ngành</span>
           </div>
           <LegendChips activeBand={activeBand} onToggle={(l) => setActiveBand((cur) => (cur === l ? null : l))} />
@@ -95,7 +114,7 @@ export default function StockStrength() {
         )}
       </div>
 
-      <div className="mt-4">
+      <div className="mb-4">
         <TrendSignalScanner />
       </div>
 
