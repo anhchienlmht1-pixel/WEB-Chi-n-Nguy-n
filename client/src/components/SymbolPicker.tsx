@@ -15,7 +15,13 @@ export default function SymbolPicker({ value, onChange }: { value: string; onCha
         return;
       }
       try {
-        setResults(await searchSymbols(query));
+        const data = await searchSymbols(query);
+        setResults(data);
+        // Typing out the exact symbol (case-insensitive) is already
+        // unambiguous — jump straight there instead of making the reader
+        // press Enter or click the one row that could possibly match.
+        const exact = data.find((r) => r.symbol.toUpperCase() === query.trim().toUpperCase());
+        if (exact) select(exact.symbol);
       } catch {
         setResults([]);
       }

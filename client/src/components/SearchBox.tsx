@@ -19,6 +19,11 @@ export default function SearchBox() {
       try {
         const data = await searchSymbols(query);
         setResults(data);
+        // Typing out the exact symbol (case-insensitive) is already
+        // unambiguous — jump straight there instead of making the reader
+        // press Enter or click the one row that could possibly match.
+        const exact = data.find((r) => r.symbol.toUpperCase() === query.trim().toUpperCase());
+        if (exact) goTo(exact.symbol);
       } catch {
         setResults([]);
       }
