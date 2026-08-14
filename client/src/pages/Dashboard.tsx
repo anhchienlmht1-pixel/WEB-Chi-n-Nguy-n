@@ -5,7 +5,6 @@ import { useWatchlist } from "../hooks/useWatchlist";
 import TopTraded from "../components/TopTraded";
 import MarketMovers from "../components/MarketMovers";
 import TechnicalChartPanel from "../components/TechnicalChartPanel";
-import Hero from "../components/Hero";
 import IndexTicker from "../components/IndexTicker";
 import LeaderBoard from "../components/LeaderBoard";
 import TrendSignalScanner from "../components/TrendSignalScanner";
@@ -19,8 +18,6 @@ export default function Dashboard() {
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-6">
-      <Hero />
-
       <IndexTicker />
 
       <div className="mb-6">
