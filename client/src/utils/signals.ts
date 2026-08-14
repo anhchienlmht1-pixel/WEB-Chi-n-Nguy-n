@@ -78,22 +78,59 @@ export interface TradingSignal {
   time: number;
   price: number;
   type: "buy" | "sell";
+  /** Short label drawn next to the marker — tranche number for buys
+   * ("Mua 2/3 (+8.0%)"), realized P&L for sells ("Bán hết 2/3 (+12.4%)").
+   * Unset only for `all`'s raw per-bar entries, which nothing renders. */
+  note?: string;
 }
 
 export interface TradingSignalsResult {
   // Every bar matching the buy/sell condition — mirrors the pasted code's
-  // df['Buy_Signal'].sum() / df['Sell_Signal'].sum() counts exactly.
+  // df['Buy_Signal'].sum() / df['Sell_Signal'].sum() counts exactly. Used
+  // by latestSignal() below, not drawn on the chart.
   all: TradingSignal[];
-  // Only the first bar of each buy/sell streak — what actually gets drawn
-  // on the chart, since a marker on every single matching day (often most
-  // of a trend) is unreadable clutter rather than a useful entry/exit cue.
+  // The actual trade events drawn on the chart — see the position-sizing
+  // comment above computeTradingSignals for what triggers each one.
   transitions: TradingSignal[];
+}
+
+const TRANCHE_COUNT = 3;
+// Pyramid into a confirmed uptrend instead of buying 100% at once: tranche
+// 1 fires right at entry, tranche 2 once price is 8% above entry, tranche
+// 3 once it's 16% above entry (each only while the trend is still intact).
+const PYRAMID_STEPS_PCT = [0, 8, 16];
+// Lock in some profit early — sell the first tranche once price is this
+// far above entry — while still holding the rest for as long as the trend
+// lasts, rather than only ever selling everything at once on reversal.
+const EARLY_TAKE_PROFIT_PCT = 20;
+
+interface OpenTranche {
+  price: number;
+  sold: boolean;
+}
+
+interface Position {
+  entryPrice: number;
+  tranches: OpenTranche[];
+  earlyTakeProfitDone: boolean;
+}
+
+function pct(from: number, to: number): string {
+  const v = ((to - from) / from) * 100;
+  return `${v >= 0 ? "+" : ""}${v.toFixed(1)}%`;
 }
 
 // Buy: SMA20 > SMA50, ADX(14) > 25, Supertrend(10,3) uptrend.
 // Sell: SMA20 < SMA50, or Supertrend downtrend.
-// (Ported 1:1 from a user-supplied vnstock_ta example — same thresholds,
-// same indicator periods.)
+// (Underlying signal ported 1:1 from a user-supplied vnstock_ta example —
+// same thresholds, same indicator periods.)
+//
+// Position sizing on top of that raw signal (illustrative money-management
+// overlay, not the signal itself, and not investment advice): buy in 3
+// tranches, adding to the position as the trend proves itself (pyramiding)
+// instead of going all-in on the first bar; take some profit early off the
+// first tranche once the trade is well ahead; sell whatever tranches are
+// still open the moment the trend actually reverses.
 export function computeTradingSignals(points: HistoryPoint[]): TradingSignalsResult {
   if (points.length < 51) return { all: [], transitions: [] };
 
@@ -117,6 +154,7 @@ export function computeTradingSignals(points: HistoryPoint[]): TradingSignalsRes
   const all: TradingSignal[] = [];
   const transitions: TradingSignal[] = [];
   let prevType: "buy" | "sell" | null = null;
+  let position: Position | null = null;
 
   for (const p of points) {
     const t = toSeconds(p);
@@ -130,11 +168,58 @@ export function computeTradingSignals(points: HistoryPoint[]): TradingSignalsRes
     if (s20 > s50 && adxVal > 25 && direction === 1) type = "buy";
     else if (s20 < s50 || direction === -1) type = "sell";
 
-    if (type) {
-      const signal: TradingSignal = { time: t, price: type === "buy" ? p.low : p.high, type };
-      all.push(signal);
-      if (type !== prevType) transitions.push(signal);
+    if (type) all.push({ time: t, price: type === "buy" ? p.low : p.high, type });
+
+    if (type === "buy") {
+      if (prevType !== "buy") {
+        // Fresh entry — start a new position with tranche 1.
+        position = { entryPrice: p.close, tranches: [{ price: p.close, sold: false }], earlyTakeProfitDone: false };
+        transitions.push({ time: t, price: p.low, type: "buy", note: `Mua 1/${TRANCHE_COUNT}` });
+      } else if (position) {
+        // Pyramid in: add the next tranche once price clears its step.
+        const nextIdx = position.tranches.length;
+        if (nextIdx < TRANCHE_COUNT && p.close >= position.entryPrice * (1 + PYRAMID_STEPS_PCT[nextIdx] / 100)) {
+          position.tranches.push({ price: p.close, sold: false });
+          transitions.push({
+            time: t,
+            price: p.low,
+            type: "buy",
+            note: `Mua ${nextIdx + 1}/${TRANCHE_COUNT} (${pct(position.entryPrice, p.close)})`,
+          });
+        }
+
+        // Early partial profit-take — sell the first (oldest) open tranche
+        // once the trade is far enough ahead, keep the rest riding the trend.
+        if (!position.earlyTakeProfitDone && p.close >= position.entryPrice * (1 + EARLY_TAKE_PROFIT_PCT / 100)) {
+          const firstOpen = position.tranches.find((tr) => !tr.sold);
+          if (firstOpen) {
+            firstOpen.sold = true;
+            position.earlyTakeProfitDone = true;
+            const soldCount = position.tranches.filter((tr) => tr.sold).length;
+            transitions.push({
+              time: t,
+              price: p.high,
+              type: "sell",
+              note: `Chốt lãi ${soldCount}/${TRANCHE_COUNT} (${pct(firstOpen.price, p.close)})`,
+            });
+          }
+        }
+      }
+    } else if (prevType === "buy" && position) {
+      // Trend broke — exit whatever tranches are still open, profit or loss.
+      const open = position.tranches.filter((tr) => !tr.sold);
+      if (open.length > 0) {
+        const avgCost = open.reduce((sum, tr) => sum + tr.price, 0) / open.length;
+        transitions.push({
+          time: t,
+          price: p.high,
+          type: "sell",
+          note: `Bán hết ${open.length}/${TRANCHE_COUNT} (${pct(avgCost, p.close)})`,
+        });
+      }
+      position = null;
     }
+
     prevType = type;
   }
 

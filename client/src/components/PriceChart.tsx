@@ -161,7 +161,10 @@ const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
         position: s.type === "buy" ? "belowBar" : "aboveBar",
         color: s.type === "buy" ? UP : DOWN,
         shape: s.type === "buy" ? "arrowUp" : "arrowDown",
-        text: s.type === "buy" ? "MUA" : "BÁN",
+        // note already spells out tranche/P&L ("Mua 2/3 (+8.0%)", "Bán hết
+        // 2/3 (-3.1%)"...) — falls back to the plain MUA/BÁN label for any
+        // signal that somehow doesn't have one.
+        text: s.note ?? (s.type === "buy" ? "MUA" : "BÁN"),
       }));
       createSeriesMarkers(mainSeries, markers);
     }
