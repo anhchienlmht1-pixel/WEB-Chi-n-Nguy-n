@@ -5,6 +5,7 @@ import { fetchStockStrength, fetchMarketBoard } from "../api/client";
 import { STRENGTH_BANDS, bandFor } from "../utils/stockStrength";
 import { formatPercent, formatPrice, formatVolume, trendClass } from "../utils/format";
 import type { Quote } from "../types";
+import TrendSignalScanner from "../components/TrendSignalScanner";
 
 const POLL_MS = 5 * 60 * 1000; // server caches the underlying sheet read for 5 min
 
@@ -78,7 +79,7 @@ export default function StockStrength() {
       <div className="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/40">
         <div>
           <div className="flex flex-wrap items-baseline gap-2">
-            <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">Leader Board</h1>
+            <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">THỰC CHIẾN CỔ PHIẾU</h1>
             <span className="text-sm text-slate-500 dark:text-slate-400">sức mạnh cổ phiếu theo ngành</span>
           </div>
           <LegendChips activeBand={activeBand} onToggle={(l) => setActiveBand((cur) => (cur === l ? null : l))} />
@@ -92,6 +93,10 @@ export default function StockStrength() {
             <div>Bấm vào mã để xem chi tiết</div>
           </div>
         )}
+      </div>
+
+      <div className="mt-4">
+        <TrendSignalScanner />
       </div>
 
       <div className="mt-3">
