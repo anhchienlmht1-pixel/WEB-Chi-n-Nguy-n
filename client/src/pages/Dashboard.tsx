@@ -77,16 +77,26 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <TopTraded />
+      {/* "TOP 10 CỔ PHIẾU" / "Diễn biến thị trường" / "Tổng quan thị trường" side
+          by side as 3 parallel columns on wide screens; each already scrolls
+          its own table horizontally if it needs more room than its column
+          gets, so nothing breaks at the narrower width. Stacks back to a
+          single column below lg, where 3-across would just be unreadable. */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
+        <TopTraded />
 
-      {data && data.quotes.length > 0 && <MarketMovers quotes={data.quotes} />}
+        {data && data.quotes.length > 0 && <MarketMovers quotes={data.quotes} />}
 
-      <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
-        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-          Tổng quan thị trường
-        </h1>
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex gap-1 rounded-lg border border-slate-200 p-1 dark:border-slate-800">
+        <div>
+          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-3">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Tổng quan thị trường</h2>
+            {boardData?.provider && (
+              <span className="rounded-full border border-slate-300 px-2.5 py-1 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                Nguồn dữ liệu: {boardData.provider}
+              </span>
+            )}
+          </div>
+          <div className="mb-3 flex gap-1 rounded-lg border border-slate-200 p-1 dark:border-slate-800">
             {BOARD_TABS.map((tab) => (
               <button
                 key={tab.key}
@@ -101,45 +111,40 @@ export default function Dashboard() {
               </button>
             ))}
           </div>
-          {boardData?.provider && (
-            <span className="rounded-full border border-slate-300 px-2.5 py-1 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
-              Nguồn dữ liệu: {boardData.provider}
-            </span>
+
+          {boardLoading && !boardData && (
+            <p className="text-slate-500 dark:text-slate-400">Đang tải dữ liệu...</p>
+          )}
+          {boardError && !boardData && (
+            <div className="rounded-lg border border-red-300 bg-red-50 p-4 dark:border-red-900/60 dark:bg-red-950/30">
+              <p className="font-medium text-red-600 dark:text-red-400">Lỗi tải dữ liệu</p>
+              <p className="mt-1 text-sm text-red-500 dark:text-red-300/90">{boardError}</p>
+              <p className="mt-2 text-xs text-slate-500">
+                {boardMode === "watchlist"
+                  ? "Kiểm tra cấu hình DATA_PROVIDER trên server (Vercel → Settings → Environment Variables), sau đó Redeploy."
+                  : "Bảng toàn sàn dùng riêng nguồn vnstock (VCI) — nếu nguồn này đang lỗi, thử lại 'Mã theo dõi' trong lúc chờ."}
+              </p>
+            </div>
+          )}
+          {boardData && boardData.quotes.length === 0 && (
+            <p className="text-slate-500 dark:text-slate-400">Không có mã nào để hiển thị.</p>
+          )}
+          {/* Surfaced instead of silently hidden — a failed money-flow fetch
+              used to just make the "Dòng tiền" column vanish with no clue why. */}
+          {boardMode === "watchlist" && moneyFlowError && !moneyFlowData && (
+            <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
+              <span className="font-medium">Không tải được cột "Sức mạnh dòng tiền": </span>
+              {moneyFlowError}
+            </div>
+          )}
+          {boardData && boardData.quotes.length > 0 && (
+            <StockTable
+              quotes={boardData.quotes}
+              moneyFlow={boardMode === "watchlist" ? moneyFlow : undefined}
+            />
           )}
         </div>
       </div>
-
-      {boardLoading && !boardData && (
-        <p className="text-slate-500 dark:text-slate-400">Đang tải dữ liệu...</p>
-      )}
-      {boardError && !boardData && (
-        <div className="rounded-lg border border-red-300 bg-red-50 p-4 dark:border-red-900/60 dark:bg-red-950/30">
-          <p className="font-medium text-red-600 dark:text-red-400">Lỗi tải dữ liệu</p>
-          <p className="mt-1 text-sm text-red-500 dark:text-red-300/90">{boardError}</p>
-          <p className="mt-2 text-xs text-slate-500">
-            {boardMode === "watchlist"
-              ? "Kiểm tra cấu hình DATA_PROVIDER trên server (Vercel → Settings → Environment Variables), sau đó Redeploy."
-              : "Bảng toàn sàn dùng riêng nguồn vnstock (VCI) — nếu nguồn này đang lỗi, thử lại 'Mã theo dõi' trong lúc chờ."}
-          </p>
-        </div>
-      )}
-      {boardData && boardData.quotes.length === 0 && (
-        <p className="text-slate-500 dark:text-slate-400">Không có mã nào để hiển thị.</p>
-      )}
-      {/* Surfaced instead of silently hidden — a failed money-flow fetch
-          used to just make the "Dòng tiền" column vanish with no clue why. */}
-      {boardMode === "watchlist" && moneyFlowError && !moneyFlowData && (
-        <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
-          <span className="font-medium">Không tải được cột "Sức mạnh dòng tiền": </span>
-          {moneyFlowError}
-        </div>
-      )}
-      {boardData && boardData.quotes.length > 0 && (
-        <StockTable
-          quotes={boardData.quotes}
-          moneyFlow={boardMode === "watchlist" ? moneyFlow : undefined}
-        />
-      )}
     </div>
   );
 }
