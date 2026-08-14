@@ -7,6 +7,7 @@ import MarketMovers from "../components/MarketMovers";
 import TechnicalChartPanel from "../components/TechnicalChartPanel";
 import Hero from "../components/Hero";
 import IndexTicker from "../components/IndexTicker";
+import LeaderBoard from "../components/LeaderBoard";
 
 const DEFAULT_SYMBOL = "VNINDEX";
 
@@ -42,6 +43,10 @@ export default function Dashboard() {
         <TopTraded />
 
         {data && data.quotes.length > 0 && <MarketMovers quotes={data.quotes} />}
+      </div>
+
+      <div className="mt-6">
+        <LeaderBoard />
       </div>
     </div>
   );
