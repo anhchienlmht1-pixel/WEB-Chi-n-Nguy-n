@@ -7,7 +7,7 @@ import MarketMovers from "../components/MarketMovers";
 import TechnicalChartPanel from "../components/TechnicalChartPanel";
 import Hero from "../components/Hero";
 import TrendSignalScanner from "../components/TrendSignalScanner";
-import MarketSentiment from "../components/MarketSentiment";
+import IndexTicker from "../components/IndexTicker";
 
 const DEFAULT_SYMBOL = "VNINDEX";
 
@@ -20,7 +20,7 @@ export default function Dashboard() {
     <div className="mx-auto max-w-[1400px] px-4 py-6">
       <Hero />
 
-      <MarketSentiment />
+      <IndexTicker />
 
       <div className="mb-6">
         <h1 className="mb-3 text-xl font-bold text-slate-900 dark:text-slate-100">Biểu đồ kỹ thuật</h1>
