@@ -24,7 +24,6 @@ export default function ChartToolbar({
   onResolutionChange,
   chartType,
   onChartTypeChange,
-  onOpenIndicators,
   showSignals,
   onToggleSignals,
   onScreenshot,
@@ -42,7 +41,6 @@ export default function ChartToolbar({
   onResolutionChange: (r: ChartResolution) => void;
   chartType: ChartType;
   onChartTypeChange: (t: ChartType) => void;
-  onOpenIndicators: () => void;
   showSignals: boolean;
   onToggleSignals: () => void;
   onScreenshot: () => void;
@@ -80,14 +78,6 @@ export default function ChartToolbar({
             </button>
           ))}
         </div>
-
-        <button
-          type="button"
-          onClick={onOpenIndicators}
-          className="rounded-md px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-        >
-          Chỉ báo
-        </button>
 
         <div className="relative">
           <button
