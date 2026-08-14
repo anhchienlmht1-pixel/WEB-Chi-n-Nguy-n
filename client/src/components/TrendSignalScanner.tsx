@@ -16,7 +16,15 @@ function formatSince(iso: string): string {
 // ADX(14) > 25, Supertrend(10,3) uptrend) — computed once server-side
 // across ~70 symbols and cached, rather than the browser looping through
 // dozens of per-symbol history fetches itself.
-export default function TrendSignalScanner() {
+export default function TrendSignalScanner({
+  onSelectSymbol,
+}: {
+  /** Switches the chart sitting next to this panel to the clicked symbol
+   * in place, instead of navigating away to the stock detail page —
+   * passed on every page that renders this beside a TechnicalChartPanel.
+   * Falls back to a normal /stock/:symbol navigation when omitted. */
+  onSelectSymbol?: (symbol: string) => void;
+}) {
   const { data: hits, error, loading } = usePolling(() => fetchTrendBuySignals(), [], POLL_MS);
   const { addMany } = useWatchlist();
 
@@ -72,24 +80,21 @@ export default function TrendSignalScanner() {
         </p>
       ) : (
         <div className="max-h-96 overflow-y-auto">
-          {hits.map((h) => (
-            <div
-              key={h.symbol}
-              className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-2 last:border-0 hover:bg-slate-50 dark:border-slate-900 dark:hover:bg-slate-900/60"
-            >
-              <div className="flex min-w-0 items-center gap-2">
-                <WatchButton symbol={h.symbol} />
-                <Link to={`/stock/${h.symbol}`} className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-slate-900 dark:text-slate-100">{h.symbol}</span>
-                    <span className="text-[11px] text-slate-400 dark:text-slate-500">{h.exchange}</span>
-                  </div>
-                  <div className="truncate text-xs text-slate-400 dark:text-slate-500">
-                    Từ {formatSince(h.signalSince)}
-                  </div>
-                </Link>
+          {hits.map((h) => {
+            // WatchButton is its own <button> — kept as a sibling rather
+            // than nested inside the row's own clickable element, since a
+            // <button> (or an <a>) can't validly contain another <button>.
+            const nameBlock = (
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-slate-900 dark:text-slate-100">{h.symbol}</span>
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500">{h.exchange}</span>
+                </div>
+                <div className="truncate text-xs text-slate-400 dark:text-slate-500">Từ {formatSince(h.signalSince)}</div>
               </div>
-              <Link to={`/stock/${h.symbol}`} className="shrink-0 text-right">
+            );
+            const priceBlock = (
+              <div className="shrink-0 text-right">
                 <div className="tabular-nums font-medium text-slate-900 dark:text-slate-100">
                   {formatPrice(h.price, h.currency)}
                 </div>
@@ -104,9 +109,32 @@ export default function TrendSignalScanner() {
                 >
                   {formatPercent(h.changePercent)}
                 </div>
-              </Link>
-            </div>
-          ))}
+              </div>
+            );
+            const rowClass = "flex min-w-0 flex-1 items-center justify-between gap-2 text-left";
+            // Switches the sibling chart in place when one's provided
+            // (Dashboard/THỰC CHIẾN CP both render this next to a chart);
+            // otherwise falls back to navigating to the stock detail page.
+            return (
+              <div
+                key={h.symbol}
+                className="flex items-center gap-2 border-b border-slate-100 px-4 py-2 last:border-0 hover:bg-slate-50 dark:border-slate-900 dark:hover:bg-slate-900/60"
+              >
+                <WatchButton symbol={h.symbol} />
+                {onSelectSymbol ? (
+                  <button type="button" onClick={() => onSelectSymbol(h.symbol)} className={rowClass}>
+                    {nameBlock}
+                    {priceBlock}
+                  </button>
+                ) : (
+                  <Link to={`/stock/${h.symbol}`} className={rowClass}>
+                    {nameBlock}
+                    {priceBlock}
+                  </Link>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

@@ -30,7 +30,7 @@ export default function StockStrength() {
             <TechnicalChartPanel symbol={chartSymbol} onSymbolChange={setChartSymbol} height={420} />
           </div>
           <div className="w-full shrink-0 lg:w-80">
-            <TrendSignalScanner />
+            <TrendSignalScanner onSelectSymbol={setChartSymbol} />
           </div>
         </div>
       </div>

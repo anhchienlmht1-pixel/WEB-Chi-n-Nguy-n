@@ -35,7 +35,7 @@ export default function Dashboard() {
             />
           </div>
           <div className="w-full shrink-0 lg:w-80">
-            <TrendSignalScanner />
+            <TrendSignalScanner onSelectSymbol={setChartSymbol} />
           </div>
         </div>
       </div>
