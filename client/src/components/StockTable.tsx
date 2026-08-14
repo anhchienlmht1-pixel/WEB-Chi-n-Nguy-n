@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { MoneyFlowRecord, Quote } from "../types";
-import { formatChange, formatPercent, formatPrice, formatVolume, trendClass } from "../utils/format";
+import { formatPercent, formatPrice, formatVolume, trendClass } from "../utils/format";
 import type { KeyRatios } from "../utils/ratios";
 import WatchButton from "./WatchButton";
 
@@ -87,7 +87,7 @@ export default function StockTable({
 
   function SortHeader({ label, sortKeyValue, align = "right" }: { label: string; sortKeyValue: SortKey; align?: "left" | "right" }) {
     return (
-      <th className={`px-4 py-3 font-medium ${align === "right" ? "text-right" : "text-left"}`}>
+      <th className={`px-2 py-1.5 font-medium ${align === "right" ? "text-right" : "text-left"}`}>
         <button
           type="button"
           onClick={() => toggleSort(sortKeyValue)}
@@ -106,21 +106,20 @@ export default function StockTable({
 
   return (
     <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
-      <table className="w-full min-w-[640px] border-collapse text-sm">
+      <table className="w-full min-w-[280px] border-collapse text-xs">
         <thead>
-          <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800">
+          <tr className="border-b border-slate-200 text-left text-[10px] uppercase tracking-wide text-slate-500 dark:border-slate-800">
             <SortHeader label="Mã" sortKeyValue="symbol" align="left" />
-            <th className="px-4 py-3 font-medium">Tên</th>
+            <th className="px-2 py-1.5 font-medium">Tên</th>
             <SortHeader label="Giá" sortKeyValue="price" />
-            <th className="px-4 py-3 text-right font-medium">Thay đổi</th>
             <SortHeader label="%" sortKeyValue="changePercent" />
             <SortHeader label="KL" sortKeyValue="volume" />
             {hasRatios && <SortHeader label="P/E" sortKeyValue="pe" />}
             {hasRatios && <SortHeader label="P/B" sortKeyValue="pb" />}
             {hasRatios && <SortHeader label="ROE" sortKeyValue="roe" />}
             {hasRatios && <SortHeader label="ROA" sortKeyValue="roa" />}
-            {hasMoneyFlow && <th className="px-4 py-3 text-right font-medium">Dòng tiền</th>}
-            <th className="px-4 py-3"></th>
+            {hasMoneyFlow && <th className="px-2 py-1.5 text-right font-medium">Dòng tiền</th>}
+            <th className="px-1 py-1.5"></th>
           </tr>
         </thead>
         <tbody>
@@ -133,55 +132,52 @@ export default function StockTable({
                 onClick={() => navigate(`/stock/${q.symbol}`)}
                 className="cursor-pointer border-b border-slate-100 last:border-0 hover:bg-slate-50 dark:border-slate-900 dark:hover:bg-slate-900/60"
               >
-                <td className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+                <td className="px-2 py-1 font-semibold text-slate-900 dark:text-slate-100">
                   {q.symbol}
                 </td>
-                <td className="max-w-[240px] truncate px-4 py-3 text-slate-500 dark:text-slate-400">
+                <td className="max-w-[120px] truncate px-2 py-1 text-slate-500 dark:text-slate-400">
                   {q.name}
                 </td>
-                <td className="px-4 py-3 text-right tabular-nums text-slate-900 dark:text-slate-100">
+                <td className="px-2 py-1 text-right tabular-nums text-slate-900 dark:text-slate-100">
                   {formatPrice(q.price, q.currency)}
                 </td>
-                <td className={`px-4 py-3 text-right tabular-nums ${trendClass(q.change)}`}>
-                  {formatChange(q.change, q.currency)}
-                </td>
-                <td className={`px-4 py-3 text-right tabular-nums ${trendClass(q.changePercent)}`}>
+                <td className={`px-2 py-1 text-right tabular-nums ${trendClass(q.changePercent)}`}>
                   {formatPercent(q.changePercent)}
                 </td>
-                <td className="px-4 py-3 text-right tabular-nums text-slate-500 dark:text-slate-400">
+                <td className="px-2 py-1 text-right tabular-nums text-slate-500 dark:text-slate-400">
                   {formatVolume(q.volume)}
                 </td>
                 {hasRatios && (
-                  <td className="px-4 py-3 text-right tabular-nums text-slate-700 dark:text-slate-300">
+                  <td className="px-2 py-1 text-right tabular-nums text-slate-700 dark:text-slate-300">
                     {formatRatio(ratioValue(r, "pe"))}
                   </td>
                 )}
                 {hasRatios && (
-                  <td className="px-4 py-3 text-right tabular-nums text-slate-700 dark:text-slate-300">
+                  <td className="px-2 py-1 text-right tabular-nums text-slate-700 dark:text-slate-300">
                     {formatRatio(ratioValue(r, "pb"))}
                   </td>
                 )}
                 {hasRatios && (
-                  <td className="px-4 py-3 text-right tabular-nums text-slate-700 dark:text-slate-300">
+                  <td className="px-2 py-1 text-right tabular-nums text-slate-700 dark:text-slate-300">
                     {formatRatio(ratioValue(r, "roe"))}
                     {r?.roe && <span className="ml-0.5 text-[10px] text-slate-400">%</span>}
                   </td>
                 )}
                 {hasRatios && (
-                  <td className="px-4 py-3 text-right tabular-nums text-slate-700 dark:text-slate-300">
+                  <td className="px-2 py-1 text-right tabular-nums text-slate-700 dark:text-slate-300">
                     {formatRatio(ratioValue(r, "roa"))}
                     {r?.roa && <span className="ml-0.5 text-[10px] text-slate-400">%</span>}
                   </td>
                 )}
                 {hasMoneyFlow && (
                   <td
-                    className="px-4 py-3 text-right font-medium text-slate-700 dark:text-slate-300"
+                    className="px-2 py-1 text-right font-medium text-slate-700 dark:text-slate-300"
                     title={mf ? `${mf.sector} — hạng ${mf.rank}` : undefined}
                   >
                     {mf ? mf.score : "—"}
                   </td>
                 )}
-                <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                <td className="px-1 py-1 text-right" onClick={(e) => e.stopPropagation()}>
                   <WatchButton symbol={q.symbol} />
                 </td>
               </tr>

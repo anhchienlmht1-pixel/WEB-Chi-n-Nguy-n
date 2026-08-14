@@ -59,16 +59,15 @@ export default function TopTraded() {
       )}
       {data && data.items.length > 0 && (
         <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
-          <table className="w-full min-w-[640px] border-collapse text-sm">
+          <table className="w-full min-w-[380px] border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800">
-                <th className="px-4 py-2.5 font-medium">#</th>
-                <th className="px-4 py-2.5 font-medium">Mã</th>
-                <th className="px-4 py-2.5 font-medium">Sàn</th>
-                <th className="px-4 py-2.5 text-right font-medium">Giá</th>
-                <th className="px-4 py-2.5 text-right font-medium">%</th>
-                <th className="px-4 py-2.5 text-right font-medium">KL</th>
-                <th className="px-4 py-2.5 text-right font-medium">GT giao dịch</th>
+              <tr className="border-b border-slate-200 text-left text-[10px] uppercase tracking-wide text-slate-500 dark:border-slate-800">
+                <th className="px-2 py-1.5 font-medium">#</th>
+                <th className="px-2 py-1.5 font-medium">Mã</th>
+                <th className="px-2 py-1.5 text-right font-medium">Giá</th>
+                <th className="px-2 py-1.5 text-right font-medium">%</th>
+                <th className="px-2 py-1.5 text-right font-medium">KL</th>
+                <th className="px-2 py-1.5 text-right font-medium">GT GD</th>
               </tr>
             </thead>
             <tbody>
@@ -78,34 +77,22 @@ export default function TopTraded() {
                   onClick={() => navigate(`/stock/${item.symbol}`)}
                   className="cursor-pointer border-b border-slate-100 last:border-0 hover:bg-slate-50 dark:border-slate-900 dark:hover:bg-slate-900/60"
                 >
-                  <td className="px-4 py-2.5 text-slate-400 dark:text-slate-500">{i + 1}</td>
-                  <td className="px-4 py-2.5 font-semibold text-slate-900 dark:text-slate-100">
-                    {item.symbol}
-                    {item.name && (
-                      <span className="ml-2 hidden text-xs font-normal text-slate-400 sm:inline dark:text-slate-500">
-                        {item.name}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-2.5">
-                    <span className="rounded-full border border-slate-200 px-2 py-0.5 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
-                      {item.exchange || "—"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2.5 text-right tabular-nums text-slate-900 dark:text-slate-100">
+                  <td className="px-2 py-1 text-slate-400 dark:text-slate-500">{i + 1}</td>
+                  <td className="px-2 py-1 font-semibold text-slate-900 dark:text-slate-100">{item.symbol}</td>
+                  <td className="px-2 py-1 text-right tabular-nums text-slate-900 dark:text-slate-100">
                     {item.price != null ? formatPrice(item.price, "VND") : "—"}
                   </td>
                   <td
-                    className={`px-4 py-2.5 text-right tabular-nums ${
+                    className={`px-2 py-1 text-right tabular-nums ${
                       item.changePercent != null ? trendClass(item.changePercent) : "text-slate-400"
                     }`}
                   >
                     {item.changePercent != null ? formatPercent(item.changePercent) : "—"}
                   </td>
-                  <td className="px-4 py-2.5 text-right tabular-nums text-slate-500 dark:text-slate-400">
+                  <td className="px-2 py-1 text-right tabular-nums text-slate-500 dark:text-slate-400">
                     {item.volume != null ? formatVolume(item.volume) : "—"}
                   </td>
-                  <td className="px-4 py-2.5 text-right tabular-nums text-slate-500 dark:text-slate-400">
+                  <td className="px-2 py-1 text-right tabular-nums text-slate-500 dark:text-slate-400">
                     {formatValue(item.value)}
                   </td>
                 </tr>
