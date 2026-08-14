@@ -59,19 +59,22 @@ export default function Dashboard() {
 
       <div className="mb-6">
         <h1 className="mb-3 text-xl font-bold text-slate-900 dark:text-slate-100">Biểu đồ kỹ thuật</h1>
-        <TechnicalChartPanel
-          symbol={chartSymbol}
-          height={480}
-          onSymbolChange={setChartSymbol}
-          // /market/overview isn't behind the quote/history fallback chain
-          // yet, so this is undefined today — kept so the chart already
-          // picks up a source the moment that endpoint gains one too.
-          preferSource={data?.quotes.find((q) => q.symbol === chartSymbol)?.source}
-        />
-      </div>
-
-      <div className="mb-6">
-        <TrendSignalScanner />
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+          <div className="min-w-0 flex-1">
+            <TechnicalChartPanel
+              symbol={chartSymbol}
+              height={480}
+              onSymbolChange={setChartSymbol}
+              // /market/overview isn't behind the quote/history fallback chain
+              // yet, so this is undefined today — kept so the chart already
+              // picks up a source the moment that endpoint gains one too.
+              preferSource={data?.quotes.find((q) => q.symbol === chartSymbol)?.source}
+            />
+          </div>
+          <div className="w-full shrink-0 lg:w-80">
+            <TrendSignalScanner />
+          </div>
+        </div>
       </div>
 
       <TopTraded />

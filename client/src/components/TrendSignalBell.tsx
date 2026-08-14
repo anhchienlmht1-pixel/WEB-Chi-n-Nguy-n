@@ -12,7 +12,7 @@ function formatSince(iso: string): string {
 // on the dashboard and the chart's own Mua/Bán markers) — so a fresh
 // signal is visible from any page, not just when scrolled to that section.
 export default function TrendSignalBell() {
-  const { hits, newHits, acknowledge } = useTrendSignalNotifications();
+  const { hits, newHits, acknowledge, permission, requestPermission } = useTrendSignalNotifications();
   const [open, setOpen] = useState(false);
 
   function toggle() {
@@ -53,6 +53,29 @@ export default function TrendSignalBell() {
                 SMA20&gt;SMA50, ADX(14)&gt;25, Supertrend(10,3) tăng
               </div>
             </div>
+
+            {permission !== "unsupported" && permission !== "granted" && (
+              <div className="border-b border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-800/50">
+                {permission === "denied" ? (
+                  <p className="text-xs text-slate-400 dark:text-slate-500">
+                    Thông báo trình duyệt đang bị chặn — vào cài đặt trình duyệt cho trang này để bật lại.
+                  </p>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={requestPermission}
+                    className="w-full rounded-md bg-emerald-500 px-2.5 py-1.5 text-xs font-semibold text-slate-950 transition-colors hover:bg-emerald-400"
+                  >
+                    🔔 Bật thông báo trình duyệt khi có tín hiệu mới
+                  </button>
+                )}
+              </div>
+            )}
+            {permission === "granted" && (
+              <div className="border-b border-slate-200 px-3 py-1.5 text-[11px] text-emerald-600 dark:border-slate-800 dark:text-emerald-400">
+                ✓ Đã bật thông báo trình duyệt
+              </div>
+            )}
 
             {hits.length === 0 ? (
               <p className="p-3 text-sm text-slate-400 dark:text-slate-500">
