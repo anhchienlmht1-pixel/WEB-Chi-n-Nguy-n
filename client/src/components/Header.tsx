@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { to: "/so-sanh-pb", label: "So sánh P/B", end: false },
   { to: "/ban-tin", label: "Bản tin", end: false },
   { to: "/suc-manh-co-phieu", label: "Thực Chiến CP", end: false },
+  { href: "https://www.youtube.com/watch?v=CyUYSWOAavw", label: "Hướng Dẫn MỞ TK", external: true },
 ];
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -42,11 +43,27 @@ export default function Header() {
         </NavLink>
 
         <nav className="hidden min-w-0 items-center gap-2 overflow-x-auto md:flex">
-          {NAV_ITEMS.map((item) => (
-            <NavLink key={item.to} to={item.to} end={item.end} className={navLinkClass}>
-              {item.label}
-            </NavLink>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            if ("external" in item && item.external) {
+              return (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={navLinkClass({ isActive: false })}
+                >
+                  {item.label}
+                </a>
+              );
+            }
+            const internalItem = item as { to: string; label: string; end: boolean };
+            return (
+              <NavLink key={internalItem.to} to={internalItem.to} end={internalItem.end} className={navLinkClass}>
+                {internalItem.label}
+              </NavLink>
+            );
+          })}
         </nav>
 
         <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-2 sm:flex-none sm:gap-3">
@@ -74,17 +91,34 @@ export default function Header() {
 
       {menuOpen && (
         <nav className="border-t border-slate-200 px-4 py-2 dark:border-slate-800 md:hidden">
-          {NAV_ITEMS.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              onClick={() => setMenuOpen(false)}
-              className={mobileNavLinkClass}
-            >
-              {item.label}
-            </NavLink>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            if ("external" in item && item.external) {
+              return (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setMenuOpen(false)}
+                  className={mobileNavLinkClass({ isActive: false })}
+                >
+                  {item.label}
+                </a>
+              );
+            }
+            const internalItem = item as { to: string; label: string; end: boolean };
+            return (
+              <NavLink
+                key={internalItem.to}
+                to={internalItem.to}
+                end={internalItem.end}
+                onClick={() => setMenuOpen(false)}
+                className={mobileNavLinkClass}
+              >
+                {internalItem.label}
+              </NavLink>
+            );
+          })}
         </nav>
       )}
     </header>
