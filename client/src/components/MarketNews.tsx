@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchMarketNews, fetchTopTraded } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
-import type { NewsItem, TopExchange } from "../types";
+import type { TopExchange } from "../types";
 import { formatPercent, formatPrice, formatVolume, trendClass } from "../utils/format";
 
 type NewsTab = "tin-tuc" | "thanh-khoan-dot-biet";
