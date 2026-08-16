@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { fetchHistory } from "../api/client";
 import { fetchMarketOverview } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { useWatchlist } from "../hooks/useWatchlist";
@@ -9,6 +10,9 @@ import IndexTicker from "../components/IndexTicker";
 import LeaderBoard from "../components/LeaderBoard";
 import TrendSignalScanner from "../components/TrendSignalScanner";
 import SpecialOffers from "../components/SpecialOffers";
+import TrendSystemStats from "../components/TrendSystemStats";
+import { aggregatePoints } from "../utils/aggregate";
+import { computeTradingSignals } from "../utils/signals";
 
 const DEFAULT_SYMBOL = "VNINDEX";
 
@@ -16,6 +20,17 @@ export default function Dashboard() {
   const { data } = usePolling(fetchMarketOverview, [], 30000);
   const { symbols: watchlist } = useWatchlist();
   const [chartSymbol, setChartSymbol] = useState(watchlist[0] ?? DEFAULT_SYMBOL);
+
+  // Fetch history for signal computation
+  const historyState = usePolling(() => fetchHistory(chartSymbol, "MAX"), [chartSymbol], 5000);
+
+  // Compute trading signals
+  const signals = useMemo(() => {
+    if (!historyState.data) return [];
+    const chartPoints = aggregatePoints(historyState.data.points, "D");
+    const result = computeTradingSignals(chartPoints);
+    return result.all;
+  }, [historyState.data]);
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-6">
@@ -37,8 +52,9 @@ export default function Dashboard() {
               preferSource={data?.quotes.find((q) => q.symbol === chartSymbol)?.source}
             />
           </div>
-          <div className="w-full shrink-0 lg:w-80">
+          <div className="w-full shrink-0 lg:w-80 space-y-4">
             <TrendSignalScanner onSelectSymbol={setChartSymbol} />
+            <TrendSystemStats signals={signals} symbol={chartSymbol} />
           </div>
         </div>
       </div>
