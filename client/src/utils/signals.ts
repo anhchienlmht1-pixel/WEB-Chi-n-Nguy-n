@@ -99,10 +99,6 @@ const TRANCHE_COUNT = 3;
 // 1 fires right at entry, tranche 2 once price is 8% above entry, tranche
 // 3 once it's 16% above entry (each only while the trend is still intact).
 const PYRAMID_STEPS_PCT = [0, 8, 16];
-// Lock in some profit early — sell the first tranche once price is this
-// far above entry — while still holding the rest for as long as the trend
-// lasts, rather than only ever selling everything at once on reversal.
-const EARLY_TAKE_PROFIT_PCT = 20;
 
 interface OpenTranche {
   price: number;
@@ -112,7 +108,6 @@ interface OpenTranche {
 interface Position {
   entryPrice: number;
   tranches: OpenTranche[];
-  earlyTakeProfitDone: boolean;
 }
 
 function pct(from: number, to: number): string {
@@ -173,7 +168,7 @@ export function computeTradingSignals(points: HistoryPoint[]): TradingSignalsRes
     if (type === "buy") {
       if (prevType !== "buy") {
         // Fresh entry — start a new position with tranche 1.
-        position = { entryPrice: p.close, tranches: [{ price: p.close, sold: false }], earlyTakeProfitDone: false };
+        position = { entryPrice: p.close, tranches: [{ price: p.close, sold: false }] };
         transitions.push({ time: t, price: p.low, type: "buy", note: `Mua 1/${TRANCHE_COUNT}` });
       } else if (position) {
         // Pyramid in: add the next tranche once price clears its step.
@@ -186,23 +181,6 @@ export function computeTradingSignals(points: HistoryPoint[]): TradingSignalsRes
             type: "buy",
             note: `Mua ${nextIdx + 1}/${TRANCHE_COUNT} (${pct(position.entryPrice, p.close)})`,
           });
-        }
-
-        // Early partial profit-take — sell the first (oldest) open tranche
-        // once the trade is far enough ahead, keep the rest riding the trend.
-        if (!position.earlyTakeProfitDone && p.close >= position.entryPrice * (1 + EARLY_TAKE_PROFIT_PCT / 100)) {
-          const firstOpen = position.tranches.find((tr) => !tr.sold);
-          if (firstOpen) {
-            firstOpen.sold = true;
-            position.earlyTakeProfitDone = true;
-            const soldCount = position.tranches.filter((tr) => tr.sold).length;
-            transitions.push({
-              time: t,
-              price: p.high,
-              type: "sell",
-              note: `Chốt lãi ${soldCount}/${TRANCHE_COUNT} (${pct(firstOpen.price, p.close)})`,
-            });
-          }
         }
       }
     } else if (prevType === "buy" && position) {

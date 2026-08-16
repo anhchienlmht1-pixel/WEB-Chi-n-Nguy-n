@@ -8,8 +8,11 @@ export default function Footer() {
             <h4 className="font-semibold text-slate-900 dark:text-slate-100">Liên hệ</h4>
             <div className="mt-3 space-y-2 text-sm">
               <div>
+                <p className="font-medium text-slate-900 dark:text-slate-100">
+                  Nguyễn Anh Chiến
+                </p>
                 <p className="text-slate-600 dark:text-slate-400">Chuyên viên tư vấn đầu tư</p>
-                <p className="mt-1 font-medium text-slate-900 dark:text-slate-100">
+                <p className="mt-1 text-slate-600 dark:text-slate-400">
                   CTCP Chứng khoán KAFI
                 </p>
               </div>
