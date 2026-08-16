@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { fetchHistory } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { aggregatePoints, type ChartResolution } from "../utils/aggregate";
@@ -42,6 +42,15 @@ export default function TechnicalChartPanel({
   const [searchTimeoutId, setSearchTimeoutId] = useState<ReturnType<typeof setTimeout> | null>(null);
   const chartRef = useRef<PriceChartHandle>(null);
   const chartWrapperRef = useRef<HTMLDivElement>(null);
+
+  // Clear search input when symbol changes (data loaded)
+  useEffect(() => {
+    setSearchInput("");
+    if (searchTimeoutId) {
+      clearTimeout(searchTimeoutId);
+      setSearchTimeoutId(null);
+    }
+  }, [symbol]);
 
   function screenshot() {
     const dataUrl = chartRef.current?.takeScreenshot();
