@@ -69,29 +69,6 @@ const OFFERS: Offer[] = [
   },
 ];
 
-const FEATURES = [
-  {
-    icon: "🛡️",
-    title: "An toàn – Minh bạch",
-    text: "Quản trị rủi ro theo tiêu chuẩn cao nhất",
-  },
-  {
-    icon: "⚡",
-    title: "Giải ngân nhanh chóng",
-    text: "Hỗ trợ 24/7 – Thủ tục online",
-  },
-  {
-    icon: "📈",
-    title: "Lãi suất cạnh tranh",
-    text: "Tối ưu chi phí - Gia tăng lợi nhuận",
-  },
-  {
-    icon: "🎧",
-    title: "Tư vấn chuyên nghiệp",
-    text: "Đồng hành cùng nhà đầu tư",
-  },
-];
-
 export default function SpecialOffers() {
   return (
     <div className="mb-8 -mx-4 px-4">
@@ -192,17 +169,6 @@ export default function SpecialOffers() {
                 </div>
               );
             })}
-          </div>
-
-          {/* Features Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 border-t border-slate-700 pt-8">
-            {FEATURES.map((feature, idx) => (
-              <div key={idx} className="text-center">
-                <div className="text-3xl mb-2">{feature.icon}</div>
-                <h4 className="text-white font-bold text-sm mb-1">{feature.title}</h4>
-                <p className="text-slate-400 text-xs">{feature.text}</p>
-              </div>
-            ))}
           </div>
         </div>
       </div>
