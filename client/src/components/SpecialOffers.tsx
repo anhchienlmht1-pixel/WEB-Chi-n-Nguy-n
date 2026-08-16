@@ -85,7 +85,7 @@ export default function SpecialOffers() {
           {/* Header */}
           <div className="text-center mb-10">
             <div className="text-emerald-400 text-sm font-semibold uppercase tracking-widest mb-2">
-              — GÓI VAY KỲ QUỸ —
+              — GÓI VAY KÝ QUỸ —
             </div>
             <h2 className="text-4xl md:text-5xl font-black text-white mb-3 leading-tight">
               MARGIN LINH HOẠT – HIỆU QUẢ TỐI ƯU
