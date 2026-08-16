@@ -5,11 +5,19 @@ import { usePolling } from "../hooks/usePolling";
 import type { TopExchange } from "../types";
 import { formatPercent, formatPrice, formatVolume, trendClass } from "../utils/format";
 
-const TABS: { key: TopExchange; label: string }[] = [
+type TimePeriod = "day" | "week" | "month";
+
+const EXCHANGE_TABS: { key: TopExchange; label: string }[] = [
   { key: "ALL", label: "Cả 3 sàn" },
   { key: "HOSE", label: "HOSE" },
   { key: "HNX", label: "HNX" },
   { key: "UPCOM", label: "UPCOM" },
+];
+
+const TIME_PERIOD_TABS: { key: TimePeriod; label: string }[] = [
+  { key: "day", label: "Ngày" },
+  { key: "week", label: "Tuần" },
+  { key: "month", label: "Tháng" },
 ];
 
 function formatValue(value?: number): string {
@@ -22,29 +30,49 @@ function formatValue(value?: number): string {
 
 export default function TopTraded() {
   const [exchange, setExchange] = useState<TopExchange>("ALL");
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>("day");
   const { data, error, loading } = usePolling(() => fetchTopTraded(exchange), [exchange], 60000);
   const navigate = useNavigate();
 
   return (
     <section className="mb-8">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+      <div className="mb-3">
+        <h2 className="mb-3 text-lg font-bold text-slate-900 dark:text-slate-100">
           🔥 Top 10 giao dịch nhiều nhất
         </h2>
-        <div className="flex gap-1 rounded-lg border border-slate-200 p-1 dark:border-slate-800">
-          {TABS.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setExchange(tab.key)}
-              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                exchange === tab.key
-                  ? "bg-emerald-500 text-slate-950"
-                  : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        <div className="flex flex-wrap gap-3">
+          {/* Exchange tabs */}
+          <div className="flex gap-1 rounded-lg border border-slate-200 p-1 dark:border-slate-800">
+            {EXCHANGE_TABS.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setExchange(tab.key)}
+                className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                  exchange === tab.key
+                    ? "bg-emerald-500 text-slate-950"
+                    : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          {/* Time period tabs */}
+          <div className="flex gap-1 rounded-lg border border-slate-200 p-1 dark:border-slate-800">
+            {TIME_PERIOD_TABS.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setTimePeriod(tab.key)}
+                className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                  timePeriod === tab.key
+                    ? "bg-cyan-500 text-slate-950"
+                    : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

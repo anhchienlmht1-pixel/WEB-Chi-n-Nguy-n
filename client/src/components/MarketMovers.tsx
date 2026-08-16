@@ -4,11 +4,18 @@ import type { Quote } from "../types";
 import { formatPercent, formatPrice, formatVolume, trendClass } from "../utils/format";
 
 type MoverTab = "gainers" | "losers" | "foreign";
+type TimePeriod = "day" | "week" | "month";
 
-const TABS: { key: MoverTab; label: string; icon: string }[] = [
+const MOVER_TABS: { key: MoverTab; label: string; icon: string }[] = [
   { key: "gainers", label: "Tăng mạnh", icon: "📈" },
   { key: "losers", label: "Giảm mạnh", icon: "📉" },
   { key: "foreign", label: "Khối ngoại mua ròng", icon: "🌐" },
+];
+
+const TIME_PERIOD_TABS: { key: TimePeriod; label: string }[] = [
+  { key: "day", label: "Ngày" },
+  { key: "week", label: "Tuần" },
+  { key: "month", label: "Tháng" },
 ];
 
 function foreignNet(q: Quote): number | null {
@@ -31,6 +38,7 @@ function formatNet(net: number): string {
 // rather than showing wrong data).
 export default function MarketMovers({ quotes }: { quotes: Quote[] }) {
   const [tab, setTab] = useState<MoverTab>("gainers");
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>("day");
   const navigate = useNavigate();
 
   const rows = useMemo(() => {
@@ -49,23 +57,43 @@ export default function MarketMovers({ quotes }: { quotes: Quote[] }) {
 
   return (
     <section className="mb-8">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Diễn biến thị trường</h2>
-        <div className="flex gap-1 rounded-lg border border-slate-200 p-1 dark:border-slate-800">
-          {TABS.map((t) => (
-            <button
-              key={t.key}
-              type="button"
-              onClick={() => setTab(t.key)}
-              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                tab === t.key
-                  ? "bg-emerald-500 text-slate-950"
-                  : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
-              }`}
-            >
-              {t.icon} {t.label}
-            </button>
-          ))}
+      <div className="mb-3">
+        <h2 className="mb-3 text-lg font-bold text-slate-900 dark:text-slate-100">Diễn biến thị trường</h2>
+        <div className="flex flex-wrap gap-3">
+          {/* Mover tabs */}
+          <div className="flex gap-1 rounded-lg border border-slate-200 p-1 dark:border-slate-800">
+            {MOVER_TABS.map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => setTab(t.key)}
+                className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                  tab === t.key
+                    ? "bg-emerald-500 text-slate-950"
+                    : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                }`}
+              >
+                {t.icon} {t.label}
+              </button>
+            ))}
+          </div>
+          {/* Time period tabs */}
+          <div className="flex gap-1 rounded-lg border border-slate-200 p-1 dark:border-slate-800">
+            {TIME_PERIOD_TABS.map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => setTimePeriod(t.key)}
+                className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                  timePeriod === t.key
+                    ? "bg-cyan-500 text-slate-950"
+                    : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
