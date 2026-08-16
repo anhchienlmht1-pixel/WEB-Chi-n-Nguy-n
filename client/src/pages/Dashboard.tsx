@@ -8,7 +8,6 @@ import TechnicalChartPanel from "../components/TechnicalChartPanel";
 import IndexTicker from "../components/IndexTicker";
 import LeaderBoard from "../components/LeaderBoard";
 import TrendSignalScanner from "../components/TrendSignalScanner";
-import MarketNews from "../components/MarketNews";
 
 const DEFAULT_SYMBOL = "VNINDEX";
 
@@ -40,8 +39,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-
-      <MarketNews />
 
       {/* "TOP 10 CỔ PHIẾU" / "Diễn biến thị trường" side by side on wide
           screens; each already scrolls its own table horizontally if it

@@ -4,6 +4,7 @@ import type { DigestMarketPulse } from "../types";
 import { fetchDailyDigest, fetchDailyDigestByDate, fetchDailyDigestHistory } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { formatPercent, formatPrice, formatVolume } from "../utils/format";
+import MarketNews from "../components/MarketNews";
 
 const TOPIC_BADGE_CLASS: Record<string, string> = {
   spotlight: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
@@ -339,6 +340,10 @@ export default function DailyDigest() {
           </div>
         </div>
       )}
+
+      <div className="mt-8">
+        <MarketNews />
+      </div>
     </div>
   );
 }
