@@ -23,18 +23,6 @@ export default function AccountOpeningGuide() {
           allowFullScreen
         />
       </div>
-
-      {/* CTA */}
-      <div className="mt-8 text-center">
-        <a
-          href="https://kafi.vn"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-500 px-6 py-3 font-bold text-white transition-all hover:from-emerald-500 hover:to-emerald-400"
-        >
-          🚀 Mở Tài Khoản Ngay
-        </a>
-      </div>
     </div>
   );
 }
