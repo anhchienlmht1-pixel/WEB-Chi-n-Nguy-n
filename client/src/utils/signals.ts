@@ -115,21 +115,37 @@ function pct(from: number, to: number): string {
   return `${v >= 0 ? "+" : ""}${v.toFixed(1)}%`;
 }
 
-// Buy: SMA20 > SMA50, ADX(14) > 25, Supertrend(10,3) uptrend.
-// Sell: SMA20 < SMA50, or Supertrend downtrend.
-// (Underlying signal ported 1:1 from a user-supplied vnstock_ta example —
-// same thresholds, same indicator periods.)
+// Buy: SMA20 > SMA50, ADX(14) > 25, Supertrend(10,3) uptrend, Volume > 1.2x avg.
+// Sell: (SMA20 < SMA50 or Supertrend downtrend) AND (ADX > 20) AND Volume > 1.0x avg.
+//
+// Improved signal filtering:
+// - Requires volume confirmation to avoid false/excessive signals
+// - Sell signals require ADX confirmation (weaker than buy but still confirmed)
+// - Reduces whipsaw and low-conviction signals
+// - Better convergence of price, trend, momentum, and volume
 //
 // Position sizing on top of that raw signal (illustrative money-management
 // overlay, not the signal itself, and not investment advice): buy in 3
 // tranches, adding to the position as the trend proves itself (pyramiding)
-// instead of going all-in on the first bar; take some profit early off the
-// first tranche once the trade is well ahead; sell whatever tranches are
-// still open the moment the trend actually reverses.
+// instead of going all-in on the first bar; sell all open tranches when
+// trend actually reverses with volume confirmation.
 export function computeTradingSignals(points: HistoryPoint[]): TradingSignalsResult {
   if (points.length < 51) return { all: [], transitions: [] };
 
   const closes = points.map((p) => p.close);
+  const volumes = points.map((p) => p.volume);
+
+  // Calculate 20-day average volume for confirmation
+  const avgVolume = sma({ period: 20, values: volumes });
+  const avgVolumeMap = new Map<number, number>();
+  const volumeOffset = points.length - avgVolume.length;
+  for (let i = 0; i < avgVolume.length; i++) {
+    const idx = volumeOffset + i;
+    if (idx >= 0) {
+      avgVolumeMap.set(toSeconds(points[idx]), avgVolume[i]);
+    }
+  }
+
   const sma20 = alignTail(points, sma({ period: 20, values: closes }));
   const sma50 = alignTail(points, sma({ period: 50, values: closes }));
   const adxRows = adx({
@@ -157,11 +173,18 @@ export function computeTradingSignals(points: HistoryPoint[]): TradingSignalsRes
     const s50 = sma50Map.get(t);
     const adxVal = adxMap.get(t);
     const direction = directionMap.get(t);
-    if (s20 === undefined || s50 === undefined || adxVal === undefined || direction === undefined) continue;
+    const avgVol = avgVolumeMap.get(t);
+    if (s20 === undefined || s50 === undefined || adxVal === undefined || direction === undefined || avgVol === undefined) continue;
+
+    // Volume confirmation thresholds
+    const buyVolumeConfirmed = p.volume > avgVol * 1.2; // Buy requires 20% above average
+    const sellVolumeConfirmed = p.volume > avgVol * 1.0; // Sell requires at average or above
 
     let type: "buy" | "sell" | null = null;
-    if (s20 > s50 && adxVal > 25 && direction === 1) type = "buy";
-    else if (s20 < s50 || direction === -1) type = "sell";
+    // Buy: strong signal + volume confirmation
+    if (s20 > s50 && adxVal > 25 && direction === 1 && buyVolumeConfirmed) type = "buy";
+    // Sell: trend reversal + ADX confirmation + volume confirmation (prevent false breakouts)
+    else if ((s20 < s50 || direction === -1) && adxVal > 20 && sellVolumeConfirmed) type = "sell";
 
     if (type) all.push({ time: t, price: type === "buy" ? p.low : p.high, type });
 
