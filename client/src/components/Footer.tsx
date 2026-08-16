@@ -30,15 +30,39 @@ export default function Footer() {
 
           {/* Community */}
           <div>
-            <h4 className="font-semibold text-slate-900 dark:text-slate-100">Cộng đồng</h4>
-            <div className="mt-3">
+            <h4 className="font-semibold text-slate-900 dark:text-slate-100">Theo dõi</h4>
+            <div className="mt-3 flex flex-wrap gap-2">
               <a
-                href="https://zalo.me/g/n1hcdesbqhdutsecnxzg"
+                href="https://www.facebook.com/chiennguyen.taichinh/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-md border border-blue-500 px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-500/10 dark:border-blue-400 dark:text-blue-400"
+              >
+                📘 Facebook
+              </a>
+              <a
+                href="https://www.youtube.com/@chiennguyen.taichinh"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-md border border-red-500 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-500/10 dark:border-red-400 dark:text-red-400"
+              >
+                📺 YouTube
+              </a>
+              <a
+                href="https://zalo.me/0886284212"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-md border border-emerald-500 px-3 py-2 text-sm font-medium text-emerald-600 hover:bg-emerald-500/10 dark:border-emerald-400 dark:text-emerald-400"
               >
-                📱 Nhóm Zalo
+                💬 Zalo
+              </a>
+              <a
+                href="https://zalo.me/g/n1hcdesbqhdutsecnxzg"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-md border border-cyan-500 px-3 py-2 text-sm font-medium text-cyan-600 hover:bg-cyan-500/10 dark:border-cyan-400 dark:text-cyan-400"
+              >
+                👥 Nhóm Zalo
               </a>
             </div>
           </div>
