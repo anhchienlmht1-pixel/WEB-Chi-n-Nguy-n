@@ -26,6 +26,9 @@ const mobileNavLinkClass = ({ isActive }: { isActive: boolean }) =>
       : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
   }`;
 
+const ctaButtonClass =
+  "shrink-0 inline-flex items-center gap-1 whitespace-nowrap rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-500 px-3 py-2 text-xs font-bold text-white transition-all hover:from-emerald-500 hover:to-emerald-400 dark:from-emerald-500 dark:to-emerald-400 dark:hover:from-emerald-400 dark:hover:to-emerald-300";
+
 export default function Header() {
   const { theme, toggle } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -51,9 +54,9 @@ export default function Header() {
                   href={item.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={navLinkClass({ isActive: false })}
+                  className={ctaButtonClass}
                 >
-                  {item.label}
+                  📱 {item.label}
                 </a>
               );
             }
@@ -100,9 +103,9 @@ export default function Header() {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => setMenuOpen(false)}
-                  className={mobileNavLinkClass({ isActive: false })}
+                  className="block rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-500 px-3 py-3 text-sm font-bold text-white transition-all hover:from-emerald-500 hover:to-emerald-400 dark:from-emerald-500 dark:to-emerald-400 dark:hover:from-emerald-400 dark:hover:to-emerald-300 my-2"
                 >
-                  {item.label}
+                  📱 {item.label}
                 </a>
               );
             }
