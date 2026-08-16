@@ -105,9 +105,10 @@ export async function fetchHistory(
 }
 
 export async function fetchTopTraded(
-  exchange: TopExchange
-): Promise<{ provider: string; exchange: TopExchange; items: TopTradedItem[] }> {
-  const { data } = await api.get("/market/top", { params: { exchange } });
+  exchange: TopExchange,
+  period: "day" | "week" | "month" = "day"
+): Promise<{ provider: string; exchange: TopExchange; period: string; items: TopTradedItem[] }> {
+  const { data } = await api.get("/market/top", { params: { exchange, period } });
   return data;
 }
 

@@ -77,12 +77,13 @@ router.get(
   "/market/top",
   asyncHandler(async (req, res) => {
     const exchange = String(req.query.exchange || "ALL").toUpperCase() as TopExchange;
+    const period = String(req.query.period || "day").toLowerCase() as "day" | "week" | "month";
     if (!VALID_EXCHANGES.includes(exchange)) {
       res.status(400).json({ error: `Sàn không hợp lệ. Dùng: ${VALID_EXCHANGES.join(", ")}` });
       return;
     }
-    const { items, source } = await cached(`top:${exchange}`, 60, () => getTopTradedWithFallback(exchange));
-    res.json({ provider: source, exchange, items });
+    const { items, source } = await cached(`top:${exchange}:${period}`, 60, () => getTopTradedWithFallback(exchange));
+    res.json({ provider: source, exchange, period, items });
   })
 );
 

@@ -31,7 +31,7 @@ function formatValue(value?: number): string {
 export default function TopTraded() {
   const [exchange, setExchange] = useState<TopExchange>("ALL");
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("day");
-  const { data, error, loading } = usePolling(() => fetchTopTraded(exchange), [exchange], 60000);
+  const { data, error, loading } = usePolling(() => fetchTopTraded(exchange, timePeriod), [exchange, timePeriod], 60000);
   const navigate = useNavigate();
 
   return (
