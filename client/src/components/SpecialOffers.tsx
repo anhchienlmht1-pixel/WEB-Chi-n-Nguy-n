@@ -52,13 +52,30 @@ export default function SpecialOffers() {
             className="overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all hover:shadow-lg dark:border-slate-800 dark:bg-slate-900/40"
           >
             {/* Rate Display */}
-            <div className="flex items-center justify-center bg-white px-4 py-8 dark:bg-slate-950/50">
+            <div className="flex items-center justify-center bg-gradient-to-b from-slate-50 to-white px-4 py-10 dark:from-slate-800/50 dark:to-slate-900/50">
               {offer.rateImage ? (
                 <img src={offer.rateImage} alt={`${offer.rate}%`} className="h-32 object-contain" />
               ) : (
-                <div className="text-center">
-                  <div className="text-6xl font-black text-emerald-600 dark:text-emerald-400">{offer.rate}</div>
-                  <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">%</div>
+                <div className="relative inline-block">
+                  {/* 3D Number Display */}
+                  <div className="relative text-center">
+                    {/* Shadow layers for 3D effect */}
+                    <div className="absolute inset-0 -z-10 bg-gradient-to-br from-emerald-500/30 to-cyan-500/30 blur-2xl rounded-full" />
+
+                    {/* Main number */}
+                    <div className="text-8xl font-black leading-none">
+                      <span className="bg-gradient-to-b from-emerald-500 to-teal-600 bg-clip-text text-transparent drop-shadow-2xl">
+                        {offer.rate}
+                      </span>
+                    </div>
+
+                    {/* Percent symbol */}
+                    <div className="absolute bottom-4 right-0 text-2xl font-bold">
+                      <span className="bg-gradient-to-b from-emerald-500 to-teal-600 bg-clip-text text-transparent">
+                        %
+                      </span>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
