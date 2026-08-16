@@ -8,6 +8,7 @@ import TechnicalChartPanel from "../components/TechnicalChartPanel";
 import IndexTicker from "../components/IndexTicker";
 import LeaderBoard from "../components/LeaderBoard";
 import TrendSignalScanner from "../components/TrendSignalScanner";
+import SpecialOffers from "../components/SpecialOffers";
 
 const DEFAULT_SYMBOL = "VNINDEX";
 
@@ -19,6 +20,8 @@ export default function Dashboard() {
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-6">
       <IndexTicker />
+
+      <SpecialOffers />
 
       <div className="mb-6">
         <h1 className="mb-3 text-xl font-bold text-slate-900 dark:text-slate-100">Biểu đồ kỹ thuật</h1>
