@@ -1,58 +1,10 @@
 interface Offer {
   rate: string;
+  rateImage?: string; // Optional: path to 3D number image
   title: string;
   description: string;
   color: string;
   link: string;
-}
-
-// SVG number display with 3D effect
-function RateSVG({ number }: { number: string }) {
-  return (
-    <svg viewBox="0 0 200 160" className="h-32 w-full" preserveAspectRatio="xMidYMid meet">
-      <defs>
-        <linearGradient id={`grad-${number}`} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#10b981" />
-          <stop offset="50%" stopColor="#06b6d4" />
-          <stop offset="100%" stopColor="#14b8a6" />
-        </linearGradient>
-        <filter id={`shadow-${number}`} x="-50%" y="-50%" width="200%" height="200%">
-          <feDropShadow dx="4" dy="4" stdDeviation="6" floodOpacity="0.3" />
-          <feDropShadow dx="2" dy="-2" stdDeviation="3" floodOpacity="0.2" floodColor="white" />
-        </filter>
-      </defs>
-
-      {/* Main number */}
-      <text
-        x="50%"
-        y="65%"
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fontSize="100"
-        fontWeight="900"
-        fill={`url(#grad-${number})`}
-        filter={`url(#shadow-${number})`}
-        fontFamily="system-ui, -apple-system, sans-serif"
-      >
-        {number}
-      </text>
-
-      {/* Percent symbol */}
-      <text
-        x="75%"
-        y="50%"
-        textAnchor="start"
-        dominantBaseline="middle"
-        fontSize="32"
-        fontWeight="700"
-        fill={`url(#grad-${number})`}
-        filter={`url(#shadow-${number})`}
-        fontFamily="system-ui, -apple-system, sans-serif"
-      >
-        %
-      </text>
-    </svg>
-  );
 }
 
 const OFFERS: Offer[] = [
@@ -99,9 +51,16 @@ export default function SpecialOffers() {
             key={offer.title}
             className="overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all hover:shadow-lg dark:border-slate-800 dark:bg-slate-900/40"
           >
-            {/* Rate Display - SVG */}
-            <div className="flex items-center justify-center bg-slate-50/50 px-4 py-6 dark:bg-slate-800/30">
-              <RateSVG number={offer.rate} />
+            {/* Rate Display */}
+            <div className="flex items-center justify-center bg-white px-4 py-8 dark:bg-slate-950/50">
+              {offer.rateImage ? (
+                <img src={offer.rateImage} alt={`${offer.rate}%`} className="h-32 object-contain" />
+              ) : (
+                <div className="text-center">
+                  <div className="text-6xl font-black text-emerald-600 dark:text-emerald-400">{offer.rate}</div>
+                  <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">%</div>
+                </div>
+              )}
             </div>
 
             {/* Content */}
