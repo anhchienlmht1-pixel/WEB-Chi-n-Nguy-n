@@ -8,7 +8,7 @@ import { useTheme } from "../hooks/useTheme";
 const NAV_ITEMS = [
   { to: "/", label: "Thị trường", end: true },
   { to: "/so-sanh-pb", label: "So sánh P/B", end: false },
-  { href: "https://www.youtube.com/watch?v=CyUYSWOAavw", label: "Hướng Dẫn MỞ TK", external: true },
+  { to: "/huong-dan-mo-tai-khoan", label: "📱 Hướng Dẫn MỞ TK", end: false },
 ];
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -24,9 +24,6 @@ const mobileNavLinkClass = ({ isActive }: { isActive: boolean }) =>
       ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
       : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
   }`;
-
-const ctaButtonClass =
-  "shrink-0 inline-flex items-center gap-1 whitespace-nowrap rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-500 px-3 py-2 text-xs font-bold text-white transition-all hover:from-emerald-500 hover:to-emerald-400 dark:from-emerald-500 dark:to-emerald-400 dark:hover:from-emerald-400 dark:hover:to-emerald-300";
 
 export default function Header() {
   const { theme, toggle } = useTheme();
@@ -45,27 +42,11 @@ export default function Header() {
         </NavLink>
 
         <nav className="hidden min-w-0 items-center gap-2 overflow-x-auto md:flex">
-          {NAV_ITEMS.map((item) => {
-            if ("external" in item && item.external) {
-              return (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={ctaButtonClass}
-                >
-                  📱 {item.label}
-                </a>
-              );
-            }
-            const internalItem = item as { to: string; label: string; end: boolean };
-            return (
-              <NavLink key={internalItem.to} to={internalItem.to} end={internalItem.end} className={navLinkClass}>
-                {internalItem.label}
-              </NavLink>
-            );
-          })}
+          {NAV_ITEMS.map((item) => (
+            <NavLink key={item.to} to={item.to} end={item.end} className={navLinkClass}>
+              {item.label}
+            </NavLink>
+          ))}
         </nav>
 
         <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-2 sm:flex-none sm:gap-3">
@@ -96,34 +77,17 @@ export default function Header() {
 
       {menuOpen && (
         <nav className="border-t border-slate-200 px-4 py-2 dark:border-slate-800 md:hidden">
-          {NAV_ITEMS.map((item) => {
-            if ("external" in item && item.external) {
-              return (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => setMenuOpen(false)}
-                  className="block rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-500 px-3 py-3 text-sm font-bold text-white transition-all hover:from-emerald-500 hover:to-emerald-400 dark:from-emerald-500 dark:to-emerald-400 dark:hover:from-emerald-400 dark:hover:to-emerald-300 my-2"
-                >
-                  📱 {item.label}
-                </a>
-              );
-            }
-            const internalItem = item as { to: string; label: string; end: boolean };
-            return (
-              <NavLink
-                key={internalItem.to}
-                to={internalItem.to}
-                end={internalItem.end}
-                onClick={() => setMenuOpen(false)}
-                className={mobileNavLinkClass}
-              >
-                {internalItem.label}
-              </NavLink>
-            );
-          })}
+          {NAV_ITEMS.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              onClick={() => setMenuOpen(false)}
+              className={mobileNavLinkClass}
+            >
+              {item.label}
+            </NavLink>
+          ))}
         </nav>
       )}
     </header>

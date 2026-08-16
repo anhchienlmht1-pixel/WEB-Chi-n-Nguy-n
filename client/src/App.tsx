@@ -6,6 +6,7 @@ import StockDetail from './pages/StockDetail'
 import PbCompare from './pages/PbCompare'
 import DailyDigest from './pages/DailyDigest'
 import StockStrength from './pages/StockStrength'
+import AccountOpeningGuide from './pages/AccountOpeningGuide'
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route path="/so-sanh-pb" element={<PbCompare />} />
           <Route path="/ban-tin" element={<DailyDigest />} />
           <Route path="/suc-manh-co-phieu" element={<StockStrength />} />
+          <Route path="/huong-dan-mo-tai-khoan" element={<AccountOpeningGuide />} />
           <Route path="*" element={<Dashboard />} />
         </Routes>
       </main>
