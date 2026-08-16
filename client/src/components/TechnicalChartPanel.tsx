@@ -38,6 +38,8 @@ export default function TechnicalChartPanel({
   const [chartType, setChartType] = useState<ChartType>("candlestick");
   const [drawingTool, setDrawingTool] = useState<DrawingTool>(null);
   const [showSignals, setShowSignals] = useState(true);
+  const [searchInput, setSearchInput] = useState("");
+  const [searchTimeoutId, setSearchTimeoutId] = useState<ReturnType<typeof setTimeout> | null>(null);
   const chartRef = useRef<PriceChartHandle>(null);
   const chartWrapperRef = useRef<HTMLDivElement>(null);
 
@@ -57,6 +59,56 @@ export default function TechnicalChartPanel({
       document.exitFullscreen();
     } else {
       el.requestFullscreen();
+    }
+  }
+
+  function handleChartKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    // Only capture if onSymbolChange is available
+    if (!onSymbolChange) return;
+
+    // Clear existing timeout
+    if (searchTimeoutId) {
+      clearTimeout(searchTimeoutId);
+    }
+
+    // Capture alphanumeric input (stock codes are typically uppercase letters and numbers)
+    if (/^[A-Z0-9]$/i.test(e.key)) {
+      e.preventDefault();
+      const newInput = searchInput + e.key.toUpperCase();
+      setSearchInput(newInput);
+
+      // Auto-search after typing
+      const timeoutId = setTimeout(() => {
+        if (newInput && newInput !== symbol) {
+          onSymbolChange(newInput);
+        }
+        setSearchInput("");
+      }, 500);
+
+      setSearchTimeoutId(timeoutId);
+    } else if (e.key === "Backspace") {
+      e.preventDefault();
+      const newInput = searchInput.slice(0, -1);
+      setSearchInput(newInput);
+
+      if (searchTimeoutId) {
+        clearTimeout(searchTimeoutId);
+      }
+
+      if (newInput) {
+        const timeoutId = setTimeout(() => {
+          if (newInput && newInput !== symbol) {
+            onSymbolChange(newInput);
+          }
+          setSearchInput("");
+        }, 500);
+        setSearchTimeoutId(timeoutId);
+      }
+    } else if (e.key === "Escape") {
+      setSearchInput("");
+      if (searchTimeoutId) {
+        clearTimeout(searchTimeoutId);
+      }
     }
   }
 
@@ -82,8 +134,15 @@ export default function TechnicalChartPanel({
   return (
     <div
       ref={chartWrapperRef}
-      className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40"
+      onKeyDown={handleChartKeyDown}
+      tabIndex={0}
+      className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40 focus:outline-none relative"
     >
+      {searchInput && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 bg-emerald-600 text-white px-6 py-3 rounded-lg shadow-lg font-bold text-lg">
+          Tìm kiếm: <span className="font-black text-xl">{searchInput}</span>
+        </div>
+      )}
       <ChartToolbar
         symbol={`${symbol} (${resolution})`}
         plainSymbol={symbol}
