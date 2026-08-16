@@ -39,17 +39,12 @@ export default function TechnicalChartPanel({
   const [drawingTool, setDrawingTool] = useState<DrawingTool>(null);
   const [showSignals, setShowSignals] = useState(true);
   const [searchInput, setSearchInput] = useState("");
-  const [searchTimeoutId, setSearchTimeoutId] = useState<ReturnType<typeof setTimeout> | null>(null);
   const chartRef = useRef<PriceChartHandle>(null);
   const chartWrapperRef = useRef<HTMLDivElement>(null);
 
   // Clear search input when symbol changes (data loaded)
   useEffect(() => {
     setSearchInput("");
-    if (searchTimeoutId) {
-      clearTimeout(searchTimeoutId);
-      setSearchTimeoutId(null);
-    }
   }, [symbol]);
 
   function screenshot() {
@@ -75,49 +70,29 @@ export default function TechnicalChartPanel({
     // Only capture if onSymbolChange is available
     if (!onSymbolChange) return;
 
-    // Clear existing timeout
-    if (searchTimeoutId) {
-      clearTimeout(searchTimeoutId);
-    }
-
     // Capture alphanumeric input (stock codes are typically uppercase letters and numbers)
     if (/^[A-Z0-9]$/i.test(e.key)) {
       e.preventDefault();
+
+      // Don't accept more input if already at 3 characters
+      if (searchInput.length >= 3) return;
+
       const newInput = searchInput + e.key.toUpperCase();
       setSearchInput(newInput);
 
-      // Auto-search after typing
-      const timeoutId = setTimeout(() => {
-        if (newInput && newInput !== symbol) {
+      // If 3 characters, search immediately
+      if (newInput.length === 3) {
+        if (newInput !== symbol) {
           onSymbolChange(newInput);
         }
-        setSearchInput("");
-      }, 500);
-
-      setSearchTimeoutId(timeoutId);
+        // Don't clear searchInput here - let the symbol change effect do it
+      }
     } else if (e.key === "Backspace") {
       e.preventDefault();
       const newInput = searchInput.slice(0, -1);
       setSearchInput(newInput);
-
-      if (searchTimeoutId) {
-        clearTimeout(searchTimeoutId);
-      }
-
-      if (newInput) {
-        const timeoutId = setTimeout(() => {
-          if (newInput && newInput !== symbol) {
-            onSymbolChange(newInput);
-          }
-          setSearchInput("");
-        }, 500);
-        setSearchTimeoutId(timeoutId);
-      }
     } else if (e.key === "Escape") {
       setSearchInput("");
-      if (searchTimeoutId) {
-        clearTimeout(searchTimeoutId);
-      }
     }
   }
 
