@@ -33,6 +33,7 @@ const OFFERS: Offer[] = [
     title: "Gói vay kỳ quỹ Margin-Zero",
     shortTitle: "MARGIN-ZERO",
     description: "Vay 0% lên đến 100 triệu",
+    badge: "BEST SELLER",
     benefits: [
       { icon: "💰", text: "Lãi vay margin 0%" },
       { icon: "💵", text: "Dành cho dự nợ đến 100 triệu VND" },
@@ -58,11 +59,11 @@ const OFFERS: Offer[] = [
     rate: "10",
     title: "Gói vay kỳ quỹ Margin Plus",
     shortTitle: "MARGIN PLUS",
-    description: "Dự nợ lớn – lịnh hoạt",
+    description: "Dự nợ lớn – linh hoạt",
     benefits: [
       { icon: "📊", text: "Lãi vay margin chỉ 10%/năm" },
       { icon: "💎", text: "Dành cho dự nợ từ 2 - 20 tỷ VND" },
-      { icon: "🎯", text: "Hạn mức lịnh hoạt, hỗ trợ tối đa" },
+      { icon: "🎯", text: "Hạn mức linh hoạt, hỗ trợ tối đa" },
     ],
     link: "https://kafi.vn/margin-plus",
     glowColor: "amber",
@@ -102,11 +103,14 @@ export default function SpecialOffers() {
               };
 
               return (
-                <div
+                <a
                   key={offer.shortTitle}
+                  href={offer.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className={`relative rounded-2xl bg-gradient-to-b from-slate-800 to-slate-900 border ${
                     glowClasses[offer.glowColor as keyof typeof glowClasses]
-                  } shadow-2xl overflow-hidden group hover:shadow-2xl transition-all dark:from-slate-900 dark:to-black`}
+                  } shadow-2xl overflow-hidden group hover:shadow-2xl transition-all dark:from-slate-900 dark:to-black block h-full cursor-pointer`}
                 >
                   {/* Glow Effect Border */}
                   <div
@@ -125,7 +129,11 @@ export default function SpecialOffers() {
                   {/* Badge */}
                   {offer.badge && (
                     <div className="absolute top-4 left-4 z-10">
-                      <div className="bg-emerald-500 text-white px-3 py-1 rounded-full text-xs font-bold transform -rotate-12">
+                      <div className={`text-white px-3 py-1 rounded-full text-xs font-bold transform -rotate-12 ${
+                        offer.badge === "BEST SELLER"
+                          ? "bg-cyan-500"
+                          : "bg-emerald-500"
+                      }`}>
                         {offer.badge}
                       </div>
                     </div>
@@ -157,16 +165,11 @@ export default function SpecialOffers() {
                     </div>
 
                     {/* CTA Button */}
-                    <a
-                      href={offer.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold py-3 px-4 rounded-lg transition-all text-center text-sm"
-                    >
+                    <div className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 group-hover:from-emerald-500 group-hover:to-emerald-400 text-white font-bold py-3 px-4 rounded-lg transition-all text-center text-sm">
                       TÌM HIỂU THÊM →
-                    </a>
+                    </div>
                   </div>
-                </div>
+                </a>
               );
             })}
           </div>
