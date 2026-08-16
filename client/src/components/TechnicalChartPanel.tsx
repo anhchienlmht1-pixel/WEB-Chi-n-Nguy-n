@@ -6,6 +6,7 @@ import { computeTradingSignals } from "../utils/signals";
 import PriceChart, { type ActiveIndicator, type ChartType, type DrawingTool, type PriceChartHandle } from "./PriceChart";
 import ChartToolbar from "./ChartToolbar";
 import DrawingToolbar from "./DrawingToolbar";
+import TrendSystemStats from "./TrendSystemStats";
 
 // No indicator overlays by default anymore (used to be SMA20/SMA50) — kept
 // minimal per request: just candles + the Mua/Bán trend-following markers,
@@ -68,8 +69,14 @@ export default function TechnicalChartPanel({
     [historyState.data, resolution]
   );
   const signalResult = useMemo(
-    () => (showSignals ? computeTradingSignals(chartPoints) : { all: [], transitions: [] }),
-    [chartPoints, showSignals]
+    () => {
+      // Don't show signals for VNINDEX
+      if (symbol === "VNINDEX" || !showSignals) {
+        return { all: [], transitions: [] };
+      }
+      return computeTradingSignals(chartPoints);
+    },
+    [chartPoints, showSignals, symbol]
   );
 
   return (
@@ -85,35 +92,40 @@ export default function TechnicalChartPanel({
         onResolutionChange={setResolution}
         chartType={chartType}
         onChartTypeChange={setChartType}
-        showSignals={showSignals}
+        showSignals={showSignals && symbol !== "VNINDEX"}
         onToggleSignals={() => setShowSignals((v) => !v)}
         onScreenshot={screenshot}
         onFullscreen={toggleFullscreen}
       />
 
-      <div className="flex">
-        <DrawingToolbar tool={drawingTool} onSelect={setDrawingTool} onClear={() => chartRef.current?.clearDrawings()} />
-        <div className="min-w-0 flex-1 p-2">
-          {chartPoints.length > 0 ? (
-            <PriceChart
-              ref={chartRef}
-              points={chartPoints}
-              activeIndicators={NO_INDICATORS}
-              signals={signalResult.transitions}
-              chartType={chartType}
-              drawingTool={drawingTool}
-              onDrawingComplete={() => setDrawingTool(null)}
-              height={height}
-            />
-          ) : (
-            <div className="flex items-center justify-center text-slate-400 dark:text-slate-500" style={{ height }}>
-              {historyState.loading
-                ? "Đang tải biểu đồ..."
-                : historyState.error
-                  ? `Lỗi tải biểu đồ: ${historyState.error}`
-                  : "Không có dữ liệu biểu đồ"}
-            </div>
-          )}
+      <div className="flex flex-col">
+        <div className="flex flex-1">
+          <DrawingToolbar tool={drawingTool} onSelect={setDrawingTool} onClear={() => chartRef.current?.clearDrawings()} />
+          <div className="min-w-0 flex-1 p-2">
+            {chartPoints.length > 0 ? (
+              <PriceChart
+                ref={chartRef}
+                points={chartPoints}
+                activeIndicators={NO_INDICATORS}
+                signals={signalResult.transitions}
+                chartType={chartType}
+                drawingTool={drawingTool}
+                onDrawingComplete={() => setDrawingTool(null)}
+                height={height}
+              />
+            ) : (
+              <div className="flex items-center justify-center text-slate-400 dark:text-slate-500" style={{ height }}>
+                {historyState.loading
+                  ? "Đang tải biểu đồ..."
+                  : historyState.error
+                    ? `Lỗi tải biểu đồ: ${historyState.error}`
+                    : "Không có dữ liệu biểu đồ"}
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="border-t border-slate-200 px-2 pb-2 dark:border-slate-800">
+          <TrendSystemStats signals={signalResult.all} symbol={symbol} />
         </div>
       </div>
     </div>
