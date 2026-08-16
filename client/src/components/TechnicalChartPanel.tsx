@@ -100,19 +100,29 @@ export default function TechnicalChartPanel({
   // Tháng) roll those daily bars up client-side, so switching resolution
   // changes what one candle represents instead of just the visible range.
   const historyState = usePolling(() => fetchHistory(symbol, "MAX", preferSource), [symbol, preferSource]);
+
+  // Poll for fresh data every 5 seconds to get faster signal updates
+  const refreshState = usePolling(() => fetchHistory(symbol, "MAX", preferSource), [symbol, preferSource], 5000);
+
   const chartPoints = useMemo(
     () => (historyState.data ? aggregatePoints(historyState.data.points, resolution) : []),
     [historyState.data, resolution]
   );
+
+  // Recompute signals using the refreshed data for faster updates
   const signalResult = useMemo(
     () => {
       // Don't show signals for VNINDEX
       if (symbol === "VNINDEX" || !showSignals) {
         return { all: [], transitions: [] };
       }
-      return computeTradingSignals(chartPoints);
+      // Use refreshState data if available, otherwise fall back to historyState
+      const pointsToUse = refreshState.data
+        ? aggregatePoints(refreshState.data.points, resolution)
+        : chartPoints;
+      return computeTradingSignals(pointsToUse);
     },
-    [chartPoints, showSignals, symbol]
+    [chartPoints, refreshState.data, showSignals, symbol, resolution]
   );
 
   return (
