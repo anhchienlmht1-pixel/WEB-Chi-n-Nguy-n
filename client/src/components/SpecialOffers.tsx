@@ -85,10 +85,10 @@ export default function SpecialOffers() {
           {/* Header */}
           <div className="text-center mb-10">
             <div className="text-emerald-400 text-sm font-semibold uppercase tracking-widest mb-2">
-              — GÓI VAY KỲ QUỲ —
+              — GÓI VAY KỲ QUỸ —
             </div>
             <h2 className="text-4xl md:text-5xl font-black text-white mb-3 leading-tight">
-              MARGIN LỊNH HOẠT – HIỆU QUẢ TỐI ƯU
+              MARGIN LINH HOẠT – HIỆU QUẢ TỐI ƯU
             </h2>
             <p className="text-slate-300 text-lg">Đa dạng gói vay – Lãi suất cạnh tranh – Hỗ trợ nhà đầu tư tối đa</p>
           </div>
