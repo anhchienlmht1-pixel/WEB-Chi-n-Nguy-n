@@ -8,7 +8,7 @@ import { useTheme } from "../hooks/useTheme";
 const NAV_ITEMS = [
   { to: "/", label: "Thị trường", end: true },
   { to: "/so-sanh-pb", label: "So sánh P/B", end: false },
-  { to: "/huong-dan-mo-tai-khoan", label: "📱 Hướng Dẫn MỞ TK", end: false },
+  { to: "/huong-dan-mo-tai-khoan", label: "📱 Hướng Dẫn Mở Tài Khoản", end: false },
 ];
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
