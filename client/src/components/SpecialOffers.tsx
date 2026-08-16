@@ -41,38 +41,38 @@ export default function SpecialOffers() {
   return (
     <section className="mb-6">
       <div className="mb-4">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">🎁 Ưu đãi</h2>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">🎁 Ưu đãi</h2>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {OFFERS.map((offer) => (
           <div
             key={offer.title}
-            className="overflow-hidden rounded-lg border border-slate-200 bg-white transition-shadow hover:shadow-md dark:border-slate-800 dark:bg-slate-900/40"
+            className="overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all hover:shadow-lg dark:border-slate-800 dark:bg-slate-900/40"
           >
-            {/* Rate Display */}
-            <div className={`bg-gradient-to-br ${offer.color} px-6 py-8 text-center`}>
-              <div className="text-4xl font-black text-white">{offer.rate}</div>
-              <div className="text-sm font-semibold text-white/90">%</div>
+            {/* Rate Display - Large Gradient Section */}
+            <div className={`bg-gradient-to-br ${offer.color} px-6 py-12 text-center`}>
+              <div className="text-6xl font-black text-white leading-none">{offer.rate}</div>
+              <div className="mt-2 text-lg font-semibold text-white/95">%</div>
             </div>
 
             {/* Content */}
-            <div className="p-4">
-              <h3 className="mb-2 text-sm font-bold text-slate-900 dark:text-slate-100">
+            <div className="p-5">
+              <h3 className="mb-3 text-sm font-bold text-slate-900 dark:text-slate-100">
                 {offer.title}
               </h3>
-              <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+              <p className="mb-4 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
                 {offer.description}
               </p>
             </div>
 
             {/* CTA */}
-            <div className="border-t border-slate-100 px-4 py-3 dark:border-slate-800">
+            <div className="border-t border-slate-100 px-5 py-3 dark:border-slate-800">
               <a
                 href={offer.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex w-full items-center justify-center rounded-md bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-600 transition-colors hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20"
+                className="inline-flex w-full items-center justify-center rounded-md bg-emerald-50 px-3 py-2.5 text-xs font-semibold text-emerald-600 transition-colors hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20"
               >
                 Tìm hiểu thêm →
               </a>
