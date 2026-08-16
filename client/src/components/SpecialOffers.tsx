@@ -3,6 +3,7 @@ interface Offer {
   title: string;
   description: string;
   color: string;
+  link: string;
 }
 
 const OFFERS: Offer[] = [
@@ -11,24 +12,28 @@ const OFFERS: Offer[] = [
     title: "Gói vay kỳ quỹ Margin T",
     description: "Gói vay linh hoạt với lãi suất chỉ từ 0%/năm. Áp dụng cho khách hàng lướt sóng, thời gian năm giữ ngắn hạn.",
     color: "from-emerald-500 to-teal-500",
+    link: "https://kafi.vn/margin-t",
   },
   {
     rate: "0",
     title: "Gói vay kỳ quỹ Margin-Zero",
     description: "Lãi vay margin 0% dành cho dư nợ đến 100 triệu VND",
     color: "from-cyan-500 to-emerald-500",
+    link: "https://kafi.vn/margin-zero",
   },
   {
     rate: "8",
     title: "Gói vay kỳ quỹ Margin Cashback",
     description: "Gói vay linh hoạt với lãi suất chỉ từ 8%/năm. Áp dụng cho khách hàng giao dịch tần suất cao.",
     color: "from-teal-500 to-cyan-500",
+    link: "https://kafi.vn/margin-cashback",
   },
   {
     rate: "10",
     title: "Gói vay kỳ quỹ Margin Plus",
     description: "Lãi vay margin chỉ 10% dành cho dư nợ từ 2 - 20 tỷ VND (2 tỷ ≤ dư nợ ≤ 20 tỷ)",
     color: "from-emerald-400 to-teal-600",
+    link: "https://kafi.vn/margin-plus",
   },
 ];
 
@@ -63,12 +68,14 @@ export default function SpecialOffers() {
 
             {/* CTA */}
             <div className="border-t border-slate-100 px-4 py-3 dark:border-slate-800">
-              <button
-                type="button"
-                className="w-full rounded-md bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-600 transition-colors hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20"
+              <a
+                href={offer.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex w-full items-center justify-center rounded-md bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-600 transition-colors hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20"
               >
-                Tìm hiểu thêm
-              </button>
+                Tìm hiểu thêm →
+              </a>
             </div>
           </div>
         ))}
