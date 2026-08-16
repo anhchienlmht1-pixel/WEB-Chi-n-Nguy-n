@@ -52,12 +52,18 @@ export default function Dashboard() {
               preferSource={data?.quotes.find((q) => q.symbol === chartSymbol)?.source}
             />
           </div>
-          <div className="w-full shrink-0 lg:w-80 space-y-4">
+          <div className="w-full shrink-0 lg:w-80">
             <TrendSignalScanner onSelectSymbol={setChartSymbol} />
-            <TrendSystemStats signals={signals} symbol={chartSymbol} />
           </div>
         </div>
       </div>
+
+      {/* Trend System Statistics */}
+      {chartSymbol !== "VNINDEX" && (
+        <div className="mb-6">
+          <TrendSystemStats signals={signals} symbol={chartSymbol} />
+        </div>
+      )}
 
       {/* "TOP 10 CỔ PHIẾU" / "Diễn biến thị trường" side by side on wide
           screens; each already scrolls its own table horizontally if it
