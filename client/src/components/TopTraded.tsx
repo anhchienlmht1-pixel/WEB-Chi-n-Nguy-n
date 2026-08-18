@@ -31,7 +31,8 @@ function formatValue(value?: number): string {
 export default function TopTraded() {
   const [exchange, setExchange] = useState<TopExchange>("ALL");
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("day");
-  const { data, error, loading } = usePolling(() => fetchTopTraded(exchange, timePeriod), [exchange, timePeriod], 60000);
+  // Real-time polling: cập nhật mỗi 10 giây để có dữ liệu real-time
+  const { data, error, loading } = usePolling(() => fetchTopTraded(exchange, timePeriod), [exchange, timePeriod], 10000);
   const navigate = useNavigate();
 
   return (

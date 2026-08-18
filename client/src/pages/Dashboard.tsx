@@ -17,7 +17,8 @@ import { computeTradingSignals } from "../utils/signals";
 const DEFAULT_SYMBOL = "VNINDEX";
 
 export default function Dashboard() {
-  const { data } = usePolling(fetchMarketOverview, [], 30000);
+  // Real-time polling: cập nhật dữ liệu thị trường mỗi 10 giây
+  const { data } = usePolling(fetchMarketOverview, [], 10000);
   const { symbols: watchlist } = useWatchlist();
   const [chartSymbol, setChartSymbol] = useState(watchlist[0] ?? DEFAULT_SYMBOL);
 
