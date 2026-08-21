@@ -1,15 +1,14 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchQuote } from "../api/client";
+import { fetchQuote, fetchHistory } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
-import type { Quote } from "../types";
+import type { Quote, HistoryPoint } from "../types";
 import { formatPercent, formatPrice, formatVolume, trendClass } from "../utils/format";
-import TechnicalChartPanel from "./TechnicalChartPanel";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 export default function StockComparator() {
   const [input, setInput] = useState("");
   const [symbols, setSymbols] = useState<string[]>(["FPT", "VIC", "TCB"]);
-  const [selectedChart, setSelectedChart] = useState<string>("FPT");
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
@@ -31,10 +30,59 @@ export default function StockComparator() {
     10000 // Real-time: update every 10 seconds
   );
 
+  // Fetch historical data for performance chart
+  const { data: historyData } = usePolling(
+    async () => {
+      const results = await Promise.all(
+        symbols.map(async (symbol) => {
+          try {
+            const data = await fetchHistory(symbol, "1M");
+            return { symbol, points: data.points };
+          } catch {
+            return null;
+          }
+        })
+      );
+      return results.filter((d) => d !== null) as { symbol: string; points: HistoryPoint[] }[];
+    },
+    [symbols],
+    30000 // Update every 30 seconds
+  );
+
+  // Prepare chart data - normalize prices to percentage change from first day
+  const chartData = useMemo(() => {
+    if (!historyData || historyData.length === 0) return [];
+
+    const firstPoints = historyData.map(d => d.points[0]);
+    const maxPoints = Math.max(...historyData.map(d => d.points.length));
+
+    const data = [];
+    for (let i = 0; i < maxPoints; i++) {
+      const point: any = { date: "" };
+
+      historyData.forEach((hist, idx) => {
+        if (i < hist.points.length) {
+          const p = hist.points[i];
+          const firstPrice = firstPoints[idx]?.close || p.close;
+          const pctChange = ((p.close - firstPrice) / firstPrice) * 100;
+          point[hist.symbol] = parseFloat(pctChange.toFixed(2));
+          if (i === hist.points.length - 1) {
+            point.date = p.time.slice(0, 10);
+          }
+        }
+      });
+
+      if (point.date) data.push(point);
+    }
+    return data;
+  }, [historyData]);
+
   const sortedQuotes = useMemo(() => {
     if (!quotes) return [];
     return [...quotes].sort((a, b) => (b.price * b.volume) - (a.price * a.volume));
   }, [quotes]);
+
+  const COLORS = ["#10b981", "#06b6d4", "#f59e0b", "#8b5cf6", "#ec4899", "#ef4444"];
 
   function addStock() {
     const symbol = input.trim().toUpperCase();
@@ -63,28 +111,51 @@ export default function StockComparator() {
 
   return (
     <section>
-      {/* Chart Section */}
-      {symbols.length > 0 && (
-        <div className="mb-6 rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
-          <div className="mb-4">
-            <h3 className="mb-3 text-lg font-bold text-slate-900 dark:text-slate-100">Biểu đồ kỹ thuật</h3>
-            <div className="flex flex-wrap gap-2">
-              {symbols.map((symbol) => (
-                <button
+      {/* Performance Comparison Chart */}
+      {symbols.length > 0 && chartData.length > 0 && (
+        <div className="mb-6 rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900/40">
+          <h3 className="mb-4 text-lg font-bold text-slate-900 dark:text-slate-100">
+            📊 So Sánh Hiệu Suất Giá (30 ngày gần nhất)
+          </h3>
+          <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+            Biểu đồ so sánh mức thay đổi giá (%) của các cổ phiếu từ ngày đầu tiên
+          </p>
+          <ResponsiveContainer width="100%" height={400}>
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="currentColor" opacity={0.1} />
+              <XAxis
+                dataKey="date"
+                stroke="currentColor"
+                style={{ fontSize: "12px" }}
+              />
+              <YAxis
+                stroke="currentColor"
+                label={{ value: "Thay đổi (%)", angle: -90, position: "insideLeft" }}
+                style={{ fontSize: "12px" }}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "rgba(15, 23, 42, 0.9)",
+                  border: "1px solid rgba(148, 163, 184, 0.3)",
+                  borderRadius: "8px",
+                  color: "#f1f5f9"
+                }}
+                formatter={(value) => `${(value as number).toFixed(2)}%`}
+              />
+              <Legend />
+              {symbols.map((symbol, idx) => (
+                <Line
                   key={symbol}
-                  onClick={() => setSelectedChart(symbol)}
-                  className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                    selectedChart === symbol
-                      ? "bg-emerald-600 text-white"
-                      : "border border-slate-300 text-slate-600 hover:border-emerald-500 hover:text-emerald-600 dark:border-slate-700 dark:text-slate-400 dark:hover:border-emerald-500 dark:hover:text-emerald-400"
-                  }`}
-                >
-                  {symbol}
-                </button>
+                  type="monotone"
+                  dataKey={symbol}
+                  stroke={COLORS[idx % COLORS.length]}
+                  strokeWidth={2}
+                  dot={false}
+                  isAnimationActive={false}
+                />
               ))}
-            </div>
-          </div>
-          <TechnicalChartPanel symbol={selectedChart} height={400} />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       )}
 
