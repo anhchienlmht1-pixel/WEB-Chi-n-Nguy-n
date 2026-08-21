@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import stocksRouter from "./routes/stocks.js";
+import providersRouter from "./routes/providers.js";
 import { getProvider } from "./providers/index.js";
 
 // Express app construction lives here, separate from index.ts's app.listen(),
@@ -32,6 +33,8 @@ app.get("/api/health", health);
 app.get("/health", health);
 app.use("/api", stocksRouter);
 app.use(stocksRouter);
+app.use("/api/providers", providersRouter);
+app.use("/providers", providersRouter);
 
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   const status = err.status || 500;
