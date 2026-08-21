@@ -77,6 +77,50 @@ export default function StockComparator() {
     return data;
   }, [historyData]);
 
+  // Calculate performance metrics from historical data
+  const performanceMetrics = useMemo(() => {
+    if (!historyData || historyData.length === 0) return new Map();
+
+    const metrics = new Map<string, {
+      periodChange: number;
+      periodChangePercent: number;
+      high: number;
+      low: number;
+      avgPrice: number;
+      volatility: number;
+    }>();
+
+    historyData.forEach((hist) => {
+      if (hist.points.length === 0) return;
+
+      const points = hist.points;
+      const startPrice = points[0].close;
+      const endPrice = points[points.length - 1].close;
+
+      const closes = points.map(p => p.close);
+      const high = Math.max(...closes);
+      const low = Math.min(...closes);
+      const avgPrice = closes.reduce((a, b) => a + b, 0) / closes.length;
+
+      // Calculate volatility (standard deviation)
+      const variance = closes.reduce((sum, price) => {
+        return sum + Math.pow(price - avgPrice, 2);
+      }, 0) / closes.length;
+      const volatility = Math.sqrt(variance);
+
+      metrics.set(hist.symbol, {
+        periodChange: endPrice - startPrice,
+        periodChangePercent: startPrice ? ((endPrice - startPrice) / startPrice) * 100 : 0,
+        high,
+        low,
+        avgPrice,
+        volatility,
+      });
+    });
+
+    return metrics;
+  }, [historyData]);
+
   const sortedQuotes = useMemo(() => {
     if (!quotes) return [];
     return [...quotes].sort((a, b) => (b.price * b.volume) - (a.price * a.volume));
@@ -202,7 +246,67 @@ export default function StockComparator() {
         ))}
       </div>
 
-      {/* Comparison Table */}
+      {/* Performance Metrics Table */}
+      {historyData && historyData.length > 0 && (
+        <div className="mb-6 rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900/40">
+          <h3 className="mb-4 text-lg font-bold text-slate-900 dark:text-slate-100">
+            📈 Chỉ Số Hiệu Suất (30 ngày)
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[800px] border-collapse text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-600 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400">
+                  <th className="px-4 py-3 font-medium">Mã</th>
+                  <th className="px-4 py-3 text-right font-medium">Giá Hiện Tại</th>
+                  <th className="px-4 py-3 text-right font-medium">Thay Đổi (30d)</th>
+                  <th className="px-4 py-3 text-right font-medium">% (30d)</th>
+                  <th className="px-4 py-3 text-right font-medium">Cao Nhất</th>
+                  <th className="px-4 py-3 text-right font-medium">Thấp Nhất</th>
+                  <th className="px-4 py-3 text-right font-medium">Giá Trung Bình</th>
+                  <th className="px-4 py-3 text-right font-medium">Volatility</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedQuotes.map((quote) => {
+                  const metrics = performanceMetrics.get(quote.symbol);
+                  return (
+                    <tr
+                      key={quote.symbol}
+                      onClick={() => navigate(`/stock/${quote.symbol}`)}
+                      className="cursor-pointer border-b border-slate-100 last:border-0 hover:bg-slate-50 dark:border-slate-900 dark:hover:bg-slate-900/60"
+                    >
+                      <td className="px-4 py-3 font-bold text-slate-900 dark:text-slate-100">{quote.symbol}</td>
+                      <td className="px-4 py-3 text-right tabular-nums text-slate-900 dark:text-slate-100">
+                        {formatPrice(quote.price, quote.currency)}
+                      </td>
+                      <td className={`px-4 py-3 text-right tabular-nums ${metrics ? trendClass(metrics.periodChange) : ''}`}>
+                        {metrics ? (metrics.periodChange >= 0 ? "+" : "") + metrics.periodChange.toFixed(2) : "—"}
+                      </td>
+                      <td className={`px-4 py-3 text-right tabular-nums font-semibold ${metrics ? trendClass(metrics.periodChangePercent) : ''}`}>
+                        {metrics ? formatPercent(metrics.periodChangePercent) : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums text-slate-900 dark:text-slate-100">
+                        {metrics ? formatPrice(metrics.high, quote.currency) : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums text-slate-900 dark:text-slate-100">
+                        {metrics ? formatPrice(metrics.low, quote.currency) : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-400">
+                        {metrics ? formatPrice(metrics.avgPrice, quote.currency) : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-400">
+                        {metrics ? metrics.volatility.toFixed(2) : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Current Quotes Comparison Table */}
       {loading && !quotes ? (
         <p className="text-slate-500 dark:text-slate-400">Đang tải dữ liệu...</p>
       ) : sortedQuotes.length === 0 ? (
@@ -215,7 +319,7 @@ export default function StockComparator() {
                 <th className="px-4 py-3 font-medium">Mã</th>
                 <th className="px-4 py-3 font-medium">Tên</th>
                 <th className="px-4 py-3 text-right font-medium">Giá</th>
-                <th className="px-4 py-3 text-right font-medium">Thay Đổi</th>
+                <th className="px-4 py-3 text-right font-medium">Thay Đổi Hôm Nay</th>
                 <th className="px-4 py-3 text-right font-medium">%</th>
                 <th className="px-4 py-3 text-right font-medium">KL</th>
                 <th className="px-4 py-3 text-right font-medium">GT GD</th>
