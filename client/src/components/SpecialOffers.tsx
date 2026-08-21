@@ -143,7 +143,7 @@ export default function SpecialOffers() {
                     {/* Rate Display */}
                     <div className="text-center mb-4">
                       <div className="text-5xl md:text-6xl font-black text-emerald-400 leading-none mb-1">
-                        {offer.rate}
+                        {offer.rate}%
                       </div>
                       <div className="text-xl font-bold text-emerald-300">/năm</div>
                     </div>
