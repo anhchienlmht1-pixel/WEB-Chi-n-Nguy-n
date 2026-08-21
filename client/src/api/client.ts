@@ -24,6 +24,8 @@ const api = axios.create({ baseURL: "/api", timeout: 30000 });
 // (seen on Vercel's serverless runtime for reasons not reproducible in
 // local dev), `.data` arrives as a raw string instead — handle that case
 // too instead of silently falling back to the generic message.
+//
+// Also handle rate limiting (429, 503) with user-friendly messages
 api.interceptors.response.use(undefined, (error) => {
   let serverMessage: unknown = error?.response?.data?.error;
   if (serverMessage === undefined && typeof error?.response?.data === "string") {
@@ -36,6 +38,14 @@ api.interceptors.response.use(undefined, (error) => {
   if (typeof serverMessage === "string" && serverMessage) {
     error.message = serverMessage;
   }
+
+  // Handle rate limit errors with friendly messages
+  if (error?.response?.status === 429 || error?.response?.status === 503) {
+    error.message =
+      error.message ||
+      "⏸️ Đã đạt giới hạn truy cập API. Vui lòng tải lại sau 1-2 phút hoặc kiểm tra hạng thành viên tài khoản";
+  }
+
   return Promise.reject(error);
 });
 
