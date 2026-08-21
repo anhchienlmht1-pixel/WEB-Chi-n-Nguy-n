@@ -4,10 +4,12 @@ import { fetchQuote } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import type { Quote } from "../types";
 import { formatPercent, formatPrice, formatVolume, trendClass } from "../utils/format";
+import TechnicalChartPanel from "./TechnicalChartPanel";
 
 export default function StockComparator() {
   const [input, setInput] = useState("");
   const [symbols, setSymbols] = useState<string[]>(["FPT", "VIC", "TCB"]);
+  const [selectedChart, setSelectedChart] = useState<string>("FPT");
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
@@ -61,6 +63,31 @@ export default function StockComparator() {
 
   return (
     <section>
+      {/* Chart Section */}
+      {symbols.length > 0 && (
+        <div className="mb-6 rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
+          <div className="mb-4">
+            <h3 className="mb-3 text-lg font-bold text-slate-900 dark:text-slate-100">Biểu đồ kỹ thuật</h3>
+            <div className="flex flex-wrap gap-2">
+              {symbols.map((symbol) => (
+                <button
+                  key={symbol}
+                  onClick={() => setSelectedChart(symbol)}
+                  className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                    selectedChart === symbol
+                      ? "bg-emerald-600 text-white"
+                      : "border border-slate-300 text-slate-600 hover:border-emerald-500 hover:text-emerald-600 dark:border-slate-700 dark:text-slate-400 dark:hover:border-emerald-500 dark:hover:text-emerald-400"
+                  }`}
+                >
+                  {symbol}
+                </button>
+              ))}
+            </div>
+          </div>
+          <TechnicalChartPanel symbol={selectedChart} height={400} />
+        </div>
+      )}
+
       {/* Input Section */}
       <div className="mb-6 rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900/40">
         <h3 className="mb-3 text-lg font-bold text-slate-900 dark:text-slate-100">Thêm Cổ Phiếu</h3>
