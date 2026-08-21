@@ -7,6 +7,7 @@ import { useTheme } from "../hooks/useTheme";
 
 const NAV_ITEMS = [
   { to: "/", label: "Thị trường", end: true },
+  { to: "/so-sanh-gia", label: "So sánh Giá", end: false },
   { to: "/so-sanh-pb", label: "So sánh P/B", end: false },
   { to: "/huong-dan-mo-tai-khoan", label: "📱 Hướng Dẫn Mở Tài Khoản Chứng Khoán", end: false },
 ];
