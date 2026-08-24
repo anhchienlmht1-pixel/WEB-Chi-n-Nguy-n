@@ -12,6 +12,7 @@ import {
   getMarketOverviewWithFallback,
   getTopTradedWithFallback,
 } from "../providers/fallback.js";
+import { Market, History, Reference } from "../api/unified.js";
 import { fetchInvestmentOutlook } from "../providers/googleSheet.js";
 import { fetchMoneyFlowTable } from "../providers/moneyFlowSheet.js";
 import { fetchNewsForSymbol, fetchCafefNews } from "../news/cafefNews.js";
@@ -82,16 +83,16 @@ router.get(
       res.status(400).json({ error: `Sàn không hợp lệ. Dùng: ${VALID_EXCHANGES.join(", ")}` });
       return;
     }
-    const { items, source } = await cached(`top:${exchange}:${period}`, 60, () => getTopTradedWithFallback(exchange));
-    res.json({ provider: source, exchange, period, items });
+    const result = await cached(`top:${exchange}:${period}`, 60, () => Market.getTopTraded(exchange));
+    res.json({ provider: result.source, exchange, period, items: result.items });
   })
 );
 
 router.get(
   "/market/overview",
   asyncHandler(async (_req, res) => {
-    const { quotes, source } = await cached("overview", 30, () => getMarketOverviewWithFallback());
-    res.json({ provider: source, quotes });
+    const result = await cached("overview", 30, () => Market.getOverview());
+    res.json({ provider: result.source, quotes: result.quotes });
   })
 );
 
@@ -179,15 +180,9 @@ router.get(
   "/quote/:symbol",
   asyncHandler(async (req, res) => {
     const symbol = String(req.params.symbol).toUpperCase();
-    // A caller that already knows which source answered a related request
-    // (e.g. the history chart for the same symbol) can pass it back here to
-    // stay pinned to that source instead of independently re-resolving the
-    // fallback chain, which could otherwise land on a different provider.
-    const preferSource = (req.query.preferSource as string) || undefined;
-    const { quote, source } = await cached(`quote:${symbol}:${preferSource ?? ""}`, 20, () =>
-      getQuoteWithFallback(symbol, preferSource)
-    );
-    res.json({ ...quote, source });
+    const result = await cached(`quote:${symbol}`, 20, () => Market.getQuote(symbol));
+    // Market.getQuote returns the quote data with source field already included
+    res.json(result);
   })
 );
 
@@ -200,11 +195,10 @@ router.get(
       res.status(400).json({ error: `Invalid range. Use one of: ${VALID_RANGES.join(", ")}` });
       return;
     }
-    const preferSource = (req.query.preferSource as string) || undefined;
-    const { points, source } = await cached(`history:${symbol}:${range}:${preferSource ?? ""}`, 120, () =>
-      getHistoryWithFallback(symbol, range, preferSource)
+    const result = await cached(`history:${symbol}:${range}`, 120, () =>
+      History.getHistory(symbol, range)
     );
-    res.json({ symbol, range, points, source });
+    res.json(result);
   })
 );
 
@@ -232,14 +226,26 @@ router.get(
 router.get(
   "/search",
   asyncHandler(async (req, res) => {
-    const provider = getProvider();
     const q = (req.query.q as string) || "";
     if (!q.trim()) {
       res.json({ results: [] });
       return;
     }
-    const data = await cached(`search:${q.toLowerCase()}`, 30, () => provider.search(q));
-    res.json({ results: data });
+    try {
+      const result = await cached(`search:${q.toLowerCase()}`, 30, async () => {
+        try {
+          return await Reference.search(q);
+        } catch (err) {
+          // Fallback to provider search if Reference API fails
+          const provider = getProvider();
+          const searchResults = await provider.search(q);
+          return { results: searchResults, source: provider.id };
+        }
+      });
+      res.json({ results: result.results || result });
+    } catch (err) {
+      res.json({ results: [] });
+    }
   })
 );
 
