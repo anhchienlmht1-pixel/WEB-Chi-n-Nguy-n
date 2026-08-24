@@ -6,7 +6,7 @@ export interface StockSeed {
   basePrice: number;
 }
 
-// Curated universe of Vietnam-listed stocks (HOSE/HNX). basePrice is only used
+// Curated universe of Vietnam-listed stocks (HOSE/HNX/UPCOM). basePrice is only used
 // by the mock provider for realistic-looking demo numbers; real providers use
 // live prices and only borrow the name/exchange metadata from here.
 export const STOCK_UNIVERSE: StockSeed[] = [
