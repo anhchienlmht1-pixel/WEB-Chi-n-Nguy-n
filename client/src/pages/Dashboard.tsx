@@ -37,8 +37,6 @@ export default function Dashboard() {
     <div className="mx-auto max-w-[1400px] px-4 py-6">
       <IndexTicker />
 
-      <SpecialOffers />
-
       <div className="mb-6">
         <h1 className="mb-3 text-xl font-bold text-slate-900 dark:text-slate-100">Biểu đồ kỹ thuật</h1>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
@@ -78,6 +76,11 @@ export default function Dashboard() {
 
       <div className="mt-6">
         <LeaderBoard />
+      </div>
+
+      {/* Special Offers - Compact version at the bottom */}
+      <div className="mt-12 mb-8">
+        <SpecialOffers />
       </div>
     </div>
   );
