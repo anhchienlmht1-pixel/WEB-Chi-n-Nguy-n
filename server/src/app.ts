@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import stocksRouter from "./routes/stocks.js";
 import providersRouter from "./routes/providers.js";
-import { getProvider } from "./providers/index.js";
+import { getProvider, registryManager } from "./providers/index.js";
 
 // Express app construction lives here, separate from index.ts's app.listen(),
 // so the exact same app can be reused as Vercel's single serverless function
@@ -18,7 +18,11 @@ app.use(cors());
 app.use(express.json());
 
 function health(_req: express.Request, res: express.Response) {
-  res.json({ status: "ok", provider: getProvider().id });
+  res.json({
+    status: "ok",
+    provider: getProvider().id,
+    registry: registryManager.getStats(),
+  });
 }
 
 // Mounted at both "/api/..." (how the local dev server and the client's
