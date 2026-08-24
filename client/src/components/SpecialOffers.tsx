@@ -73,28 +73,20 @@ const OFFERS: Offer[] = [
 export default function SpecialOffers() {
   return (
     <div className="mb-2 -mx-4 px-4">
-      {/* Dark Background Section - Compact */}
-      <div className="rounded-lg bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 p-4 relative overflow-hidden dark:from-slate-950 dark:via-black dark:to-slate-950">
-        {/* Background Pattern - Subtle */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500 rounded-full mix-blend-multiply filter blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-500 rounded-full mix-blend-multiply filter blur-3xl" />
-        </div>
+      {/* Dark Background Section - Ultra Compact */}
+      <div className="rounded-md bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 p-3 relative overflow-hidden dark:from-slate-950 dark:via-black dark:to-slate-950">
+        {/* No background pattern */}
 
         <div className="relative z-10">
           {/* Header - Minimal */}
-          <div className="text-center mb-4">
-            <div className="text-emerald-400 text-xs font-semibold uppercase tracking-widest mb-1">
-              GÓI VAY KÝ QUỸ
-            </div>
-            <h2 className="text-lg md:text-xl font-bold text-white mb-1 leading-tight">
-              MARGIN LINH HOẠT
+          <div className="mb-2.5">
+            <h2 className="text-xs font-bold text-white mb-0.5 leading-tight uppercase tracking-wide">
+              Gói vay KÝ QUỸ MARGIN
             </h2>
-            <p className="text-slate-300 text-xs">Lãi suất cạnh tranh – Hỗ trợ tối đa</p>
           </div>
 
-          {/* Offers Grid - 2 columns max */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2">
+          {/* Offers Grid - 4 columns */}
+          <div className="grid grid-cols-4 gap-2">
             {OFFERS.map((offer) => {
               const glowClasses = {
                 emerald: "border-emerald-500/50 shadow-emerald-500/20",
@@ -108,28 +100,14 @@ export default function SpecialOffers() {
                   href={offer.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`relative rounded-lg bg-gradient-to-b from-slate-800 to-slate-900 border ${
+                  className={`relative rounded border ${
                     glowClasses[offer.glowColor as keyof typeof glowClasses]
-                  } shadow-lg overflow-hidden group hover:shadow-lg transition-all dark:from-slate-900 dark:to-black block h-full cursor-pointer`}
+                  } shadow-sm overflow-hidden group hover:shadow-md transition-all bg-slate-800/80 dark:bg-slate-900/80 block cursor-pointer`}
                 >
-                  {/* Glow Effect Border */}
-                  <div
-                    className={`absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none`}
-                    style={{
-                      background: `radial-gradient(circle at center, ${
-                        offer.glowColor === "emerald"
-                          ? "#10b981"
-                          : offer.glowColor === "cyan"
-                            ? "#06b6d4"
-                            : "#f59e0b"
-                      }20, transparent)`,
-                    }}
-                  />
-
-                  {/* Badge - Compact */}
+                  {/* Badge - Super Compact */}
                   {offer.badge && (
-                    <div className="absolute top-2 left-2 z-10">
-                      <div className={`text-white px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    <div className="absolute top-1 left-1 z-10">
+                      <div className={`text-white px-1.5 py-0.5 rounded text-[9px] font-bold ${
                         offer.badge === "BEST SELLER"
                           ? "bg-cyan-500"
                           : "bg-emerald-500"
@@ -139,35 +117,25 @@ export default function SpecialOffers() {
                     </div>
                   )}
 
-                  <div className="relative z-10 p-3 h-full flex flex-col">
-                    {/* Rate Display - Compact */}
-                    <div className="text-center mb-2">
-                      <div className="text-3xl font-black text-emerald-400 leading-none mb-0.5">
+                  <div className="relative z-10 p-2 flex flex-col h-full">
+                    {/* Rate Display - Ultra Compact */}
+                    <div className="text-center mb-1">
+                      <div className="text-2xl font-black text-emerald-400 leading-none">
                         {offer.rate}%
                       </div>
-                      <div className="text-xs font-semibold text-emerald-300">/năm</div>
+                      <div className="text-[10px] font-semibold text-emerald-300">/năm</div>
                     </div>
 
                     {/* Title */}
-                    <h3 className="text-white font-bold text-sm mb-1 text-center">{offer.shortTitle}</h3>
-                    <div className="bg-emerald-500/20 border border-emerald-500/50 rounded px-2 py-0.5 text-center mb-2">
-                      <p className="text-emerald-300 text-[11px] font-semibold">{offer.description}</p>
-                    </div>
+                    <h3 className="text-white font-bold text-[11px] mb-1 text-center leading-tight">{offer.shortTitle}</h3>
+                    <p className="text-emerald-300 text-[9px] font-semibold text-center mb-1 leading-tight flex-1">
+                      {offer.description}
+                    </p>
 
-                    {/* Benefits - Minimal */}
-                    <div className="space-y-1 mb-2 flex-1 text-[11px]">
-                      {offer.benefits.slice(0, 2).map((benefit, idx) => (
-                        <div key={idx} className="flex gap-1.5">
-                          <div className="text-sm shrink-0">{benefit.icon}</div>
-                          <p className="text-slate-400 leading-tight">{benefit.text}</p>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* CTA Button */}
-                    <div className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 group-hover:from-emerald-500 group-hover:to-emerald-400 text-white font-bold py-2 px-3 rounded transition-all text-center text-[11px]">
-                      TÌM HIỂU THÊM →
-                    </div>
+                    {/* CTA Button - Minimal */}
+                    <button className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-1 px-2 rounded text-[9px] transition-all">
+                      Chi tiết →
+                    </button>
                   </div>
                 </a>
               );
