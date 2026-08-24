@@ -121,9 +121,8 @@ export default function SpecialOffers() {
                     {/* Rate Display - Ultra Compact */}
                     <div className="text-center mb-1">
                       <div className="text-2xl font-black text-emerald-400 leading-none">
-                        {offer.rate}%
+                        {offer.rate}% <span className="text-[10px] font-semibold text-emerald-300">/năm</span>
                       </div>
-                      <div className="text-[10px] font-semibold text-emerald-300">/năm</div>
                     </div>
 
                     {/* Title */}
