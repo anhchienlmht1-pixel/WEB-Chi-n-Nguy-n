@@ -135,12 +135,18 @@ async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T)
 }
 
 export async function scanBuySignals(): Promise<BuySignalHit[]> {
+  const failed = new Map<string, string>();
   const hits = await mapWithConcurrency(STOCK_UNIVERSE, 20, async (seed): Promise<BuySignalHit | null> => {
     try {
       const { points: raw } = await getHistoryWithFallback(seed.symbol, "1Y");
       const points = dedupeSameDay(raw);
       const since = latestBuySince(points);
-      if (!since || points.length === 0) return null;
+      if (!since || points.length === 0) {
+        if (points.length === 0) {
+          failed.set(seed.symbol, "No historical data");
+        }
+        return null;
+      }
 
       const last = points[points.length - 1];
       const prev = points.length > 1 ? points[points.length - 2] : null;
@@ -155,15 +161,27 @@ export async function scanBuySignals(): Promise<BuySignalHit[]> {
         changePercent,
         signalSince: since,
       };
-    } catch {
+    } catch (err) {
       // A single symbol's data being unavailable shouldn't fail the whole
       // scan — it's simply excluded from the result, same as it just not
       // having a buy signal.
+      failed.set(seed.symbol, err instanceof Error ? err.message : String(err));
       return null;
     }
   });
 
-  return hits
+  const results = hits
     .filter((h): h is BuySignalHit => h !== null)
     .sort((a, b) => b.signalSince.localeCompare(a.signalSince));
+
+  // Log failures for debugging (especially UPCOM symbols)
+  const upcomFailed = Array.from(failed.entries()).filter(([sym]) =>
+    STOCK_UNIVERSE.find(s => s.symbol === sym)?.exchange === "UPCOM"
+  );
+  if (upcomFailed.length > 0) {
+    console.warn("[trendScanner] UPCOM stocks failed to scan:",
+      Object.fromEntries(upcomFailed));
+  }
+
+  return results;
 }
