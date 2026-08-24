@@ -39,23 +39,40 @@ const PROVIDERS: Record<string, StockProvider> = {
  * This is called once at server startup
  */
 export function initializeRegistry(): void {
-  // Register explorer providers (web scraping)
-  registryManager.register(metadata.VCI_METADATA, vnstockProvider);
-  registryManager.register(metadata.KBS_METADATA, kbsMarketProvider);
-  registryManager.register(metadata.FIREANT_METADATA, fireantProvider);
-  registryManager.register(metadata.VNDIRECT_METADATA, vndirectProvider);
+  try {
+    // Register explorer providers (web scraping)
+    console.log("[Registry] Registering VCI provider...");
+    registryManager.register(metadata.VCI_METADATA, vnstockProvider);
 
-  // Register connector providers (official APIs)
-  registryManager.register(metadata.FMP_METADATA, mockProvider); // Placeholder
-  registryManager.register(metadata.TRADINGVIEW_METADATA, tradingviewProvider);
-  registryManager.register(metadata.YAHOO_METADATA, yahooProvider);
-  registryManager.register(metadata.FINNHUB_METADATA, finnhubProvider);
-  registryManager.register(metadata.ALPHAVANTAGE_METADATA, alphaVantageProvider);
+    console.log("[Registry] Registering KBS provider...");
+    registryManager.register(metadata.KBS_METADATA, kbsMarketProvider);
 
-  // Register mock provider
-  registryManager.register(metadata.MOCK_METADATA, mockProvider);
+    console.log("[Registry] Registering Fireant provider...");
+    registryManager.register(metadata.FIREANT_METADATA, fireantProvider);
 
-  console.log("[Registry] Provider registry initialized:", registryManager.getStats());
+    console.log("[Registry] Registering VNDirect provider...");
+    registryManager.register(metadata.VNDIRECT_METADATA, vndirectProvider);
+
+    // Register connector providers (official APIs)
+    registryManager.register(metadata.FMP_METADATA, mockProvider); // Placeholder
+    registryManager.register(metadata.TRADINGVIEW_METADATA, tradingviewProvider);
+    registryManager.register(metadata.YAHOO_METADATA, yahooProvider);
+    registryManager.register(metadata.FINNHUB_METADATA, finnhubProvider);
+    registryManager.register(metadata.ALPHAVANTAGE_METADATA, alphaVantageProvider);
+
+    // Register mock provider
+    registryManager.register(metadata.MOCK_METADATA, mockProvider);
+
+    const stats = registryManager.getStats();
+    console.log("[Registry] Provider registry initialized:");
+    console.log(`  Total providers: ${stats.totalProviders}`);
+    console.log(`  Enabled providers: ${stats.enabledProviders}`);
+    console.log(`  Explorer providers: ${stats.categories.includes('explorer') ? registryManager.getByCategory('explorer').length : 0}`);
+    console.log(`  Providers list:`, stats.providers.map(p => `${p.id}(${p.enabled ? 'enabled' : 'disabled'})`).join(", "));
+  } catch (error) {
+    console.error("[Registry] Error initializing registry:", error);
+    throw error;
+  }
 }
 
 /**
