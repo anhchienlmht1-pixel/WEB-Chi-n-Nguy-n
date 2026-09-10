@@ -76,9 +76,15 @@ function computeSupertrendDirections(points: HistoryPoint[], period: number, mul
   return directions;
 }
 
+// Calculate buy/sell signals with dates
+export interface SignalDates {
+  buyDate: string;  // When buy signal started
+  sellDate: string | null;  // When sell signal occurred (null if still holding)
+}
+
 // Walk back from the latest bar: is it currently a buy, and if so, how far
 // back does the uninterrupted buy streak go (for "tín hiệu từ ngày...").
-export function latestBuySince(points: HistoryPoint[]): string | null {
+export function latestBuySince(points: HistoryPoint[]): SignalDates | null {
   if (points.length < 51) return null;
 
   const closes = points.map((p) => p.close);
@@ -93,7 +99,11 @@ export function latestBuySince(points: HistoryPoint[]): string | null {
   const adxOffset = n - adxRows.length;
   const dirOffset = n - directions.length;
 
-  let since: string | null = null;
+  // Find current buy signal (from end going backward)
+  let buyDate: string | null = null;
+  let sellDate: string | null = null;
+  let foundSell = false;
+
   for (let i = n - 1; i >= 0; i--) {
     if (i < sma20Offset || i < sma50Offset || i < adxOffset || i < dirOffset) break;
     const s20 = sma20[i - sma20Offset];
@@ -103,12 +113,33 @@ export function latestBuySince(points: HistoryPoint[]): string | null {
     if (s20 === undefined || s50 === undefined || adxVal === undefined || direction === undefined) break;
 
     const isBuy = s20 > s50 && adxVal > 25 && direction === 1;
+
+    // If at the end and not a buy signal, no current buy
     if (i === n - 1 && !isBuy) return null;
-    if (!isBuy) break;
-    since = points[i].time;
+
+    // Track the first sell signal after buy
+    if (buyDate && !foundSell && !isBuy) {
+      sellDate = points[i].time;
+      foundSell = true;
+    }
+
+    // When we break from buy, record the buy date
+    if (!isBuy && buyDate === null) {
+      // Continue until we find where buy started
+      continue;
+    }
+
+    if (isBuy && buyDate === null) {
+      buyDate = points[i].time;
+    }
+
+    if (isBuy) {
+      buyDate = points[i].time; // Update to earliest buy date
+    }
   }
 
-  return since;
+  if (!buyDate) return null;
+  return { buyDate, sellDate };
 }
 
 export interface BuySignalHit {
@@ -118,7 +149,9 @@ export interface BuySignalHit {
   currency: string;
   price: number;
   changePercent: number;
-  signalSince: string;
+  signalSince: string;  // Buy date (for backward compatibility)
+  buyDate: string;      // Buy date (new)
+  sellDate: string | null;  // Sell date (null if still holding)
 }
 
 async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
@@ -140,8 +173,8 @@ export async function scanBuySignals(): Promise<BuySignalHit[]> {
     try {
       const { points: raw } = await getHistoryWithFallback(seed.symbol, "1Y");
       const points = dedupeSameDay(raw);
-      const since = latestBuySince(points);
-      if (!since || points.length === 0) {
+      const signalDates = latestBuySince(points);
+      if (!signalDates || points.length === 0) {
         if (points.length === 0) {
           failed.set(seed.symbol, "No historical data");
         }
@@ -159,7 +192,9 @@ export async function scanBuySignals(): Promise<BuySignalHit[]> {
         currency: seed.currency,
         price: last.close,
         changePercent,
-        signalSince: since,
+        signalSince: signalDates.buyDate,  // For backward compatibility
+        buyDate: signalDates.buyDate,
+        sellDate: signalDates.sellDate,
       };
     } catch (err) {
       // A single symbol's data being unavailable shouldn't fail the whole

@@ -255,6 +255,10 @@ export interface TrendBuySignal {
   changePercent: number;
   // ISO date the current uninterrupted buy streak started.
   signalSince: string;
+  // Open/buy date
+  buyDate: string;
+  // Close/sell date (null if still holding)
+  sellDate: string | null;
 }
 
 // Same trend-following combo as a chart's own Mua/Bán markers (SMA20 >
