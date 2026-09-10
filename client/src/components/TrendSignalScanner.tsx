@@ -91,7 +91,7 @@ export default function TrendSignalScanner({
                   <span className="text-[11px] text-slate-400 dark:text-slate-500">{h.exchange}</span>
                 </div>
                 <div className="truncate text-xs text-slate-400 dark:text-slate-500">
-                  🟢 Mở: {formatSince(h.buyDate)} {h.sellDate ? `| 🔴 Đóng: ${formatSince(h.sellDate)}` : "| Giữ"}
+                  🟢 Mở: {formatSince(h.buyDate)} {h.sellDate ? `| 🔴 Đóng: ${formatSince(h.sellDate)}` : "| 📌 Đang mở mua"}
                 </div>
               </div>
             );
