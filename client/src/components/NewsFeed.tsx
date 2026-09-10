@@ -38,7 +38,7 @@ export default function NewsFeed({ symbol }: { symbol: string }) {
       )}
 
       {!loading && error && (
-        <div className="p-4 text-sm text-red-500 dark:text-red-400">
+        <div className="p-4 text-sm text-slate-1000 dark:text-slate-400">
           Không tải được tin tức: {error}
         </div>
       )}

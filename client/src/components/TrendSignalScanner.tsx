@@ -45,7 +45,7 @@ export default function TrendSignalScanner({
 
   if (error && !hits) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-red-500 dark:border-slate-800 dark:bg-slate-900/40 dark:text-red-400">
+      <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-1000 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-400">
         Không tải được danh sách tín hiệu: {error}
       </div>
     );
@@ -67,7 +67,7 @@ export default function TrendSignalScanner({
           <button
             type="button"
             onClick={() => addMany(hits.map((h) => h.symbol))}
-            className="shrink-0 whitespace-nowrap rounded-md border border-amber-500 px-2.5 py-1 text-xs font-semibold text-amber-600 transition-colors hover:bg-amber-500/10 dark:border-amber-400 dark:text-amber-400"
+            className="shrink-0 whitespace-nowrap rounded-md border border-slate-1000 px-2.5 py-1 text-xs font-semibold text-slate-500 transition-colors hover:bg-slate-1000/10 dark:border-slate-300 dark:text-slate-300"
           >
             ★ Thêm tất cả vào Theo dõi
           </button>
@@ -101,9 +101,9 @@ export default function TrendSignalScanner({
                 <div
                   className={`text-xs tabular-nums ${
                     h.changePercent > 0
-                      ? "text-emerald-600 dark:text-emerald-400"
+                      ? "text-slate-600 dark:text-slate-300"
                       : h.changePercent < 0
-                        ? "text-red-500 dark:text-red-400"
+                        ? "text-slate-1000 dark:text-slate-400"
                         : "text-slate-400"
                   }`}
                 >

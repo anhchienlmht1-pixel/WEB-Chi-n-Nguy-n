@@ -18,8 +18,8 @@ function formatNet(net: number): string {
 }
 
 function netClass(net: number): string {
-  if (net > 0) return "text-emerald-600 dark:text-emerald-400";
-  if (net < 0) return "text-red-500 dark:text-red-400";
+  if (net > 0) return "text-slate-600 dark:text-slate-300";
+  if (net < 0) return "text-slate-1000 dark:text-slate-400";
   return "text-slate-500 dark:text-slate-400";
 }
 
@@ -103,20 +103,20 @@ export default function ForeignFlowPanel({ quote }: { quote: Quote }) {
           <tbody>
             <tr className="border-b border-slate-100 dark:border-slate-900">
               <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400">KL</th>
-              <td className="px-3 py-2 text-right tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">
+              <td className="px-3 py-2 text-right tabular-nums font-semibold text-slate-600 dark:text-slate-300">
                 {formatVolume(snapshot.buy)}
               </td>
-              <td className="px-3 py-2 text-right tabular-nums font-semibold text-red-500 dark:text-red-400">
+              <td className="px-3 py-2 text-right tabular-nums font-semibold text-slate-1000 dark:text-slate-400">
                 {formatVolume(snapshot.sell)}
               </td>
               <td className={`px-3 py-2 text-right tabular-nums font-semibold ${netClass(net)}`}>{formatNet(net)}</td>
             </tr>
             <tr>
               <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400">GT</th>
-              <td className="px-3 py-2 text-right tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">
+              <td className="px-3 py-2 text-right tabular-nums font-semibold text-slate-600 dark:text-slate-300">
                 {formatValueVnd(buyValue)}
               </td>
-              <td className="px-3 py-2 text-right tabular-nums font-semibold text-red-500 dark:text-red-400">
+              <td className="px-3 py-2 text-right tabular-nums font-semibold text-slate-1000 dark:text-slate-400">
                 {formatValueVnd(sellValue)}
               </td>
               <td className={`px-3 py-2 text-right tabular-nums font-semibold ${netClass(netValue)}`}>

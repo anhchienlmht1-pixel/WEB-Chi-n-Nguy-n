@@ -69,7 +69,7 @@ export default function MarketMovers({ quotes }: { quotes: Quote[] }) {
                 onClick={() => setTab(t.key)}
                 className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                   tab === t.key
-                    ? "bg-emerald-500 text-slate-950"
+                    ? "bg-slate-1000 text-slate-950"
                     : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
                 }`}
               >
@@ -86,7 +86,7 @@ export default function MarketMovers({ quotes }: { quotes: Quote[] }) {
                 onClick={() => setTimePeriod(t.key)}
                 className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                   timePeriod === t.key
-                    ? "bg-cyan-500 text-slate-950"
+                    ? "bg-slate-1000 text-slate-950"
                     : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
                 }`}
               >

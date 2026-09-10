@@ -24,7 +24,7 @@ export default function StockOutlookPanel({ symbol }: { symbol: string }) {
           href={SHEET_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs font-medium text-emerald-600 hover:underline dark:text-emerald-400"
+          className="text-xs font-medium text-slate-600 hover:underline dark:text-slate-300"
         >
           Mở trang tính ↗
         </a>

@@ -40,8 +40,8 @@ export default function StockHeaderInfo() {
         </div>
         <div className={`text-xs font-medium ${
           isPositive
-            ? "text-emerald-600 dark:text-emerald-400"
-            : "text-red-600 dark:text-red-400"
+            ? "text-slate-600 dark:text-slate-300"
+            : "text-slate-800 dark:text-slate-400"
         }`}>
           {isPositive ? "+" : ""}{change.toFixed(2)} ({changePercent.toFixed(2)}%)
         </div>

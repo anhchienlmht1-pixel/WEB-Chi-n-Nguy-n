@@ -3,32 +3,29 @@
 /* Class-based dark mode: `dark:` variants apply when <html class="dark">. */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Softer pastel palette overrides for the default slate and emerald
-   colors. Every bg-slate, text-emerald, etc utility across the app picks
-   these up automatically since they override the same CSS variable
-   names those utilities read from. Slate becomes a gentle lavender-navy
-   tint instead of pure gray/near-black; emerald keeps the same green
-   hue as before, just softer and a touch brighter. */
+/* Warm earth tone palette
+   Primary colors: #4A3C2A (brown), #A89B8C (taupe), #F2D29E (cream), #2E251A (dark brown)
+   Applied to slate and emerald utilities throughout the app. */
 @theme {
-  --color-slate-50: #f7f8fc;
-  --color-slate-100: #eef1f8;
-  --color-slate-200: #e1e6f0;
-  --color-slate-300: #c9d1e3;
-  --color-slate-400: #96a2c2;
-  --color-slate-500: #6d78a0;
-  --color-slate-600: #525d80;
-  --color-slate-700: #3b4463;
-  --color-slate-800: #272e48;
-  --color-slate-900: #1a2038;
-  --color-slate-950: #11152a;
+  --color-slate-50: #faf7f2;
+  --color-slate-100: #f2ede5;
+  --color-slate-200: #e8e0d6;
+  --color-slate-300: #d4c9bc;
+  --color-slate-400: #a89b8c;
+  --color-slate-500: #7a6d61;
+  --color-slate-600: #5d5248;
+  --color-slate-700: #4a3c2a;
+  --color-slate-800: #37291f;
+  --color-slate-900: #2e251a;
+  --color-slate-950: #1f1810;
 
-  --color-emerald-50: #eefcf6;
-  --color-emerald-100: #d2f8e7;
-  --color-emerald-300: #7de3bd;
-  --color-emerald-400: #4ed0a5;
-  --color-emerald-500: #2fb98e;
-  --color-emerald-600: #229c78;
-  --color-emerald-700: #1b7c61;
+  --color-emerald-50: #fef9f3;
+  --color-emerald-100: #f2d29e;
+  --color-emerald-300: #d4b876;
+  --color-emerald-400: #b5934f;
+  --color-emerald-500: #4a3c2a;
+  --color-emerald-600: #3d3220;
+  --color-emerald-700: #2e251a;
 }
 
 html {
@@ -64,12 +61,12 @@ img {
   height: auto;
 }
 
-.up { color: #16a34a; }
-.down { color: #dc2626; }
-.flat { color: #6b7280; }
-.dark .up { color: #22c55e; }
-.dark .down { color: #ef4444; }
-.dark .flat { color: #9ca3af; }
+.up { color: #a89b8c; }
+.down { color: #8b5a3c; }
+.flat { color: #7a6d61; }
+.dark .up { color: #f2d29e; }
+.dark .down { color: #c9845c; }
+.dark .flat { color: #a89b8c; }
 
 ::-webkit-scrollbar { height: 8px; width: 8px; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }

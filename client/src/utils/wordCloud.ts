@@ -19,9 +19,9 @@ export interface WordCloudEntry {
 }
 
 export const WORD_CLOUD_COLORS = [
-  "text-emerald-600 dark:text-emerald-400",
+  "text-slate-600 dark:text-slate-300",
   "text-sky-600 dark:text-sky-400",
-  "text-amber-600 dark:text-amber-400",
+  "text-slate-500 dark:text-slate-300",
   "text-rose-600 dark:text-rose-400",
   "text-violet-600 dark:text-violet-400",
 ];

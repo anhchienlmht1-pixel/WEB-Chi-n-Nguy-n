@@ -67,7 +67,7 @@ export default function MarketNews() {
               onClick={() => setTab(t.key)}
               className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                 tab === t.key
-                  ? "bg-emerald-500 text-slate-950"
+                  ? "bg-slate-1000 text-slate-950"
                   : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
               }`}
             >
@@ -84,7 +84,7 @@ export default function MarketNews() {
             <p className="text-slate-500 dark:text-slate-400">Đang tải...</p>
           )}
           {error && !newsItems.length && (
-            <p className="text-sm text-red-500 dark:text-red-400">Lỗi tải tin tức: {error}</p>
+            <p className="text-sm text-slate-1000 dark:text-slate-400">Lỗi tải tin tức: {error}</p>
           )}
           {newsItems.length === 0 && !loading && (
             <p className="text-slate-500 dark:text-slate-400">Chưa có tin tức mới.</p>
@@ -110,7 +110,7 @@ export default function MarketNews() {
                           href={item.link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="line-clamp-2 text-slate-900 hover:text-emerald-600 dark:text-slate-100 dark:hover:text-emerald-400"
+                          className="line-clamp-2 text-slate-900 hover:text-slate-600 dark:text-slate-100 dark:hover:text-slate-300"
                         >
                           {item.title}
                         </a>
@@ -146,7 +146,7 @@ export default function MarketNews() {
                 onClick={() => setExchange(ex)}
                 className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                   exchange === ex
-                    ? "bg-emerald-500 text-slate-950"
+                    ? "bg-slate-1000 text-slate-950"
                     : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
                 }`}
               >
@@ -159,7 +159,7 @@ export default function MarketNews() {
             <p className="text-slate-500 dark:text-slate-400">Đang tải...</p>
           )}
           {tradedError && !topVolumes.length && (
-            <p className="text-sm text-red-500 dark:text-red-400">
+            <p className="text-sm text-slate-1000 dark:text-slate-400">
               Lỗi tải mã giao dịch nhiều: {tradedError}
             </p>
           )}

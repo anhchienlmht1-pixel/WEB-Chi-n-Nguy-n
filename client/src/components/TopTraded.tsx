@@ -50,7 +50,7 @@ export default function TopTraded() {
                 onClick={() => setExchange(tab.key)}
                 className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                   exchange === tab.key
-                    ? "bg-emerald-500 text-slate-950"
+                    ? "bg-slate-1000 text-slate-950"
                     : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
                 }`}
               >
@@ -66,7 +66,7 @@ export default function TopTraded() {
                 onClick={() => setTimePeriod(tab.key)}
                 className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                   timePeriod === tab.key
-                    ? "bg-cyan-500 text-slate-950"
+                    ? "bg-slate-1000 text-slate-950"
                     : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
                 }`}
               >
@@ -81,7 +81,7 @@ export default function TopTraded() {
         <p className="text-slate-500 dark:text-slate-400">Đang tải...</p>
       )}
       {error && !data && (
-        <p className="text-sm text-red-500 dark:text-red-400">Lỗi tải top giao dịch: {error}</p>
+        <p className="text-sm text-slate-1000 dark:text-slate-400">Lỗi tải top giao dịch: {error}</p>
       )}
       {data && data.items.length === 0 && (
         <p className="text-slate-500 dark:text-slate-400">Chưa có dữ liệu cho sàn này.</p>

@@ -100,12 +100,12 @@ export default function Hero() {
       />
 
       <div className="relative">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-400">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-300">
           Theo dõi. Phân tích. Đầu tư.
         </p>
         <h1 className="mt-3 max-w-2xl text-3xl font-extrabold leading-tight text-white sm:text-5xl">
           Nền tảng đầu tư chứng khoán{" "}
-          <span className="bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-slate-300 to-slate-600 bg-clip-text text-transparent">
             toàn diện
           </span>{" "}
           của bạn
@@ -120,7 +120,7 @@ export default function Hero() {
           href="https://www.youtube.com/watch?v=CyUYSWOAavw"
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-6 inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-5 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-emerald-400"
+          className="mt-6 inline-flex items-center gap-2 rounded-lg bg-slate-1000 px-5 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-slate-300"
         >
           ▶️ Hướng dẫn mở tài khoản chứng khoán
         </a>
@@ -128,7 +128,7 @@ export default function Hero() {
         <div className="mt-8 flex flex-wrap gap-8 sm:gap-12">
           {STATS.map((s) => (
             <div key={s.label}>
-              <div className="text-2xl font-bold text-emerald-400 sm:text-3xl">{s.value}</div>
+              <div className="text-2xl font-bold text-slate-300 sm:text-3xl">{s.value}</div>
               <div className="mt-1 text-xs text-slate-400 sm:text-sm">{s.label}</div>
             </div>
           ))}

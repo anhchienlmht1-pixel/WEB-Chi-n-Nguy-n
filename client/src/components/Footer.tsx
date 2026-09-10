@@ -20,7 +20,7 @@ export default function Footer() {
                 <p className="text-slate-500 dark:text-slate-400">Điện thoại:</p>
                 <a
                   href="tel:0886284212"
-                  className="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
+                  className="text-slate-600 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-400"
                 >
                   0886.284.212
                 </a>
@@ -44,7 +44,7 @@ export default function Footer() {
                 href="https://www.youtube.com/@chiennguyen.taichinh"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-md border border-red-500 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-500/10 dark:border-red-400 dark:text-red-400"
+                className="inline-flex items-center gap-2 rounded-md border border-slate-1000 px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-1000/10 dark:border-slate-400 dark:text-slate-400"
               >
                 📺 YouTube
               </a>
@@ -52,7 +52,7 @@ export default function Footer() {
                 href="https://zalo.me/0886284212"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-md border border-emerald-500 px-3 py-2 text-sm font-medium text-emerald-600 hover:bg-emerald-500/10 dark:border-emerald-400 dark:text-emerald-400"
+                className="inline-flex items-center gap-2 rounded-md border border-slate-1000 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-1000/10 dark:border-slate-300 dark:text-slate-300"
               >
                 💬 Zalo
               </a>
@@ -60,7 +60,7 @@ export default function Footer() {
                 href="https://zalo.me/g/n1hcdesbqhdutsecnxzg"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-md border border-cyan-500 px-3 py-2 text-sm font-medium text-cyan-600 hover:bg-cyan-500/10 dark:border-cyan-400 dark:text-cyan-400"
+                className="inline-flex items-center gap-2 rounded-md border border-slate-1000 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-1000/10 dark:border-slate-400 dark:text-slate-400"
               >
                 👥 Nhóm Zalo
               </a>

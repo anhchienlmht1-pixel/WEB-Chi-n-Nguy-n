@@ -34,7 +34,7 @@ export default function TrendSignalBell() {
       >
         🔔
         {newHits.length > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
+          <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-slate-1000 px-1 text-[10px] font-bold leading-none text-white">
             {newHits.length > 9 ? "9+" : newHits.length}
           </span>
         )}
@@ -64,7 +64,7 @@ export default function TrendSignalBell() {
                   <button
                     type="button"
                     onClick={requestPermission}
-                    className="w-full rounded-md bg-emerald-500 px-2.5 py-1.5 text-xs font-semibold text-slate-950 transition-colors hover:bg-emerald-400"
+                    className="w-full rounded-md bg-slate-1000 px-2.5 py-1.5 text-xs font-semibold text-slate-950 transition-colors hover:bg-slate-300"
                   >
                     🔔 Bật thông báo trình duyệt khi có tín hiệu mới
                   </button>
@@ -72,7 +72,7 @@ export default function TrendSignalBell() {
               </div>
             )}
             {permission === "granted" && (
-              <div className="border-b border-slate-200 px-3 py-1.5 text-[11px] text-emerald-600 dark:border-slate-800 dark:text-emerald-400">
+              <div className="border-b border-slate-200 px-3 py-1.5 text-[11px] text-slate-600 dark:border-slate-800 dark:text-slate-300">
                 ✓ Đã bật thông báo trình duyệt
               </div>
             )}
@@ -103,8 +103,8 @@ export default function TrendSignalBell() {
                       <div
                         className={`text-xs tabular-nums ${
                           h.changePercent >= 0
-                            ? "text-emerald-600 dark:text-emerald-400"
-                            : "text-red-500 dark:text-red-400"
+                            ? "text-slate-600 dark:text-slate-300"
+                            : "text-slate-1000 dark:text-slate-400"
                         }`}
                       >
                         {formatPercent(h.changePercent)}

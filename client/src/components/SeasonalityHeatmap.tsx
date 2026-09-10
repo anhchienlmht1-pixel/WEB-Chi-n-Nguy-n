@@ -41,7 +41,7 @@ export default function SeasonalityHeatmap({ symbol }: { symbol: string }) {
       )}
 
       {!loading && (error || table.years.length === 0) && (
-        <div className="p-4 text-sm text-red-500 dark:text-red-400">
+        <div className="p-4 text-sm text-slate-1000 dark:text-slate-400">
           {error ? `Không thể tải dữ liệu: ${error}` : `Chưa đủ dữ liệu lịch sử cho ${symbol}.`}
         </div>
       )}

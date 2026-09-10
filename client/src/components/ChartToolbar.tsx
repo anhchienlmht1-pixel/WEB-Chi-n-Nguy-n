@@ -70,7 +70,7 @@ export default function ChartToolbar({
               onClick={() => onResolutionChange(r.value)}
               className={`rounded px-2 py-1 transition-colors ${
                 resolution === r.value
-                  ? "bg-emerald-500 text-slate-950"
+                  ? "bg-slate-1000 text-slate-950"
                   : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
               }`}
             >
@@ -100,7 +100,7 @@ export default function ChartToolbar({
                     }}
                     className={`block w-full px-3 py-1.5 text-left text-xs ${
                       chartType === c.value
-                        ? "text-emerald-600 dark:text-emerald-400"
+                        ? "text-slate-600 dark:text-slate-300"
                         : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
                     }`}
                   >
@@ -117,7 +117,7 @@ export default function ChartToolbar({
           onClick={onToggleSignals}
           className={`rounded-md px-2 py-1 text-xs font-medium transition-colors ${
             showSignals
-              ? "bg-emerald-500 text-slate-950"
+              ? "bg-slate-1000 text-slate-950"
               : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
           }`}
         >

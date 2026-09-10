@@ -25,7 +25,7 @@ export default function SecuritiesStatementTable({
 
   if (error || !data) {
     return (
-      <div className="text-sm text-red-500 dark:text-red-400">
+      <div className="text-sm text-slate-1000 dark:text-slate-400">
         Không tải được báo cáo chi tiết cho {symbol}{error ? `: ${error}` : ""}.
       </div>
     );

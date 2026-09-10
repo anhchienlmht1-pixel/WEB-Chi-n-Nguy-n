@@ -15,14 +15,14 @@ const NAV_ITEMS = [
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `shrink-0 whitespace-nowrap text-xs font-medium transition-colors ${
     isActive
-      ? "text-emerald-600 dark:text-emerald-400"
+      ? "text-slate-600 dark:text-slate-300"
       : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
   }`;
 
 const mobileNavLinkClass = ({ isActive }: { isActive: boolean }) =>
   `block rounded-lg px-3 py-3 text-sm font-medium transition-colors ${
     isActive
-      ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
+      ? "bg-slate-100 text-slate-600 dark:bg-slate-1000/10 dark:text-slate-300"
       : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
   }`;
 

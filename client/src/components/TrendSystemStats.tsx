@@ -71,13 +71,13 @@ export default function TrendSystemStats({ signals, symbol }: Props) {
         </div>
         <div>
           <div className="text-xs text-slate-500 dark:text-slate-400">Thắng</div>
-          <div className="mt-0.5 text-lg font-semibold text-emerald-600 dark:text-emerald-400">
+          <div className="mt-0.5 text-lg font-semibold text-slate-600 dark:text-slate-300">
             {stats.wins}
           </div>
         </div>
         <div>
           <div className="text-xs text-slate-500 dark:text-slate-400">Thua</div>
-          <div className="mt-0.5 text-lg font-semibold text-red-500 dark:text-red-400">
+          <div className="mt-0.5 text-lg font-semibold text-slate-1000 dark:text-slate-400">
             {stats.losses}
           </div>
         </div>
@@ -98,9 +98,9 @@ export default function TrendSystemStats({ signals, symbol }: Props) {
           <div
             className={`mt-0.5 text-lg font-semibold ${
               parseFloat(stats.avgPnl) > 0
-                ? "text-emerald-600 dark:text-emerald-400"
+                ? "text-slate-600 dark:text-slate-300"
                 : parseFloat(stats.avgPnl) < 0
-                  ? "text-red-500 dark:text-red-400"
+                  ? "text-slate-1000 dark:text-slate-400"
                   : "text-slate-900 dark:text-slate-100"
             }`}
           >

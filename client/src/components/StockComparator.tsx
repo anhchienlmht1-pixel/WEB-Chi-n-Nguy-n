@@ -172,16 +172,16 @@ export default function StockComparator() {
             }}
             onKeyPress={handleKeyPress}
             placeholder="Nhập mã cổ phiếu (vd: FPT, VIC, TCB)"
-            className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-1000 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
           />
           <button
             onClick={addStock}
-            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-emerald-500 dark:bg-emerald-500 dark:hover:bg-emerald-400"
+            className="rounded-lg bg-slate-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-slate-1000 dark:bg-slate-1000 dark:hover:bg-slate-300"
           >
             Thêm
           </button>
         </div>
-        {error && <p className="mt-2 text-sm text-red-500 dark:text-red-400">{error}</p>}
+        {error && <p className="mt-2 text-sm text-slate-1000 dark:text-slate-400">{error}</p>}
       </div>
 
       {/* Selected Stocks Tags */}
@@ -189,12 +189,12 @@ export default function StockComparator() {
         {symbols.map((symbol) => (
           <div
             key={symbol}
-            className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-sm font-medium text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300"
+            className="inline-flex items-center gap-2 rounded-full bg-slate-200 px-3 py-1 text-sm font-medium text-slate-700 dark:bg-slate-1000/20 dark:text-slate-400"
           >
             {symbol}
             <button
               onClick={() => removeStock(symbol)}
-              className="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-200"
+              className="text-slate-600 hover:text-emerald-800 dark:text-slate-300 dark:hover:text-slate-300"
             >
               ✕
             </button>

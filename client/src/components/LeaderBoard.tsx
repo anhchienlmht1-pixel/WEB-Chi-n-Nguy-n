@@ -101,7 +101,7 @@ export default function LeaderBoard() {
       )}
 
       {!loading && (error || !data) && (
-        <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-600 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-400">
+        <div className="rounded-lg border border-slate-300 bg-slate-100 p-4 text-sm text-slate-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-slate-400">
           Không tải được dữ liệu sức mạnh cổ phiếu{error ? `: ${error}` : ""}.
         </div>
       )}

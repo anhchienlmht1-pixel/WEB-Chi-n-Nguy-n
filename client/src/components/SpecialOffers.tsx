@@ -89,9 +89,9 @@ export default function SpecialOffers() {
           <div className="grid grid-cols-4 gap-2">
             {OFFERS.map((offer) => {
               const glowClasses = {
-                emerald: "border-emerald-500/50 shadow-emerald-500/20",
-                cyan: "border-cyan-500/50 shadow-cyan-500/20",
-                amber: "border-amber-500/50 shadow-amber-500/20",
+                emerald: "border-slate-400/50 shadow-slate-400/20",
+                cyan: "border-slate-500/50 shadow-slate-500/20",
+                amber: "border-slate-300/50 shadow-slate-300/20",
               };
 
               return (
@@ -109,8 +109,8 @@ export default function SpecialOffers() {
                     <div className="absolute top-1 left-1 z-10">
                       <div className={`text-white px-1.5 py-0.5 rounded text-[9px] font-bold ${
                         offer.badge === "BEST SELLER"
-                          ? "bg-cyan-500"
-                          : "bg-emerald-500"
+                          ? "bg-slate-500"
+                          : "bg-slate-400"
                       }`}>
                         {offer.badge}
                       </div>
@@ -120,19 +120,19 @@ export default function SpecialOffers() {
                   <div className="relative z-10 p-2 flex flex-col h-full">
                     {/* Rate Display - Ultra Compact */}
                     <div className="text-center mb-1">
-                      <div className="text-2xl font-black text-emerald-400 leading-none">
-                        {offer.rate}% <span className="text-[10px] font-semibold text-emerald-300">/năm</span>
+                      <div className="text-2xl font-black text-slate-300 leading-none">
+                        {offer.rate}% <span className="text-[10px] font-semibold text-slate-400">/năm</span>
                       </div>
                     </div>
 
                     {/* Title */}
                     <h3 className="text-white font-bold text-[11px] mb-1 text-center leading-tight">{offer.shortTitle}</h3>
-                    <p className="text-emerald-300 text-[9px] font-semibold text-center mb-1 leading-tight flex-1">
+                    <p className="text-slate-300 text-[9px] font-semibold text-center mb-1 leading-tight flex-1">
                       {offer.description}
                     </p>
 
                     {/* CTA Button - Minimal */}
-                    <button className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-1 px-2 rounded text-[9px] transition-all">
+                    <button className="w-full bg-slate-600 hover:bg-slate-500 text-white font-bold py-1 px-2 rounded text-[9px] transition-all">
                       Chi tiết →
                     </button>
                   </div>

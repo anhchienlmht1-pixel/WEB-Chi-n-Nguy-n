@@ -24,7 +24,7 @@ export default function StockDetail() {
   if (quoteState.error && !quote) {
     return (
       <div className="mx-auto max-w-[1400px] px-4 py-10 text-center">
-        <p className="text-red-500 dark:text-red-400">
+        <p className="text-slate-1000 dark:text-slate-400">
           Không tải được mã "{symbol}": {quoteState.error}
         </p>
       </div>

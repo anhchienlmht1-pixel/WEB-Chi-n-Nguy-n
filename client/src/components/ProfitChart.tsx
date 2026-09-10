@@ -57,7 +57,7 @@ export default function ProfitChart({ report }: { report: FinancialReport }) {
               </span>
               <div style={{ height: BAR_AREA_HEIGHT }} className="flex w-full items-end">
                 <div
-                  className={`w-full rounded-t ${positive ? "bg-emerald-500" : "bg-red-500"}`}
+                  className={`w-full rounded-t ${positive ? "bg-slate-1000" : "bg-slate-1000"}`}
                   style={{ height: barPx }}
                 />
               </div>

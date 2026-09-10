@@ -49,7 +49,7 @@ export default function SecuritiesDetailView({
                 onClick={() => setPeriodType(pt)}
                 className={`rounded-md px-3 py-1 transition-colors ${
                   periodType === pt
-                    ? "bg-emerald-500 text-slate-950"
+                    ? "bg-slate-1000 text-slate-950"
                     : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
                 }`}
               >
@@ -82,7 +82,7 @@ export default function SecuritiesDetailView({
       )}
 
       {!loading && (error || !periodData) && (
-        <div className="p-4 text-sm text-red-500 dark:text-red-400">
+        <div className="p-4 text-sm text-slate-1000 dark:text-slate-400">
           Không tải được dữ liệu chi tiết cho {symbol}
           {error ? `: ${error}` : ""}.
         </div>
@@ -92,7 +92,7 @@ export default function SecuritiesDetailView({
         <div className="space-y-6 p-4">
           {CHART_GROUPS.map((group) => (
             <div key={group.section}>
-              <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
+              <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                 {group.section}
               </h4>
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
