@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Import professional fonts for financial platform */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
 /* Class-based dark mode: `dark:` variants apply when <html class="dark">. */
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -47,9 +50,25 @@ body {
 body {
   margin: 0;
   font-family: "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
+  font-weight: 400;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   touch-action: manipulation;
+}
+
+/* Headings use Poppins - bold and professional */
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Poppins", system-ui, sans-serif;
+  font-weight: 700;
+}
+
+/* Numbers and financial data use IBM Plex Mono - monospace for clarity */
+.price, .number, [class*="rate"], [class*="price"], [class*="quote"],
+.tabular-nums, code, pre,
+[class*="percentage"], [class*="change"] {
+  font-family: "IBM Plex Mono", monospace;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
 #root {
@@ -59,6 +78,30 @@ body {
 img {
   max-width: 100%;
   height: auto;
+}
+
+/* Utility classes for financial typography */
+.font-heading {
+  font-family: "Poppins", system-ui, sans-serif;
+  font-weight: 700;
+}
+
+.font-mono-price {
+  font-family: "IBM Plex Mono", monospace;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.font-body {
+  font-family: "Inter", system-ui, sans-serif;
+  font-weight: 400;
+}
+
+/* Price/rate display styling */
+.tabular-nums {
+  font-family: "IBM Plex Mono", monospace;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .up { color: #a89b8c; }
