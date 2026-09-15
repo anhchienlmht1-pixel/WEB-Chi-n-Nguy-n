@@ -11,6 +11,7 @@ import type { Quote, HistoryPoint } from "../providers/types.js";
 
 export interface FundInsightStock {
   symbol: string;
+  logoUrl: string | null; // stock logo from Fmarket, when available
   price: number | null;
   changePercent: number | null;
   fundCount: number; // QUỸ CẦM
@@ -92,12 +93,13 @@ export async function buildFundInsight(): Promise<FundInsightPayload> {
   const funds = await fetchOpenStockFunds();
 
   // Aggregate per stock: how many funds hold it and the weights they assign.
-  const agg = new Map<string, { count: number; weights: number[] }>();
+  const agg = new Map<string, { count: number; weights: number[]; logoUrl: string | null }>();
   for (const f of funds) {
     for (const h of f.holdings) {
-      const e = agg.get(h.stockCode) ?? { count: 0, weights: [] };
+      const e = agg.get(h.stockCode) ?? { count: 0, weights: [], logoUrl: null };
       e.count += 1;
       if (Number.isFinite(h.weight) && h.weight > 0) e.weights.push(h.weight);
+      if (!e.logoUrl && h.logoUrl) e.logoUrl = h.logoUrl;
       agg.set(h.stockCode, e);
     }
   }
@@ -145,6 +147,7 @@ export async function buildFundInsight(): Promise<FundInsightPayload> {
       st?.return12m != null ? Math.round(percentile(sortedReturns, st.return12m) * 99) : 0;
     return {
       symbol: sym,
+      logoUrl: e.logoUrl,
       price: q?.price ?? null,
       changePercent: q?.changePercent ?? null,
       fundCount: e.count,

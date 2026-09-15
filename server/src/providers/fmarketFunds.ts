@@ -19,6 +19,8 @@ const TICKER_RE = /^[A-Z0-9]{3}$/;
 export interface FmarketFundHolding {
   stockCode: string;
   weight: number; // % of the fund's NAV
+  /** Stock logo URL when Fmarket includes one in the holding row. */
+  logoUrl: string | null;
 }
 
 export interface FmarketFund {
@@ -85,13 +87,23 @@ function toNumber(v: unknown): number | null {
 
 // Fmarket's detail payload has shifted field names over time; read holdings
 // defensively from whichever list is present and keep only real equities.
+// Fmarket has moved logo fields around across versions, so read from any of
+// the plausible keys and only accept an absolute URL.
+function extractLogo(h: any): string | null {
+  const candidates = [h?.image, h?.imageUrl, h?.logoUrl, h?.logo, h?.icon, h?.productImage, h?.stockImage];
+  for (const c of candidates) {
+    if (typeof c === "string" && /^https?:\/\//i.test(c.trim())) return c.trim();
+  }
+  return null;
+}
+
 function extractHoldings(detail: any): FmarketFundHolding[] {
   const lists: any[] = [
     detail?.data?.productTopHoldingList,
     detail?.data?.productTopHoldingListVN,
     detail?.productTopHoldingList,
   ].filter(Array.isArray);
-  const seen = new Map<string, number>();
+  const seen = new Map<string, { weight: number; logoUrl: string | null }>();
   for (const list of lists) {
     for (const h of list) {
       const code = String(h?.stockCode ?? h?.code ?? "")
@@ -101,12 +113,19 @@ function extractHoldings(detail: any): FmarketFundHolding[] {
       const type = String(h?.type ?? "STOCK").toUpperCase();
       if (type && type !== "STOCK") continue;
       const weight = toNumber(h?.netAssetPercent ?? h?.weight ?? h?.percent) ?? 0;
-      // Keep the largest reported weight if the same code appears twice.
-      if (!seen.has(code) || weight > (seen.get(code) as number)) seen.set(code, weight);
+      const logoUrl = extractLogo(h);
+      const prev = seen.get(code);
+      // Keep the largest reported weight if the same code appears twice, and
+      // keep whichever occurrence carried a logo.
+      if (!prev || weight > prev.weight) {
+        seen.set(code, { weight, logoUrl: logoUrl ?? prev?.logoUrl ?? null });
+      } else if (!prev.logoUrl && logoUrl) {
+        prev.logoUrl = logoUrl;
+      }
     }
     if (seen.size > 0) break;
   }
-  return Array.from(seen, ([stockCode, weight]) => ({ stockCode, weight }));
+  return Array.from(seen, ([stockCode, v]) => ({ stockCode, weight: v.weight, logoUrl: v.logoUrl }));
 }
 
 async function fetchFundList(): Promise<{ id: number; name: string; shortName: string; code: string; assetType: string; nav12mChange: number | null }[]> {

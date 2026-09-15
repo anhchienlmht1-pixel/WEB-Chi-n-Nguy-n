@@ -272,6 +272,7 @@ export async function fetchTrendBuySignals(): Promise<TrendBuySignal[]> {
 
 export interface FundInsightStock {
   symbol: string;
+  logoUrl: string | null;
   price: number | null;
   changePercent: number | null;
   fundCount: number;

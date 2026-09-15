@@ -1,11 +1,31 @@
 import { Link } from "react-router-dom";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { usePolling } from "../hooks/usePolling";
 import { fetchFundInsight, type FundInsightStock } from "../api/client";
 import { formatPercent } from "../utils/format";
 import CompanyLogo from "./CompanyLogo";
 
 const POLL_MS = 30 * 60 * 1000; // server caches for 1h — holdings move ~daily
+
+// Prefers the stock logo Fmarket returns; if it's missing or fails to load,
+// falls back to the app's existing company-logo/initials badge so a row is
+// never left with a broken image.
+function StockLogo({ symbol, logoUrl, size = 26 }: { symbol: string; logoUrl: string | null; size?: number }) {
+  const [failed, setFailed] = useState(false);
+  if (!logoUrl || failed) return <CompanyLogo symbol={symbol} size={size} />;
+  return (
+    <img
+      src={logoUrl}
+      alt={symbol}
+      width={size}
+      height={size}
+      loading="lazy"
+      onError={() => setFailed(true)}
+      className="shrink-0 rounded-md object-contain"
+      style={{ width: size, height: size }}
+    />
+  );
+}
 
 function monthLabel(): string {
   return `tháng ${new Date().getMonth() + 1}`;
@@ -85,7 +105,7 @@ function Row({ s }: { s: FundInsightStock }) {
     <tr className="border-t border-slate-100 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/40">
       <td className="px-3 py-2">
         <Link to={`/stock/${s.symbol}`} className="flex items-center gap-2">
-          <CompanyLogo symbol={s.symbol} size={26} />
+          <StockLogo symbol={s.symbol} logoUrl={s.logoUrl} size={26} />
           <div className="min-w-0">
             <div className="font-semibold text-slate-900 dark:text-slate-100">{s.symbol}</div>
             <div className="text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
