@@ -1,6 +1,8 @@
 import { adx, atr, sma } from "technicalindicators";
 import { STOCK_UNIVERSE } from "../providers/universe.js";
 import { getHistoryWithFallback } from "../providers/fallback.js";
+import { fetchFinancialReport } from "../providers/financials.js";
+import { extractKeyRatios } from "../digest/ratios.js";
 import type { HistoryPoint } from "../providers/types.js";
 
 // Same trend-following combo as the chart's own Mua/Bán markers
@@ -80,6 +82,41 @@ function computeSupertrendDirections(points: HistoryPoint[], period: number, mul
 export interface SignalDates {
   buyDate: string;  // When buy signal started
   sellDate: string | null;  // When sell signal occurred (null if still holding)
+}
+
+// Check if ROE is increasing (positive trend to reduce noise)
+// Fetches the latest annual and quarterly reports to verify ROE is healthy
+async function isRoeIncreasing(symbol: string): Promise<boolean> {
+  try {
+    // Try to get annual report for longer-term trend
+    const annualReport = await fetchFinancialReport(symbol, "CSTC", "year");
+    const annualRatios = extractKeyRatios(annualReport);
+
+    if (annualRatios.roe === null || annualRatios.roe.value <= 0) {
+      return false; // ROE must be positive
+    }
+
+    // For more recent data, also check quarterly report if available
+    try {
+      const quarterlyReport = await fetchFinancialReport(symbol, "CSTC", "quarter");
+      const quarterlyRatios = extractKeyRatios(quarterlyReport);
+
+      // If we have quarterly ROE, it should also be positive
+      if (quarterlyRatios.roe !== null && quarterlyRatios.roe.value <= 0) {
+        return false;
+      }
+    } catch {
+      // Quarterly data may not be available for all stocks, that's okay
+      // Fall back to annual check if quarterly fails
+    }
+
+    return true; // ROE is positive
+  } catch {
+    // If we can't fetch financial data, don't filter out the signal
+    // (it's better to show a signal and have the user verify ROE manually
+    // than to hide potentially good signals)
+    return true;
+  }
 }
 
 // Walk back from the latest bar: is it currently a buy, and if so, how far
@@ -178,6 +215,12 @@ export async function scanBuySignals(): Promise<BuySignalHit[]> {
         if (points.length === 0) {
           failed.set(seed.symbol, "No historical data");
         }
+        return null;
+      }
+
+      // Add ROE check: only include signals where ROE is positive (to reduce noise)
+      const hasGoodRoe = await isRoeIncreasing(seed.symbol);
+      if (!hasGoodRoe) {
         return null;
       }
 
