@@ -57,8 +57,8 @@ export default function MarketMovers({ quotes }: { quotes: Quote[] }) {
 
   return (
     <section className="mb-8">
-      <div className="mb-3">
-        <h2 className="mb-3 text-lg font-bold text-slate-900 dark:text-slate-100">Diễn biến thị trường</h2>
+      <div className="mb-4">
+        <h2 className="mb-4 text-lg font-bold text-slate-900 dark:text-slate-100">📊 Diễn biến thị trường</h2>
         <div className="flex flex-wrap gap-3">
           {/* Mover tabs */}
           <div className="flex gap-1 rounded-lg border border-slate-200 p-1 dark:border-slate-800">

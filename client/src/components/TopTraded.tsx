@@ -37,8 +37,8 @@ export default function TopTraded() {
 
   return (
     <section className="mb-8">
-      <div className="mb-3">
-        <h2 className="mb-3 text-lg font-bold text-slate-900 dark:text-slate-100">
+      <div className="mb-4">
+        <h2 className="mb-4 text-lg font-bold text-slate-900 dark:text-slate-100">
           🔥 Top 10 giao dịch nhiều nhất
         </h2>
         <div className="flex flex-wrap gap-3">

@@ -57,8 +57,8 @@ export default function MarketNews() {
 
   return (
     <section className="mb-8">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Cập nhật thị trường</h2>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">📰 Cập nhật thị trường</h2>
         <div className="flex gap-1 rounded-lg border border-slate-200 p-1 dark:border-slate-800">
           {TABS.map((t) => (
             <button
