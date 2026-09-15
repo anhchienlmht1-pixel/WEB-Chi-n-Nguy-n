@@ -26,6 +26,7 @@ import { buildDailyDigest } from "../digest/marketDigest.js";
 import { enrichDailyDigest } from "../digest/enrich.js";
 import { saveDigestToHistory, listDigestHistory, getDigestFromHistory, isDigestHistoryEnabled } from "../digest/digestHistory.js";
 import { fetchStockStrength } from "../providers/stockStrength.js";
+import { buildFundInsight } from "../signals/fundInsight.js";
 
 const router = Router();
 const cache = new NodeCache({ stdTTL: 20, checkperiod: 30 });
@@ -443,6 +444,18 @@ router.get(
     // per trading day.
     const data = await cached("ma-scan", 60 * 60, () => scanMovingAverages(), { staleOnError: true });
     res.json({ items: data });
+  })
+);
+
+router.get(
+  "/fund-insight",
+  asyncHandler(async (_req, res) => {
+    // Aggregates the open funds' holdings from Fmarket and crosses them with
+    // our own price strength. Fund holdings update at most daily and the
+    // build fans out over ~40 fund detail calls plus a history scan, so a 1h
+    // TTL with staleOnError keeps it cheap and resilient to a Fmarket blip.
+    const data = await cached("fund-insight", 60 * 60, () => buildFundInsight(), { staleOnError: true });
+    res.json(data);
   })
 );
 

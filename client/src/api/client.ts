@@ -269,3 +269,40 @@ export async function fetchTrendBuySignals(): Promise<TrendBuySignal[]> {
   const { data } = await api.get("/trend-signals");
   return data.items;
 }
+
+export interface FundInsightStock {
+  symbol: string;
+  price: number | null;
+  changePercent: number | null;
+  fundCount: number;
+  avgWeight: number;
+  priceStrength: number;
+  distanceFromPeak: number | null;
+  waitingToBuy: boolean;
+}
+
+export interface FundInsight {
+  asOf: string;
+  fundsTotal: number;
+  symbolsHeld: number;
+  waitingToBuyCount: number;
+  vnindex12mChange: number | null;
+  fundsBeatingVnindex: number;
+  fundsComparable: number;
+  topPicks: FundInsightStock[];
+  mostHeld: { symbol: string; fundCount: number }[];
+  strongest: { symbol: string; priceStrength: number; fundCount: number } | null;
+  crowdedWeak: {
+    symbol: string;
+    fundCount: number;
+    priceStrength: number;
+    distanceFromPeak: number | null;
+  } | null;
+}
+
+// Where the open funds' money sits (Fmarket holdings) crossed with our own
+// price strength — see server/src/signals/fundInsight.ts.
+export async function fetchFundInsight(): Promise<FundInsight> {
+  const { data } = await api.get("/fund-insight");
+  return data;
+}
