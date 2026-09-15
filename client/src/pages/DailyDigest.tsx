@@ -7,15 +7,15 @@ import { formatPercent, formatPrice, formatVolume } from "../utils/format";
 import MarketNews from "../components/MarketNews";
 
 const TOPIC_BADGE_CLASS: Record<string, string> = {
-  spotlight: "bg-slate-100 text-slate-600 dark:bg-slate-1000/10 dark:text-slate-300",
+  spotlight: "bg-slate-100 text-slate-600 dark:bg-slate-800/10 dark:text-slate-300",
   sector: "bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400",
   liquidity: "bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-400",
   breadth: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
 };
 
 const TONE_CLASS: Record<string, string> = {
-  up: "text-slate-600 dark:text-slate-300",
-  down: "text-slate-800 dark:text-slate-400",
+  up: "text-green-600 dark:text-green-400",
+  down: "text-red-600 dark:text-red-400",
   neutral: "text-slate-600 dark:text-slate-300",
 };
 
@@ -112,7 +112,7 @@ export default function DailyDigest() {
       {error && !data && (
         <div className="rounded-lg border border-slate-300 bg-slate-100 p-4 dark:border-red-900/60 dark:bg-red-950/30">
           <p className="font-medium text-slate-800 dark:text-slate-400">Lỗi tải bản tin</p>
-          <p className="mt-1 text-sm text-slate-1000 dark:text-slate-300/90">{error}</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-300/90">{error}</p>
         </div>
       )}
 
@@ -287,8 +287,8 @@ export default function DailyDigest() {
                       <span
                         className={
                           s.changePercent >= 0
-                            ? "text-slate-600 dark:text-slate-300"
-                            : "text-slate-800 dark:text-slate-400"
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-red-600 dark:text-red-400"
                         }
                       >
                         {formatPercent(s.changePercent)}

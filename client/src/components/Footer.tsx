@@ -44,7 +44,7 @@ export default function Footer() {
                 href="https://www.youtube.com/@chiennguyen.taichinh"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-md border border-slate-1000 px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-1000/10 dark:border-slate-400 dark:text-slate-400"
+                className="inline-flex items-center gap-2 rounded-md border border-slate-400 px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-800/10 dark:border-slate-400 dark:text-slate-400"
               >
                 📺 YouTube
               </a>
@@ -52,7 +52,7 @@ export default function Footer() {
                 href="https://zalo.me/0886284212"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-md border border-slate-1000 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-1000/10 dark:border-slate-300 dark:text-slate-300"
+                className="inline-flex items-center gap-2 rounded-md border border-slate-400 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-800/10 dark:border-slate-300 dark:text-slate-300"
               >
                 💬 Zalo
               </a>
@@ -60,7 +60,7 @@ export default function Footer() {
                 href="https://zalo.me/g/n1hcdesbqhdutsecnxzg"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-md border border-slate-1000 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-1000/10 dark:border-slate-400 dark:text-slate-400"
+                className="inline-flex items-center gap-2 rounded-md border border-slate-400 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-800/10 dark:border-slate-400 dark:text-slate-400"
               >
                 👥 Nhóm Zalo
               </a>

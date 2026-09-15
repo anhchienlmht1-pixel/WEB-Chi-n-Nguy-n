@@ -120,7 +120,7 @@ export default function Hero() {
           href="https://www.youtube.com/watch?v=CyUYSWOAavw"
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-6 inline-flex items-center gap-2 rounded-lg bg-slate-1000 px-5 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-slate-300"
+          className="mt-6 inline-flex items-center gap-2 rounded-lg bg-slate-800 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-slate-700"
         >
           ▶️ Hướng dẫn mở tài khoản chứng khoán
         </a>

@@ -19,13 +19,13 @@ export const STRENGTH_BANDS: StrengthBand[] = [
     label: "Khá",
     min: 500,
     max: 550,
-    className: "bg-slate-200 text-emerald-800 dark:bg-slate-1000/20 dark:text-slate-400",
+    className: "bg-slate-200 text-emerald-800 dark:bg-slate-800/20 dark:text-slate-400",
   },
   {
     label: "Khỏe",
     min: 550,
     max: 600,
-    className: "bg-slate-1000 text-white dark:bg-slate-1000 dark:text-slate-950",
+    className: "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 dark:bg-slate-800 dark:text-white",
   },
   {
     label: "Rất Khỏe",

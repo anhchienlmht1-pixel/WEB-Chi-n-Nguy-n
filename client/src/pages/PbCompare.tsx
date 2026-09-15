@@ -52,7 +52,7 @@ export default function PbCompare() {
             onClick={() => setGroup(g.value)}
             className={`rounded-md px-3 py-1.5 transition-colors ${
               group === g.value
-                ? "bg-slate-1000 text-slate-950"
+                ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
                 : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
             }`}
           >
@@ -71,7 +71,7 @@ export default function PbCompare() {
               onClick={() => setPbYears(y)}
               className={`rounded-md px-3 py-1 transition-colors ${
                 pbYears === y
-                  ? "bg-slate-1000 text-slate-950"
+                  ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
                   : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
               }`}
             >
@@ -95,7 +95,7 @@ export default function PbCompare() {
           </div>
         )}
         {!pbLoading && (pbError || !pbStats) && (
-          <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-1000 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-400">
+          <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-400">
             Không tải được dữ liệu P/B{pbError ? `: ${pbError}` : ""}.
           </div>
         )}

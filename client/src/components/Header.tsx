@@ -22,7 +22,7 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
 const mobileNavLinkClass = ({ isActive }: { isActive: boolean }) =>
   `block rounded-lg px-3 py-3 text-sm font-medium transition-colors ${
     isActive
-      ? "bg-slate-100 text-slate-600 dark:bg-slate-1000/10 dark:text-slate-300"
+      ? "bg-slate-100 text-slate-600 dark:bg-slate-800/10 dark:text-slate-300"
       : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
   }`;
 

@@ -53,7 +53,7 @@ export default function BankFundamentals({ symbol }: { symbol: string }) {
               onClick={() => setPeriodType(pt)}
               className={`rounded-md px-3 py-1 transition-colors ${
                 periodType === pt
-                  ? "bg-slate-1000 text-slate-950"
+                  ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
                   : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
               }`}
             >
@@ -72,7 +72,7 @@ export default function BankFundamentals({ symbol }: { symbol: string }) {
       )}
 
       {!loading && (error || !data) && (
-        <div className="p-4 text-sm text-slate-1000 dark:text-slate-400">
+        <div className="p-4 text-sm text-slate-500 dark:text-slate-400">
           Không tải được dữ liệu cơ bản cho {symbol}{error ? `: ${error}` : ""}.
         </div>
       )}

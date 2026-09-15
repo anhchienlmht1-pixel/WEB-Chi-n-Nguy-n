@@ -45,7 +45,7 @@ export default function TrendSignalScanner({
 
   if (error && !hits) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-1000 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-400">
+      <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-400">
         Không tải được danh sách tín hiệu: {error}
       </div>
     );
@@ -104,9 +104,9 @@ export default function TrendSignalScanner({
                 <div
                   className={`text-xs tabular-nums ${
                     h.changePercent > 0
-                      ? "text-slate-600 dark:text-slate-300"
+                      ? "text-green-600 dark:text-green-400"
                       : h.changePercent < 0
-                        ? "text-slate-1000 dark:text-slate-400"
+                        ? "text-red-600 dark:text-red-400"
                         : "text-slate-400"
                   }`}
                 >

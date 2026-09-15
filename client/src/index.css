@@ -1,34 +1,34 @@
 @import "tailwindcss";
 
-/* Import professional fonts for financial platform */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
-
 /* Class-based dark mode: `dark:` variants apply when <html class="dark">. */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Warm earth tone palette
-   Primary colors: #4A3C2A (brown), #A89B8C (taupe), #F2D29E (cream), #2E251A (dark brown)
-   Applied to slate and emerald utilities throughout the app. */
+/* ---------------------------------------------------------------------------
+   Professional financial palette
+   Neutral cool-gray chrome (slate) + semantic green/red for gains/losses.
+   Vietnamese market convention: green = tăng, red = giảm, vàng = tham chiếu.
+   Brand accent (emerald) is a refined institutional green.
+--------------------------------------------------------------------------- */
 @theme {
-  --color-slate-50: #faf7f2;
-  --color-slate-100: #f2ede5;
-  --color-slate-200: #e8e0d6;
-  --color-slate-300: #d4c9bc;
-  --color-slate-400: #a89b8c;
-  --color-slate-500: #7a6d61;
-  --color-slate-600: #5d5248;
-  --color-slate-700: #4a3c2a;
-  --color-slate-800: #37291f;
-  --color-slate-900: #2e251a;
-  --color-slate-950: #1f1810;
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0f172a;
+  --color-slate-950: #020617;
 
-  --color-emerald-50: #fef9f3;
-  --color-emerald-100: #f2d29e;
-  --color-emerald-300: #d4b876;
-  --color-emerald-400: #b5934f;
-  --color-emerald-500: #4a3c2a;
-  --color-emerald-600: #3d3220;
-  --color-emerald-700: #2e251a;
+  --color-emerald-50: #ecfdf5;
+  --color-emerald-100: #d1fae5;
+  --color-emerald-300: #6ee7b7;
+  --color-emerald-400: #34d399;
+  --color-emerald-500: #10b981;
+  --color-emerald-600: #059669;
+  --color-emerald-700: #047857;
 }
 
 html {
@@ -47,28 +47,45 @@ body {
   overflow-x: hidden;
 }
 
+/* ---------------------------------------------------------------------------
+   Typography — a single, neutral, authoritative sans (Inter) across the whole
+   app. Numbers use tabular figures so columns align like a real trading
+   terminal, without the clunky monospace look.
+   Inter is loaded in index.html.
+--------------------------------------------------------------------------- */
 body {
   margin: 0;
   font-family: "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
   font-weight: 400;
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   touch-action: manipulation;
+  letter-spacing: -0.006em;
 }
 
-/* Headings use Poppins - bold and professional */
+/* Headings: same family, heavier weight, tighter tracking for an
+   institutional, confident feel. */
 h1, h2, h3, h4, h5, h6 {
-  font-family: "Poppins", system-ui, sans-serif;
+  font-family: "Inter", system-ui, sans-serif;
   font-weight: 700;
+  letter-spacing: -0.02em;
+}
+h1 { letter-spacing: -0.028em; }
+
+/* All financial data: tabular figures, medium weight for legibility. */
+.price, .number, [class*="rate"], [class*="price"], [class*="quote"],
+.tabular-nums, [class*="percentage"], [class*="change"],
+.font-mono-price {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  letter-spacing: 0;
 }
 
-/* Numbers and financial data use IBM Plex Mono - monospace for clarity */
-.price, .number, [class*="rate"], [class*="price"], [class*="quote"],
-.tabular-nums, code, pre,
-[class*="percentage"], [class*="change"] {
-  font-family: "IBM Plex Mono", monospace;
-  font-weight: 600;
-  letter-spacing: 0.01em;
+code, pre {
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 #root {
@@ -80,16 +97,17 @@ img {
   height: auto;
 }
 
-/* Utility classes for financial typography */
+/* Typography utility classes (kept for existing usages). */
 .font-heading {
-  font-family: "Poppins", system-ui, sans-serif;
+  font-family: "Inter", system-ui, sans-serif;
   font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .font-mono-price {
-  font-family: "IBM Plex Mono", monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
   font-weight: 600;
-  letter-spacing: 0.01em;
 }
 
 .font-body {
@@ -97,21 +115,23 @@ img {
   font-weight: 400;
 }
 
-/* Price/rate display styling */
 .tabular-nums {
-  font-family: "IBM Plex Mono", monospace;
-  font-weight: 600;
   font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
 }
 
-.up { color: #a89b8c; }
-.down { color: #8b5a3c; }
-.flat { color: #7a6d61; }
-.dark .up { color: #f2d29e; }
-.dark .down { color: #c9845c; }
-.dark .flat { color: #a89b8c; }
+/* ---------------------------------------------------------------------------
+   Semantic gain/loss colors — the core of a stock platform.
+   trendClass() in utils/format.ts emits .up / .down / .flat everywhere.
+--------------------------------------------------------------------------- */
+.up { color: #16a34a; }
+.down { color: #dc2626; }
+.flat { color: #64748b; }
+.dark .up { color: #22c55e; }
+.dark .down { color: #f87171; }
+.dark .flat { color: #94a3b8; }
 
 ::-webkit-scrollbar { height: 8px; width: 8px; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-.dark ::-webkit-scrollbar-thumb { background: #2e3340; }
+.dark ::-webkit-scrollbar-thumb { background: #334155; }
 ::-webkit-scrollbar-track { background: transparent; }

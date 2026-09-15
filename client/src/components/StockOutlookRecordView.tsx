@@ -4,7 +4,7 @@ export function StockOutlookRecordView({ record }: { record: StockOutlookRecord 
   return (
     <>
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <span className="rounded-full bg-slate-200 px-3 py-1 text-sm font-bold text-slate-700 dark:bg-slate-1000/10 dark:text-slate-300">
+        <span className="rounded-full bg-slate-200 px-3 py-1 text-sm font-bold text-slate-700 dark:bg-slate-800/10 dark:text-slate-300">
           {record.symbol}
         </span>
         {record.updatedAt && (
