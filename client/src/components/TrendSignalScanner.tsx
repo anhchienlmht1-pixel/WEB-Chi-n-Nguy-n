@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { usePolling } from "../hooks/usePolling";
 import { fetchTrendBuySignals } from "../api/client";
@@ -9,6 +10,36 @@ const POLL_MS = 5 * 60 * 1000; // server caches the scan for 1h — no point pol
 
 function formatSince(iso: string): string {
   return new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
+}
+
+// Whole days between the buy date and today, so the user reads "đang nắm giữ
+// N ngày" instead of decoding a bare date.
+function daysHeld(iso: string): number {
+  const start = new Date(iso).getTime();
+  if (Number.isNaN(start)) return 0;
+  const diff = Date.now() - start;
+  return Math.max(0, Math.floor(diff / 86_400_000));
+}
+
+// Reusable card shell so the loading / error / empty / list states all share
+// the same header and framing — the panel never "jumps" between states.
+function Panel({ children, subtitle }: { children: ReactNode; subtitle?: ReactNode }) {
+  return (
+    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
+      <div className="border-b border-slate-200 bg-gradient-to-r from-green-50/60 to-transparent p-4 dark:border-slate-800 dark:from-green-950/20">
+        <div className="flex items-center gap-2">
+          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-green-100 text-sm dark:bg-green-950/50">
+            📈
+          </span>
+          <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Tín hiệu MUA</h4>
+        </div>
+        <p className="mt-1.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+          {subtitle ?? "Cổ phiếu đang trong xu hướng tăng và chưa xuất hiện điểm bán."}
+        </p>
+      </div>
+      {children}
+    </div>
+  );
 }
 
 // Lists every stock in the universe currently on a buy signal per the same
@@ -25,63 +56,109 @@ export default function TrendSignalScanner({
    * Falls back to a normal /stock/:symbol navigation when omitted. */
   onSelectSymbol?: (symbol: string) => void;
 }) {
-  const { data: hits, error, loading } = usePolling(() => fetchTrendBuySignals(), [], POLL_MS);
+  const { data: hits, error, loading, refetch } = usePolling(() => fetchTrendBuySignals(), [], POLL_MS);
   const { addMany } = useWatchlist();
 
+  // First load — the server scans ~70 symbols, so tell the user it's working
+  // instead of leaving a bare spinner that reads as "broken".
   if (loading && !hits) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
-        <h4 className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
-          Tín hiệu MUA (Trend Following)
-        </h4>
-        <div className="space-y-2">
+      <Panel subtitle="Đang quét toàn bộ thị trường để tìm cổ phiếu đang tăng giá…">
+        <div className="space-y-2 p-4">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-6 w-full animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
+            <div key={i} className="flex items-center gap-3">
+              <div className="h-8 w-8 shrink-0 animate-pulse rounded-md bg-slate-100 dark:bg-slate-800" />
+              <div className="h-6 flex-1 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
+            </div>
           ))}
         </div>
-      </div>
+      </Panel>
     );
   }
 
+  // Friendly, non-technical error with a retry — a cold-cache scan can exceed
+  // the request timeout, which is normal on the very first visit.
   if (error && !hits) {
+    const isTimeout = /timeout/i.test(error);
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-400">
-        Không tải được danh sách tín hiệu: {error}
-      </div>
+      <Panel subtitle="Cổ phiếu đang trong xu hướng tăng và chưa xuất hiện điểm bán.">
+        <div className="flex flex-col items-center gap-3 p-6 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-xl dark:bg-slate-800">
+            ⏳
+          </div>
+          <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+            {isTimeout ? "Đang tổng hợp dữ liệu thị trường" : "Chưa tải được danh sách tín hiệu"}
+          </p>
+          <p className="max-w-xs text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+            {isTimeout
+              ? "Lần tải đầu tiên hệ thống cần quét khoảng 70 mã nên có thể mất vài giây. Bạn hãy thử lại nhé."
+              : "Có thể do kết nối tạm thời gián đoạn. Vui lòng thử lại sau giây lát."}
+          </p>
+          <button
+            type="button"
+            onClick={refetch}
+            className="mt-1 rounded-md bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+          >
+            ↻ Thử lại
+          </button>
+        </div>
+      </Panel>
     );
   }
 
   if (!hits) return null;
 
+  const subtitle = (
+    <>
+      <span className="font-medium text-green-700 dark:text-green-400">{hits.length} cổ phiếu</span> đang trong xu hướng
+      tăng, chưa xuất hiện điểm bán.
+      <span
+        className="mt-0.5 block text-[11px] text-slate-400 dark:text-slate-500"
+        title="Điều kiện: SMA20 > SMA50, ADX(14) > 25 và Supertrend(10,3) đang báo tăng"
+      >
+        Hệ thống Trend Following · cập nhật mỗi giờ ⓘ
+      </span>
+    </>
+  );
+
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-transparent p-4 dark:border-slate-800 dark:from-slate-900/50">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 bg-gradient-to-r from-green-50/60 to-transparent p-4 dark:border-slate-800 dark:from-green-950/20">
         <div className="min-w-0 flex-1">
-          <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">📈 Tín hiệu MUA (Trend Following)</h4>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            {hits.length} mã đang trong xu hướng tăng, chưa xuất hiện điểm bán
-            <br className="hidden sm:block" />
-            <span className="text-slate-400 dark:text-slate-500">(SMA20&gt;SMA50, ADX(14)&gt;25, Supertrend) — cập nhật mỗi giờ</span>
-          </p>
+          <div className="flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-green-100 text-sm dark:bg-green-950/50">
+              📈
+            </span>
+            <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Tín hiệu MUA</h4>
+          </div>
+          <p className="mt-1.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{subtitle}</p>
         </div>
         {hits.length > 0 && (
           <button
             type="button"
             onClick={() => addMany(hits.map((h) => h.symbol))}
+            title="Thêm tất cả mã trong danh sách vào mục theo dõi của bạn"
             className="shrink-0 whitespace-nowrap rounded-md border border-green-600 bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 transition-all hover:bg-green-100 dark:border-green-500/50 dark:bg-green-950/30 dark:text-green-400 dark:hover:bg-green-950/50"
           >
-            ★ Thêm tất cả
+            ★ Theo dõi tất cả
           </button>
         )}
       </div>
 
       {hits.length === 0 ? (
-        <p className="p-4 text-sm text-slate-400 dark:text-slate-500">
-          Hiện không có mã nào khớp đủ 3 điều kiện của tín hiệu MUA.
-        </p>
+        <div className="flex flex-col items-center gap-2 p-6 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-xl dark:bg-slate-800">
+            🔍
+          </div>
+          <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Chưa có mã nào khớp tín hiệu MUA</p>
+          <p className="max-w-xs text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+            Hiện không cổ phiếu nào hội đủ 3 điều kiện của xu hướng tăng. Danh sách sẽ tự cập nhật mỗi giờ.
+          </p>
+        </div>
       ) : (
         <div className="max-h-96 overflow-y-auto">
           {hits.map((h) => {
+            const held = daysHeld(h.buyDate);
             // WatchButton is its own <button> — kept as a sibling rather
             // than nested inside the row's own clickable element, since a
             // <button> (or an <a>) can't validly contain another <button>.
@@ -91,8 +168,13 @@ export default function TrendSignalScanner({
                   <span className="font-semibold text-slate-900 dark:text-slate-100">{h.symbol}</span>
                   <span className="text-[11px] text-slate-400 dark:text-slate-500">{h.exchange}</span>
                 </div>
-                <div className="truncate text-xs text-slate-400 dark:text-slate-500">
-                  🟢 Mở: {formatSince(h.buyDate)} {h.sellDate ? `| 🔴 Đóng: ${formatSince(h.sellDate)}` : "| 📌 Đang mở mua"}
+                <div className="mt-0.5 flex items-center gap-1.5 text-xs">
+                  <span className="inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-[11px] font-medium text-green-700 dark:bg-green-950/40 dark:text-green-400">
+                    ● Đang mua
+                  </span>
+                  <span className="text-slate-400 dark:text-slate-500">
+                    {held > 0 ? `${held} ngày` : "hôm nay"} · từ {formatSince(h.buyDate)}
+                  </span>
                 </div>
               </div>
             );
@@ -102,7 +184,7 @@ export default function TrendSignalScanner({
                   {formatPrice(h.price, h.currency)}
                 </div>
                 <div
-                  className={`text-xs tabular-nums ${
+                  className={`text-xs tabular-nums font-medium ${
                     h.changePercent > 0
                       ? "text-green-600 dark:text-green-400"
                       : h.changePercent < 0
@@ -110,7 +192,7 @@ export default function TrendSignalScanner({
                         : "text-slate-400"
                   }`}
                 >
-                  {formatPercent(h.changePercent)}
+                  {h.changePercent > 0 ? "▲" : h.changePercent < 0 ? "▼" : ""} {formatPercent(h.changePercent)}
                 </div>
               </div>
             );
@@ -121,7 +203,7 @@ export default function TrendSignalScanner({
             return (
               <div
                 key={h.symbol}
-                className="flex items-center gap-2 border-b border-l-4 border-l-green-500 border-slate-100 px-4 py-3 last:border-0 transition-colors hover:bg-green-50/30 dark:border-slate-900 dark:border-l-green-500/60 dark:hover:bg-green-950/20"
+                className="flex items-center gap-2 border-b border-l-4 border-l-green-500 border-slate-100 px-4 py-3 last:border-b-0 transition-colors hover:bg-green-50/40 dark:border-slate-900 dark:border-l-green-500/60 dark:hover:bg-green-950/20"
               >
                 <WatchButton symbol={h.symbol} />
                 {onSelectSymbol ? (
