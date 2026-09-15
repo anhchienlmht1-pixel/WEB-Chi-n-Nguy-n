@@ -39,8 +39,13 @@ export default function Dashboard() {
       <IndexTicker />
 
       {/* Main Chart + Signals Section */}
-      <div className="mb-6">
-        <h1 className="mb-4 text-lg font-bold text-slate-900 dark:text-slate-100">Biểu đồ Kỹ Thuật</h1>
+      <div className="mb-8">
+        <div className="mb-4 flex items-end justify-between gap-4">
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-400">Phân tích kỹ thuật</h2>
+            <h1 className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">Biểu đồ thị trường</h1>
+          </div>
+        </div>
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
           {/* Chart */}
           <div className="min-w-0">
@@ -61,18 +66,28 @@ export default function Dashboard() {
 
       {/* Trend System Statistics */}
       {chartSymbol !== "VNINDEX" && (
-        <div className="mb-6">
+        <div className="mb-8">
           <TrendSystemStats signals={signals} symbol={chartSymbol} />
         </div>
       )}
 
       {/* Market Data Bottom Row */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <TopTraded />
-        {data && data.quotes.length > 0 && <MarketMovers quotes={data.quotes} />}
+      <div className="mb-8">
+        <div className="mb-4">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-400">Thị trường</h2>
+          <h3 className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100">Hoạt động thị trường</h3>
+        </div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <TopTraded />
+          {data && data.quotes.length > 0 && <MarketMovers quotes={data.quotes} />}
+        </div>
       </div>
 
-      <div className="mt-6">
+      <div className="mb-8">
+        <div className="mb-4">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-400">Xếp hạng</h2>
+          <h3 className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100">Bảng xếp hạng thị trường</h3>
+        </div>
         <LeaderBoard />
       </div>
 

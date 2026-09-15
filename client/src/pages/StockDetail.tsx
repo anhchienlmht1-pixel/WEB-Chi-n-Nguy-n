@@ -35,28 +35,32 @@ export default function StockDetail() {
     <div className="mx-auto max-w-[1400px] px-4 py-6">
       {quote && (
         <>
-          <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                  {quote.symbol}
-                </h1>
-                {quote.exchange && (
-                  <span className="rounded-full border border-slate-300 px-2 py-0.5 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
-                    {quote.exchange}
-                  </span>
-                )}
-                <WatchButton symbol={quote.symbol} />
+          <div className="mb-8 rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900/40">
+            <div className="flex flex-wrap items-start justify-between gap-6">
+              <div className="flex-1">
+                <div className="flex items-center gap-3">
+                  <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
+                    {quote.symbol}
+                  </h1>
+                  {quote.exchange && (
+                    <span className="rounded-full border border-slate-300 bg-slate-50 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-400">
+                      {quote.exchange}
+                    </span>
+                  )}
+                </div>
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{quote.name}</p>
+                <div className="mt-3">
+                  <WatchButton symbol={quote.symbol} />
+                </div>
               </div>
-              <p className="text-slate-500 dark:text-slate-400">{quote.name}</p>
-            </div>
-            <div className="text-right">
-              <div className="text-3xl font-bold tabular-nums text-slate-900 dark:text-slate-100">
-                {formatPrice(quote.price, quote.currency)}
-                <span className="ml-2 text-base text-slate-500">{quote.currency}</span>
-              </div>
-              <div className={`text-sm font-medium tabular-nums ${trendClass(quote.change)}`}>
-                {formatChange(quote.change, quote.currency)} ({formatPercent(quote.changePercent)})
+              <div className="text-right">
+                <div className="text-4xl font-bold tabular-nums text-slate-900 dark:text-slate-100">
+                  {formatPrice(quote.price, quote.currency)}
+                </div>
+                <div className={`mt-1 text-sm font-semibold tabular-nums ${trendClass(quote.change)}`}>
+                  {formatChange(quote.change, quote.currency)} ({formatPercent(quote.changePercent)})
+                </div>
+                <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">{quote.currency}</div>
               </div>
             </div>
           </div>
@@ -119,9 +123,9 @@ export default function StockDetail() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/40">
-      <div className="text-xs text-slate-500">{label}</div>
-      <div className="mt-1 font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 transition-colors hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:bg-slate-800/50">
+      <div className="text-xs font-medium text-slate-600 dark:text-slate-400">{label}</div>
+      <div className="mt-1.5 font-semibold tabular-nums text-slate-900 dark:text-slate-100">
         {value}
       </div>
     </div>

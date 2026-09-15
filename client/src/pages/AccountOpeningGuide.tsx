@@ -1,12 +1,13 @@
 export default function AccountOpeningGuide() {
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
+    <div className="mx-auto max-w-4xl px-4 py-6">
       {/* Header */}
-      <div className="mb-8 text-center">
-        <h1 className="mb-3 text-3xl font-bold text-slate-900 dark:text-slate-100">
-          📱 Hướng Dẫn Mở Tài Khoản
+      <div className="mb-8">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-400">Hướng dẫn</h2>
+        <h1 className="mt-1 mb-2 text-3xl font-bold text-slate-900 dark:text-slate-100">
+          📱 Mở Tài Khoản Chứng Khoán
         </h1>
-        <p className="text-slate-600 dark:text-slate-400">
+        <p className="text-sm text-slate-600 dark:text-slate-400">
           Xem video hướng dẫn chi tiết cách mở tài khoản giao dịch chứng khoán
         </p>
       </div>

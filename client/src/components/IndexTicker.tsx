@@ -12,24 +12,37 @@ const INDEX_SYMBOLS = ["VNINDEX", "VN30", "HNXINDEX", "UPCOMINDEX"] as const;
 
 function IndexCard({ quote }: { quote: Quote }) {
   const dir = quote.changePercent > 0 ? "▲" : quote.changePercent < 0 ? "▼" : "";
+  const isUp = quote.changePercent > 0;
+  const isDown = quote.changePercent < 0;
+
   return (
     <Link
       to={`/stock/${quote.symbol}`}
-      className="flex flex-1 flex-col gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900/40 dark:hover:bg-slate-800/60 min-w-[140px]"
+      className={`flex flex-col gap-3 rounded-lg border px-4 py-4 transition-all duration-200 ${
+        isUp
+          ? "border-green-200 bg-green-50/50 hover:bg-green-50 dark:border-green-900/50 dark:bg-green-950/20 dark:hover:bg-green-950/30"
+          : isDown
+            ? "border-red-200 bg-red-50/50 hover:bg-red-50 dark:border-red-900/50 dark:bg-red-950/20 dark:hover:bg-red-950/30"
+            : "border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900/40 dark:hover:bg-slate-800/60"
+      }`}
     >
       <div>
-        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <div className="text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-400">
           {quote.symbol}
         </div>
       </div>
-      <div className="text-right">
-        <div className={`text-2xl font-bold tabular-nums ${trendClass(quote.changePercent)}`}>
+      <div className="flex-1">
+        <div className={`text-3xl font-bold tabular-nums ${trendClass(quote.changePercent)}`}>
           {formatPrice(quote.price, quote.currency)}
         </div>
-        <div className={`text-xs font-medium tabular-nums ${trendClass(quote.changePercent)}`}>
-          {dir} {quote.change >= 0 ? "+" : ""}
-          {quote.change.toFixed(2)} ({quote.changePercent >= 0 ? "+" : ""}
-          {quote.changePercent.toFixed(2)}%)
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        <span className={`text-xs font-semibold ${trendClass(quote.changePercent)}`}>
+          {dir}
+        </span>
+        <div className={`text-xs font-medium tabular-nums text-right ${trendClass(quote.changePercent)}`}>
+          <div>{quote.change >= 0 ? "+" : ""}{quote.change.toFixed(2)}</div>
+          <div>({quote.changePercent >= 0 ? "+" : ""}{quote.changePercent.toFixed(2)}%)</div>
         </div>
       </div>
     </Link>
@@ -48,9 +61,9 @@ export default function IndexTicker() {
 
   if (loading && !data) {
     return (
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {INDEX_SYMBOLS.map((s) => (
-          <div key={s} className="h-16 animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800" />
+          <div key={s} className="h-20 animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800" />
         ))}
       </div>
     );
@@ -60,10 +73,13 @@ export default function IndexTicker() {
   if (!data) return null;
 
   return (
-    <div className="mb-6 flex flex-wrap gap-3">
-      {data.map((q) => (
-        <IndexCard key={q.symbol} quote={q} />
-      ))}
+    <div>
+      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">Chỉ số thị trường</h2>
+      <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {data.map((q) => (
+          <IndexCard key={q.symbol} quote={q} />
+        ))}
+      </div>
     </div>
   );
 }

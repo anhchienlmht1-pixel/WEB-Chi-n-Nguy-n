@@ -38,8 +38,11 @@ export default function PbCompare() {
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-6">
-      <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">So sánh P/B theo ngành</h1>
-      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">So sánh P/B các doanh nghiệp niêm yết theo nhóm ngành.</p>
+      <div className="mb-6">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-400">Công cụ phân tích</h2>
+        <h1 className="mt-1 mb-2 text-3xl font-bold text-slate-900 dark:text-slate-100">So sánh P/B theo ngành</h1>
+        <p className="text-sm text-slate-600 dark:text-slate-400">So sánh P/B các doanh nghiệp niêm yết theo nhóm ngành</p>
+      </div>
 
       <div className="mt-4 flex w-fit gap-1 rounded-lg border border-slate-200 p-1 text-sm font-medium dark:border-slate-800">
         {GROUPS.map((g) => (

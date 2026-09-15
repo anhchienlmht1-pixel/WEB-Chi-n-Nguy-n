@@ -54,22 +54,23 @@ export default function TrendSignalScanner({
   if (!hits) return null;
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
-      <div className="flex flex-wrap items-start justify-between gap-2 border-b border-slate-200 p-4 dark:border-slate-800">
-        <div>
-          <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Tín hiệu MUA (Trend Following)</h4>
-          <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
-            {hits.length} mã đang trong xu hướng tăng, chưa xuất hiện điểm bán (SMA20&gt;SMA50, ADX(14)&gt;25,
-            Supertrend(10,3)) — quét toàn bộ danh mục, cập nhật mỗi giờ.
+    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-transparent p-4 dark:border-slate-800 dark:from-slate-900/50">
+        <div className="min-w-0 flex-1">
+          <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">📈 Tín hiệu MUA (Trend Following)</h4>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            {hits.length} mã đang trong xu hướng tăng, chưa xuất hiện điểm bán
+            <br className="hidden sm:block" />
+            <span className="text-slate-400 dark:text-slate-500">(SMA20&gt;SMA50, ADX(14)&gt;25, Supertrend) — cập nhật mỗi giờ</span>
           </p>
         </div>
         {hits.length > 0 && (
           <button
             type="button"
             onClick={() => addMany(hits.map((h) => h.symbol))}
-            className="shrink-0 whitespace-nowrap rounded-md border border-slate-1000 px-2.5 py-1 text-xs font-semibold text-slate-500 transition-colors hover:bg-slate-1000/10 dark:border-slate-300 dark:text-slate-300"
+            className="shrink-0 whitespace-nowrap rounded-md border border-green-600 bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 transition-all hover:bg-green-100 dark:border-green-500/50 dark:bg-green-950/30 dark:text-green-400 dark:hover:bg-green-950/50"
           >
-            ★ Thêm tất cả vào Theo dõi
+            ★ Thêm tất cả
           </button>
         )}
       </div>
@@ -120,7 +121,7 @@ export default function TrendSignalScanner({
             return (
               <div
                 key={h.symbol}
-                className="flex items-center gap-2 border-b border-l-4 border-l-slate-600 border-slate-100 px-4 py-3 last:border-0 transition-colors hover:bg-slate-50 dark:border-slate-900 dark:border-l-slate-500 dark:hover:bg-slate-900/60"
+                className="flex items-center gap-2 border-b border-l-4 border-l-green-500 border-slate-100 px-4 py-3 last:border-0 transition-colors hover:bg-green-50/30 dark:border-slate-900 dark:border-l-green-500/60 dark:hover:bg-green-950/20"
               >
                 <WatchButton symbol={h.symbol} />
                 {onSelectSymbol ? (
