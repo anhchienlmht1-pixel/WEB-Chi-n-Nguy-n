@@ -84,36 +84,77 @@ export interface SignalDates {
   sellDate: string | null;  // When sell signal occurred (null if still holding)
 }
 
-// Check if ROE is increasing (positive trend to reduce noise)
-// Fetches the latest annual and quarterly reports to verify ROE is healthy
-async function isRoeIncreasing(symbol: string): Promise<boolean> {
+// CAN SLIM fundamentals check: ROE, Revenue growth, Earnings growth
+// to reduce noise and only show high-quality buy signals
+async function checkCanSlimFundamentals(symbol: string): Promise<boolean> {
   try {
-    // Try to get annual report for longer-term trend
-    const annualReport = await fetchFinancialReport(symbol, "CSTC", "year");
-    const annualRatios = extractKeyRatios(annualReport);
+    // Fetch annual income statement for revenue and earnings
+    const incomeReport = await fetchFinancialReport(symbol, "KQKD", "year");
+    if (incomeReport.periods.length < 2) return true; // Need at least 2 years to compare
 
-    if (annualRatios.roe === null || annualRatios.roe.value <= 0) {
-      return false; // ROE must be positive
+    // Find revenue row (Doanh thu thuần / Revenue from sales)
+    const revenueItem = incomeReport.items.find(
+      (item) =>
+        /doanh thu|revenue/i.test((item.name || "").toLowerCase()) &&
+        /bán|sales/i.test((item.name || "").toLowerCase())
+    );
+
+    // Find net income/earnings row (Lợi nhuận sau thuế / Net income)
+    const earningsItem = incomeReport.items.find(
+      (item) =>
+        (/lợi nhuận|profit|earnings|net income/i.test((item.name || "").toLowerCase()) ||
+         /lợi nhuận ròng|lợi nhuận sau|net profit/i.test((item.name || "").toLowerCase())) &&
+        !/trước thuế/i.test((item.name || "").toLowerCase()) // Exclude pre-tax profit
+    );
+
+    // Get latest and previous year values
+    const latestIdx = incomeReport.periods.length - 1;
+    const prevIdx = incomeReport.periods.length - 2;
+
+    // Check Revenue growth: latest > previous and both positive
+    if (revenueItem) {
+      const latestRevenue = revenueItem.values[latestIdx];
+      const prevRevenue = revenueItem.values[prevIdx];
+
+      if (latestRevenue !== null && prevRevenue !== null && latestRevenue > 0 && prevRevenue > 0) {
+        const revenueGrowth = (latestRevenue - prevRevenue) / prevRevenue;
+        if (revenueGrowth < 0) {
+          // Revenue must not be declining
+          return false;
+        }
+      }
     }
 
-    // For more recent data, also check quarterly report if available
-    try {
-      const quarterlyReport = await fetchFinancialReport(symbol, "CSTC", "quarter");
-      const quarterlyRatios = extractKeyRatios(quarterlyReport);
+    // Check Earnings growth: latest > previous and both positive
+    if (earningsItem) {
+      const latestEarnings = earningsItem.values[latestIdx];
+      const prevEarnings = earningsItem.values[prevIdx];
 
-      // If we have quarterly ROE, it should also be positive
-      if (quarterlyRatios.roe !== null && quarterlyRatios.roe.value <= 0) {
+      if (latestEarnings !== null && prevEarnings !== null && latestEarnings > 0 && prevEarnings > 0) {
+        const earningsGrowth = (latestEarnings - prevEarnings) / prevEarnings;
+        if (earningsGrowth < 0) {
+          // Earnings must not be declining
+          return false;
+        }
+      } else if (latestEarnings !== null && latestEarnings <= 0) {
+        // Latest earnings must be positive
         return false;
       }
-    } catch {
-      // Quarterly data may not be available for all stocks, that's okay
-      // Fall back to annual check if quarterly fails
     }
 
-    return true; // ROE is positive
+    // Fetch ratio report to check ROE
+    const ratioReport = await fetchFinancialReport(symbol, "CSTC", "year");
+    const ratios = extractKeyRatios(ratioReport);
+
+    // ROE must be positive
+    if (ratios.roe === null || ratios.roe.value <= 0) {
+      return false;
+    }
+
+    return true;
   } catch {
     // If we can't fetch financial data, don't filter out the signal
-    // (it's better to show a signal and have the user verify ROE manually
+    // (it's better to show a signal and have the user verify fundamentals
     // than to hide potentially good signals)
     return true;
   }
@@ -218,9 +259,10 @@ export async function scanBuySignals(): Promise<BuySignalHit[]> {
         return null;
       }
 
-      // Add ROE check: only include signals where ROE is positive (to reduce noise)
-      const hasGoodRoe = await isRoeIncreasing(seed.symbol);
-      if (!hasGoodRoe) {
+      // Check CAN SLIM fundamentals: ROE > 0, Revenue growth >= 0, Earnings growth >= 0
+      // to reduce noise and improve signal quality
+      const hasSolidFundamentals = await checkCanSlimFundamentals(seed.symbol);
+      if (!hasSolidFundamentals) {
         return null;
       }
 
