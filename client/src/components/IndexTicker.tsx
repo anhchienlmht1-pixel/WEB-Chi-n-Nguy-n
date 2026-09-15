@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { fetchQuote } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
-import { formatPrice, formatVolume, trendClass } from "../utils/format";
+import { formatPrice, trendClass } from "../utils/format";
 import type { Quote } from "../types";
 
 // The 4 index symbols this data source (KBS) actually has verified quotes
