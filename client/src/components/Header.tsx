@@ -42,7 +42,7 @@ export default function Header() {
           <span className="hidden sm:inline">Chiến Nguyễn Stock</span>
         </NavLink>
 
-        <nav className="hidden min-w-0 items-center gap-5 overflow-x-auto md:flex lg:gap-7">
+        <nav className="hidden shrink-0 items-center gap-6 md:flex lg:gap-8">
           {NAV_ITEMS.map((item) => (
             <NavLink key={item.to} to={item.to} end={item.end} className={navLinkClass}>
               {item.label}
@@ -51,10 +51,10 @@ export default function Header() {
         </nav>
 
         <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-2 sm:flex-none sm:gap-3">
-          <div className="min-w-0 flex-1 sm:w-40 sm:flex-none md:w-52">
+          <div className="min-w-0 flex-1 sm:w-40 sm:flex-none md:w-40 lg:w-52">
             <StockHeaderInfo />
           </div>
-          <div className="min-w-0 flex-1 sm:w-40 sm:flex-none md:w-52">
+          <div className="min-w-0 flex-1 sm:w-40 sm:flex-none md:w-40 lg:w-52">
             <SearchBox />
           </div>
           <TrendSignalBell />
