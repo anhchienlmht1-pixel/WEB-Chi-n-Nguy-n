@@ -15,18 +15,15 @@ function IndexCard({ quote }: { quote: Quote }) {
   return (
     <Link
       to={`/stock/${quote.symbol}`}
-      className="flex min-w-[150px] flex-1 items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900/40 dark:hover:bg-slate-800/60"
+      className="flex flex-1 flex-col gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900/40 dark:hover:bg-slate-800/60 min-w-[140px]"
     >
       <div>
-        <div className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           {quote.symbol}
-        </div>
-        <div className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
-          KL {formatVolume(quote.volume)}
         </div>
       </div>
       <div className="text-right">
-        <div className={`text-lg font-bold tabular-nums ${trendClass(quote.changePercent)}`}>
+        <div className={`text-2xl font-bold tabular-nums ${trendClass(quote.changePercent)}`}>
           {formatPrice(quote.price, quote.currency)}
         </div>
         <div className={`text-xs font-medium tabular-nums ${trendClass(quote.changePercent)}`}>

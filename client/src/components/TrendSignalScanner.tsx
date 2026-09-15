@@ -120,7 +120,7 @@ export default function TrendSignalScanner({
             return (
               <div
                 key={h.symbol}
-                className="flex items-center gap-2 border-b border-slate-100 px-4 py-2 last:border-0 hover:bg-slate-50 dark:border-slate-900 dark:hover:bg-slate-900/60"
+                className="flex items-center gap-2 border-b border-l-4 border-l-slate-600 border-slate-100 px-4 py-3 last:border-0 transition-colors hover:bg-slate-50 dark:border-slate-900 dark:border-l-slate-500 dark:hover:bg-slate-900/60"
               >
                 <WatchButton symbol={h.symbol} />
                 {onSelectSymbol ? (

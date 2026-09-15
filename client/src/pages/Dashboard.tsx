@@ -35,23 +35,25 @@ export default function Dashboard() {
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-6">
+      {/* Index Ticker */}
       <IndexTicker />
 
+      {/* Main Chart + Signals Section */}
       <div className="mb-6">
-        <h1 className="mb-3 text-xl font-bold text-slate-900 dark:text-slate-100">Biểu đồ kỹ thuật</h1>
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-          <div className="min-w-0 flex-1">
+        <h1 className="mb-4 text-lg font-bold text-slate-900 dark:text-slate-100">Biểu đồ Kỹ Thuật</h1>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
+          {/* Chart */}
+          <div className="min-w-0">
             <TechnicalChartPanel
               symbol={chartSymbol}
-              height={480}
+              height={420}
               onSymbolChange={setChartSymbol}
-              // /market/overview isn't behind the quote/history fallback chain
-              // yet, so this is undefined today — kept so the chart already
-              // picks up a source the moment that endpoint gains one too.
               preferSource={data?.quotes.find((q) => q.symbol === chartSymbol)?.source}
             />
           </div>
-          <div className="w-full shrink-0 lg:w-80">
+
+          {/* Trend Signals */}
+          <div className="w-full">
             <TrendSignalScanner onSelectSymbol={setChartSymbol} />
           </div>
         </div>
@@ -64,13 +66,9 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* "TOP 10 CỔ PHIẾU" / "Diễn biến thị trường" side by side on wide
-          screens; each already scrolls its own table horizontally if it
-          needs more room than its column gets. Stacks to a single column
-          below lg. */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
+      {/* Market Data Bottom Row */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <TopTraded />
-
         {data && data.quotes.length > 0 && <MarketMovers quotes={data.quotes} />}
       </div>
 
