@@ -73,21 +73,21 @@ export default function LeaderBoard() {
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/40">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
         <div>
           <div className="flex flex-wrap items-baseline gap-2">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Leader Board</h2>
-            <span className="text-sm text-slate-500 dark:text-slate-400">sức mạnh cổ phiếu theo ngành</span>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">🏆 Leader Board</h2>
+            <span className="text-sm text-slate-600 dark:text-slate-400">sức mạnh cổ phiếu theo ngành</span>
           </div>
           <LegendChips activeBand={activeBand} onToggle={(l) => setActiveBand((cur) => (cur === l ? null : l))} />
         </div>
         {data && (
-          <div className="text-right text-xs text-slate-400 dark:text-slate-500">
+          <div className="text-right text-xs text-slate-500 dark:text-slate-400">
             <div>
               {data.asOfDate && <>Cập nhật: {data.asOfDate} · </>}
               {totalCount} mã
             </div>
-            <div>Bấm vào mã để xem chi tiết</div>
+            <div className="mt-1 font-medium">Bấm vào mã để xem chi tiết</div>
           </div>
         )}
       </div>
