@@ -111,13 +111,19 @@ export default function LeaderBoard() {
       )}
 
       {data && data.sectors.length > 0 && (
-        <div className="grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
+        <div className="flex flex-nowrap gap-2 overflow-x-auto pb-1">
           {visibleSectors.map((s) => {
             const rows = s.stocks.map((st) => ({ ...st, quote: quoteBySymbol.get(st.symbol) }));
             return (
-              <div key={s.sector} className="min-w-0">
+              <div
+                key={s.sector}
+                className="min-w-[92px] flex-1 border-r border-slate-200 pr-2 last:border-r-0 last:pr-0 dark:border-slate-800"
+              >
                 <div className="mb-1.5 border-b-2 border-slate-300 pb-1 dark:border-slate-600">
-                  <span className="block truncate text-[11px] font-bold uppercase tracking-wide text-slate-800 dark:text-slate-100">
+                  <span
+                    title={s.sector}
+                    className="block truncate text-[11px] font-bold uppercase tracking-wide text-slate-800 dark:text-slate-100"
+                  >
                     {s.sector}
                   </span>
                 </div>
