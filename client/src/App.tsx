@@ -3,6 +3,7 @@ import Header from './components/Header'
 import Footer from './components/Footer'
 import Dashboard from './pages/Dashboard'
 import StockDetail from './pages/StockDetail'
+import Watchlist from './pages/Watchlist'
 import PbCompare from './pages/PbCompare'
 import DailyDigest from './pages/DailyDigest'
 import StockStrength from './pages/StockStrength'
@@ -17,6 +18,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/stock/:symbol" element={<StockDetail />} />
+          <Route path="/theo-doi" element={<Watchlist />} />
           <Route path="/so-sanh-pb" element={<PbCompare />} />
           <Route path="/so-sanh-gia" element={<StockComparison />} />
           <Route path="/ban-tin" element={<DailyDigest />} />
