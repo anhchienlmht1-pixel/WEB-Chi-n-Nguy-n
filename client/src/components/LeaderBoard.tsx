@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { usePolling } from "../hooks/usePolling";
 import { fetchStockStrength, fetchMarketBoard } from "../api/client";
 import { STRENGTH_BANDS, bandFor } from "../utils/stockStrength";
-import { formatPercent, formatPrice, formatVolume, trendClass } from "../utils/format";
+import { formatPercent } from "../utils/format";
 import type { Quote } from "../types";
 
 const POLL_MS = 5 * 60 * 1000; // server caches the underlying sheet read for 5 min
@@ -111,62 +111,41 @@ export default function LeaderBoard() {
       )}
 
       {data && data.sectors.length > 0 && (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-3">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
           {visibleSectors.map((s) => {
             const rows = s.stocks.map((st) => ({ ...st, quote: quoteBySymbol.get(st.symbol) }));
-            const changes = rows
-              .map((r) => r.quote?.changePercent)
-              .filter((v): v is number => v != null);
-            const avgChange = changes.length > 0 ? changes.reduce((a, b) => a + b, 0) / changes.length : null;
-
             return (
-              <div key={s.sector} className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
-                <div className="flex items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-2.5 py-1.5 dark:border-slate-800 dark:bg-slate-800/60">
-                  <span className="truncate text-xs font-bold uppercase tracking-wide text-slate-700 dark:text-slate-200">
+              <div key={s.sector} className="min-w-0">
+                <div className="mb-1.5 border-b-2 border-slate-300 pb-1 dark:border-slate-600">
+                  <span className="block truncate text-[11px] font-bold uppercase tracking-wide text-slate-800 dark:text-slate-100">
                     {s.sector}
                   </span>
-                  {avgChange != null && (
-                    <span className={`shrink-0 text-xs font-semibold tabular-nums ${trendClass(avgChange)}`}>
-                      {formatPercent(avgChange)}
-                    </span>
-                  )}
                 </div>
-                <table className="w-full border-collapse text-[11px]">
-                  <thead>
-                    <tr className="text-slate-400 dark:text-slate-500">
-                      <th className="px-2 py-1 text-left font-medium">Mã</th>
-                      <th className="px-1.5 py-1 text-right font-medium">SM</th>
-                      <th className="px-1.5 py-1 text-right font-medium">Giá</th>
-                      <th className="px-1.5 py-1 text-right font-medium">+/-</th>
-                      <th className="px-2 py-1 text-right font-medium">KL</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((r) => {
-                      const band = bandFor(r.score);
-                      return (
-                        <tr
-                          key={r.symbol}
-                          onClick={() => navigate(`/stock/${r.symbol}`)}
-                          title={`${r.symbol} — ${band.label} (${r.score})`}
-                          className={`cursor-pointer border-t border-black/5 transition-opacity last:border-0 hover:opacity-80 dark:border-white/5 ${band.className}`}
+                <ul className="space-y-1">
+                  {rows.map((r) => {
+                    const band = bandFor(r.score);
+                    const changePct = r.quote?.changePercent;
+                    return (
+                      <li
+                        key={r.symbol}
+                        onClick={() => navigate(`/stock/${r.symbol}`)}
+                        title={`${r.symbol} — ${band.label} (${r.score})${
+                          changePct != null ? ` · ${formatPercent(changePct)} hôm nay` : ""
+                        }`}
+                        className="flex cursor-pointer items-center gap-1 text-[11px] transition-opacity hover:opacity-70"
+                      >
+                        <span className="min-w-0 flex-1 truncate font-semibold text-slate-700 dark:text-slate-200">
+                          {r.symbol}
+                        </span>
+                        <span
+                          className={`w-[42px] shrink-0 rounded-sm px-1.5 py-0.5 text-right font-semibold tabular-nums ${band.className}`}
                         >
-                          <td className="px-2 py-1 font-semibold">{r.symbol}</td>
-                          <td className="px-1.5 py-1 text-right tabular-nums">{r.score}</td>
-                          <td className="px-1.5 py-1 text-right tabular-nums">
-                            {r.quote ? formatPrice(r.quote.price, r.quote.currency) : "—"}
-                          </td>
-                          <td className="px-1.5 py-1 text-right tabular-nums">
-                            {r.quote ? formatPercent(r.quote.changePercent) : "—"}
-                          </td>
-                          <td className="px-2 py-1 text-right tabular-nums">
-                            {r.quote ? formatVolume(r.quote.volume) : "—"}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                          {r.score}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
               </div>
             );
           })}
