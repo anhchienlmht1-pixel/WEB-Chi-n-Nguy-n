@@ -111,7 +111,7 @@ export default function Hero() {
           của bạn
         </h1>
         <p className="mt-4 max-w-xl text-sm text-slate-400 sm:text-base">
-          Chiến Nguyễn Invest mang đến bảng giá thời gian thực, biểu đồ kỹ thuật chuyên
+          Chiến Nguyễn Stock mang đến bảng giá thời gian thực, biểu đồ kỹ thuật chuyên
           sâu với đầy đủ công cụ vẽ và thư viện chỉ báo, cùng dữ liệu tài chính doanh
           nghiệp — tất cả trong một nơi duy nhất.
         </p>

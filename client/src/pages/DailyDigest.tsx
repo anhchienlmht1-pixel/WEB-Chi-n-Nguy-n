@@ -154,7 +154,7 @@ export default function DailyDigest() {
               </div>
               <div className="mt-4 flex items-center gap-2">
                 <img src="/logo-bull.png" alt="" className="h-7 w-7 shrink-0 rounded-full bg-white/10 object-contain p-0.5" />
-                <span className="text-xs font-semibold tracking-wide text-slate-200">CHIẾN NGUYỄN INVEST</span>
+                <span className="text-xs font-semibold tracking-wide text-slate-200">CHIẾN NGUYỄN STOCK</span>
               </div>
             </div>
 

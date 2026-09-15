@@ -9,20 +9,20 @@ const NAV_ITEMS = [
   { to: "/", label: "Thị trường", end: true },
   { to: "/so-sanh-gia", label: "So sánh Giá", end: false },
   { to: "/so-sanh-pb", label: "So sánh P/B", end: false },
-  { to: "/huong-dan-mo-tai-khoan", label: "📱 Hướng Dẫn Mở Tài Khoản Chứng Khoán", end: false },
+  { to: "/huong-dan-mo-tai-khoan", label: "Mở Tài Khoản", end: false },
 ];
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-  `shrink-0 whitespace-nowrap text-xs font-medium transition-colors ${
+  `shrink-0 whitespace-nowrap border-b-2 pb-0.5 text-xs font-semibold uppercase tracking-[0.14em] transition-colors ${
     isActive
-      ? "text-slate-600 dark:text-slate-300"
-      : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+      ? "border-slate-900 text-slate-900 dark:border-slate-100 dark:text-slate-100"
+      : "border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
   }`;
 
 const mobileNavLinkClass = ({ isActive }: { isActive: boolean }) =>
-  `block rounded-lg px-3 py-3 text-sm font-medium transition-colors ${
+  `block rounded-lg px-3 py-3 text-sm font-semibold uppercase tracking-[0.12em] transition-colors ${
     isActive
-      ? "bg-slate-100 text-slate-600 dark:bg-slate-800/10 dark:text-slate-300"
+      ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100"
       : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
   }`;
 
@@ -39,10 +39,10 @@ export default function Header() {
           className="flex shrink-0 items-center gap-2 text-lg font-bold text-slate-900 dark:text-slate-100"
         >
           <img src="/logo-bull.png" alt="" className="h-8 w-8 shrink-0 object-contain" />
-          <span className="hidden sm:inline">Chiến Nguyễn Invest</span>
+          <span className="hidden sm:inline">Chiến Nguyễn Stock</span>
         </NavLink>
 
-        <nav className="hidden min-w-0 items-center gap-2 overflow-x-auto md:flex">
+        <nav className="hidden min-w-0 items-center gap-5 overflow-x-auto md:flex lg:gap-7">
           {NAV_ITEMS.map((item) => (
             <NavLink key={item.to} to={item.to} end={item.end} className={navLinkClass}>
               {item.label}
