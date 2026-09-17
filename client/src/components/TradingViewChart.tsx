@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 function toTvSymbol(symbol: string, exchange?: string): string {
   const sym = symbol.toUpperCase();
   if (sym === "VNINDEX") return "HOSE:VNINDEX";
+  if (sym === "HNX30") return "HNX:HNX30";
   const ex = exchange === "HNX" ? "HNX" : exchange === "UPCOM" ? "UPCOM" : "HOSE";
   return `${ex}:${sym}`;
 }
@@ -44,13 +45,17 @@ export default function TradingViewChart({
       interval: "D",
       timezone: "Asia/Ho_Chi_Minh",
       theme: isDark ? "dark" : "light",
-      style: "1",
+      style: "1",         // candlestick
       locale: "vi_VN",
       hide_top_toolbar: false,
       hide_legend: false,
+      hide_volume: false,
+      allow_symbol_change: false,
       save_image: true,
-      calendar: false,
+      calendar: false,    // ẩn lịch sự kiện quốc tế
+      news: [],           // không hiện tin tức nước ngoài
       support_host: "https://www.tradingview.com",
+      container_id: `tv_${symbol}`,
     });
     wrapper.appendChild(script);
 
