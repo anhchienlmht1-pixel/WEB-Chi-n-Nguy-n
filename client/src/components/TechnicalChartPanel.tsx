@@ -7,6 +7,7 @@ import PriceChart, { type ActiveIndicator, type ChartType, type DrawingTool, typ
 import ChartToolbar from "./ChartToolbar";
 import DrawingToolbar from "./DrawingToolbar";
 import TrendSystemStats from "./TrendSystemStats";
+import TradingViewChart from "./TradingViewChart";
 
 // No indicator overlays by default anymore (used to be SMA20/SMA50) — kept
 // minimal per request: just candles + the Mua/Bán trend-following markers,
@@ -20,6 +21,7 @@ export default function TechnicalChartPanel({
   symbol,
   height = 420,
   preferSource,
+  exchange,
   onSymbolChange,
 }: {
   symbol: string;
@@ -28,6 +30,8 @@ export default function TechnicalChartPanel({
    * (see api/client.ts fetchHistory) — avoids the chart silently landing on
    * a different source than the price header shown next to it. */
   preferSource?: string;
+  /** Exchange of the symbol (HOSE/HNX/UPCOM) — used for TradingView widget. */
+  exchange?: string;
   /** Shows a symbol search box right in the chart's own toolbar when set —
    * only meaningful where the symbol is local component state (the market
    * page's standalone chart), not where it comes from the URL (stock
@@ -39,6 +43,7 @@ export default function TechnicalChartPanel({
   const [drawingTool, setDrawingTool] = useState<DrawingTool>(null);
   const [showSignals, setShowSignals] = useState(true);
   const [searchInput, setSearchInput] = useState("");
+  const [useTv, setUseTv] = useState(false);
   const chartRef = useRef<PriceChartHandle>(null);
   const chartWrapperRef = useRef<HTMLDivElement>(null);
 
@@ -149,38 +154,44 @@ export default function TechnicalChartPanel({
         onToggleSignals={() => setShowSignals((v) => !v)}
         onScreenshot={screenshot}
         onFullscreen={toggleFullscreen}
+        useTradingView={useTv}
+        onToggleTradingView={() => setUseTv((v) => !v)}
       />
 
-      <div className="flex flex-col">
-        <div className="flex flex-1">
-          <DrawingToolbar tool={drawingTool} onSelect={setDrawingTool} onClear={() => chartRef.current?.clearDrawings()} />
-          <div className="min-w-0 flex-1 p-2">
-            {chartPoints.length > 0 ? (
-              <PriceChart
-                ref={chartRef}
-                points={chartPoints}
-                activeIndicators={NO_INDICATORS}
-                signals={signalResult.transitions}
-                chartType={chartType}
-                drawingTool={drawingTool}
-                onDrawingComplete={() => setDrawingTool(null)}
-                height={height}
-              />
-            ) : (
-              <div className="flex items-center justify-center text-slate-400 dark:text-slate-500" style={{ height }}>
-                {historyState.loading
-                  ? "Đang tải biểu đồ..."
-                  : historyState.error
-                    ? `Lỗi tải biểu đồ: ${historyState.error}`
-                    : "Không có dữ liệu biểu đồ"}
-              </div>
-            )}
+      {useTv ? (
+        <TradingViewChart symbol={symbol} exchange={exchange} height={height + 40} />
+      ) : (
+        <div className="flex flex-col">
+          <div className="flex flex-1">
+            <DrawingToolbar tool={drawingTool} onSelect={setDrawingTool} onClear={() => chartRef.current?.clearDrawings()} />
+            <div className="min-w-0 flex-1 p-2">
+              {chartPoints.length > 0 ? (
+                <PriceChart
+                  ref={chartRef}
+                  points={chartPoints}
+                  activeIndicators={NO_INDICATORS}
+                  signals={signalResult.transitions}
+                  chartType={chartType}
+                  drawingTool={drawingTool}
+                  onDrawingComplete={() => setDrawingTool(null)}
+                  height={height}
+                />
+              ) : (
+                <div className="flex items-center justify-center text-slate-400 dark:text-slate-500" style={{ height }}>
+                  {historyState.loading
+                    ? "Đang tải biểu đồ..."
+                    : historyState.error
+                      ? `Lỗi tải biểu đồ: ${historyState.error}`
+                      : "Không có dữ liệu biểu đồ"}
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="border-t border-slate-200 px-2 pb-2 dark:border-slate-800">
+            <TrendSystemStats signals={signalResult.all} symbol={symbol} />
           </div>
         </div>
-        <div className="border-t border-slate-200 px-2 pb-2 dark:border-slate-800">
-          <TrendSystemStats signals={signalResult.all} symbol={symbol} />
-        </div>
-      </div>
+      )}
     </div>
   );
 }
