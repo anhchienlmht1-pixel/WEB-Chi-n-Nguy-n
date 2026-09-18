@@ -28,8 +28,6 @@ export default function ChartToolbar({
   onToggleSignals,
   onScreenshot,
   onFullscreen,
-  useTradingView,
-  onToggleTradingView,
 }: {
   symbol: string;
   /** Raw symbol (no "(D)" resolution suffix) for the search box's value —
@@ -47,8 +45,6 @@ export default function ChartToolbar({
   onToggleSignals: () => void;
   onScreenshot: () => void;
   onFullscreen: () => void;
-  useTradingView?: boolean;
-  onToggleTradingView?: () => void;
 }) {
   const [copied, setCopied] = useState(false);
   const [chartTypeOpen, setChartTypeOpen] = useState(false);
@@ -127,24 +123,6 @@ export default function ChartToolbar({
         >
           Tín hiệu Mua/Bán
         </button>
-
-        {onToggleTradingView && (
-          <button
-            type="button"
-            onClick={onToggleTradingView}
-            className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold transition-colors ${
-              useTradingView
-                ? "bg-blue-600 text-white"
-                : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-            }`}
-            title="Xem biểu đồ TradingView"
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M4 4h16v2H4V4zm0 4h10v2H4V8zm0 4h16v2H4v-2zm0 4h10v2H4v-2z" />
-            </svg>
-            TradingView
-          </button>
-        )}
       </div>
 
       {onSymbolChange && (
