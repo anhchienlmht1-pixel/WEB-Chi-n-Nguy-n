@@ -9,6 +9,7 @@ import TechnicalChartPanel from "../components/TechnicalChartPanel";
 import IndexTicker from "../components/IndexTicker";
 import LeaderBoard from "../components/LeaderBoard";
 import FundInsight from "../components/FundInsight";
+import VnindexPbCard from "../components/VnindexPbCard";
 import TrendSignalScanner from "../components/TrendSignalScanner";
 import SpecialOffers from "../components/SpecialOffers";
 import TrendSystemStats from "../components/TrendSystemStats";
@@ -82,6 +83,15 @@ export default function Dashboard() {
           <TopTraded />
           {data && data.quotes.length > 0 && <MarketMovers quotes={data.quotes} />}
         </div>
+      </div>
+
+      {/* VN-Index P/B Valuation */}
+      <div className="mb-8">
+        <div className="mb-4">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-400">Định giá chỉ số</h2>
+          <h3 className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100">P/B Ratio VN-Index</h3>
+        </div>
+        <VnindexPbCard />
       </div>
 
       {/* Fund Insight — dòng tiền quỹ mở (nguồn Fmarket) */}

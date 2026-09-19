@@ -27,6 +27,7 @@ import { enrichDailyDigest } from "../digest/enrich.js";
 import { saveDigestToHistory, listDigestHistory, getDigestFromHistory, isDigestHistoryEnabled } from "../digest/digestHistory.js";
 import { fetchStockStrength } from "../providers/stockStrength.js";
 import { buildFundInsight } from "../signals/fundInsight.js";
+import { buildVnindexPb } from "../signals/vnindexPb.js";
 import inspectFmarketApi from "../providers/fmarketInspect.js";
 
 const router = Router();
@@ -456,6 +457,15 @@ router.get(
     // build fans out over ~40 fund detail calls plus a history scan, so a 1h
     // TTL with staleOnError keeps it cheap and resilient to a Fmarket blip.
     const data = await cached("fund-insight", 60 * 60, () => buildFundInsight(), { staleOnError: true });
+    res.json(data);
+  })
+);
+
+// VN-Index P/B ratio — market cap / book value of all VN30 members
+router.get(
+  "/vnindex-pb",
+  asyncHandler(async (_req, res) => {
+    const data = await cached("vnindex-pb", 60 * 60, () => buildVnindexPb(), { staleOnError: true });
     res.json(data);
   })
 );

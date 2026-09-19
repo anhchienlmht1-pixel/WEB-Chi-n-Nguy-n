@@ -307,3 +307,30 @@ export async function fetchFundInsight(): Promise<FundInsight> {
   const { data } = await api.get("/fund-insight");
   return data;
 }
+
+export interface VnindexPbData {
+  asOf: string;
+  vn30Members: number;
+  totalMarketCap: number;
+  totalBookValue: number;
+  pbRatio: number | null;
+  pbByYear: Array<{
+    year: number;
+    bookValuePerShare: number | null;
+    marketCapPerShare: number | null;
+    pb: number | null;
+  }>;
+  memberPbs: Array<{
+    symbol: string;
+    price: number | null;
+    marketCap: number | null;
+    bookValue: number | null;
+    pb: number | null;
+  }>;
+}
+
+// VN-Index P/B: market cap / book value of all 30 VN30 members
+export async function fetchVnindexPb(): Promise<VnindexPbData> {
+  const { data } = await api.get("/vnindex-pb");
+  return data;
+}
