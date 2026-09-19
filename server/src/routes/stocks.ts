@@ -27,6 +27,7 @@ import { enrichDailyDigest } from "../digest/enrich.js";
 import { saveDigestToHistory, listDigestHistory, getDigestFromHistory, isDigestHistoryEnabled } from "../digest/digestHistory.js";
 import { fetchStockStrength } from "../providers/stockStrength.js";
 import { buildFundInsight } from "../signals/fundInsight.js";
+import inspectFmarketApi from "../providers/fmarketInspect.js";
 
 const router = Router();
 const cache = new NodeCache({ stdTTL: 20, checkperiod: 30 });
@@ -456,6 +457,15 @@ router.get(
     // TTL with staleOnError keeps it cheap and resilient to a Fmarket blip.
     const data = await cached("fund-insight", 60 * 60, () => buildFundInsight(), { staleOnError: true });
     res.json(data);
+  })
+);
+
+// Debug endpoint: inspect Fmarket API structure (test prospectus endpoints, holdings, etc.)
+router.get(
+  "/debug/fmarket-inspect",
+  asyncHandler(async (_req, res) => {
+    const report = await inspectFmarketApi();
+    res.json(report);
   })
 );
 
