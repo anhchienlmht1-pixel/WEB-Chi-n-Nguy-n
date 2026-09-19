@@ -1,57 +1,18 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { Quote } from "../types";
+import type { ForeignFlowRow } from "../utils/foreignFlow";
+import { formatNetValue, formatNetVolume } from "../utils/foreignFlow";
 import { formatPrice, formatPercent, formatVolume, trendClass } from "../utils/format";
 
 type FilterTab = "all" | "buy" | "sell";
 
-interface FlowRow {
-  quote: Quote;
-  netVolume: number;
-  netValue: number;
-}
-
-function formatNetVolume(net: number): string {
-  const sign = net > 0 ? "+" : net < 0 ? "−" : "";
-  return `${sign}${formatVolume(Math.abs(net))}`;
-}
-
-// KBS's price board only carries foreign buy/sell VOLUME (shares), not a
-// separate value field — value here is volume × current price, an estimate
-// (each foreign trade may have matched at a different price during the
-// session), not the exchange's own reported turnover value. Same caveat as
-// ForeignFlowPanel (per-symbol detail view) — this is the market-wide table.
-function formatNetValue(value: number): string {
-  const sign = value > 0 ? "+" : value < 0 ? "−" : "";
-  const abs = Math.abs(value);
-  const billions = abs / 1_000_000_000;
-  const text =
-    billions >= 1
-      ? `${billions.toLocaleString("vi-VN", { maximumFractionDigits: 1 })} tỷ`
-      : `${(abs / 1_000_000).toLocaleString("vi-VN", { maximumFractionDigits: 0 })} triệu`;
-  return `${sign}${text}`;
-}
-
-// Reuses whatever market-overview quotes the caller already fetched (same
-// 10s poll as the rest of the Dashboard) — no separate fetch/cache needed,
-// this is purely a client-side view over KBS's FB/FS fields already on
-// each quote. Only today's session snapshot is available (KBS doesn't
-// expose historical daily foreign-flow, same limitation as
-// ForeignFlowPanel), so "mỗi ngày" here means the current trading day.
-export default function ForeignFlowBoard({ quotes }: { quotes: Quote[] }) {
+// Renders a table over rows already computed by the caller (see
+// utils/foreignFlow.ts) — kept separate from the fetch/poll so this same
+// table can be reused from any page that already has quotes in hand.
+export default function ForeignFlowBoard({ rows }: { rows: ForeignFlowRow[] }) {
   const [tab, setTab] = useState<FilterTab>("all");
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
-
-  const rows = useMemo<FlowRow[]>(() => {
-    return quotes
-      .filter((q) => q.exchange !== "Chỉ số" && q.exchange !== "Phái sinh")
-      .filter((q) => q.foreignBuyVolume != null && q.foreignSellVolume != null)
-      .map((q) => {
-        const netVolume = (q.foreignBuyVolume ?? 0) - (q.foreignSellVolume ?? 0);
-        return { quote: q, netVolume, netValue: netVolume * q.price };
-      });
-  }, [quotes]);
 
   const summary = useMemo(() => {
     const buyValue = rows.reduce((sum, r) => sum + Math.max(r.netValue, 0), 0);
