@@ -12,8 +12,10 @@ import FundInsight from "../components/FundInsight";
 import TrendSignalScanner from "../components/TrendSignalScanner";
 import SpecialOffers from "../components/SpecialOffers";
 import TrendSystemStats from "../components/TrendSystemStats";
+import ForeignFlowChart from "../components/ForeignFlowChart";
 import { aggregatePoints } from "../utils/aggregate";
 import { computeTradingSignals } from "../utils/signals";
+import { computeForeignFlowRows } from "../utils/foreignFlow";
 
 const DEFAULT_SYMBOL = "VNINDEX";
 
@@ -33,6 +35,8 @@ export default function Dashboard() {
     const result = computeTradingSignals(chartPoints);
     return result.all;
   }, [historyState.data]);
+
+  const foreignFlowRows = useMemo(() => computeForeignFlowRows(data?.quotes ?? []), [data]);
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-6">
@@ -82,6 +86,11 @@ export default function Dashboard() {
           <TopTraded />
           {data && data.quotes.length > 0 && <MarketMovers quotes={data.quotes} />}
         </div>
+        {foreignFlowRows.length > 0 && (
+          <div className="mt-6">
+            <ForeignFlowChart rows={foreignFlowRows} />
+          </div>
+        )}
       </div>
 
       {/* Fund Insight — dòng tiền quỹ mở (nguồn Fmarket) */}

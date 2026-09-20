@@ -8,8 +8,6 @@ import PbCompare from './pages/PbCompare'
 import DailyDigest from './pages/DailyDigest'
 import StockStrength from './pages/StockStrength'
 import AccountOpeningGuide from './pages/AccountOpeningGuide'
-import StockComparison from './pages/StockComparison'
-import ForeignFlow from './pages/ForeignFlow'
 
 function App() {
   return (
@@ -21,10 +19,8 @@ function App() {
           <Route path="/stock/:symbol" element={<StockDetail />} />
           <Route path="/theo-doi" element={<Watchlist />} />
           <Route path="/so-sanh-pb" element={<PbCompare />} />
-          <Route path="/so-sanh-gia" element={<StockComparison />} />
           <Route path="/ban-tin" element={<DailyDigest />} />
           <Route path="/suc-manh-co-phieu" element={<StockStrength />} />
-          <Route path="/dong-tien-khoi-ngoai" element={<ForeignFlow />} />
           <Route path="/huong-dan-mo-tai-khoan" element={<AccountOpeningGuide />} />
           <Route path="*" element={<Dashboard />} />
         </Routes>
