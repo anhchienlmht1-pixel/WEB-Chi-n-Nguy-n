@@ -81,6 +81,7 @@ function computeSupertrendDirections(points: HistoryPoint[], period: number, mul
 // Calculate buy/sell signals with dates
 export interface SignalDates {
   buyDate: string;  // When buy signal started
+  buyPrice: number; // Close price on buyDate — basis for "% lãi/lỗ từ lúc vào tín hiệu"
   sellDate: string | null;  // When sell signal occurred (null if still holding)
 }
 
@@ -179,6 +180,7 @@ export function latestBuySince(points: HistoryPoint[]): SignalDates | null {
 
   // Find current buy signal (from end going backward)
   let buyDate: string | null = null;
+  let buyPrice: number | null = null;
   let sellDate: string | null = null;
   let foundSell = false;
 
@@ -207,17 +209,14 @@ export function latestBuySince(points: HistoryPoint[]): SignalDates | null {
       continue;
     }
 
-    if (isBuy && buyDate === null) {
-      buyDate = points[i].time;
-    }
-
     if (isBuy) {
       buyDate = points[i].time; // Update to earliest buy date
+      buyPrice = points[i].close; // Update alongside — price on that earliest buy date
     }
   }
 
-  if (!buyDate) return null;
-  return { buyDate, sellDate };
+  if (!buyDate || buyPrice === null) return null;
+  return { buyDate, buyPrice, sellDate };
 }
 
 export interface BuySignalHit {
@@ -229,6 +228,8 @@ export interface BuySignalHit {
   changePercent: number;
   signalSince: string;  // Buy date (for backward compatibility)
   buyDate: string;      // Buy date (new)
+  buyPrice: number;     // Close price on buyDate — basis for signalReturnPercent
+  signalReturnPercent: number; // % change from buyPrice to current price (cumulative since signal started)
   sellDate: string | null;  // Sell date (null if still holding)
 }
 
@@ -269,6 +270,9 @@ export async function scanBuySignals(): Promise<BuySignalHit[]> {
       const last = points[points.length - 1];
       const prev = points.length > 1 ? points[points.length - 2] : null;
       const changePercent = prev && prev.close ? ((last.close - prev.close) / prev.close) * 100 : 0;
+      const signalReturnPercent = signalDates.buyPrice
+        ? ((last.close - signalDates.buyPrice) / signalDates.buyPrice) * 100
+        : 0;
 
       return {
         symbol: seed.symbol,
@@ -279,6 +283,8 @@ export async function scanBuySignals(): Promise<BuySignalHit[]> {
         changePercent,
         signalSince: signalDates.buyDate,  // For backward compatibility
         buyDate: signalDates.buyDate,
+        buyPrice: signalDates.buyPrice,
+        signalReturnPercent,
         sellDate: signalDates.sellDate,
       };
     } catch (err) {

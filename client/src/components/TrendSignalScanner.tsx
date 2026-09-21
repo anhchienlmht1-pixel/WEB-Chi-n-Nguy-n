@@ -191,8 +191,21 @@ export default function TrendSignalScanner({
                         ? "text-red-600 dark:text-red-400"
                         : "text-slate-400"
                   }`}
+                  title="Biến động giá trong ngày hôm nay"
                 >
                   {h.changePercent > 0 ? "▲" : h.changePercent < 0 ? "▼" : ""} {formatPercent(h.changePercent)}
+                </div>
+                <div
+                  className={`mt-1 rounded px-1.5 py-0.5 text-[11px] font-semibold tabular-nums ${
+                    h.signalReturnPercent > 0
+                      ? "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400"
+                      : h.signalReturnPercent < 0
+                        ? "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400"
+                        : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                  }`}
+                  title={`Lãi/lỗ tích lũy từ giá lúc vào tín hiệu (${formatPrice(h.buyPrice, h.currency)}) đến giá hiện tại`}
+                >
+                  {formatPercent(h.signalReturnPercent)} từ tín hiệu
                 </div>
               </div>
             );

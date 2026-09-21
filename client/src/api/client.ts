@@ -257,6 +257,11 @@ export interface TrendBuySignal {
   signalSince: string;
   // Open/buy date
   buyDate: string;
+  // Close price on buyDate — basis for signalReturnPercent
+  buyPrice: number;
+  // % change from buyPrice to current price — cumulative return since the
+  // signal started, not to be confused with changePercent (today's move).
+  signalReturnPercent: number;
   // Close/sell date (null if still holding)
   sellDate: string | null;
 }
