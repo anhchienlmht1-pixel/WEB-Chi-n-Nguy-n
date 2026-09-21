@@ -78,6 +78,43 @@ function computeSupertrendDirections(points: HistoryPoint[], period: number, mul
   return directions;
 }
 
+interface BuySeriesBar {
+  time: string;
+  close: number;
+  isBuy: boolean;
+}
+
+// Same SMA20/SMA50/ADX(14)/Supertrend(10,3) combo as latestBuySince, but
+// returned as a full aligned per-bar series (one entry per bar once every
+// indicator has warmed up) instead of just the latest streak — used by
+// findClosedTrades() to walk the whole history forward and reconstruct
+// every completed buy→sell cycle, not only the currently-open one.
+function computeBuySeries(points: HistoryPoint[]): BuySeriesBar[] {
+  const closes = points.map((p) => p.close);
+  const sma20 = sma({ period: 20, values: closes });
+  const sma50 = sma({ period: 50, values: closes });
+  const adxRows = adx({ high: points.map((p) => p.high), low: points.map((p) => p.low), close: closes, period: 14 });
+  const directions = computeSupertrendDirections(points, 10, 3);
+
+  const n = points.length;
+  const sma20Offset = n - sma20.length;
+  const sma50Offset = n - sma50.length;
+  const adxOffset = n - adxRows.length;
+  const dirOffset = n - directions.length;
+  const startOffset = Math.max(sma20Offset, sma50Offset, adxOffset, dirOffset);
+
+  const out: BuySeriesBar[] = [];
+  for (let i = startOffset; i < n; i++) {
+    const s20 = sma20[i - sma20Offset];
+    const s50 = sma50[i - sma50Offset];
+    const adxVal = adxRows[i - adxOffset]?.adx;
+    const direction = directions[i - dirOffset];
+    if (s20 === undefined || s50 === undefined || adxVal === undefined || direction === undefined) continue;
+    out.push({ time: points[i].time, close: points[i].close, isBuy: s20 > s50 && adxVal > 25 && direction === 1 });
+  }
+  return out;
+}
+
 // Calculate buy/sell signals with dates
 export interface SignalDates {
   buyDate: string;  // When buy signal started
@@ -228,6 +265,54 @@ export interface BuySignalHit {
   sellDate: string | null;  // Sell date (null if still holding)
 }
 
+export interface ClosedTrade {
+  buyDate: string;
+  buyPrice: number;
+  sellDate: string;
+  sellPrice: number;
+  returnPercent: number; // % change from buyPrice to sellPrice
+  holdingDays: number;
+}
+
+// Walks the full buy-series forward and pairs each buy streak's start with
+// the bar where it breaks — i.e. every COMPLETED trend-following trade in
+// the symbol's history, not just the one currently open (that's what
+// latestBuySince reports). A streak still open at the last bar is not
+// included here — it isn't a "deal đã đóng" yet.
+export function findClosedTrades(points: HistoryPoint[]): ClosedTrade[] {
+  if (points.length < 51) return [];
+  const series = computeBuySeries(points);
+
+  const trades: ClosedTrade[] = [];
+  let open: { time: string; close: number } | null = null;
+
+  for (const bar of series) {
+    if (bar.isBuy && !open) {
+      open = { time: bar.time, close: bar.close };
+    } else if (!bar.isBuy && open) {
+      const holdingDays = Math.round((new Date(bar.time).getTime() - new Date(open.time).getTime()) / 86_400_000);
+      trades.push({
+        buyDate: open.time,
+        buyPrice: open.close,
+        sellDate: bar.time,
+        sellPrice: bar.close,
+        returnPercent: ((bar.close - open.close) / open.close) * 100,
+        holdingDays,
+      });
+      open = null;
+    }
+  }
+
+  return trades;
+}
+
+export interface ClosedTradeHit extends ClosedTrade {
+  symbol: string;
+  name: string;
+  exchange: string;
+  currency: string;
+}
+
 async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
   const results: R[] = new Array(items.length);
   let next = 0;
@@ -305,4 +390,31 @@ export async function scanBuySignals(): Promise<BuySignalHit[]> {
   }
 
   return results;
+}
+
+// "Lịch sử giao dịch đã đóng" — every symbol's completed buy→sell trades
+// (see findClosedTrades) whose exit fell within the last `windowDays`,
+// across the whole universe. No CAN SLIM fundamentals filter here (unlike
+// scanBuySignals): that's a screen on whether to trust a signal going
+// forward, not something that changes what already happened, and skipping
+// it avoids doubling the per-symbol financial-report fetches for history
+// nobody's about to act on.
+export async function scanClosedTrades(windowDays = 30): Promise<ClosedTradeHit[]> {
+  const cutoff = Date.now() - windowDays * 86_400_000;
+  const failed = new Map<string, string>();
+
+  const hits = await mapWithConcurrency(STOCK_UNIVERSE, 20, async (seed): Promise<ClosedTradeHit[]> => {
+    try {
+      const { points: raw } = await getHistoryWithFallback(seed.symbol, "1Y");
+      const points = dedupeSameDay(raw);
+      return findClosedTrades(points)
+        .filter((t) => new Date(t.sellDate).getTime() >= cutoff)
+        .map((t) => ({ ...t, symbol: seed.symbol, name: seed.name, exchange: seed.exchange, currency: seed.currency }));
+    } catch (err) {
+      failed.set(seed.symbol, err instanceof Error ? err.message : String(err));
+      return [];
+    }
+  });
+
+  return hits.flat().sort((a, b) => b.sellDate.localeCompare(a.sellDate));
 }

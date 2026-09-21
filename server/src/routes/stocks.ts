@@ -16,7 +16,7 @@ import { fetchInvestmentOutlook } from "../providers/googleSheet.js";
 import { fetchMoneyFlowTable } from "../providers/moneyFlowSheet.js";
 import { fetchNewsForSymbol, fetchCafefNews } from "../news/cafefNews.js";
 import { getCompanyProfileWithFallback } from "../providers/companyProfileFallback.js";
-import { scanBuySignals } from "../signals/trendScanner.js";
+import { scanBuySignals, scanClosedTrades } from "../signals/trendScanner.js";
 import { scanMovingAverages } from "../signals/maScanner.js";
 import { scanPbComparison, BANK_SYMBOLS, SECURITIES_SYMBOLS, REAL_ESTATE_SYMBOLS } from "../signals/pbScanner.js";
 import { fetchVndirectLogos, fetchVndirectCompanyProfilesRaw } from "../providers/vndirectLogos.js";
@@ -431,6 +431,18 @@ router.get(
     // request would be needlessly slow and hammer the price-history
     // provider for no benefit.
     const data = await cached("trend-signals", 60 * 60, () => scanBuySignals(), { staleOnError: true });
+    res.json({ items: data });
+  })
+);
+
+router.get(
+  "/trend-signals/closed",
+  asyncHandler(async (_req, res) => {
+    // "Lịch sử giao dịch đã đóng" — every completed buy→sell trade (same
+    // SMA20/SMA50/ADX/Supertrend combo) whose exit fell in the last 30
+    // days, across the whole universe. Same 1h TTL as /trend-signals for
+    // the same reason: this only moves once per trading day.
+    const data = await cached("trend-signals-closed", 60 * 60, () => scanClosedTrades(30), { staleOnError: true });
     res.json({ items: data });
   })
 );

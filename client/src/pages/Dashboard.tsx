@@ -12,6 +12,7 @@ import FundInsight from "../components/FundInsight";
 import TrendSignalScanner from "../components/TrendSignalScanner";
 import SpecialOffers from "../components/SpecialOffers";
 import TrendSystemStats from "../components/TrendSystemStats";
+import TrendClosedTrades from "../components/TrendClosedTrades";
 import ForeignFlowChart from "../components/ForeignFlowChart";
 import { aggregatePoints } from "../utils/aggregate";
 import { computeTradingSignals } from "../utils/signals";
@@ -75,6 +76,11 @@ export default function Dashboard() {
           <TrendSystemStats signals={signals} symbol={chartSymbol} />
         </div>
       )}
+
+      {/* Closed trend-following trades — "lịch sử các deal đã đóng" */}
+      <div className="mb-8">
+        <TrendClosedTrades />
+      </div>
 
       {/* Market Data Bottom Row */}
       <div className="mb-8">

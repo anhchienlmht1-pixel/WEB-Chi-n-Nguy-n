@@ -55,7 +55,7 @@ function findInObject(obj: any, patterns: string[], path = ""): Map<string, stri
           results.set(pattern, current);
         }
       }
-    } else if (typeof value === "object" && Object.keys(value).length < 100) {
+    } else if (typeof value === "object" && value !== null && Object.keys(value).length < 100) {
       // Don't traverse deeply nested objects
       const nested = findInObject(value, patterns, newPath);
       for (const [pattern, matches] of nested) {

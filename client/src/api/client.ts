@@ -275,6 +275,27 @@ export async function fetchTrendBuySignals(): Promise<TrendBuySignal[]> {
   return data.items;
 }
 
+export interface ClosedTrade {
+  symbol: string;
+  name: string;
+  exchange: string;
+  currency: string;
+  buyDate: string;
+  buyPrice: number;
+  sellDate: string;
+  sellPrice: number;
+  returnPercent: number;
+  holdingDays: number;
+}
+
+// "Lịch sử giao dịch đã đóng" — completed buy→sell trades (same combo as
+// TrendBuySignal) whose exit fell within the last 30 days — see
+// server/src/signals/trendScanner.ts's scanClosedTrades.
+export async function fetchClosedTrades(): Promise<ClosedTrade[]> {
+  const { data } = await api.get("/trend-signals/closed");
+  return data.items;
+}
+
 export interface FundInsightStock {
   symbol: string;
   logoUrl: string | null;
