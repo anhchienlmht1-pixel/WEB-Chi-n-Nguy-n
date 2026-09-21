@@ -182,7 +182,6 @@ export function latestBuySince(points: HistoryPoint[]): SignalDates | null {
   let buyDate: string | null = null;
   let buyPrice: number | null = null;
   let sellDate: string | null = null;
-  let foundSell = false;
 
   for (let i = n - 1; i >= 0; i--) {
     if (i < sma20Offset || i < sma50Offset || i < adxOffset || i < dirOffset) break;
@@ -197,22 +196,18 @@ export function latestBuySince(points: HistoryPoint[]): SignalDates | null {
     // If at the end and not a buy signal, no current buy
     if (i === n - 1 && !isBuy) return null;
 
-    // Track the first sell signal after buy
-    if (buyDate && !foundSell && !isBuy) {
+    if (!isBuy) {
+      // Streak broken — this bar is the boundary right before the current
+      // uninterrupted run started. Stop here: everything further back is a
+      // separate, non-contiguous episode and must NOT overwrite buyDate
+      // (a bug previously let it do so, reporting a far earlier buyDate
+      // whenever an older unrelated uptrend also happened to qualify).
       sellDate = points[i].time;
-      foundSell = true;
+      break;
     }
 
-    // When we break from buy, record the buy date
-    if (!isBuy && buyDate === null) {
-      // Continue until we find where buy started
-      continue;
-    }
-
-    if (isBuy) {
-      buyDate = points[i].time; // Update to earliest buy date
-      buyPrice = points[i].close; // Update alongside — price on that earliest buy date
-    }
+    buyDate = points[i].time; // Update to earliest buy date within this streak
+    buyPrice = points[i].close; // Update alongside — price on that earliest buy date
   }
 
   if (!buyDate || buyPrice === null) return null;
