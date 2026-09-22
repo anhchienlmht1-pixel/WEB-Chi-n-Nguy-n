@@ -1,8 +1,10 @@
+import { Globe, Video, MessageCircle, Users, Phone } from "lucide-react";
+
 export default function Footer() {
   return (
-    <footer className="border-t border-slate-200 bg-slate-50 py-6 dark:border-slate-800 dark:bg-slate-900/30">
+    <footer className="border-t border-slate-200 bg-slate-50 py-8 dark:border-slate-800 dark:bg-slate-900/30">
       <div className="mx-auto max-w-[1400px] px-4">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {/* Contact Info */}
           <div>
             <h4 className="font-semibold text-slate-900 dark:text-slate-100">Liên hệ</h4>
@@ -16,15 +18,13 @@ export default function Footer() {
                   CTCP Chứng khoán KAFI
                 </p>
               </div>
-              <div>
-                <p className="text-slate-500 dark:text-slate-400">Điện thoại:</p>
-                <a
-                  href="tel:0886284212"
-                  className="text-slate-600 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-400"
-                >
-                  0886.284.212
-                </a>
-              </div>
+              <a
+                href="tel:0886284212"
+                className="inline-flex items-center gap-1.5 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100"
+              >
+                <Phone className="h-3.5 w-3.5" strokeWidth={1.75} />
+                0886.284.212
+              </a>
             </div>
           </div>
 
@@ -36,33 +36,37 @@ export default function Footer() {
                 href="https://www.facebook.com/chiennguyen.taichinh/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-md border border-blue-500 px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-500/10 dark:border-blue-400 dark:text-blue-400"
+                className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors duration-300 hover:border-blue-400 hover:text-blue-600 dark:border-slate-700 dark:text-slate-300 dark:hover:text-blue-400"
               >
-                📘 Facebook
+                <Globe className="h-4 w-4" strokeWidth={1.75} />
+                Facebook
               </a>
               <a
                 href="https://www.youtube.com/@chiennguyen.taichinh"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-md border border-slate-400 px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-800/10 dark:border-slate-400 dark:text-slate-400"
+                className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors duration-300 hover:border-red-400 hover:text-red-600 dark:border-slate-700 dark:text-slate-300 dark:hover:text-red-400"
               >
-                📺 YouTube
+                <Video className="h-4 w-4" strokeWidth={1.75} />
+                YouTube
               </a>
               <a
                 href="https://zalo.me/0886284212"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-md border border-slate-400 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-800/10 dark:border-slate-300 dark:text-slate-300"
+                className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors duration-300 hover:border-emerald-400 hover:text-emerald-600 dark:border-slate-700 dark:text-slate-300 dark:hover:text-emerald-400"
               >
-                💬 Zalo
+                <MessageCircle className="h-4 w-4" strokeWidth={1.75} />
+                Zalo
               </a>
               <a
                 href="https://zalo.me/g/n1hcdesbqhdutsecnxzg"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-md border border-slate-400 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-800/10 dark:border-slate-400 dark:text-slate-400"
+                className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors duration-300 hover:border-emerald-400 hover:text-emerald-600 dark:border-slate-700 dark:text-slate-300 dark:hover:text-emerald-400"
               >
-                👥 Nhóm Zalo
+                <Users className="h-4 w-4" strokeWidth={1.75} />
+                Nhóm Zalo
               </a>
             </div>
           </div>
@@ -70,14 +74,14 @@ export default function Footer() {
           {/* Disclaimer */}
           <div>
             <h4 className="font-semibold text-slate-900 dark:text-slate-100">Lưu ý</h4>
-            <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+            <p className="mt-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
               Các tín hiệu và dữ liệu được cung cấp chỉ mang tính chất minh họa, không phải lời khuyên đầu tư. Quý khách
               vui lòng tham khảo ý kiến chuyên viên trước khi quyết định đầu tư.
             </p>
           </div>
         </div>
 
-        <div className="mt-6 border-t border-slate-200 pt-4 text-center text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
+        <div className="mt-8 border-t border-slate-200 pt-4 text-center text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
           <p>© 2024 - 2025. Nền tảng phân tích thị trường chứng khoán Việt Nam</p>
         </div>
       </div>

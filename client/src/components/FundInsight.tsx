@@ -33,8 +33,8 @@ function monthLabel(): string {
 
 function Shell({ subtitle, children }: { subtitle: ReactNode; children: ReactNode }) {
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
-      <div className="border-b border-slate-200 bg-gradient-to-r from-green-50/70 to-transparent p-4 dark:border-slate-800 dark:from-green-950/20">
+    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
+      <div className="border-b border-slate-200 p-4 dark:border-slate-800">
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-md bg-slate-900 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white dark:bg-slate-100 dark:text-slate-900">
             Fund Insight

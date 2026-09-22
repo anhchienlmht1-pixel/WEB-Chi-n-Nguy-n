@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { History } from "lucide-react";
 import { usePolling } from "../hooks/usePolling";
 import { fetchClosedTrades } from "../api/client";
 import { formatPrice, formatPercent } from "../utils/format";
@@ -19,9 +20,12 @@ export default function TrendClosedTrades() {
 
   if (loading && !trades) {
     return (
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
-        <div className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-transparent p-4 dark:border-slate-800 dark:from-slate-800/40">
-          <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">📜 Lịch sử giao dịch đã đóng (30 ngày)</h4>
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
+        <div className="border-b border-slate-200 p-4 dark:border-slate-800">
+          <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+            <History className="h-4 w-4 text-slate-400" strokeWidth={1.75} />
+            Lịch sử giao dịch đã đóng (30 ngày)
+          </h4>
         </div>
         <div className="space-y-2 p-4">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -39,9 +43,12 @@ export default function TrendClosedTrades() {
   const lossCount = trades.filter((t) => t.returnPercent < 0).length;
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
-      <div className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-transparent p-4 dark:border-slate-800 dark:from-slate-800/40">
-        <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">📜 Lịch sử giao dịch đã đóng (30 ngày)</h4>
+    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
+      <div className="border-b border-slate-200 p-4 dark:border-slate-800">
+        <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+          <History className="h-4 w-4 text-slate-400" strokeWidth={1.75} />
+          Lịch sử giao dịch đã đóng (30 ngày)
+        </h4>
         <p className="mt-1.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
           {trades.length === 0 ? (
             "Chưa có giao dịch nào đóng trong 30 ngày qua."

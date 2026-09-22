@@ -1,15 +1,16 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { BarChart3, TrendingUp, TrendingDown, Globe, type LucideIcon } from "lucide-react";
 import type { Quote } from "../types";
 import { formatPercent, formatPrice, formatVolume, trendClass } from "../utils/format";
 
 type MoverTab = "gainers" | "losers" | "foreign";
 type TimePeriod = "day" | "week" | "month";
 
-const MOVER_TABS: { key: MoverTab; label: string; icon: string }[] = [
-  { key: "gainers", label: "Tăng mạnh", icon: "📈" },
-  { key: "losers", label: "Giảm mạnh", icon: "📉" },
-  { key: "foreign", label: "Khối ngoại mua ròng", icon: "🌐" },
+const MOVER_TABS: { key: MoverTab; label: string; icon: LucideIcon }[] = [
+  { key: "gainers", label: "Tăng mạnh", icon: TrendingUp },
+  { key: "losers", label: "Giảm mạnh", icon: TrendingDown },
+  { key: "foreign", label: "Khối ngoại mua ròng", icon: Globe },
 ];
 
 const TIME_PERIOD_TABS: { key: TimePeriod; label: string }[] = [
@@ -58,7 +59,10 @@ export default function MarketMovers({ quotes }: { quotes: Quote[] }) {
   return (
     <section className="mb-8">
       <div className="mb-4">
-        <h2 className="mb-4 text-lg font-bold text-slate-900 dark:text-slate-100">📊 Diễn biến thị trường</h2>
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-slate-100">
+          <BarChart3 className="h-5 w-5 text-slate-400" strokeWidth={1.75} />
+          Diễn biến thị trường
+        </h2>
         <div className="flex flex-wrap gap-3">
           {/* Mover tabs */}
           <div className="flex gap-1 rounded-lg border border-slate-200 p-1 dark:border-slate-800">
@@ -67,13 +71,14 @@ export default function MarketMovers({ quotes }: { quotes: Quote[] }) {
                 key={t.key}
                 type="button"
                 onClick={() => setTab(t.key)}
-                className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors duration-300 ${
                   tab === t.key
                     ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
                     : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
                 }`}
               >
-                {t.icon} {t.label}
+                <t.icon className="h-3.5 w-3.5" strokeWidth={1.75} />
+                {t.label}
               </button>
             ))}
           </div>

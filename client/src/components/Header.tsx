@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
+import { Sun, Moon, X, Menu } from "lucide-react";
 import SearchBox from "./SearchBox";
 import StockHeaderInfo from "./StockHeaderInfo";
 import TrendSignalBell from "./TrendSignalBell";
@@ -73,17 +74,17 @@ export default function Header() {
           <button
             onClick={toggle}
             title={theme === "dark" ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-base transition-colors duration-300 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition-colors duration-300 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
           >
-            {theme === "dark" ? "☀️" : "🌙"}
+            {theme === "dark" ? <Sun className="h-4 w-4" strokeWidth={1.75} /> : <Moon className="h-4 w-4" strokeWidth={1.75} />}
           </button>
           <button
             onClick={() => setMenuOpen((v) => !v)}
             aria-label={menuOpen ? "Đóng menu" : "Mở menu"}
             aria-expanded={menuOpen}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-lg transition-colors hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800 md:hidden"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition-colors duration-300 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 md:hidden"
           >
-            {menuOpen ? "✕" : "☰"}
+            {menuOpen ? <X className="h-4 w-4" strokeWidth={1.75} /> : <Menu className="h-4 w-4" strokeWidth={1.75} />}
           </button>
         </div>
       </div>

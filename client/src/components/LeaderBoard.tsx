@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Trophy } from "lucide-react";
 import { usePolling } from "../hooks/usePolling";
 import { fetchStockStrength, fetchMarketBoard } from "../api/client";
 import { STRENGTH_BANDS, bandFor } from "../utils/stockStrength";
@@ -76,7 +77,10 @@ export default function LeaderBoard() {
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
         <div>
           <div className="flex flex-wrap items-baseline gap-2">
-            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">🏆 Leader Board</h2>
+            <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900 dark:text-slate-100">
+              <Trophy className="h-5 w-5 text-slate-400" strokeWidth={1.75} />
+              Leader Board
+            </h2>
             <span className="text-sm text-slate-600 dark:text-slate-400">sức mạnh cổ phiếu theo ngành</span>
           </div>
           <LegendChips activeBand={activeBand} onToggle={(l) => setActiveBand((cur) => (cur === l ? null : l))} />

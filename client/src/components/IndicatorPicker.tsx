@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { X, Check } from "lucide-react";
 import { INDICATOR_CATALOG } from "../utils/indicatorCatalog";
 
 export default function IndicatorPicker({
@@ -37,9 +38,9 @@ export default function IndicatorPicker({
             type="button"
             onClick={onClose}
             aria-label="Đóng"
-            className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+            className="rounded p-1 text-slate-400 transition-colors duration-300 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
           >
-            ✕
+            <X className="h-4 w-4" strokeWidth={1.75} />
           </button>
         </div>
 
@@ -80,7 +81,7 @@ export default function IndicatorPicker({
                   {def.nameEn}
                   <span className="text-slate-400 dark:text-slate-500"> - {def.name}</span>
                 </span>
-                {active && <span className="ml-2 shrink-0 text-slate-600 dark:text-slate-300">✓</span>}
+                {active && <Check className="ml-2 h-4 w-4 shrink-0 text-slate-600 dark:text-slate-300" strokeWidth={2} />}
               </button>
             );
           })}

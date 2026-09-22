@@ -41,87 +41,81 @@ export default function Dashboard() {
   const foreignFlowRows = useMemo(() => computeForeignFlowRows(data?.quotes ?? []), [data]);
 
   return (
-    <div className="mx-auto max-w-[1400px] px-4 py-6">
-      {/* Trend System Intro — first thing a visitor sees */}
-      <TrendSystemIntro />
+    <div className="mx-auto max-w-[1400px] px-4 py-8">
+      <div className="space-y-14">
+        {/* Trend System Intro — first thing a visitor sees */}
+        <TrendSystemIntro />
 
-      {/* Index Ticker */}
-      <IndexTicker />
+        {/* Index Ticker */}
+        <IndexTicker />
 
-      {/* Main Chart + Signals Section */}
-      <div className="mb-8">
-        <div className="mb-4 flex items-end justify-between gap-4">
-          <div>
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-400">Phân tích kỹ thuật</h2>
-            <h1 className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">Biểu đồ thị trường</h1>
+        {/* Main Chart + Signals Section */}
+        <div>
+          <div className="mb-5 flex items-end justify-between gap-4">
+            <div>
+              <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">Phân tích kỹ thuật</h2>
+              <h1 className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">Biểu đồ thị trường</h1>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
+            {/* Chart */}
+            <div className="min-w-0">
+              <TechnicalChartPanel
+                symbol={chartSymbol}
+                height={420}
+                onSymbolChange={setChartSymbol}
+                preferSource={data?.quotes.find((q) => q.symbol === chartSymbol)?.source}
+              />
+            </div>
+
+            {/* Trend Signals */}
+            <div className="w-full">
+              <TrendSignalScanner onSelectSymbol={setChartSymbol} />
+            </div>
           </div>
         </div>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
-          {/* Chart */}
-          <div className="min-w-0">
-            <TechnicalChartPanel
-              symbol={chartSymbol}
-              height={420}
-              onSymbolChange={setChartSymbol}
-              preferSource={data?.quotes.find((q) => q.symbol === chartSymbol)?.source}
-            />
-          </div>
 
-          {/* Trend Signals */}
-          <div className="w-full">
-            <TrendSignalScanner onSelectSymbol={setChartSymbol} />
-          </div>
-        </div>
-      </div>
+        {/* Trend System Statistics */}
+        {chartSymbol !== "VNINDEX" && <TrendSystemStats signals={signals} symbol={chartSymbol} />}
 
-      {/* Trend System Statistics */}
-      {chartSymbol !== "VNINDEX" && (
-        <div className="mb-8">
-          <TrendSystemStats signals={signals} symbol={chartSymbol} />
-        </div>
-      )}
-
-      {/* Closed trend-following trades — "lịch sử các deal đã đóng" */}
-      <div className="mb-8">
+        {/* Closed trend-following trades — "lịch sử các deal đã đóng" */}
         <TrendClosedTrades />
-      </div>
 
-      {/* Market Data Bottom Row */}
-      <div className="mb-8">
-        <div className="mb-4">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-400">Thị trường</h2>
-          <h3 className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100">Hoạt động thị trường</h3>
-        </div>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <TopTraded />
-          {data && data.quotes.length > 0 && <MarketMovers quotes={data.quotes} />}
-        </div>
-        {foreignFlowRows.length > 0 && (
-          <div className="mt-6">
-            <ForeignFlowChart rows={foreignFlowRows} />
+        {/* Market Data Bottom Row */}
+        <div>
+          <div className="mb-5">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">Thị trường</h2>
+            <h3 className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100">Hoạt động thị trường</h3>
           </div>
-        )}
-      </div>
-
-      {/* Fund Insight — dòng tiền quỹ mở (nguồn Fmarket) */}
-      <div className="mb-8">
-        <div className="mb-4">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-400">Dòng tiền quỹ</h2>
-          <h3 className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100">Insight từ các quỹ mở</h3>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <TopTraded />
+            {data && data.quotes.length > 0 && <MarketMovers quotes={data.quotes} />}
+          </div>
+          {foreignFlowRows.length > 0 && (
+            <div className="mt-6">
+              <ForeignFlowChart rows={foreignFlowRows} />
+            </div>
+          )}
         </div>
-        <FundInsight />
-      </div>
 
-      <div className="mb-8">
-        <div className="mb-4">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-400">Xếp hạng</h2>
-          <h3 className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100">Bảng xếp hạng thị trường</h3>
+        {/* Fund Insight — dòng tiền quỹ mở (nguồn Fmarket) */}
+        <div>
+          <div className="mb-5">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">Dòng tiền quỹ</h2>
+            <h3 className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100">Insight từ các quỹ mở</h3>
+          </div>
+          <FundInsight />
         </div>
-        <LeaderBoard />
-      </div>
 
-      {/* Special Offers - Compact version at the bottom */}
-      <div className="mt-12 mb-8">
+        <div>
+          <div className="mb-5">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">Xếp hạng</h2>
+            <h3 className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100">Bảng xếp hạng thị trường</h3>
+          </div>
+          <LeaderBoard />
+        </div>
+
+        {/* Special Offers */}
         <SpecialOffers />
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Flame } from "lucide-react";
 import { fetchTopTraded } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import type { TopExchange } from "../types";
@@ -38,8 +39,9 @@ export default function TopTraded() {
   return (
     <section className="mb-8">
       <div className="mb-4">
-        <h2 className="mb-4 text-lg font-bold text-slate-900 dark:text-slate-100">
-          🔥 Top 10 giao dịch nhiều nhất
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-slate-100">
+          <Flame className="h-5 w-5 text-slate-400" strokeWidth={1.75} />
+          Top 10 giao dịch nhiều nhất
         </h2>
         <div className="flex flex-wrap gap-3">
           {/* Exchange tabs */}

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { Bell, Check } from "lucide-react";
 import { useTrendSignalNotifications } from "../hooks/useTrendSignalNotifications";
 import { formatPercent, formatPrice } from "../utils/format";
 
@@ -30,9 +31,9 @@ export default function TrendSignalBell() {
         onClick={toggle}
         title="Tín hiệu MUA (Trend Following)"
         aria-label="Tín hiệu MUA (Trend Following)"
-        className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-base transition-colors hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+        className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-300 transition-colors duration-300 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
       >
-        🔔
+        <Bell className="h-4 w-4 text-slate-600 dark:text-slate-300" strokeWidth={1.75} />
         {newHits.length > 0 && (
           <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-slate-800 px-1 text-[10px] font-bold leading-none text-white">
             {newHits.length > 9 ? "9+" : newHits.length}
@@ -64,16 +65,18 @@ export default function TrendSignalBell() {
                   <button
                     type="button"
                     onClick={requestPermission}
-                    className="w-full rounded-md bg-slate-800 px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-slate-700"
+                    className="inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-slate-800 px-2.5 py-1.5 text-xs font-semibold text-white transition-colors duration-300 hover:bg-slate-700"
                   >
-                    🔔 Bật thông báo trình duyệt khi có tín hiệu mới
+                    <Bell className="h-3.5 w-3.5" strokeWidth={1.75} />
+                    Bật thông báo trình duyệt khi có tín hiệu mới
                   </button>
                 )}
               </div>
             )}
             {permission === "granted" && (
-              <div className="border-b border-slate-200 px-3 py-1.5 text-[11px] text-slate-600 dark:border-slate-800 dark:text-slate-300">
-                ✓ Đã bật thông báo trình duyệt
+              <div className="flex items-center gap-1.5 border-b border-slate-200 px-3 py-1.5 text-[11px] text-slate-600 dark:border-slate-800 dark:text-slate-300">
+                <Check className="h-3 w-3" strokeWidth={2} />
+                Đã bật thông báo trình duyệt
               </div>
             )}
 

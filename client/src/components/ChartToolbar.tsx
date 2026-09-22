@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Camera, Maximize2, Share2 } from "lucide-react";
 import type { ChartResolution } from "../utils/aggregate";
 import type { ChartType } from "./PriceChart";
 import SymbolPicker from "./SymbolPicker";
@@ -136,25 +137,32 @@ export default function ChartToolbar({
           type="button"
           title="Chụp ảnh biểu đồ"
           onClick={onScreenshot}
-          className="flex h-7 w-7 items-center justify-center rounded text-sm text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+          className="flex h-7 w-7 items-center justify-center rounded text-slate-500 transition-colors duration-300 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
         >
-          📷
+          <Camera className="h-3.5 w-3.5" strokeWidth={1.75} />
         </button>
         <button
           type="button"
           title="Toàn màn hình"
           onClick={onFullscreen}
-          className="flex h-7 w-7 items-center justify-center rounded text-sm text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+          className="flex h-7 w-7 items-center justify-center rounded text-slate-500 transition-colors duration-300 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
         >
-          ⛶
+          <Maximize2 className="h-3.5 w-3.5" strokeWidth={1.75} />
         </button>
         <button
           type="button"
           title="Chia sẻ"
           onClick={share}
-          className="flex h-7 items-center justify-center rounded px-2 text-xs text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+          className="flex h-7 items-center justify-center gap-1 rounded px-2 text-xs text-slate-500 transition-colors duration-300 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
         >
-          {copied ? "Đã sao chép" : "🔗 Chia sẻ"}
+          {copied ? (
+            "Đã sao chép"
+          ) : (
+            <>
+              <Share2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+              Chia sẻ
+            </>
+          )}
         </button>
       </div>
     </div>

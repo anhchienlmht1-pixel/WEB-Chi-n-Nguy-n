@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Newspaper, Activity, type LucideIcon } from "lucide-react";
 import { fetchMarketNews, fetchTopTraded } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import type { TopExchange } from "../types";
@@ -7,9 +8,9 @@ import { formatPercent, formatPrice, formatVolume, trendClass } from "../utils/f
 
 type NewsTab = "tin-tuc" | "thanh-khoan-dot-biet";
 
-const TABS: { key: NewsTab; label: string; icon: string }[] = [
-  { key: "tin-tuc", label: "Tin tức", icon: "📰" },
-  { key: "thanh-khoan-dot-biet", label: "Thanh khoản đột biến", icon: "💹" },
+const TABS: { key: NewsTab; label: string; icon: LucideIcon }[] = [
+  { key: "tin-tuc", label: "Tin tức", icon: Newspaper },
+  { key: "thanh-khoan-dot-biet", label: "Thanh khoản đột biến", icon: Activity },
 ];
 
 function formatDate(dateStr: string | undefined): string {
@@ -58,20 +59,24 @@ export default function MarketNews() {
   return (
     <section className="mb-8">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">📰 Cập nhật thị trường</h2>
+        <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-slate-100">
+          <Newspaper className="h-5 w-5 text-slate-400" strokeWidth={1.75} />
+          Cập nhật thị trường
+        </h2>
         <div className="flex gap-1 rounded-lg border border-slate-200 p-1 dark:border-slate-800">
           {TABS.map((t) => (
             <button
               key={t.key}
               type="button"
               onClick={() => setTab(t.key)}
-              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+              className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors duration-300 ${
                 tab === t.key
                   ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
                   : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
               }`}
             >
-              {t.icon} {t.label}
+              <t.icon className="h-3.5 w-3.5" strokeWidth={1.75} />
+              {t.label}
             </button>
           ))}
         </div>
