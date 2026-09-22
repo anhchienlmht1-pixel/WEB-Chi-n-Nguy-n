@@ -13,6 +13,7 @@ import TrendSignalScanner from "../components/TrendSignalScanner";
 import SpecialOffers from "../components/SpecialOffers";
 import TrendSystemStats from "../components/TrendSystemStats";
 import TrendClosedTrades from "../components/TrendClosedTrades";
+import TrendSystemIntro from "../components/TrendSystemIntro";
 import ForeignFlowChart from "../components/ForeignFlowChart";
 import { aggregatePoints } from "../utils/aggregate";
 import { computeTradingSignals } from "../utils/signals";
@@ -41,6 +42,9 @@ export default function Dashboard() {
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-6">
+      {/* Trend System Intro — first thing a visitor sees */}
+      <TrendSystemIntro />
+
       {/* Index Ticker */}
       <IndexTicker />
 
