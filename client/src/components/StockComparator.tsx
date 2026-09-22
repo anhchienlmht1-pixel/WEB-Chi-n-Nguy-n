@@ -82,7 +82,7 @@ export default function StockComparator() {
     return [...quotes].sort((a, b) => (b.price * b.volume) - (a.price * a.volume));
   }, [quotes]);
 
-  const COLORS = ["#10b981", "#06b6d4", "#f59e0b", "#8b5cf6", "#ec4899", "#ef4444"];
+  const COLORS = ["#00c694", "#06b6d4", "#f59e0b", "#8b5cf6", "#ec4899", "#ef4444"];
 
   function addStock() {
     const symbol = input.trim().toUpperCase();

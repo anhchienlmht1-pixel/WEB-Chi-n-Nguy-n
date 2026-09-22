@@ -4,38 +4,52 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ---------------------------------------------------------------------------
-   Professional financial palette
-   Neutral cool-gray chrome (slate) + semantic green/red for gains/losses.
-   Vietnamese market convention: green = tăng, red = giảm, vàng = tham chiếu.
-   Brand accent (emerald) is a refined institutional green.
+   Professional financial palette — dark teal-green brand kit.
+   Neutral chrome (slate) shifted toward a dark teal family anchored on
+   #101820 (page bg, dark mode) / #0C6070 & #07756D (surfaces, informs the
+   800/900 borders) so the whole dark UI reads as one coherent brand, not
+   generic gray + a green accent. Brand accent (emerald) is #00C694 (solid,
+   e.g. primary buttons — emerald-600) / #16E684 (bright, e.g. dark-mode
+   icons & highlighted text — emerald-400).
+   Semantic gain/loss colors (see .up/.down below) are intentionally a
+   DIFFERENT green from the brand accent, so "tăng giá" never gets confused
+   with a brand-colored button or badge.
 --------------------------------------------------------------------------- */
 @theme {
   --color-slate-50: #f8fafc;
   --color-slate-100: #f1f5f9;
   --color-slate-200: #e2e8f0;
   --color-slate-300: #cbd5e1;
-  --color-slate-400: #94a3b8;
-  --color-slate-500: #64748b;
-  --color-slate-600: #475569;
-  --color-slate-700: #334155;
-  --color-slate-800: #1e293b;
-  --color-slate-900: #0f172a;
-  --color-slate-950: #020617;
+  --color-slate-400: #8aa8ad;
+  --color-slate-500: #5b7d82;
+  --color-slate-600: #3d6469;
+  --color-slate-700: #234046;
+  --color-slate-800: #16333b;
+  --color-slate-900: #132229;
+  --color-slate-950: #101820;
 
-  --color-emerald-50: #ecfdf5;
-  --color-emerald-100: #d1fae5;
-  --color-emerald-300: #6ee7b7;
-  --color-emerald-400: #34d399;
-  --color-emerald-500: #10b981;
-  --color-emerald-600: #059669;
-  --color-emerald-700: #047857;
+  --color-emerald-50: #eafff6;
+  --color-emerald-100: #cffce9;
+  --color-emerald-300: #5ef0a8;
+  --color-emerald-400: #16e684;
+  --color-emerald-500: #0ed89a;
+  --color-emerald-600: #00c694;
+  --color-emerald-700: #00996f;
+  --color-emerald-800: #007a5c;
+  --color-emerald-900: #065f46;
+  --color-emerald-950: #012e24;
 }
 
+/* Dark is the default theme (see hooks/useTheme.ts) — assume it here too
+   so the very first paint (before that module's JS runs and toggles the
+   .dark class) is already #101820 instead of flashing white. */
 html {
-  color-scheme: light;
-}
-html.dark {
   color-scheme: dark;
+  background-color: #101820;
+}
+html:not(.dark) {
+  color-scheme: light;
+  background-color: #f8fafc;
 }
 
 /* Responsive/mobile baseline: block accidental page-level horizontal
@@ -133,5 +147,5 @@ img {
 
 ::-webkit-scrollbar { height: 8px; width: 8px; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-.dark ::-webkit-scrollbar-thumb { background: #334155; }
+.dark ::-webkit-scrollbar-thumb { background: #234046; }
 ::-webkit-scrollbar-track { background: transparent; }

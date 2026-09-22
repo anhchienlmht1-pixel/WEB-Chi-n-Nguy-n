@@ -23,7 +23,7 @@ const CHART_GROUPS: { title: string; keys: SecuritiesMetricKey[]; format: "perce
   { title: "Dư nợ margin", keys: ["marginBalance"], format: "money" },
 ];
 
-const LINE_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#a78bfa", "#f472b6"];
+const LINE_COLORS = ["#3b82f6", "#00c694", "#f59e0b", "#a78bfa", "#f472b6"];
 
 function formatPercentTick(v: number): string {
   return `${(v * 100).toFixed(1)}%`;

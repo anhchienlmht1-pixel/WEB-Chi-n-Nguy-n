@@ -21,7 +21,7 @@ const CHART_GROUPS: { title: string; keys: BankMetricKey[]; format: "percent" | 
   { title: "Chất lượng tài sản & hiệu quả: NPL / CIR", keys: ["npl", "cir"], format: "percent" },
 ];
 
-const LINE_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#a78bfa", "#f472b6"];
+const LINE_COLORS = ["#3b82f6", "#00c694", "#f59e0b", "#a78bfa", "#f472b6"];
 
 function formatPercentTick(v: number): string {
   return `${(v * 100).toFixed(1)}%`;

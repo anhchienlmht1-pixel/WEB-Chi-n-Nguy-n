@@ -158,9 +158,9 @@ export default function ForeignFlowPanel({ quote }: { quote: Quote }) {
         <>
           <svg viewBox={`0 0 ${W} ${H}`} className="h-[90px] w-full" role="img" aria-label="Xu hướng mua/bán ròng khối ngoại trong phiên">
             <line x1={PAD.left} x2={W - PAD.right} y1={zeroY} y2={zeroY} className="stroke-slate-200 dark:stroke-slate-800" strokeWidth={1} />
-            <path d={pathD} fill="none" stroke="#0ea5e9" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+            <path d={pathD} fill="none" stroke="#00c694" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
             {history.map((p, i) => (
-              <circle key={p.time} cx={xFor(i)} cy={yFor(p.net)} r={i === history.length - 1 ? 3 : 0} fill="#0ea5e9" />
+              <circle key={p.time} cx={xFor(i)} cy={yFor(p.net)} r={i === history.length - 1 ? 3 : 0} fill="#00c694" />
             ))}
           </svg>
           <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
