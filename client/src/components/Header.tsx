@@ -6,7 +6,7 @@ import TrendSignalBell from "./TrendSignalBell";
 import { useTheme } from "../hooks/useTheme";
 
 const NAV_ITEMS = [
-  { to: "/", label: "Thị trường", end: true },
+  { to: "/thi-truong", label: "Thị trường", end: false },
   { to: "/so-sanh-pb", label: "So sánh P/B", end: false },
   { to: "/huong-dan-mo-tai-khoan", label: "Mở Tài Khoản", end: false },
 ];
@@ -57,6 +57,12 @@ export default function Header() {
             <SearchBox />
           </div>
           <TrendSignalBell />
+          <NavLink
+            to="/thi-truong"
+            className="hidden shrink-0 whitespace-nowrap rounded-lg bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-700 sm:inline-block"
+          >
+            Vào hệ thống →
+          </NavLink>
           <button
             onClick={toggle}
             title={theme === "dark" ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"}

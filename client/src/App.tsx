@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router-dom'
 import Header from './components/Header'
 import Footer from './components/Footer'
+import Landing from './pages/Landing'
 import Dashboard from './pages/Dashboard'
 import StockDetail from './pages/StockDetail'
 import Watchlist from './pages/Watchlist'
@@ -15,7 +16,8 @@ function App() {
       <Header />
       <main className="flex-1">
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={<Landing />} />
+          <Route path="/thi-truong" element={<Dashboard />} />
           <Route path="/stock/:symbol" element={<StockDetail />} />
           <Route path="/theo-doi" element={<Watchlist />} />
           <Route path="/so-sanh-pb" element={<PbCompare />} />

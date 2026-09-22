@@ -1,7 +1,9 @@
+import { Link } from "react-router-dom";
+
 const STATS = [
-  { value: "64+", label: "Mã cổ phiếu & chỉ số" },
+  { value: "70+", label: "Mã cổ phiếu quét tín hiệu" },
   { value: "27", label: "Chỉ báo kỹ thuật" },
-  { value: "Thời gian thực", label: "Cập nhật liên tục" },
+  { value: "3 sàn", label: "HOSE · HNX · UPCOM" },
 ];
 
 // City-skyline silhouette + an uptrend candlestick line, drawn by hand as
@@ -85,18 +87,18 @@ export default function Hero() {
       {/* Warm glow accents — no external assets, just layered radial gradients. */}
       <div
         className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full opacity-40 blur-3xl"
-        style={{ background: "radial-gradient(circle, #10b981 0%, transparent 70%)" }}
+        style={{ background: "radial-gradient(circle, #16e684 0%, transparent 70%)" }}
       />
       <div
         className="pointer-events-none absolute -bottom-32 -left-16 h-72 w-72 rounded-full opacity-20 blur-3xl"
-        style={{ background: "radial-gradient(circle, #10b981 0%, transparent 70%)" }}
+        style={{ background: "radial-gradient(circle, #00c694 0%, transparent 70%)" }}
       />
       <SkylineArt />
       {/* Left-side fade so the skyline never competes with the headline's
           contrast, even on narrow viewports where it scales up under the text. */}
       <div
         className="pointer-events-none absolute inset-0"
-        style={{ background: "linear-gradient(90deg, #020617 0%, #020617 38%, transparent 72%)" }}
+        style={{ background: "linear-gradient(90deg, #101820 0%, #101820 38%, transparent 72%)" }}
       />
 
       <div className="relative">
@@ -104,31 +106,36 @@ export default function Hero() {
           Theo dõi. Phân tích. Đầu tư.
         </p>
         <h1 className="mt-3 max-w-2xl text-3xl font-extrabold leading-tight text-white sm:text-5xl">
-          Nền tảng đầu tư chứng khoán{" "}
-          <span className="bg-gradient-to-r from-slate-300 to-slate-600 bg-clip-text text-transparent">
-            toàn diện
-          </span>{" "}
-          của bạn
+          Đầu tư chứng khoán{" "}
+          <span className="bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent">
+            có hệ thống, có kỷ luật
+          </span>
         </h1>
         <p className="mt-4 max-w-xl text-sm text-slate-400 sm:text-base">
-          Chiến Nguyễn Stock mang đến bảng giá thời gian thực, biểu đồ kỹ thuật chuyên
-          sâu với đầy đủ công cụ vẽ và thư viện chỉ báo, cùng dữ liệu tài chính doanh
-          nghiệp — tất cả trong một nơi duy nhất.
+          Chiến Nguyễn Stock kết hợp bảng giá thời gian thực, hệ thống tín hiệu Mua/Bán
+          trend-following, dòng tiền khối ngoại &amp; quỹ mở, cùng biểu đồ kỹ thuật chuyên
+          sâu — tất cả trong một nơi duy nhất.
         </p>
 
-        <a
-          href="https://www.youtube.com/watch?v=CyUYSWOAavw"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-6 inline-flex items-center gap-2 rounded-lg bg-slate-800 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-slate-700"
-        >
-          ▶️ Hướng dẫn mở tài khoản chứng khoán
-        </a>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link
+            to="/thi-truong"
+            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+          >
+            Xem thị trường trực tiếp →
+          </Link>
+          <Link
+            to="/huong-dan-mo-tai-khoan"
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/60 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-slate-700"
+          >
+            ▶️ Hướng dẫn mở tài khoản
+          </Link>
+        </div>
 
         <div className="mt-8 flex flex-wrap gap-8 sm:gap-12">
           {STATS.map((s) => (
             <div key={s.label}>
-              <div className="text-2xl font-bold text-slate-300 sm:text-3xl">{s.value}</div>
+              <div className="text-2xl font-bold text-emerald-400 sm:text-3xl">{s.value}</div>
               <div className="mt-1 text-xs text-slate-400 sm:text-sm">{s.label}</div>
             </div>
           ))}
