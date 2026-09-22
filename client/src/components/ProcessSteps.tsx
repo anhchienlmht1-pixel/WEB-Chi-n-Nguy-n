@@ -23,20 +23,20 @@ const STEPS = [
 
 export default function ProcessSteps() {
   return (
-    <section className="mb-12">
-      <div className="mb-6 text-center">
+    <section>
+      <div className="mb-10 text-center">
         <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">Quy trình</h2>
-        <h3 className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">Hệ thống vận hành như thế nào</h3>
+        <h3 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">Hệ thống vận hành như thế nào</h3>
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {STEPS.map((s, i) => (
-          <div key={s.step} className="relative rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/40">
-            <div className="font-mono text-3xl font-bold text-emerald-500/30">{s.step}</div>
-            <h4 className="mt-2 font-semibold text-slate-900 dark:text-slate-100">{s.title}</h4>
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        {STEPS.map((s) => (
+          <div
+            key={s.step}
+            className="rounded-xl border border-slate-200 bg-white p-6 transition-shadow duration-300 hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:border-slate-800 dark:bg-slate-900/40"
+          >
+            <div className="font-mono text-2xl font-semibold text-slate-300 dark:text-slate-700">{s.step}</div>
+            <h4 className="mt-3 font-semibold text-slate-900 dark:text-slate-100">{s.title}</h4>
             <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{s.desc}</p>
-            {i < STEPS.length - 1 && (
-              <span className="absolute -right-3 top-1/2 hidden -translate-y-1/2 text-slate-300 lg:block dark:text-slate-700">→</span>
-            )}
           </div>
         ))}
       </div>

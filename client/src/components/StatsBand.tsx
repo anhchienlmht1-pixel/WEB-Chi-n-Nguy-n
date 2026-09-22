@@ -11,12 +11,12 @@ const STATS = [
 
 export default function StatsBand() {
   return (
-    <section className="mb-12 rounded-xl border border-slate-800 bg-gradient-to-br from-slate-950 via-[#0c1d22] to-[#07332f] px-6 py-10 sm:px-10">
-      <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
+    <section className="rounded-xl border border-slate-200 bg-slate-50 px-6 py-10 dark:border-slate-800 dark:bg-slate-900/40 sm:px-10">
+      <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
         {STATS.map((s) => (
           <div key={s.label} className="text-center">
-            <div className="text-3xl font-bold text-emerald-400 sm:text-4xl">{s.value}</div>
-            <div className="mt-2 text-xs leading-snug text-slate-400 sm:text-sm">{s.label}</div>
+            <div className="text-3xl font-bold text-slate-900 dark:text-slate-100 sm:text-4xl">{s.value}</div>
+            <div className="mt-2 text-xs leading-snug text-slate-500 dark:text-slate-400 sm:text-sm">{s.label}</div>
           </div>
         ))}
       </div>

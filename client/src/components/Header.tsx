@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import SearchBox from "./SearchBox";
 import StockHeaderInfo from "./StockHeaderInfo";
 import TrendSignalBell from "./TrendSignalBell";
@@ -28,6 +28,9 @@ const mobileNavLinkClass = ({ isActive }: { isActive: boolean }) =>
 export default function Header() {
   const { theme, toggle } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
+  // Landing page keeps the header to Logo – Menu – CTA (no search/ticker/
+  // bell) — those belong to the live app, not the marketing homepage.
+  const isLanding = useLocation().pathname === "/";
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">
@@ -50,23 +53,27 @@ export default function Header() {
         </nav>
 
         <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-2 sm:flex-none sm:gap-3">
-          <div className="min-w-0 flex-1 sm:w-40 sm:flex-none md:w-40 lg:w-52">
-            <StockHeaderInfo />
-          </div>
-          <div className="min-w-0 flex-1 sm:w-40 sm:flex-none md:w-40 lg:w-52">
-            <SearchBox />
-          </div>
-          <TrendSignalBell />
+          {!isLanding && (
+            <>
+              <div className="min-w-0 flex-1 sm:w-40 sm:flex-none md:w-40 lg:w-52">
+                <StockHeaderInfo />
+              </div>
+              <div className="min-w-0 flex-1 sm:w-40 sm:flex-none md:w-40 lg:w-52">
+                <SearchBox />
+              </div>
+              <TrendSignalBell />
+            </>
+          )}
           <NavLink
             to="/thi-truong"
-            className="hidden shrink-0 whitespace-nowrap rounded-lg bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-700 sm:inline-block"
+            className="hidden shrink-0 whitespace-nowrap rounded-lg bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white transition-colors duration-300 hover:bg-emerald-700 sm:inline-block"
           >
-            Vào hệ thống →
+            Vào hệ thống
           </NavLink>
           <button
             onClick={toggle}
             title={theme === "dark" ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-base transition-colors hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-base transition-colors duration-300 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
           >
             {theme === "dark" ? "☀️" : "🌙"}
           </button>

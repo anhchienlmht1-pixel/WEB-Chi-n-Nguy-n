@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { PlayCircle } from "lucide-react";
 
 const STATS = [
   { value: "70+", label: "Mã cổ phiếu quét tín hiệu" },
@@ -83,16 +84,7 @@ function SkylineArt() {
 
 export default function Hero() {
   return (
-    <div className="relative mb-8 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 px-6 py-12 sm:px-10 sm:py-16">
-      {/* Warm glow accents — no external assets, just layered radial gradients. */}
-      <div
-        className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full opacity-40 blur-3xl"
-        style={{ background: "radial-gradient(circle, #16e684 0%, transparent 70%)" }}
-      />
-      <div
-        className="pointer-events-none absolute -bottom-32 -left-16 h-72 w-72 rounded-full opacity-20 blur-3xl"
-        style={{ background: "radial-gradient(circle, #00c694 0%, transparent 70%)" }}
-      />
+    <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 px-6 py-16 sm:px-10 sm:py-20">
       <SkylineArt />
       {/* Left-side fade so the skyline never competes with the headline's
           contrast, even on narrow viewports where it scales up under the text. */}
@@ -106,10 +98,7 @@ export default function Hero() {
           Theo dõi. Phân tích. Đầu tư.
         </p>
         <h1 className="mt-3 max-w-2xl text-3xl font-extrabold leading-tight text-white sm:text-5xl">
-          Đầu tư chứng khoán{" "}
-          <span className="bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent">
-            có hệ thống, có kỷ luật
-          </span>
+          Đầu tư chứng khoán <span className="text-emerald-400">có hệ thống, có kỷ luật</span>
         </h1>
         <p className="mt-4 max-w-xl text-sm text-slate-400 sm:text-base">
           Chiến Nguyễn Stock kết hợp bảng giá thời gian thực, hệ thống tín hiệu Mua/Bán
@@ -117,18 +106,19 @@ export default function Hero() {
           sâu — tất cả trong một nơi duy nhất.
         </p>
 
-        <div className="mt-6 flex flex-wrap gap-3">
+        <div className="mt-8 flex flex-wrap gap-3">
           <Link
             to="/thi-truong"
-            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition-colors duration-300 hover:bg-emerald-700"
           >
-            Xem thị trường trực tiếp →
+            Xem thị trường trực tiếp
           </Link>
           <Link
             to="/huong-dan-mo-tai-khoan"
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/60 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-slate-700"
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-700 px-5 py-3 text-sm font-semibold text-white transition-colors duration-300 hover:bg-slate-800"
           >
-            ▶️ Hướng dẫn mở tài khoản
+            <PlayCircle className="h-4 w-4" strokeWidth={1.75} />
+            Hướng dẫn mở tài khoản
           </Link>
         </div>
 
