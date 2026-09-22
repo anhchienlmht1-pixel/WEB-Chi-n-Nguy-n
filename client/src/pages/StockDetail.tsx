@@ -14,6 +14,7 @@ import { isSecuritiesSymbol } from "../utils/securitiesData";
 import CompanyProfileCard from "../components/CompanyProfileCard";
 import ForeignFlowPanel from "../components/ForeignFlowPanel";
 import StockOutlookPanel from "../components/StockOutlookPanel";
+import SystemAssessment from "../components/SystemAssessment";
 
 export default function StockDetail() {
   const { symbol = "" } = useParams();
@@ -84,6 +85,7 @@ export default function StockDetail() {
             </div>
 
             <div className="space-y-4">
+              {!isIndexOrFutures && <SystemAssessment symbol={quote.symbol} />}
               {!isIndexOrFutures && <CompanyProfileCard symbol={quote.symbol} fallbackName={quote.name} />}
               {!isIndexOrFutures && <StockOutlookPanel symbol={quote.symbol} />}
               {!isIndexOrFutures && <ForeignFlowPanel quote={quote} />}
