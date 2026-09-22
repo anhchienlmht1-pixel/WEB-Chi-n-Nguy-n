@@ -40,16 +40,13 @@
   --color-emerald-950: #012e24;
 }
 
-/* Dark is the default theme (see hooks/useTheme.ts) — assume it here too
-   so the very first paint (before that module's JS runs and toggles the
-   .dark class) is already #101820 instead of flashing white. */
 html {
-  color-scheme: dark;
-  background-color: #101820;
-}
-html:not(.dark) {
   color-scheme: light;
   background-color: #f8fafc;
+}
+html.dark {
+  color-scheme: dark;
+  background-color: #101820;
 }
 
 /* Responsive/mobile baseline: block accidental page-level horizontal

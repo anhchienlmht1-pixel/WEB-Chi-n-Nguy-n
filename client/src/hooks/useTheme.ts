@@ -5,10 +5,9 @@ const STORAGE_KEY = "stockdash.theme";
 export type Theme = "light" | "dark";
 
 // Module-level store so every consumer (header toggle, TradingView widget)
-// sees the same theme and re-renders together. Defaults to dark (the brand
-// palette's #101820 background) unless the visitor has explicitly switched
-// to light before.
-let theme: Theme = localStorage.getItem(STORAGE_KEY) === "light" ? "light" : "dark";
+// sees the same theme and re-renders together. Defaults to light (white
+// background) unless the visitor has explicitly switched to dark before.
+let theme: Theme = localStorage.getItem(STORAGE_KEY) === "dark" ? "dark" : "light";
 const listeners = new Set<() => void>();
 
 function applyToDocument() {
