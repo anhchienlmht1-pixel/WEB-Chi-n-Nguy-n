@@ -8,7 +8,6 @@ import MarketMovers from "../components/MarketMovers";
 import TechnicalChartPanel from "../components/TechnicalChartPanel";
 import IndexTicker from "../components/IndexTicker";
 import LeaderBoard from "../components/LeaderBoard";
-import FundInsight from "../components/FundInsight";
 import TrendSignalScanner from "../components/TrendSignalScanner";
 import SpecialOffers from "../components/SpecialOffers";
 import TrendSystemStats from "../components/TrendSystemStats";
@@ -96,15 +95,6 @@ export default function Dashboard() {
               <ForeignFlowChart rows={foreignFlowRows} />
             </div>
           )}
-        </div>
-
-        {/* Fund Insight — dòng tiền quỹ mở (nguồn Fmarket) */}
-        <div>
-          <div className="mb-5">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">Dòng tiền quỹ</h2>
-            <h3 className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100">Insight từ các quỹ mở</h3>
-          </div>
-          <FundInsight />
         </div>
 
         <div>
