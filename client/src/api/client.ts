@@ -275,24 +275,36 @@ export async function fetchTrendBuySignals(): Promise<TrendBuySignal[]> {
   return data.items;
 }
 
-export interface ClosedTrade {
+export interface JournalPosition {
   symbol: string;
   name: string;
   exchange: string;
   currency: string;
   buyDate: string;
   buyPrice: number;
+}
+
+export interface JournalClosedTrade extends JournalPosition {
   sellDate: string;
   sellPrice: number;
   returnPercent: number;
   holdingDays: number;
 }
 
-// "Lịch sử giao dịch đã đóng" — completed buy→sell trades (same combo as
-// TrendBuySignal) whose exit fell within the last 30 days — see
-// server/src/signals/trendScanner.ts's scanClosedTrades.
-export async function fetchClosedTrades(): Promise<ClosedTrade[]> {
-  const { data } = await api.get("/trend-signals/closed");
-  return data.items;
+export interface TradeJournal {
+  // First date the journal is allowed to record anything — deliberately
+  // not backdated, so numbers can't be accused of being a hindsight
+  // backtest — see server/src/signals/tradeJournal.ts.
+  startDate: string;
+  open: JournalPosition[];
+  closed: JournalClosedTrade[];
+}
+
+// "Lịch sử giao dịch" — a real, forward-only log of the system's own
+// Mua/Bán combo (same as TrendBuySignal) rather than a backtest over
+// historical prices.
+export async function fetchTradeJournal(): Promise<TradeJournal> {
+  const { data } = await api.get("/trend-signals/journal");
+  return data;
 }
 

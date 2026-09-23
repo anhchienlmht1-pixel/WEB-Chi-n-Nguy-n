@@ -16,7 +16,8 @@ import { fetchInvestmentOutlook } from "../providers/googleSheet.js";
 import { fetchMoneyFlowTable } from "../providers/moneyFlowSheet.js";
 import { fetchNewsForSymbol, fetchCafefNews } from "../news/cafefNews.js";
 import { getCompanyProfileWithFallback } from "../providers/companyProfileFallback.js";
-import { scanBuySignals, scanClosedTrades } from "../signals/trendScanner.js";
+import { scanBuySignals } from "../signals/trendScanner.js";
+import { getTradeJournal } from "../signals/tradeJournal.js";
 import { scanMovingAverages } from "../signals/maScanner.js";
 import { scanPbComparison, BANK_SYMBOLS, SECURITIES_SYMBOLS, REAL_ESTATE_SYMBOLS } from "../signals/pbScanner.js";
 import { fetchVndirectLogos, fetchVndirectCompanyProfilesRaw } from "../providers/vndirectLogos.js";
@@ -436,14 +437,14 @@ router.get(
 );
 
 router.get(
-  "/trend-signals/closed",
+  "/trend-signals/journal",
   asyncHandler(async (_req, res) => {
-    // "Lịch sử giao dịch đã đóng" — every completed buy→sell trade (same
-    // SMA20/SMA50/ADX/Supertrend combo) whose exit fell in the last 30
-    // days, across the whole universe. Same 1h TTL as /trend-signals for
-    // the same reason: this only moves once per trading day.
-    const data = await cached("trend-signals-closed", 60 * 60, () => scanClosedTrades(30), { staleOnError: true });
-    res.json({ items: data });
+    // Real, forward-only trade log (see signals/tradeJournal.ts) — only
+    // ever records what the Mua/Bán combo actually signals from
+    // JOURNAL_START_DATE onward, not a backtest over historical prices.
+    // A short TTL is fine: the journal itself only re-scans once a day.
+    const data = await cached("trend-signals-journal", 5 * 60, () => getTradeJournal(), { staleOnError: true });
+    res.json(data);
   })
 );
 

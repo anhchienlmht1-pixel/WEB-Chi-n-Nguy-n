@@ -11,7 +11,7 @@ import LeaderBoard from "../components/LeaderBoard";
 import TrendSignalScanner from "../components/TrendSignalScanner";
 import SpecialOffers from "../components/SpecialOffers";
 import TrendSystemStats from "../components/TrendSystemStats";
-import TrendClosedTrades from "../components/TrendClosedTrades";
+import TrendJournal from "../components/TrendJournal";
 import TrendSystemIntro from "../components/TrendSystemIntro";
 import ForeignFlowChart from "../components/ForeignFlowChart";
 import { aggregatePoints } from "../utils/aggregate";
@@ -97,8 +97,8 @@ export default function Dashboard() {
         {/* Trend System Statistics */}
         {chartSymbol !== "VNINDEX" && <TrendSystemStats signals={signals} symbol={chartSymbol} />}
 
-        {/* Closed trend-following trades — "lịch sử các deal đã đóng" */}
-        <TrendClosedTrades />
+        {/* Trade journal — real, forward-only "lịch sử giao dịch" */}
+        <TrendJournal />
 
         {/* Market Data Bottom Row */}
         <div>

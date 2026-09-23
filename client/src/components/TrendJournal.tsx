@@ -1,30 +1,31 @@
 import { Link } from "react-router-dom";
 import { History } from "lucide-react";
 import { usePolling } from "../hooks/usePolling";
-import { fetchClosedTrades } from "../api/client";
+import { fetchTradeJournal } from "../api/client";
 import { formatPrice, formatPercent } from "../utils/format";
 
-const POLL_MS = 5 * 60 * 1000; // server caches the scan for 1h — no point polling faster
+const POLL_MS = 5 * 60 * 1000;
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
+  return new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
-// Lists every completed (bought AND sold) trend-following trade across the
-// whole universe whose exit fell in the last 30 days — see
-// server/src/signals/trendScanner.ts's scanClosedTrades. Complements
-// TrendSignalScanner (which only shows positions still open) by answering
-// "how did the deals that already closed actually turn out".
-export default function TrendClosedTrades() {
-  const { data: trades, error, loading } = usePolling(() => fetchClosedTrades(), [], POLL_MS);
+// Real, forward-only trade log — every completed buy→sell deal the
+// system's own Mua/Bán combo (SMA20 > SMA50, ADX(14) > 25,
+// Supertrend(10,3)) has actually signaled since it started being recorded
+// (see server/src/signals/tradeJournal.ts), not a backtest reconstructed
+// from historical prices. Complements TrendSignalScanner (positions still
+// open) by answering "how did the deals that already closed turn out".
+export default function TrendJournal() {
+  const { data: journal, error, loading } = usePolling(() => fetchTradeJournal(), [], POLL_MS);
 
-  if (loading && !trades) {
+  if (loading && !journal) {
     return (
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
         <div className="border-b border-slate-200 p-4 dark:border-slate-800">
           <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
             <History className="h-4 w-4 text-slate-400" strokeWidth={1.75} />
-            Lịch sử giao dịch đã đóng (30 ngày)
+            Nhật ký giao dịch
           </h4>
         </div>
         <div className="space-y-2 p-4">
@@ -36,33 +37,34 @@ export default function TrendClosedTrades() {
     );
   }
 
-  if (error && !trades) return null;
-  if (!trades) return null;
+  if (error && !journal) return null;
+  if (!journal) return null;
 
-  const winCount = trades.filter((t) => t.returnPercent > 0).length;
-  const lossCount = trades.filter((t) => t.returnPercent < 0).length;
+  const { startDate, open, closed } = journal;
+  const winCount = closed.filter((t) => t.returnPercent > 0).length;
+  const lossCount = closed.filter((t) => t.returnPercent < 0).length;
 
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
       <div className="border-b border-slate-200 p-4 dark:border-slate-800">
         <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
           <History className="h-4 w-4 text-slate-400" strokeWidth={1.75} />
-          Lịch sử giao dịch đã đóng (30 ngày)
+          Nhật ký giao dịch
         </h4>
         <p className="mt-1.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-          {trades.length === 0 ? (
-            "Chưa có giao dịch nào đóng trong 30 ngày qua."
+          {closed.length === 0 ? (
+            <>Chưa có deal nào đóng — nhật ký ghi nhận tín hiệu thật từ {formatDate(startDate)}, sẽ tự cập nhật khi tín hiệu Bán xuất hiện.</>
           ) : (
             <>
-              <span className="font-medium text-slate-700 dark:text-slate-200">{trades.length} giao dịch</span> đã đóng ·{" "}
+              <span className="font-medium text-slate-700 dark:text-slate-200">{closed.length} deal</span> đã đóng ·{" "}
               <span className="text-green-600 dark:text-green-400">{winCount} lãi</span> /{" "}
-              <span className="text-red-600 dark:text-red-400">{lossCount} lỗ</span>
+              <span className="text-red-600 dark:text-red-400">{lossCount} lỗ</span> · {open.length} vị thế đang mở
             </>
           )}
         </p>
       </div>
 
-      {trades.length > 0 && (
+      {closed.length > 0 && (
         <div className="max-h-96 overflow-y-auto overflow-x-auto">
           <table className="w-full min-w-[520px] border-collapse text-xs">
             <thead className="sticky top-0 bg-slate-50 dark:bg-slate-800/90">
@@ -75,7 +77,7 @@ export default function TrendClosedTrades() {
               </tr>
             </thead>
             <tbody>
-              {trades.map((t, i) => (
+              {closed.map((t, i) => (
                 <tr
                   key={`${t.symbol}-${t.sellDate}-${i}`}
                   className="border-b border-slate-100 last:border-0 hover:bg-slate-50 dark:border-slate-900 dark:hover:bg-slate-900/60"
@@ -114,8 +116,8 @@ export default function TrendClosedTrades() {
       )}
 
       <p className="border-t border-slate-100 px-4 py-2 text-[10px] text-slate-400 dark:border-slate-900 dark:text-slate-500">
-        Deal đóng khi tín hiệu Bán kích hoạt (SMA20 cắt xuống SMA50 hoặc Supertrend đảo chiều). Lãi/Lỗ tính từ giá lúc
-        Mua đến giá lúc Bán — không phải lời khuyên đầu tư.
+        Ghi nhận tín hiệu thật theo thời gian thực từ {formatDate(startDate)} — không phải dữ liệu backtest. Deal đóng
+        khi tín hiệu Bán kích hoạt (SMA20 cắt xuống SMA50 hoặc Supertrend đảo chiều). Không phải lời khuyên đầu tư.
       </p>
     </div>
   );

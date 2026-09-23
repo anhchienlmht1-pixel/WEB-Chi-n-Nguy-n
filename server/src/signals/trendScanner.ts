@@ -19,7 +19,7 @@ function dayKey(iso: string): string {
 // dedupeSameDay — the "today" row can arrive twice while KBS is still
 // settling it) would misalign every indicator below just as badly here as
 // on the chart, so collapse them the same way before computing anything.
-function dedupeSameDay(points: HistoryPoint[]): HistoryPoint[] {
+export function dedupeSameDay(points: HistoryPoint[]): HistoryPoint[] {
   const out: HistoryPoint[] = [];
   for (const p of points) {
     const prev = out[out.length - 1];
@@ -86,10 +86,10 @@ interface BuySeriesBar {
 
 // Same SMA20/SMA50/ADX(14)/Supertrend(10,3) combo as latestBuySince, but
 // returned as a full aligned per-bar series (one entry per bar once every
-// indicator has warmed up) instead of just the latest streak — used by
-// findClosedTrades() to walk the whole history forward and reconstruct
-// every completed buy→sell cycle, not only the currently-open one.
-function computeBuySeries(points: HistoryPoint[]): BuySeriesBar[] {
+// indicator has warmed up) instead of just the latest streak — exported
+// for signals/tradeJournal.ts, which only needs the very last bar's state
+// to tell whether a symbol is buying today.
+export function computeBuySeries(points: HistoryPoint[]): BuySeriesBar[] {
   const closes = points.map((p) => p.close);
   const sma20 = sma({ period: 20, values: closes });
   const sma50 = sma({ period: 50, values: closes });
@@ -265,54 +265,6 @@ export interface BuySignalHit {
   sellDate: string | null;  // Sell date (null if still holding)
 }
 
-export interface ClosedTrade {
-  buyDate: string;
-  buyPrice: number;
-  sellDate: string;
-  sellPrice: number;
-  returnPercent: number; // % change from buyPrice to sellPrice
-  holdingDays: number;
-}
-
-// Walks the full buy-series forward and pairs each buy streak's start with
-// the bar where it breaks — i.e. every COMPLETED trend-following trade in
-// the symbol's history, not just the one currently open (that's what
-// latestBuySince reports). A streak still open at the last bar is not
-// included here — it isn't a "deal đã đóng" yet.
-export function findClosedTrades(points: HistoryPoint[]): ClosedTrade[] {
-  if (points.length < 51) return [];
-  const series = computeBuySeries(points);
-
-  const trades: ClosedTrade[] = [];
-  let open: { time: string; close: number } | null = null;
-
-  for (const bar of series) {
-    if (bar.isBuy && !open) {
-      open = { time: bar.time, close: bar.close };
-    } else if (!bar.isBuy && open) {
-      const holdingDays = Math.round((new Date(bar.time).getTime() - new Date(open.time).getTime()) / 86_400_000);
-      trades.push({
-        buyDate: open.time,
-        buyPrice: open.close,
-        sellDate: bar.time,
-        sellPrice: bar.close,
-        returnPercent: ((bar.close - open.close) / open.close) * 100,
-        holdingDays,
-      });
-      open = null;
-    }
-  }
-
-  return trades;
-}
-
-export interface ClosedTradeHit extends ClosedTrade {
-  symbol: string;
-  name: string;
-  exchange: string;
-  currency: string;
-}
-
 async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
   const results: R[] = new Array(items.length);
   let next = 0;
@@ -390,31 +342,4 @@ export async function scanBuySignals(): Promise<BuySignalHit[]> {
   }
 
   return results;
-}
-
-// "Lịch sử giao dịch đã đóng" — every symbol's completed buy→sell trades
-// (see findClosedTrades) whose exit fell within the last `windowDays`,
-// across the whole universe. No CAN SLIM fundamentals filter here (unlike
-// scanBuySignals): that's a screen on whether to trust a signal going
-// forward, not something that changes what already happened, and skipping
-// it avoids doubling the per-symbol financial-report fetches for history
-// nobody's about to act on.
-export async function scanClosedTrades(windowDays = 30): Promise<ClosedTradeHit[]> {
-  const cutoff = Date.now() - windowDays * 86_400_000;
-  const failed = new Map<string, string>();
-
-  const hits = await mapWithConcurrency(STOCK_UNIVERSE, 20, async (seed): Promise<ClosedTradeHit[]> => {
-    try {
-      const { points: raw } = await getHistoryWithFallback(seed.symbol, "1Y");
-      const points = dedupeSameDay(raw);
-      return findClosedTrades(points)
-        .filter((t) => new Date(t.sellDate).getTime() >= cutoff)
-        .map((t) => ({ ...t, symbol: seed.symbol, name: seed.name, exchange: seed.exchange, currency: seed.currency }));
-    } catch (err) {
-      failed.set(seed.symbol, err instanceof Error ? err.message : String(err));
-      return [];
-    }
-  });
-
-  return hits.flat().sort((a, b) => b.sellDate.localeCompare(a.sellDate));
 }
