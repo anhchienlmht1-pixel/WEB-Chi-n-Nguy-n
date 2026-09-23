@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { fetchHistory } from "../api/client";
+import { useEffect, useMemo, useState } from "react";
+import { fetchHistory, fetchTrendBuySignals } from "../api/client";
 import { fetchMarketOverview } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { useWatchlist } from "../hooks/useWatchlist";
@@ -25,6 +25,17 @@ export default function Dashboard() {
   const { data } = usePolling(fetchMarketOverview, [], 10000);
   const { symbols: watchlist } = useWatchlist();
   const [chartSymbol, setChartSymbol] = useState(watchlist[0] ?? DEFAULT_SYMBOL);
+
+  // VNINDEX never carries a Mua/Bán marker, so the very first chart a
+  // visitor sees would show no signal at all — once the buy-signal scan
+  // comes back, swap the default over to the first stock actually on a
+  // live signal (but only if nobody's picked/kept their own symbol yet).
+  const buySignalsState = usePolling(() => fetchTrendBuySignals(), [], 5 * 60 * 1000);
+  useEffect(() => {
+    if (watchlist.length > 0 || chartSymbol !== DEFAULT_SYMBOL) return;
+    const first = buySignalsState.data?.[0]?.symbol;
+    if (first) setChartSymbol(first);
+  }, [buySignalsState.data, watchlist, chartSymbol]);
 
   // Fetch history for signal computation
   const historyState = usePolling(() => fetchHistory(chartSymbol, "MAX"), [chartSymbol], 5000);
