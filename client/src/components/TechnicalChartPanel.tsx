@@ -37,7 +37,6 @@ export default function TechnicalChartPanel({
   const [resolution, setResolution] = useState<ChartResolution>("D");
   const [chartType, setChartType] = useState<ChartType>("candlestick");
   const [drawingTool, setDrawingTool] = useState<DrawingTool>(null);
-  const [showSignals, setShowSignals] = useState(true);
   const [searchInput, setSearchInput] = useState("");
   const chartRef = useRef<PriceChartHandle>(null);
   const chartWrapperRef = useRef<HTMLDivElement>(null);
@@ -113,7 +112,7 @@ export default function TechnicalChartPanel({
   const signalResult = useMemo(
     () => {
       // Don't show signals for VNINDEX
-      if (symbol === "VNINDEX" || !showSignals) {
+      if (symbol === "VNINDEX") {
         return { all: [], transitions: [] };
       }
       // Use refreshState data if available, otherwise fall back to historyState
@@ -122,7 +121,7 @@ export default function TechnicalChartPanel({
         : chartPoints;
       return computeTradingSignals(pointsToUse);
     },
-    [chartPoints, refreshState.data, showSignals, symbol, resolution]
+    [chartPoints, refreshState.data, symbol, resolution]
   );
 
   return (
@@ -145,8 +144,6 @@ export default function TechnicalChartPanel({
         onResolutionChange={setResolution}
         chartType={chartType}
         onChartTypeChange={setChartType}
-        showSignals={showSignals && symbol !== "VNINDEX"}
-        onToggleSignals={() => setShowSignals((v) => !v)}
         onScreenshot={screenshot}
         onFullscreen={toggleFullscreen}
       />

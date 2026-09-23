@@ -25,8 +25,6 @@ export default function ChartToolbar({
   onResolutionChange,
   chartType,
   onChartTypeChange,
-  showSignals,
-  onToggleSignals,
   onScreenshot,
   onFullscreen,
 }: {
@@ -42,8 +40,6 @@ export default function ChartToolbar({
   onResolutionChange: (r: ChartResolution) => void;
   chartType: ChartType;
   onChartTypeChange: (t: ChartType) => void;
-  showSignals: boolean;
-  onToggleSignals: () => void;
   onScreenshot: () => void;
   onFullscreen: () => void;
 }) {
@@ -113,17 +109,11 @@ export default function ChartToolbar({
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={onToggleSignals}
-          className={`rounded-md px-2 py-1 text-xs font-medium transition-colors ${
-            showSignals
-              ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
-              : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-          }`}
-        >
-          Tín hiệu Mua/Bán
-        </button>
+        {plainSymbol !== "VNINDEX" && (
+          <span className="rounded-md bg-slate-900 px-2 py-1 text-xs font-medium text-white dark:bg-slate-100 dark:text-slate-900">
+            Tín hiệu Mua/Bán
+          </span>
+        )}
       </div>
 
       {onSymbolChange && (
