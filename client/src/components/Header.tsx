@@ -9,7 +9,6 @@ import { useTheme } from "../hooks/useTheme";
 const NAV_ITEMS = [
   { to: "/thi-truong", label: "Thị trường", end: false },
   { to: "/so-sanh-pb", label: "So sánh P/B", end: false },
-  { to: "/huong-dan-mo-tai-khoan", label: "Mở Tài Khoản", end: false },
 ];
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -59,10 +58,10 @@ export default function Header() {
           </div>
           <TrendSignalBell />
           <NavLink
-            to="/thi-truong"
+            to="/huong-dan-mo-tai-khoan"
             className="hidden shrink-0 whitespace-nowrap rounded-lg bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white transition-colors duration-300 hover:bg-emerald-700 sm:inline-block"
           >
-            Vào hệ thống
+            Mở tài khoản
           </NavLink>
           <button
             onClick={toggle}
@@ -95,6 +94,13 @@ export default function Header() {
               {item.label}
             </NavLink>
           ))}
+          <NavLink
+            to="/huong-dan-mo-tai-khoan"
+            onClick={() => setMenuOpen(false)}
+            className="mt-1 block rounded-lg bg-emerald-600 px-3 py-3 text-center text-sm font-semibold uppercase tracking-[0.12em] text-white transition-colors duration-300 hover:bg-emerald-700 sm:hidden"
+          >
+            Mở tài khoản
+          </NavLink>
         </nav>
       )}
     </header>
