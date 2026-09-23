@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import Hero from "../components/Hero";
-import CoreValues from "../components/CoreValues";
 import FeatureCards from "../components/FeatureCards";
 import StatsBand from "../components/StatsBand";
 import ProcessSteps from "../components/ProcessSteps";
@@ -12,10 +11,6 @@ export default function Landing() {
     <div className="mx-auto max-w-[1400px] px-4 py-8 sm:py-10">
       <div className="space-y-20 sm:space-y-24">
         <Hero />
-
-        <Reveal>
-          <CoreValues />
-        </Reveal>
 
         <Reveal>
           <FeatureCards />
