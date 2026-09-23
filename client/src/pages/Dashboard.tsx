@@ -42,8 +42,14 @@ export default function Dashboard() {
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-8">
       <div className="space-y-14">
-        {/* Trend System Intro — first thing a visitor sees */}
-        <TrendSystemIntro />
+        {/* Leader Board — first thing a visitor sees */}
+        <div>
+          <div className="mb-5">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">Xếp hạng</h2>
+            <h3 className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100">Bảng xếp hạng thị trường</h3>
+          </div>
+          <LeaderBoard />
+        </div>
 
         {/* Index Ticker */}
         <IndexTicker />
@@ -74,6 +80,9 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Trend System Intro — right under the chart */}
+        <TrendSystemIntro />
+
         {/* Trend System Statistics */}
         {chartSymbol !== "VNINDEX" && <TrendSystemStats signals={signals} symbol={chartSymbol} />}
 
@@ -95,14 +104,6 @@ export default function Dashboard() {
               <ForeignFlowChart rows={foreignFlowRows} />
             </div>
           )}
-        </div>
-
-        <div>
-          <div className="mb-5">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">Xếp hạng</h2>
-            <h3 className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100">Bảng xếp hạng thị trường</h3>
-          </div>
-          <LeaderBoard />
         </div>
 
         {/* Special Offers */}
