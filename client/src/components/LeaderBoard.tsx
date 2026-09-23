@@ -46,7 +46,15 @@ function LegendChips({
 // strength bands as the legend). Score comes straight from the sheet;
 // price/change/volume are joined in from the full exchange board so every
 // sector's symbols (not just the curated ~70-mã watchlist) get a quote.
-export default function LeaderBoard() {
+export default function LeaderBoard({
+  onSelectSymbol,
+}: {
+  /** Switches a sibling chart to the clicked symbol in place instead of
+   * navigating away to the stock detail page — see TrendSignalScanner for
+   * the same pattern. Falls back to a normal /stock/:symbol navigation
+   * when omitted. */
+  onSelectSymbol?: (symbol: string) => void;
+} = {}) {
   const { data, error, loading } = usePolling(() => fetchStockStrength(), [], POLL_MS);
   const { data: boardData } = usePolling(() => fetchMarketBoard("ALL"), [], POLL_MS);
   const [activeBand, setActiveBand] = useState<string | null>(null);
@@ -91,7 +99,9 @@ export default function LeaderBoard() {
               {data.asOfDate && <>Cập nhật: {data.asOfDate} · </>}
               {totalCount} mã
             </div>
-            <div className="mt-1 font-medium">Bấm vào mã để xem chi tiết</div>
+            <div className="mt-1 font-medium">
+              {onSelectSymbol ? "Bấm vào mã để xem trên biểu đồ thị trường" : "Bấm vào mã để xem chi tiết"}
+            </div>
           </div>
         )}
       </div>
@@ -138,7 +148,7 @@ export default function LeaderBoard() {
                     return (
                       <li
                         key={r.symbol}
-                        onClick={() => navigate(`/stock/${r.symbol}`)}
+                        onClick={() => (onSelectSymbol ? onSelectSymbol(r.symbol) : navigate(`/stock/${r.symbol}`))}
                         title={`${r.symbol} — ${band.label} (${r.score})${
                           changePct != null ? ` · ${formatPercent(changePct)} hôm nay` : ""
                         }`}

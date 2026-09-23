@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { fetchHistory, fetchTrendBuySignals } from "../api/client";
 import { fetchMarketOverview } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
@@ -50,6 +50,14 @@ export default function Dashboard() {
 
   const foreignFlowRows = useMemo(() => computeForeignFlowRows(data?.quotes ?? []), [data]);
 
+  // Leader Board sits above the chart on this page, so picking a symbol
+  // there also needs to scroll the visitor down to see it change.
+  const chartSectionRef = useRef<HTMLDivElement>(null);
+  const selectFromLeaderBoard = useCallback((symbol: string) => {
+    setChartSymbol(symbol);
+    chartSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-8">
       <div className="space-y-14">
@@ -59,14 +67,14 @@ export default function Dashboard() {
             <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">Xếp hạng</h2>
             <h3 className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100">Bảng xếp hạng thị trường</h3>
           </div>
-          <LeaderBoard />
+          <LeaderBoard onSelectSymbol={selectFromLeaderBoard} />
         </div>
 
         {/* Index Ticker */}
         <IndexTicker />
 
         {/* Main Chart + Signals Section */}
-        <div>
+        <div ref={chartSectionRef} className="scroll-mt-20">
           <div className="mb-5 flex items-end justify-between gap-4">
             <div>
               <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">Phân tích kỹ thuật</h2>
