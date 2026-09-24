@@ -18,6 +18,7 @@ import StockOutlookPanel from "../components/StockOutlookPanel";
 import SystemAssessment from "../components/SystemAssessment";
 import PositionTracker from "../components/PositionTracker";
 import AdvisorContactBar from "../components/AdvisorContactBar";
+import FinancialSnapshot from "../components/FinancialSnapshot";
 
 const SIDEBAR_TABS = [
   { key: "tong-quan", label: "Tổng quan" },
@@ -130,6 +131,12 @@ export default function StockDetail() {
               )}
             </div>
           </div>
+
+          {!isIndexOrFutures && (
+            <div className="mt-6">
+              <FinancialSnapshot symbol={quote.symbol} />
+            </div>
+          )}
 
           {isBankSymbol(quote.symbol) && (
             <div className="mt-6">
