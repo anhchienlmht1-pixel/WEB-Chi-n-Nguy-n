@@ -2,6 +2,7 @@ import { put, head } from "@vercel/blob";
 import { STOCK_UNIVERSE } from "../providers/universe.js";
 import { getHistoryWithFallback } from "../providers/fallback.js";
 import { computeBuySeries, dedupeSameDay } from "./trendScanner.js";
+import { getScannedSymbols } from "./backgroundScan.js";
 
 // Real, forward-only trade log for "Lịch sử giao dịch" — unlike
 // scanClosedTrades (a backtest that reconstructs every historical
@@ -85,18 +86,36 @@ async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T)
 }
 
 interface CurrentSignal {
+  name: string;
+  exchange: string;
+  currency: string;
   isBuy: boolean;
   price: number;
 }
 
+// Reads the background Cron scan's full-universe results (see
+// signals/backgroundScan.ts) when available, so the journal covers the
+// same ~1,600-symbol roster as /trend-signals — falling back to a live
+// scan over the curated STOCK_UNIVERSE (the old behavior) only when
+// nothing's been scanned yet (Blob not configured, or the first Cron tick
+// hasn't landed).
 async function scanCurrentSignals(): Promise<Map<string, CurrentSignal>> {
+  const scanned = await getScannedSymbols();
+  if (scanned.length > 0) {
+    const map = new Map<string, CurrentSignal>();
+    for (const s of scanned) {
+      map.set(s.symbol, { name: s.name, exchange: s.exchange, currency: s.currency, isBuy: s.isBuy, price: s.price });
+    }
+    return map;
+  }
+
   const hits = await mapWithConcurrency(STOCK_UNIVERSE, 20, async (seed) => {
     try {
       const { points: raw } = await getHistoryWithFallback(seed.symbol, "1Y");
       const series = computeBuySeries(dedupeSameDay(raw));
       const last = series[series.length - 1];
       if (!last) return null;
-      return { symbol: seed.symbol, isBuy: last.isBuy, price: last.close };
+      return { symbol: seed.symbol, name: seed.name, exchange: seed.exchange, currency: seed.currency, isBuy: last.isBuy, price: last.close };
     } catch {
       // A single symbol's data being unavailable for today's run must not
       // block the rest of the scan — see the loop below, which also keeps
@@ -106,7 +125,9 @@ async function scanCurrentSignals(): Promise<Map<string, CurrentSignal>> {
   });
 
   const map = new Map<string, CurrentSignal>();
-  for (const h of hits) if (h) map.set(h.symbol, { isBuy: h.isBuy, price: h.price });
+  for (const h of hits) {
+    if (h) map.set(h.symbol, { name: h.name, exchange: h.exchange, currency: h.currency, isBuy: h.isBuy, price: h.price });
+  }
   return map;
 }
 
@@ -142,19 +163,16 @@ async function updateTradeJournal(): Promise<JournalState> {
     });
   }
 
-  for (const seed of STOCK_UNIVERSE) {
-    if (openBySymbol.has(seed.symbol)) continue;
-    const sig = signals.get(seed.symbol);
-    if (sig?.isBuy) {
-      nextOpen.push({
-        symbol: seed.symbol,
-        name: seed.name,
-        exchange: seed.exchange,
-        currency: seed.currency,
-        buyDate: today,
-        buyPrice: sig.price,
-      });
-    }
+  for (const [symbol, sig] of signals) {
+    if (openBySymbol.has(symbol) || !sig.isBuy) continue;
+    nextOpen.push({
+      symbol,
+      name: sig.name,
+      exchange: sig.exchange,
+      currency: sig.currency,
+      buyDate: today,
+      buyPrice: sig.price,
+    });
   }
 
   const next: JournalState = {
