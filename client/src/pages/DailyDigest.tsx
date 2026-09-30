@@ -7,14 +7,14 @@ import { formatPercent, formatPrice, formatVolume } from "../utils/format";
 import MarketNews from "../components/MarketNews";
 
 const TOPIC_BADGE_CLASS: Record<string, string> = {
-  spotlight: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
+  spotlight: "bg-slate-100 text-slate-600 dark:bg-slate-800/10 dark:text-slate-300",
   sector: "bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400",
   liquidity: "bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-400",
   breadth: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
 };
 
 const TONE_CLASS: Record<string, string> = {
-  up: "text-emerald-600 dark:text-emerald-400",
+  up: "text-green-600 dark:text-green-400",
   down: "text-red-600 dark:text-red-400",
   neutral: "text-slate-600 dark:text-slate-300",
 };
@@ -99,19 +99,20 @@ export default function DailyDigest() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Bài viết &amp; Phân tích</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Mỗi ngày một chủ đề, chọn tự động dựa trên biến động thực tế của thị trường trong phiên.
+      <div className="mb-8">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-400">Tin tức & Phân tích</h2>
+        <h1 className="mt-1 mb-2 text-3xl font-bold text-slate-900 dark:text-slate-100">Bản tin hàng ngày</h1>
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          Mỗi ngày một chủ đề, chọn tự động dựa trên biến động thực tế của thị trường trong phiên
         </p>
       </div>
 
       {loading && !data && <p className="text-slate-500 dark:text-slate-400">Đang tải bản tin...</p>}
 
       {error && !data && (
-        <div className="rounded-lg border border-red-300 bg-red-50 p-4 dark:border-red-900/60 dark:bg-red-950/30">
-          <p className="font-medium text-red-600 dark:text-red-400">Lỗi tải bản tin</p>
-          <p className="mt-1 text-sm text-red-500 dark:text-red-300/90">{error}</p>
+        <div className="rounded-lg border border-slate-300 bg-slate-100 p-4 dark:border-red-900/60 dark:bg-red-950/30">
+          <p className="font-medium text-slate-800 dark:text-slate-400">Lỗi tải bản tin</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-300/90">{error}</p>
         </div>
       )}
 
@@ -123,7 +124,7 @@ export default function DailyDigest() {
           <button
             type="button"
             onClick={backToToday}
-            className="font-semibold text-emerald-600 hover:underline dark:text-emerald-400"
+            className="font-semibold text-slate-600 hover:underline dark:text-slate-300"
           >
             ← Bài viết hôm nay
           </button>
@@ -153,7 +154,7 @@ export default function DailyDigest() {
               </div>
               <div className="mt-4 flex items-center gap-2">
                 <img src="/logo-bull.png" alt="" className="h-7 w-7 shrink-0 rounded-full bg-white/10 object-contain p-0.5" />
-                <span className="text-xs font-semibold tracking-wide text-slate-200">CHIẾN NGUYỄN INVEST</span>
+                <span className="text-xs font-semibold tracking-wide text-slate-200">CHIẾN NGUYỄN STOCK</span>
               </div>
             </div>
 
@@ -176,7 +177,7 @@ export default function DailyDigest() {
                 <button
                   type="button"
                   onClick={openArticle}
-                  className="mt-1 inline-flex w-fit items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-700"
+                  className="mt-1 inline-flex w-fit items-center gap-1 rounded-lg bg-slate-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-slate-700"
                 >
                   Đọc tiếp →
                 </button>
@@ -248,7 +249,7 @@ export default function DailyDigest() {
               <div
                 className={`mt-4 rounded-lg border p-4 ${
                   data.action.stance === "MUA"
-                    ? "border-emerald-300 bg-emerald-50 dark:border-emerald-900/60 dark:bg-emerald-950/30"
+                    ? "border-slate-400 bg-slate-100 dark:border-emerald-900/60 dark:bg-emerald-950/30"
                     : "border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50"
                 }`}
               >
@@ -259,7 +260,7 @@ export default function DailyDigest() {
                   <span
                     className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
                       data.action.stance === "MUA"
-                        ? "bg-emerald-600 text-white"
+                        ? "bg-slate-600 text-white"
                         : "bg-slate-500 text-white dark:bg-slate-600"
                     }`}
                   >
@@ -286,7 +287,7 @@ export default function DailyDigest() {
                       <span
                         className={
                           s.changePercent >= 0
-                            ? "text-emerald-600 dark:text-emerald-400"
+                            ? "text-green-600 dark:text-green-400"
                             : "text-red-600 dark:text-red-400"
                         }
                       >

@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface PollingState<T> {
   data: T | null;
   error: string | null;
   loading: boolean;
+  /** Manually re-run the fetcher (e.g. a "Thử lại" button on error). */
+  refetch: () => void;
 }
 
 export function usePolling<T>(
@@ -11,9 +13,16 @@ export function usePolling<T>(
   deps: unknown[],
   intervalMs = 0
 ): PollingState<T> {
-  const [state, setState] = useState<PollingState<T>>({ data: null, error: null, loading: true });
+  const [state, setState] = useState<Omit<PollingState<T>, "refetch">>({
+    data: null,
+    error: null,
+    loading: true,
+  });
+  const [reloadTick, setReloadTick] = useState(0);
   const fetcherRef = useRef(fetcher);
   fetcherRef.current = fetcher;
+
+  const refetch = useCallback(() => setReloadTick((t) => t + 1), []);
 
   useEffect(() => {
     let cancelled = false;
@@ -41,7 +50,7 @@ export function usePolling<T>(
       if (id) clearInterval(id);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
+  }, [...deps, reloadTick]);
 
-  return state;
+  return { ...state, refetch };
 }

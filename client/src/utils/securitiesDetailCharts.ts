@@ -18,7 +18,7 @@ export interface ChartDef {
 }
 
 const BLUE = "#3b82f6";
-const GREEN = "#10b981";
+const GREEN = "#00c694";
 const AMBER = "#f59e0b";
 const PURPLE = "#a78bfa";
 const PINK = "#f472b6";

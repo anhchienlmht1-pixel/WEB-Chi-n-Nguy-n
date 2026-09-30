@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Trophy } from "lucide-react";
 import { usePolling } from "../hooks/usePolling";
 import { fetchStockStrength, fetchMarketBoard } from "../api/client";
 import { STRENGTH_BANDS, bandFor } from "../utils/stockStrength";
-import { formatPercent, formatPrice, formatVolume, trendClass } from "../utils/format";
+import { formatPercent } from "../utils/format";
 import type { Quote } from "../types";
 
 const POLL_MS = 5 * 60 * 1000; // server caches the underlying sheet read for 5 min
@@ -45,7 +46,15 @@ function LegendChips({
 // strength bands as the legend). Score comes straight from the sheet;
 // price/change/volume are joined in from the full exchange board so every
 // sector's symbols (not just the curated ~70-mã watchlist) get a quote.
-export default function LeaderBoard() {
+export default function LeaderBoard({
+  onSelectSymbol,
+}: {
+  /** Switches a sibling chart to the clicked symbol in place instead of
+   * navigating away to the stock detail page — see TrendSignalScanner for
+   * the same pattern. Falls back to a normal /stock/:symbol navigation
+   * when omitted. */
+  onSelectSymbol?: (symbol: string) => void;
+} = {}) {
   const { data, error, loading } = usePolling(() => fetchStockStrength(), [], POLL_MS);
   const { data: boardData } = usePolling(() => fetchMarketBoard("ALL"), [], POLL_MS);
   const [activeBand, setActiveBand] = useState<string | null>(null);
@@ -73,21 +82,26 @@ export default function LeaderBoard() {
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/40">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
         <div>
           <div className="flex flex-wrap items-baseline gap-2">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Leader Board</h2>
-            <span className="text-sm text-slate-500 dark:text-slate-400">sức mạnh cổ phiếu theo ngành</span>
+            <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900 dark:text-slate-100">
+              <Trophy className="h-5 w-5 text-slate-400" strokeWidth={1.75} />
+              Leader Board
+            </h2>
+            <span className="text-sm text-slate-600 dark:text-slate-400">sức mạnh cổ phiếu theo ngành</span>
           </div>
           <LegendChips activeBand={activeBand} onToggle={(l) => setActiveBand((cur) => (cur === l ? null : l))} />
         </div>
         {data && (
-          <div className="text-right text-xs text-slate-400 dark:text-slate-500">
+          <div className="text-right text-xs text-slate-500 dark:text-slate-400">
             <div>
               {data.asOfDate && <>Cập nhật: {data.asOfDate} · </>}
               {totalCount} mã
             </div>
-            <div>Bấm vào mã để xem chi tiết</div>
+            <div className="mt-1 font-medium">
+              {onSelectSymbol ? "Bấm vào mã để xem trên biểu đồ thị trường" : "Bấm vào mã để xem chi tiết"}
+            </div>
           </div>
         )}
       </div>
@@ -101,7 +115,7 @@ export default function LeaderBoard() {
       )}
 
       {!loading && (error || !data) && (
-        <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-600 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-400">
+        <div className="rounded-lg border border-slate-300 bg-slate-100 p-4 text-sm text-slate-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-slate-400">
           Không tải được dữ liệu sức mạnh cổ phiếu{error ? `: ${error}` : ""}.
         </div>
       )}
@@ -111,62 +125,47 @@ export default function LeaderBoard() {
       )}
 
       {data && data.sectors.length > 0 && (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-3">
+        <div className="flex flex-nowrap gap-2 overflow-x-auto pb-1">
           {visibleSectors.map((s) => {
             const rows = s.stocks.map((st) => ({ ...st, quote: quoteBySymbol.get(st.symbol) }));
-            const changes = rows
-              .map((r) => r.quote?.changePercent)
-              .filter((v): v is number => v != null);
-            const avgChange = changes.length > 0 ? changes.reduce((a, b) => a + b, 0) / changes.length : null;
-
             return (
-              <div key={s.sector} className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
-                <div className="flex items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-2.5 py-1.5 dark:border-slate-800 dark:bg-slate-800/60">
-                  <span className="truncate text-xs font-bold uppercase tracking-wide text-slate-700 dark:text-slate-200">
+              <div
+                key={s.sector}
+                className="min-w-[92px] flex-1 border-r border-slate-200 pr-2 last:border-r-0 last:pr-0 dark:border-slate-800"
+              >
+                <div className="mb-1.5 border-b-2 border-slate-300 pb-1 dark:border-slate-600">
+                  <span
+                    title={s.sector}
+                    className="block truncate text-[11px] font-bold uppercase tracking-wide text-slate-800 dark:text-slate-100"
+                  >
                     {s.sector}
                   </span>
-                  {avgChange != null && (
-                    <span className={`shrink-0 text-xs font-semibold tabular-nums ${trendClass(avgChange)}`}>
-                      {formatPercent(avgChange)}
-                    </span>
-                  )}
                 </div>
-                <table className="w-full border-collapse text-[11px]">
-                  <thead>
-                    <tr className="text-slate-400 dark:text-slate-500">
-                      <th className="px-2 py-1 text-left font-medium">Mã</th>
-                      <th className="px-1.5 py-1 text-right font-medium">SM</th>
-                      <th className="px-1.5 py-1 text-right font-medium">Giá</th>
-                      <th className="px-1.5 py-1 text-right font-medium">+/-</th>
-                      <th className="px-2 py-1 text-right font-medium">KL</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((r) => {
-                      const band = bandFor(r.score);
-                      return (
-                        <tr
-                          key={r.symbol}
-                          onClick={() => navigate(`/stock/${r.symbol}`)}
-                          title={`${r.symbol} — ${band.label} (${r.score})`}
-                          className={`cursor-pointer border-t border-black/5 transition-opacity last:border-0 hover:opacity-80 dark:border-white/5 ${band.className}`}
+                <ul className="space-y-1">
+                  {rows.map((r) => {
+                    const band = bandFor(r.score);
+                    const changePct = r.quote?.changePercent;
+                    return (
+                      <li
+                        key={r.symbol}
+                        onClick={() => (onSelectSymbol ? onSelectSymbol(r.symbol) : navigate(`/stock/${r.symbol}`))}
+                        title={`${r.symbol} — ${band.label} (${r.score})${
+                          changePct != null ? ` · ${formatPercent(changePct)} hôm nay` : ""
+                        }`}
+                        className="flex cursor-pointer items-center gap-1 text-[11px] transition-opacity hover:opacity-70"
+                      >
+                        <span className="min-w-0 flex-1 truncate font-semibold text-slate-700 dark:text-slate-200">
+                          {r.symbol}
+                        </span>
+                        <span
+                          className={`w-[42px] shrink-0 rounded-sm px-1.5 py-0.5 text-right font-semibold tabular-nums ${band.className}`}
                         >
-                          <td className="px-2 py-1 font-semibold">{r.symbol}</td>
-                          <td className="px-1.5 py-1 text-right tabular-nums">{r.score}</td>
-                          <td className="px-1.5 py-1 text-right tabular-nums">
-                            {r.quote ? formatPrice(r.quote.price, r.quote.currency) : "—"}
-                          </td>
-                          <td className="px-1.5 py-1 text-right tabular-nums">
-                            {r.quote ? formatPercent(r.quote.changePercent) : "—"}
-                          </td>
-                          <td className="px-2 py-1 text-right tabular-nums">
-                            {r.quote ? formatVolume(r.quote.volume) : "—"}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                          {r.score}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
               </div>
             );
           })}

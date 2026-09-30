@@ -1,28 +1,27 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
+import { Sun, Moon, X, Menu } from "lucide-react";
 import SearchBox from "./SearchBox";
 import StockHeaderInfo from "./StockHeaderInfo";
 import TrendSignalBell from "./TrendSignalBell";
 import { useTheme } from "../hooks/useTheme";
 
 const NAV_ITEMS = [
-  { to: "/", label: "Thị trường", end: true },
-  { to: "/so-sanh-gia", label: "So sánh Giá", end: false },
+  { to: "/thi-truong", label: "Thị trường", end: false },
   { to: "/so-sanh-pb", label: "So sánh P/B", end: false },
-  { to: "/huong-dan-mo-tai-khoan", label: "📱 Hướng Dẫn Mở Tài Khoản Chứng Khoán", end: false },
 ];
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-  `shrink-0 whitespace-nowrap text-xs font-medium transition-colors ${
+  `shrink-0 whitespace-nowrap border-b-2 pb-0.5 text-xs font-semibold uppercase tracking-[0.14em] transition-colors ${
     isActive
-      ? "text-emerald-600 dark:text-emerald-400"
-      : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+      ? "border-slate-900 text-slate-900 dark:border-slate-100 dark:text-slate-100"
+      : "border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
   }`;
 
 const mobileNavLinkClass = ({ isActive }: { isActive: boolean }) =>
-  `block rounded-lg px-3 py-3 text-sm font-medium transition-colors ${
+  `block rounded-lg px-3 py-3 text-sm font-semibold uppercase tracking-[0.12em] transition-colors ${
     isActive
-      ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
+      ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100"
       : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
   }`;
 
@@ -39,10 +38,10 @@ export default function Header() {
           className="flex shrink-0 items-center gap-2 text-lg font-bold text-slate-900 dark:text-slate-100"
         >
           <img src="/logo-bull.png" alt="" className="h-8 w-8 shrink-0 object-contain" />
-          <span className="hidden sm:inline">Chiến Nguyễn Invest</span>
+          <span className="hidden sm:inline">Chiến Nguyễn Stock</span>
         </NavLink>
 
-        <nav className="hidden min-w-0 items-center gap-2 overflow-x-auto md:flex">
+        <nav className="hidden shrink-0 items-center gap-6 md:flex lg:gap-8">
           {NAV_ITEMS.map((item) => (
             <NavLink key={item.to} to={item.to} end={item.end} className={navLinkClass}>
               {item.label}
@@ -51,27 +50,33 @@ export default function Header() {
         </nav>
 
         <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-2 sm:flex-none sm:gap-3">
-          <div className="min-w-0 flex-1 sm:w-40 sm:flex-none md:w-52">
+          <div className="min-w-0 flex-1 sm:w-40 sm:flex-none md:w-40 lg:w-52">
             <StockHeaderInfo />
           </div>
-          <div className="min-w-0 flex-1 sm:w-40 sm:flex-none md:w-52">
+          <div className="min-w-0 flex-1 sm:w-40 sm:flex-none md:w-40 lg:w-52">
             <SearchBox />
           </div>
           <TrendSignalBell />
+          <NavLink
+            to="/huong-dan-mo-tai-khoan"
+            className="hidden shrink-0 whitespace-nowrap rounded-lg bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white transition-colors duration-300 hover:bg-emerald-700 sm:inline-block"
+          >
+            Mở tài khoản
+          </NavLink>
           <button
             onClick={toggle}
             title={theme === "dark" ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-base transition-colors hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition-colors duration-300 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
           >
-            {theme === "dark" ? "☀️" : "🌙"}
+            {theme === "dark" ? <Sun className="h-4 w-4" strokeWidth={1.75} /> : <Moon className="h-4 w-4" strokeWidth={1.75} />}
           </button>
           <button
             onClick={() => setMenuOpen((v) => !v)}
             aria-label={menuOpen ? "Đóng menu" : "Mở menu"}
             aria-expanded={menuOpen}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-lg transition-colors hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800 md:hidden"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition-colors duration-300 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 md:hidden"
           >
-            {menuOpen ? "✕" : "☰"}
+            {menuOpen ? <X className="h-4 w-4" strokeWidth={1.75} /> : <Menu className="h-4 w-4" strokeWidth={1.75} />}
           </button>
         </div>
       </div>
@@ -89,6 +94,13 @@ export default function Header() {
               {item.label}
             </NavLink>
           ))}
+          <NavLink
+            to="/huong-dan-mo-tai-khoan"
+            onClick={() => setMenuOpen(false)}
+            className="mt-1 block rounded-lg bg-emerald-600 px-3 py-3 text-center text-sm font-semibold uppercase tracking-[0.12em] text-white transition-colors duration-300 hover:bg-emerald-700 sm:hidden"
+          >
+            Mở tài khoản
+          </NavLink>
         </nav>
       )}
     </header>

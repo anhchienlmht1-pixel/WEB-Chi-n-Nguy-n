@@ -93,7 +93,7 @@ export default function StockTable({
           onClick={() => toggleSort(sortKeyValue)}
           className={`inline-flex items-center gap-1 transition-colors ${
             sortKey === sortKeyValue
-              ? "text-emerald-600 dark:text-emerald-400"
+              ? "text-slate-600 dark:text-slate-300"
               : "hover:text-slate-900 dark:hover:text-slate-100"
           }`}
         >

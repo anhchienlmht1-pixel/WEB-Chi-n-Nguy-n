@@ -11,18 +11,19 @@ export default function StockStrength() {
   const [chartSymbol, setChartSymbol] = useState(DEFAULT_CHART_SYMBOL);
 
   return (
-    <div className="mx-auto max-w-[1600px] px-4 py-4">
-      <div className="mb-4">
-        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
-          THỰC CHIẾN CỔ PHIẾU
+    <div className="mx-auto max-w-[1600px] px-4 py-6">
+      <div className="mb-8">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-400">Chiến lược giao dịch</h2>
+        <h1 className="mt-1 mb-2 text-3xl font-bold text-slate-900 dark:text-slate-100">
+          Thực chiến cổ phiếu
         </h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Biểu đồ kỹ thuật và tín hiệu MUA trend-following — tất cả trong một trang.
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          Biểu đồ kỹ thuật và tín hiệu MUA trend-following — tất cả trong một trang
         </p>
       </div>
 
-      <div className="mb-4">
-        <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+      <div className="mb-6">
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-400">
           Biểu đồ kỹ thuật
         </h2>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start">

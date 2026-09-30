@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { X } from "lucide-react";
 import type { IndicatorDef } from "../utils/indicatorCatalog";
 
 export default function IndicatorSettings({
@@ -40,9 +41,9 @@ export default function IndicatorSettings({
             type="button"
             onClick={onClose}
             aria-label="Đóng"
-            className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+            className="rounded p-1 text-slate-400 transition-colors duration-300 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
           >
-            ✕
+            <X className="h-4 w-4" strokeWidth={1.75} />
           </button>
         </div>
 
@@ -76,7 +77,7 @@ export default function IndicatorSettings({
           <button
             type="button"
             onClick={apply}
-            className="rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-slate-950 hover:bg-emerald-400"
+            className="rounded-md bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-700"
           >
             Áp dụng
           </button>

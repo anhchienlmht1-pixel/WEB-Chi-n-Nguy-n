@@ -3,6 +3,7 @@ import { fetchHistory } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { aggregatePoints, type ChartResolution } from "../utils/aggregate";
 import { computeTradingSignals } from "../utils/signals";
+import { computeBStarSignals } from "../utils/bstar";
 import PriceChart, { type ActiveIndicator, type ChartType, type DrawingTool, type PriceChartHandle } from "./PriceChart";
 import ChartToolbar from "./ChartToolbar";
 import DrawingToolbar from "./DrawingToolbar";
@@ -37,7 +38,6 @@ export default function TechnicalChartPanel({
   const [resolution, setResolution] = useState<ChartResolution>("D");
   const [chartType, setChartType] = useState<ChartType>("candlestick");
   const [drawingTool, setDrawingTool] = useState<DrawingTool>(null);
-  const [showSignals, setShowSignals] = useState(true);
   const [searchInput, setSearchInput] = useState("");
   const chartRef = useRef<PriceChartHandle>(null);
   const chartWrapperRef = useRef<HTMLDivElement>(null);
@@ -113,7 +113,7 @@ export default function TechnicalChartPanel({
   const signalResult = useMemo(
     () => {
       // Don't show signals for VNINDEX
-      if (symbol === "VNINDEX" || !showSignals) {
+      if (symbol === "VNINDEX") {
         return { all: [], transitions: [] };
       }
       // Use refreshState data if available, otherwise fall back to historyState
@@ -122,7 +122,23 @@ export default function TechnicalChartPanel({
         : chartPoints;
       return computeTradingSignals(pointsToUse);
     },
-    [chartPoints, refreshState.data, showSignals, symbol, resolution]
+    [chartPoints, refreshState.data, symbol, resolution]
+  );
+
+  // B★'s breakout/base math is defined in trading days (5-week base, 20-day
+  // volume average) — always compute it off daily bars regardless of the
+  // chart's selected resolution (Ngày/Tuần/Tháng), unlike signalResult
+  // above which follows whatever resolution the visible candles use.
+  const bstarSignals = useMemo(() => {
+    if (symbol === "VNINDEX") return [];
+    const source = refreshState.data ?? historyState.data;
+    if (!source) return [];
+    return computeBStarSignals(aggregatePoints(source.points, "D"));
+  }, [symbol, refreshState.data, historyState.data]);
+
+  const allSignals = useMemo(
+    () => [...signalResult.transitions, ...bstarSignals],
+    [signalResult.transitions, bstarSignals]
   );
 
   return (
@@ -133,7 +149,7 @@ export default function TechnicalChartPanel({
       className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40 focus:outline-none relative"
     >
       {searchInput && (
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 bg-emerald-600 text-white px-6 py-3 rounded-lg shadow-lg font-bold text-lg">
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 bg-slate-600 text-white px-6 py-3 rounded-lg shadow-lg font-bold text-lg">
           Tìm kiếm: <span className="font-black text-xl">{searchInput}</span>
         </div>
       )}
@@ -145,8 +161,6 @@ export default function TechnicalChartPanel({
         onResolutionChange={setResolution}
         chartType={chartType}
         onChartTypeChange={setChartType}
-        showSignals={showSignals && symbol !== "VNINDEX"}
-        onToggleSignals={() => setShowSignals((v) => !v)}
         onScreenshot={screenshot}
         onFullscreen={toggleFullscreen}
       />
@@ -160,7 +174,7 @@ export default function TechnicalChartPanel({
                 ref={chartRef}
                 points={chartPoints}
                 activeIndicators={NO_INDICATORS}
-                signals={signalResult.transitions}
+                signals={allSignals}
                 chartType={chartType}
                 drawingTool={drawingTool}
                 onDrawingComplete={() => setDrawingTool(null)}

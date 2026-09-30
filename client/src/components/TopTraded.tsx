@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Flame } from "lucide-react";
 import { fetchTopTraded } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import type { TopExchange } from "../types";
@@ -37,9 +38,10 @@ export default function TopTraded() {
 
   return (
     <section className="mb-8">
-      <div className="mb-3">
-        <h2 className="mb-3 text-lg font-bold text-slate-900 dark:text-slate-100">
-          🔥 Top 10 giao dịch nhiều nhất
+      <div className="mb-4">
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-slate-100">
+          <Flame className="h-5 w-5 text-slate-400" strokeWidth={1.75} />
+          Top 10 giao dịch nhiều nhất
         </h2>
         <div className="flex flex-wrap gap-3">
           {/* Exchange tabs */}
@@ -50,7 +52,7 @@ export default function TopTraded() {
                 onClick={() => setExchange(tab.key)}
                 className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                   exchange === tab.key
-                    ? "bg-emerald-500 text-slate-950"
+                    ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
                     : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
                 }`}
               >
@@ -66,7 +68,7 @@ export default function TopTraded() {
                 onClick={() => setTimePeriod(tab.key)}
                 className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                   timePeriod === tab.key
-                    ? "bg-cyan-500 text-slate-950"
+                    ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
                     : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
                 }`}
               >
@@ -81,7 +83,7 @@ export default function TopTraded() {
         <p className="text-slate-500 dark:text-slate-400">Đang tải...</p>
       )}
       {error && !data && (
-        <p className="text-sm text-red-500 dark:text-red-400">Lỗi tải top giao dịch: {error}</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">Lỗi tải top giao dịch: {error}</p>
       )}
       {data && data.items.length === 0 && (
         <p className="text-slate-500 dark:text-slate-400">Chưa có dữ liệu cho sàn này.</p>

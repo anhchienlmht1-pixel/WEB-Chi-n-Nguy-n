@@ -18,8 +18,8 @@ function formatNet(net: number): string {
 }
 
 function netClass(net: number): string {
-  if (net > 0) return "text-emerald-600 dark:text-emerald-400";
-  if (net < 0) return "text-red-500 dark:text-red-400";
+  if (net > 0) return "text-green-600 dark:text-green-400";
+  if (net < 0) return "text-red-600 dark:text-red-400";
   return "text-slate-500 dark:text-slate-400";
 }
 
@@ -103,20 +103,20 @@ export default function ForeignFlowPanel({ quote }: { quote: Quote }) {
           <tbody>
             <tr className="border-b border-slate-100 dark:border-slate-900">
               <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400">KL</th>
-              <td className="px-3 py-2 text-right tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">
+              <td className="px-3 py-2 text-right tabular-nums font-semibold text-green-600 dark:text-green-400">
                 {formatVolume(snapshot.buy)}
               </td>
-              <td className="px-3 py-2 text-right tabular-nums font-semibold text-red-500 dark:text-red-400">
+              <td className="px-3 py-2 text-right tabular-nums font-semibold text-red-600 dark:text-red-400">
                 {formatVolume(snapshot.sell)}
               </td>
               <td className={`px-3 py-2 text-right tabular-nums font-semibold ${netClass(net)}`}>{formatNet(net)}</td>
             </tr>
             <tr>
               <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400">GT</th>
-              <td className="px-3 py-2 text-right tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">
+              <td className="px-3 py-2 text-right tabular-nums font-semibold text-green-600 dark:text-green-400">
                 {formatValueVnd(buyValue)}
               </td>
-              <td className="px-3 py-2 text-right tabular-nums font-semibold text-red-500 dark:text-red-400">
+              <td className="px-3 py-2 text-right tabular-nums font-semibold text-red-600 dark:text-red-400">
                 {formatValueVnd(sellValue)}
               </td>
               <td className={`px-3 py-2 text-right tabular-nums font-semibold ${netClass(netValue)}`}>
@@ -158,9 +158,9 @@ export default function ForeignFlowPanel({ quote }: { quote: Quote }) {
         <>
           <svg viewBox={`0 0 ${W} ${H}`} className="h-[90px] w-full" role="img" aria-label="Xu hướng mua/bán ròng khối ngoại trong phiên">
             <line x1={PAD.left} x2={W - PAD.right} y1={zeroY} y2={zeroY} className="stroke-slate-200 dark:stroke-slate-800" strokeWidth={1} />
-            <path d={pathD} fill="none" stroke="#0ea5e9" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+            <path d={pathD} fill="none" stroke="#00c694" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
             {history.map((p, i) => (
-              <circle key={p.time} cx={xFor(i)} cy={yFor(p.net)} r={i === history.length - 1 ? 3 : 0} fill="#0ea5e9" />
+              <circle key={p.time} cx={xFor(i)} cy={yFor(p.net)} r={i === history.length - 1 ? 3 : 0} fill="#00c694" />
             ))}
           </svg>
           <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">

@@ -31,7 +31,7 @@ export default function RatioTrendChart({ report }: { report: FinancialReport })
 
   const lines: Line[] = [];
   if (peItem) lines.push({ label: "P/E", unit: peItem.unit || "Lần", color: "#f59e0b", values: order.map((i) => peItem.values[i]) });
-  if (roeItem) lines.push({ label: "ROE", unit: roeItem.unit || "%", color: "#10b981", values: order.map((i) => roeItem.values[i]) });
+  if (roeItem) lines.push({ label: "ROE", unit: roeItem.unit || "%", color: "#00c694", values: order.map((i) => roeItem.values[i]) });
 
   const allValues = lines.flatMap((l) => l.values.filter((v): v is number => v != null && Number.isFinite(v)));
   if (allValues.length < 2) return null;

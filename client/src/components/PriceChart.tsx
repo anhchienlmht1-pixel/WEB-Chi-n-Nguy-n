@@ -47,6 +47,7 @@ interface Props {
 
 const UP = "#22c55e";
 const DOWN = "#ef4444";
+const BSTAR = "#a855f7";
 const DRAW_COLOR = "#f59e0b";
 
 function fmt(value: number | undefined | null, digits = 2): string {
@@ -105,14 +106,14 @@ const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
     const chart = createChart(containerRef.current, {
       layout: {
         background: { type: ColorType.Solid, color: "transparent" },
-        textColor: dark ? "#94a3b8" : "#64748b",
+        textColor: dark ? "#8aa8ad" : "#64748b",
       },
       grid: {
-        vertLines: { color: dark ? "#1e293b" : "#e2e8f0" },
-        horzLines: { color: dark ? "#1e293b" : "#e2e8f0" },
+        vertLines: { color: dark ? "#16333b" : "#e2e8f0" },
+        horzLines: { color: dark ? "#16333b" : "#e2e8f0" },
       },
-      rightPriceScale: { borderColor: dark ? "#1e293b" : "#e2e8f0" },
-      timeScale: { borderColor: dark ? "#1e293b" : "#e2e8f0" },
+      rightPriceScale: { borderColor: dark ? "#16333b" : "#e2e8f0" },
+      timeScale: { borderColor: dark ? "#16333b" : "#e2e8f0" },
       height,
       width: containerRef.current.clientWidth,
     });
@@ -131,12 +132,12 @@ const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
       mainSeries = chart.addSeries(BarSeries, { upColor: UP, downColor: DOWN }, 0);
       mainSeries.setData(candleData);
     } else if (chartType === "line") {
-      mainSeries = chart.addSeries(LineSeries, { color: "#0ea5e9", lineWidth: 2 }, 0);
+      mainSeries = chart.addSeries(LineSeries, { color: "#00c694", lineWidth: 2 }, 0);
       mainSeries.setData(candleData.map((c) => ({ time: c.time, value: c.close })));
     } else if (chartType === "area") {
       mainSeries = chart.addSeries(
         AreaSeries,
-        { lineColor: "#0ea5e9", topColor: "rgba(14,165,233,0.35)", bottomColor: "rgba(14,165,233,0.02)" },
+        { lineColor: "#00c694", topColor: "rgba(0,198,148,0.35)", bottomColor: "rgba(0,198,148,0.02)" },
         0
       );
       mainSeries.setData(candleData.map((c) => ({ time: c.time, value: c.close })));
@@ -159,8 +160,11 @@ const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
       const markers: SeriesMarker<Time>[] = signals.map((s) => ({
         time: s.time as Time,
         position: s.type === "buy" ? "belowBar" : "aboveBar",
-        color: s.type === "buy" ? UP : DOWN,
-        shape: s.type === "buy" ? "arrowUp" : "arrowDown",
+        // B★ (utils/bstar.ts) draws as a purple circle instead of the
+        // default green/red arrow, so its one-off breakout events read as
+        // visually distinct from the sustained Trend Following combo.
+        color: s.source === "bstar" ? BSTAR : s.type === "buy" ? UP : DOWN,
+        shape: s.source === "bstar" ? "circle" : s.type === "buy" ? "arrowUp" : "arrowDown",
         // note already spells out tranche/P&L ("Mua 2/3 (+8.0%)", "Bán hết
         // 2/3 (-3.1%)"...) — falls back to the plain MUA/BÁN label for any
         // signal that somehow doesn't have one.

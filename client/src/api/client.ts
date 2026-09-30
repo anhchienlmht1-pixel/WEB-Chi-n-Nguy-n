@@ -255,6 +255,15 @@ export interface TrendBuySignal {
   changePercent: number;
   // ISO date the current uninterrupted buy streak started.
   signalSince: string;
+  // Open/buy date
+  buyDate: string;
+  // Close price on buyDate — basis for signalReturnPercent
+  buyPrice: number;
+  // % change from buyPrice to current price — cumulative return since the
+  // signal started, not to be confused with changePercent (today's move).
+  signalReturnPercent: number;
+  // Close/sell date (null if still holding)
+  sellDate: string | null;
 }
 
 // Same trend-following combo as a chart's own Mua/Bán markers (SMA20 >
@@ -265,3 +274,58 @@ export async function fetchTrendBuySignals(): Promise<TrendBuySignal[]> {
   const { data } = await api.get("/trend-signals");
   return data.items;
 }
+
+export interface BStarHit {
+  symbol: string;
+  name: string;
+  exchange: string;
+  currency: string;
+  price: number;
+  changePercent: number;
+  buyDate: string;
+  buyPrice: number;
+  signalReturnPercent: number;
+}
+
+// B★ breakout combo (tight ≤5-week base, breakout on ≥1.4x volume, price
+// above MA50; exits on close below MA20) — second, independent scan
+// alongside the default Trend Following one, same full-universe
+// background scan — see server/src/signals/bstarScanner.ts.
+export async function fetchBStarSignals(): Promise<BStarHit[]> {
+  const { data } = await api.get("/bstar-signals");
+  return data.items;
+}
+
+export interface JournalPosition {
+  symbol: string;
+  name: string;
+  exchange: string;
+  currency: string;
+  buyDate: string;
+  buyPrice: number;
+}
+
+export interface JournalClosedTrade extends JournalPosition {
+  sellDate: string;
+  sellPrice: number;
+  returnPercent: number;
+  holdingDays: number;
+}
+
+export interface TradeJournal {
+  // First date the journal is allowed to record anything — deliberately
+  // not backdated, so numbers can't be accused of being a hindsight
+  // backtest — see server/src/signals/tradeJournal.ts.
+  startDate: string;
+  open: JournalPosition[];
+  closed: JournalClosedTrade[];
+}
+
+// "Lịch sử giao dịch" — a real, forward-only log of the system's own
+// Mua/Bán combo (same as TrendBuySignal) rather than a backtest over
+// historical prices.
+export async function fetchTradeJournal(): Promise<TradeJournal> {
+  const { data } = await api.get("/trend-signals/journal");
+  return data;
+}
+

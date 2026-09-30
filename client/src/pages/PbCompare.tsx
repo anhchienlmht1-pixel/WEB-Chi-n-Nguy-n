@@ -38,8 +38,11 @@ export default function PbCompare() {
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-6">
-      <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">So sánh P/B theo ngành</h1>
-      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">So sánh P/B các doanh nghiệp niêm yết theo nhóm ngành.</p>
+      <div className="mb-6">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-400">Công cụ phân tích</h2>
+        <h1 className="mt-1 mb-2 text-3xl font-bold text-slate-900 dark:text-slate-100">So sánh P/B theo ngành</h1>
+        <p className="text-sm text-slate-600 dark:text-slate-400">So sánh P/B các doanh nghiệp niêm yết theo nhóm ngành</p>
+      </div>
 
       <div className="mt-4 flex w-fit gap-1 rounded-lg border border-slate-200 p-1 text-sm font-medium dark:border-slate-800">
         {GROUPS.map((g) => (
@@ -49,7 +52,7 @@ export default function PbCompare() {
             onClick={() => setGroup(g.value)}
             className={`rounded-md px-3 py-1.5 transition-colors ${
               group === g.value
-                ? "bg-emerald-500 text-slate-950"
+                ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
                 : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
             }`}
           >
@@ -68,7 +71,7 @@ export default function PbCompare() {
               onClick={() => setPbYears(y)}
               className={`rounded-md px-3 py-1 transition-colors ${
                 pbYears === y
-                  ? "bg-emerald-500 text-slate-950"
+                  ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
                   : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
               }`}
             >
@@ -92,12 +95,12 @@ export default function PbCompare() {
           </div>
         )}
         {!pbLoading && (pbError || !pbStats) && (
-          <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-red-500 dark:border-slate-800 dark:bg-slate-900/40 dark:text-red-400">
+          <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-400">
             Không tải được dữ liệu P/B{pbError ? `: ${pbError}` : ""}.
           </div>
         )}
         {pbStats && pbCoverage && pbWindowCapped && (
-          <div className="mb-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-400">
+          <div className="mb-3 rounded-lg border border-amber-300 bg-slate-100 p-3 text-xs text-slate-600 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-slate-300">
             Nguồn dữ liệu hiện chỉ có P/B từ <strong>{pbCoverage.earliestLabel}</strong> — khoảng "{pbYears} Năm" đã
             hiển thị toàn bộ lịch sử có sẵn, nên có thể giống với khoảng thời gian ngắn hơn.
           </div>

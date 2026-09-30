@@ -23,7 +23,7 @@ const CHART_GROUPS: { title: string; keys: SecuritiesMetricKey[]; format: "perce
   { title: "Dư nợ margin", keys: ["marginBalance"], format: "money" },
 ];
 
-const LINE_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#a78bfa", "#f472b6"];
+const LINE_COLORS = ["#3b82f6", "#00c694", "#f59e0b", "#a78bfa", "#f472b6"];
 
 function formatPercentTick(v: number): string {
   return `${(v * 100).toFixed(1)}%`;
@@ -61,7 +61,7 @@ export default function SecuritiesFundamentals({ symbol }: { symbol: string }) {
               onClick={() => setPeriodType(pt)}
               className={`rounded-md px-3 py-1 transition-colors ${
                 periodType === pt
-                  ? "bg-emerald-500 text-slate-950"
+                  ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
                   : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
               }`}
             >
@@ -80,7 +80,7 @@ export default function SecuritiesFundamentals({ symbol }: { symbol: string }) {
       )}
 
       {!loading && (error || !data) && (
-        <div className="p-4 text-sm text-red-500 dark:text-red-400">
+        <div className="p-4 text-sm text-slate-500 dark:text-slate-400">
           Không tải được dữ liệu cơ bản cho {symbol}{error ? `: ${error}` : ""}.
         </div>
       )}
@@ -113,7 +113,7 @@ export default function SecuritiesFundamentals({ symbol }: { symbol: string }) {
             <button
               type="button"
               onClick={() => setShowStatement((v) => !v)}
-              className="text-xs font-semibold text-emerald-600 hover:underline dark:text-emerald-400"
+              className="text-xs font-semibold text-slate-600 hover:underline dark:text-slate-300"
             >
               {showStatement ? "Ẩn báo cáo tài chính chi tiết ▲" : "Xem toàn bộ báo cáo tài chính chi tiết ▼"}
             </button>

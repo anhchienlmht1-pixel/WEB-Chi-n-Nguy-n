@@ -11,7 +11,7 @@ const PAD = { top: 16, right: 16, bottom: 28, left: 44 };
 // keeps the site's primary emerald, Range moved off its old washed-out
 // gray to a blue that reads clearly against both the markers and the page.
 const COLOR_RANGE = "#3b82f6";
-const COLOR_AVERAGE = "#10b981";
+const COLOR_AVERAGE = "#00c694";
 const COLOR_CURRENT = "#dc2626";
 
 function formatPb(v: number): string {

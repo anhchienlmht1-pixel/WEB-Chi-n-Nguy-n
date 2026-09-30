@@ -1,6 +1,8 @@
 import { adx, atr, sma } from "technicalindicators";
 import { STOCK_UNIVERSE } from "../providers/universe.js";
 import { getHistoryWithFallback } from "../providers/fallback.js";
+import { fetchFinancialReport } from "../providers/financials.js";
+import { extractKeyRatios } from "../digest/ratios.js";
 import type { HistoryPoint } from "../providers/types.js";
 
 // Same trend-following combo as the chart's own Mua/Bán markers
@@ -17,7 +19,7 @@ function dayKey(iso: string): string {
 // dedupeSameDay — the "today" row can arrive twice while KBS is still
 // settling it) would misalign every indicator below just as badly here as
 // on the chart, so collapse them the same way before computing anything.
-function dedupeSameDay(points: HistoryPoint[]): HistoryPoint[] {
+export function dedupeSameDay(points: HistoryPoint[]): HistoryPoint[] {
   const out: HistoryPoint[] = [];
   for (const p of points) {
     const prev = out[out.length - 1];
@@ -76,9 +78,129 @@ function computeSupertrendDirections(points: HistoryPoint[], period: number, mul
   return directions;
 }
 
+interface BuySeriesBar {
+  time: string;
+  close: number;
+  isBuy: boolean;
+}
+
+// Same SMA20/SMA50/ADX(14)/Supertrend(10,3) combo as latestBuySince, but
+// returned as a full aligned per-bar series (one entry per bar once every
+// indicator has warmed up) instead of just the latest streak — exported
+// for signals/tradeJournal.ts, which only needs the very last bar's state
+// to tell whether a symbol is buying today.
+export function computeBuySeries(points: HistoryPoint[]): BuySeriesBar[] {
+  const closes = points.map((p) => p.close);
+  const sma20 = sma({ period: 20, values: closes });
+  const sma50 = sma({ period: 50, values: closes });
+  const adxRows = adx({ high: points.map((p) => p.high), low: points.map((p) => p.low), close: closes, period: 14 });
+  const directions = computeSupertrendDirections(points, 10, 3);
+
+  const n = points.length;
+  const sma20Offset = n - sma20.length;
+  const sma50Offset = n - sma50.length;
+  const adxOffset = n - adxRows.length;
+  const dirOffset = n - directions.length;
+  const startOffset = Math.max(sma20Offset, sma50Offset, adxOffset, dirOffset);
+
+  const out: BuySeriesBar[] = [];
+  for (let i = startOffset; i < n; i++) {
+    const s20 = sma20[i - sma20Offset];
+    const s50 = sma50[i - sma50Offset];
+    const adxVal = adxRows[i - adxOffset]?.adx;
+    const direction = directions[i - dirOffset];
+    if (s20 === undefined || s50 === undefined || adxVal === undefined || direction === undefined) continue;
+    out.push({ time: points[i].time, close: points[i].close, isBuy: s20 > s50 && adxVal > 25 && direction === 1 });
+  }
+  return out;
+}
+
+// Calculate buy/sell signals with dates
+export interface SignalDates {
+  buyDate: string;  // When buy signal started
+  buyPrice: number; // Close price on buyDate — basis for "% lãi/lỗ từ lúc vào tín hiệu"
+  sellDate: string | null;  // When sell signal occurred (null if still holding)
+}
+
+// CAN SLIM fundamentals check: ROE, Revenue growth, Earnings growth
+// to reduce noise and only show high-quality buy signals
+export async function checkCanSlimFundamentals(symbol: string): Promise<boolean> {
+  try {
+    // Fetch annual income statement for revenue and earnings
+    const incomeReport = await fetchFinancialReport(symbol, "KQKD", "year");
+    if (incomeReport.periods.length < 2) return true; // Need at least 2 years to compare
+
+    // Find revenue row (Doanh thu thuần / Revenue from sales)
+    const revenueItem = incomeReport.items.find(
+      (item) =>
+        /doanh thu|revenue/i.test((item.name || "").toLowerCase()) &&
+        /bán|sales/i.test((item.name || "").toLowerCase())
+    );
+
+    // Find net income/earnings row (Lợi nhuận sau thuế / Net income)
+    const earningsItem = incomeReport.items.find(
+      (item) =>
+        (/lợi nhuận|profit|earnings|net income/i.test((item.name || "").toLowerCase()) ||
+         /lợi nhuận ròng|lợi nhuận sau|net profit/i.test((item.name || "").toLowerCase())) &&
+        !/trước thuế/i.test((item.name || "").toLowerCase()) // Exclude pre-tax profit
+    );
+
+    // Get latest and previous year values
+    const latestIdx = incomeReport.periods.length - 1;
+    const prevIdx = incomeReport.periods.length - 2;
+
+    // Check Revenue growth: latest > previous and both positive
+    if (revenueItem) {
+      const latestRevenue = revenueItem.values[latestIdx];
+      const prevRevenue = revenueItem.values[prevIdx];
+
+      if (latestRevenue !== null && prevRevenue !== null && latestRevenue > 0 && prevRevenue > 0) {
+        const revenueGrowth = (latestRevenue - prevRevenue) / prevRevenue;
+        if (revenueGrowth < 0) {
+          // Revenue must not be declining
+          return false;
+        }
+      }
+    }
+
+    // Check Earnings growth: latest > previous and both positive
+    if (earningsItem) {
+      const latestEarnings = earningsItem.values[latestIdx];
+      const prevEarnings = earningsItem.values[prevIdx];
+
+      if (latestEarnings !== null && prevEarnings !== null && latestEarnings > 0 && prevEarnings > 0) {
+        const earningsGrowth = (latestEarnings - prevEarnings) / prevEarnings;
+        if (earningsGrowth < 0) {
+          // Earnings must not be declining
+          return false;
+        }
+      } else if (latestEarnings !== null && latestEarnings <= 0) {
+        // Latest earnings must be positive
+        return false;
+      }
+    }
+
+    // Fetch ratio report to check ROE
+    const ratioReport = await fetchFinancialReport(symbol, "CSTC", "year");
+    const ratios = extractKeyRatios(ratioReport);
+
+    // ROE must be positive
+    if (ratios.roe === null || ratios.roe.value <= 0) {
+      return false;
+    }
+
+    return true;
+  } catch {
+    // If we can't fetch financial data, don't filter out the signal
+    // (it's better to show a signal and have the user verify fundamentals
+    // than to hide potentially good signals)
+    return true;
+  }
+}
+
 // Walk back from the latest bar: is it currently a buy, and if so, how far
 // back does the uninterrupted buy streak go (for "tín hiệu từ ngày...").
-export function latestBuySince(points: HistoryPoint[]): string | null {
+export function latestBuySince(points: HistoryPoint[]): SignalDates | null {
   if (points.length < 51) return null;
 
   const closes = points.map((p) => p.close);
@@ -93,7 +215,11 @@ export function latestBuySince(points: HistoryPoint[]): string | null {
   const adxOffset = n - adxRows.length;
   const dirOffset = n - directions.length;
 
-  let since: string | null = null;
+  // Find current buy signal (from end going backward)
+  let buyDate: string | null = null;
+  let buyPrice: number | null = null;
+  let sellDate: string | null = null;
+
   for (let i = n - 1; i >= 0; i--) {
     if (i < sma20Offset || i < sma50Offset || i < adxOffset || i < dirOffset) break;
     const s20 = sma20[i - sma20Offset];
@@ -103,12 +229,26 @@ export function latestBuySince(points: HistoryPoint[]): string | null {
     if (s20 === undefined || s50 === undefined || adxVal === undefined || direction === undefined) break;
 
     const isBuy = s20 > s50 && adxVal > 25 && direction === 1;
+
+    // If at the end and not a buy signal, no current buy
     if (i === n - 1 && !isBuy) return null;
-    if (!isBuy) break;
-    since = points[i].time;
+
+    if (!isBuy) {
+      // Streak broken — this bar is the boundary right before the current
+      // uninterrupted run started. Stop here: everything further back is a
+      // separate, non-contiguous episode and must NOT overwrite buyDate
+      // (a bug previously let it do so, reporting a far earlier buyDate
+      // whenever an older unrelated uptrend also happened to qualify).
+      sellDate = points[i].time;
+      break;
+    }
+
+    buyDate = points[i].time; // Update to earliest buy date within this streak
+    buyPrice = points[i].close; // Update alongside — price on that earliest buy date
   }
 
-  return since;
+  if (!buyDate || buyPrice === null) return null;
+  return { buyDate, buyPrice, sellDate };
 }
 
 export interface BuySignalHit {
@@ -118,7 +258,11 @@ export interface BuySignalHit {
   currency: string;
   price: number;
   changePercent: number;
-  signalSince: string;
+  signalSince: string;  // Buy date (for backward compatibility)
+  buyDate: string;      // Buy date (new)
+  buyPrice: number;     // Close price on buyDate — basis for signalReturnPercent
+  signalReturnPercent: number; // % change from buyPrice to current price (cumulative since signal started)
+  sellDate: string | null;  // Sell date (null if still holding)
 }
 
 async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
@@ -135,16 +279,32 @@ async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T)
 }
 
 export async function scanBuySignals(): Promise<BuySignalHit[]> {
+  const failed = new Map<string, string>();
   const hits = await mapWithConcurrency(STOCK_UNIVERSE, 20, async (seed): Promise<BuySignalHit | null> => {
     try {
       const { points: raw } = await getHistoryWithFallback(seed.symbol, "1Y");
       const points = dedupeSameDay(raw);
-      const since = latestBuySince(points);
-      if (!since || points.length === 0) return null;
+      const signalDates = latestBuySince(points);
+      if (!signalDates || points.length === 0) {
+        if (points.length === 0) {
+          failed.set(seed.symbol, "No historical data");
+        }
+        return null;
+      }
+
+      // Check CAN SLIM fundamentals: ROE > 0, Revenue growth >= 0, Earnings growth >= 0
+      // to reduce noise and improve signal quality
+      const hasSolidFundamentals = await checkCanSlimFundamentals(seed.symbol);
+      if (!hasSolidFundamentals) {
+        return null;
+      }
 
       const last = points[points.length - 1];
       const prev = points.length > 1 ? points[points.length - 2] : null;
       const changePercent = prev && prev.close ? ((last.close - prev.close) / prev.close) * 100 : 0;
+      const signalReturnPercent = signalDates.buyPrice
+        ? ((last.close - signalDates.buyPrice) / signalDates.buyPrice) * 100
+        : 0;
 
       return {
         symbol: seed.symbol,
@@ -153,17 +313,33 @@ export async function scanBuySignals(): Promise<BuySignalHit[]> {
         currency: seed.currency,
         price: last.close,
         changePercent,
-        signalSince: since,
+        signalSince: signalDates.buyDate,  // For backward compatibility
+        buyDate: signalDates.buyDate,
+        buyPrice: signalDates.buyPrice,
+        signalReturnPercent,
+        sellDate: signalDates.sellDate,
       };
-    } catch {
+    } catch (err) {
       // A single symbol's data being unavailable shouldn't fail the whole
       // scan — it's simply excluded from the result, same as it just not
       // having a buy signal.
+      failed.set(seed.symbol, err instanceof Error ? err.message : String(err));
       return null;
     }
   });
 
-  return hits
+  const results = hits
     .filter((h): h is BuySignalHit => h !== null)
     .sort((a, b) => b.signalSince.localeCompare(a.signalSince));
+
+  // Log failures for debugging (especially UPCOM symbols)
+  const upcomFailed = Array.from(failed.entries()).filter(([sym]) =>
+    STOCK_UNIVERSE.find(s => s.symbol === sym)?.exchange === "UPCOM"
+  );
+  if (upcomFailed.length > 0) {
+    console.warn("[trendScanner] UPCOM stocks failed to scan:",
+      Object.fromEntries(upcomFailed));
+  }
+
+  return results;
 }

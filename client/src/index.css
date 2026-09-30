@@ -3,39 +3,50 @@
 /* Class-based dark mode: `dark:` variants apply when <html class="dark">. */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Softer pastel palette overrides for the default slate and emerald
-   colors. Every bg-slate, text-emerald, etc utility across the app picks
-   these up automatically since they override the same CSS variable
-   names those utilities read from. Slate becomes a gentle lavender-navy
-   tint instead of pure gray/near-black; emerald keeps the same green
-   hue as before, just softer and a touch brighter. */
+/* ---------------------------------------------------------------------------
+   Professional financial palette — dark teal-green brand kit.
+   Neutral chrome (slate) shifted toward a dark teal family anchored on
+   #101820 (page bg, dark mode) / #0C6070 & #07756D (surfaces, informs the
+   800/900 borders) so the whole dark UI reads as one coherent brand, not
+   generic gray + a green accent. Brand accent (emerald) is #00C694 (solid,
+   e.g. primary buttons — emerald-600) / #16E684 (bright, e.g. dark-mode
+   icons & highlighted text — emerald-400).
+   Semantic gain/loss colors (see .up/.down below) are intentionally a
+   DIFFERENT green from the brand accent, so "tăng giá" never gets confused
+   with a brand-colored button or badge.
+--------------------------------------------------------------------------- */
 @theme {
-  --color-slate-50: #f7f8fc;
-  --color-slate-100: #eef1f8;
-  --color-slate-200: #e1e6f0;
-  --color-slate-300: #c9d1e3;
-  --color-slate-400: #96a2c2;
-  --color-slate-500: #6d78a0;
-  --color-slate-600: #525d80;
-  --color-slate-700: #3b4463;
-  --color-slate-800: #272e48;
-  --color-slate-900: #1a2038;
-  --color-slate-950: #11152a;
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #8aa8ad;
+  --color-slate-500: #5b7d82;
+  --color-slate-600: #3d6469;
+  --color-slate-700: #234046;
+  --color-slate-800: #16333b;
+  --color-slate-900: #132229;
+  --color-slate-950: #101820;
 
-  --color-emerald-50: #eefcf6;
-  --color-emerald-100: #d2f8e7;
-  --color-emerald-300: #7de3bd;
-  --color-emerald-400: #4ed0a5;
-  --color-emerald-500: #2fb98e;
-  --color-emerald-600: #229c78;
-  --color-emerald-700: #1b7c61;
+  --color-emerald-50: #eafff6;
+  --color-emerald-100: #cffce9;
+  --color-emerald-300: #5ef0a8;
+  --color-emerald-400: #16e684;
+  --color-emerald-500: #0ed89a;
+  --color-emerald-600: #00c694;
+  --color-emerald-700: #00996f;
+  --color-emerald-800: #007a5c;
+  --color-emerald-900: #065f46;
+  --color-emerald-950: #012e24;
 }
 
 html {
   color-scheme: light;
+  background-color: #f8fafc;
 }
 html.dark {
   color-scheme: dark;
+  background-color: #101820;
 }
 
 /* Responsive/mobile baseline: block accidental page-level horizontal
@@ -47,12 +58,45 @@ body {
   overflow-x: hidden;
 }
 
+/* ---------------------------------------------------------------------------
+   Typography — a single, neutral, authoritative sans (Inter) across the whole
+   app. Numbers use tabular figures so columns align like a real trading
+   terminal, without the clunky monospace look.
+   Inter is loaded in index.html.
+--------------------------------------------------------------------------- */
 body {
   margin: 0;
   font-family: "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
+  font-weight: 400;
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   touch-action: manipulation;
+  letter-spacing: -0.006em;
+}
+
+/* Headings: same family, heavier weight, tighter tracking for an
+   institutional, confident feel. */
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Inter", system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+h1 { letter-spacing: -0.028em; }
+
+/* All financial data: tabular figures, medium weight for legibility. */
+.price, .number, [class*="rate"], [class*="price"], [class*="quote"],
+.tabular-nums, [class*="percentage"], [class*="change"],
+.font-mono-price {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  letter-spacing: 0;
+}
+
+code, pre {
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 #root {
@@ -64,14 +108,41 @@ img {
   height: auto;
 }
 
+/* Typography utility classes (kept for existing usages). */
+.font-heading {
+  font-family: "Inter", system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.font-mono-price {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  font-weight: 600;
+}
+
+.font-body {
+  font-family: "Inter", system-ui, sans-serif;
+  font-weight: 400;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* ---------------------------------------------------------------------------
+   Semantic gain/loss colors — the core of a stock platform.
+   trendClass() in utils/format.ts emits .up / .down / .flat everywhere.
+--------------------------------------------------------------------------- */
 .up { color: #16a34a; }
 .down { color: #dc2626; }
-.flat { color: #6b7280; }
+.flat { color: #64748b; }
 .dark .up { color: #22c55e; }
-.dark .down { color: #ef4444; }
-.dark .flat { color: #9ca3af; }
+.dark .down { color: #f87171; }
+.dark .flat { color: #94a3b8; }
 
 ::-webkit-scrollbar { height: 8px; width: 8px; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-.dark ::-webkit-scrollbar-thumb { background: #2e3340; }
+.dark ::-webkit-scrollbar-thumb { background: #234046; }
 ::-webkit-scrollbar-track { background: transparent; }

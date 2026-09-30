@@ -8,30 +8,35 @@ export interface StrengthBand {
 }
 
 export const STRENGTH_BANDS: StrengthBand[] = [
-  { label: "Yếu", min: null, max: 400, className: "bg-sky-100 text-sky-800 dark:bg-sky-500/20 dark:text-sky-300" },
+  {
+    label: "Yếu",
+    min: null,
+    max: 400,
+    className: "bg-sky-100 text-sky-900 dark:bg-sky-500/15 dark:text-sky-200",
+  },
   {
     label: "Trung Bình",
     min: 400,
     max: 500,
-    className: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+    className: "bg-sky-200 text-sky-900 dark:bg-sky-500/30 dark:text-sky-100",
   },
   {
     label: "Khá",
     min: 500,
     max: 550,
-    className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300",
+    className: "bg-green-200 text-green-900 dark:bg-green-500/25 dark:text-green-200",
   },
   {
     label: "Khỏe",
     min: 550,
     max: 600,
-    className: "bg-emerald-500 text-white dark:bg-emerald-500 dark:text-slate-950",
+    className: "bg-green-600 text-white dark:bg-green-600 dark:text-white",
   },
   {
     label: "Rất Khỏe",
     min: 600,
     max: null,
-    className: "bg-fuchsia-200 text-fuchsia-900 dark:bg-fuchsia-500/30 dark:text-fuchsia-200",
+    className: "bg-fuchsia-300 text-fuchsia-950 dark:bg-fuchsia-500/40 dark:text-fuchsia-100",
   },
 ];
 

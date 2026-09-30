@@ -23,11 +23,12 @@ function ratioText(v: number | null, unit: string): string {
 // function instead of re-running the full-universe scan.
 async function computeTrendAction(symbol: string): Promise<TrendAction> {
   const { points } = await getHistoryWithFallback(symbol, "1Y");
-  const signalSince = latestBuySince(points);
-  const stance = signalSince ? "MUA" : "DUNG_NGOAI";
-  const reasoning = signalSince
+  const signalDates = latestBuySince(points);
+  const stance = signalDates ? "MUA" : "DUNG_NGOAI";
+  const signalSince = signalDates?.buyDate || null;
+  const reasoning = signalDates
     ? `Theo trend-following (SMA20 > SMA50, ADX(14) > 25, Supertrend tăng), ${symbol} đang trong tín hiệu Mua từ ${new Date(
-        signalSince
+        signalDates.buyDate
       ).toLocaleDateString("vi-VN")}. Tôi giữ vị thế theo xu hướng, chỉ thoát khi Supertrend đảo chiều giảm hoặc SMA20 cắt xuống dưới SMA50 — không dự đoán đỉnh, để hệ thống tự báo lúc xu hướng kết thúc.`
     : `Theo trend-following, ${symbol} chưa hội đủ điều kiện Mua (SMA20/SMA50/ADX(14)/Supertrend chưa đồng thuận tăng). Tôi đứng ngoài, chỉ giải ngân khi có tín hiệu xác nhận xu hướng tăng rõ ràng — không đoán đáy.`;
 

@@ -1,3 +1,4 @@
+import { Newspaper } from "lucide-react";
 import { fetchNewsForSymbol } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import WordCloud from "./WordCloud";
@@ -19,8 +20,11 @@ export default function NewsFeed({ symbol }: { symbol: string }) {
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
       <div className="border-b border-slate-200 p-4 dark:border-slate-800">
-        <h3 className="font-semibold text-slate-900 dark:text-slate-100">Tin tức liên quan đến {symbol}</h3>
-        <p className="text-xs text-slate-500 dark:text-slate-400">Lọc từ tin mới nhất của CafeF</p>
+        <h3 className="flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100">
+          <Newspaper className="h-4 w-4 text-slate-400" strokeWidth={1.75} />
+          Tin tức liên quan đến {symbol}
+        </h3>
+        <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">Lọc từ tin mới nhất của CafeF</p>
       </div>
 
       {items.length > 0 && (
@@ -38,7 +42,7 @@ export default function NewsFeed({ symbol }: { symbol: string }) {
       )}
 
       {!loading && error && (
-        <div className="p-4 text-sm text-red-500 dark:text-red-400">
+        <div className="p-4 text-sm text-slate-500 dark:text-slate-400">
           Không tải được tin tức: {error}
         </div>
       )}
