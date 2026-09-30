@@ -17,6 +17,7 @@ import { fetchMoneyFlowTable } from "../providers/moneyFlowSheet.js";
 import { fetchNewsForSymbol, fetchCafefNews } from "../news/cafefNews.js";
 import { getCompanyProfileWithFallback } from "../providers/companyProfileFallback.js";
 import { scanBuySignals } from "../signals/trendScanner.js";
+import { scanBStarSignals } from "../signals/bstarScanner.js";
 import { getTradeJournal } from "../signals/tradeJournal.js";
 import { getScannedSymbols } from "../signals/backgroundScan.js";
 import { scanMovingAverages } from "../signals/maScanner.js";
@@ -457,6 +458,35 @@ router.get(
             }))
             .sort((a, b) => b.signalSince.localeCompare(a.signalSince))
         : await cached("trend-signals-legacy-fallback", 60 * 60, () => scanBuySignals(), { staleOnError: true });
+    res.json({ items: data });
+  })
+);
+
+router.get(
+  "/bstar-signals",
+  asyncHandler(async (_req, res) => {
+    // B★ breakout combo (signals/bstarScanner.ts) — same full-universe
+    // background-scan-first, legacy-70-symbol-fallback pattern as
+    // /trend-signals above, just reading `bstarSignal` instead of
+    // `buySignal` off each scanned symbol.
+    const scanned = await getScannedSymbols();
+    const data =
+      scanned.length > 0
+        ? scanned
+            .filter((s) => s.bstarSignal)
+            .map((s) => ({
+              symbol: s.symbol,
+              name: s.name,
+              exchange: s.exchange,
+              currency: s.currency,
+              price: s.price,
+              changePercent: s.changePercent,
+              buyDate: s.bstarSignal!.buyDate,
+              buyPrice: s.bstarSignal!.buyPrice,
+              signalReturnPercent: s.bstarSignal!.signalReturnPercent,
+            }))
+            .sort((a, b) => b.buyDate.localeCompare(a.buyDate))
+        : await cached("bstar-signals-legacy-fallback", 60 * 60, () => scanBStarSignals(), { staleOnError: true });
     res.json({ items: data });
   })
 );

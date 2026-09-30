@@ -47,6 +47,7 @@ interface Props {
 
 const UP = "#22c55e";
 const DOWN = "#ef4444";
+const BSTAR = "#a855f7";
 const DRAW_COLOR = "#f59e0b";
 
 function fmt(value: number | undefined | null, digits = 2): string {
@@ -159,8 +160,11 @@ const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
       const markers: SeriesMarker<Time>[] = signals.map((s) => ({
         time: s.time as Time,
         position: s.type === "buy" ? "belowBar" : "aboveBar",
-        color: s.type === "buy" ? UP : DOWN,
-        shape: s.type === "buy" ? "arrowUp" : "arrowDown",
+        // B★ (utils/bstar.ts) draws as a purple circle instead of the
+        // default green/red arrow, so its one-off breakout events read as
+        // visually distinct from the sustained Trend Following combo.
+        color: s.source === "bstar" ? BSTAR : s.type === "buy" ? UP : DOWN,
+        shape: s.source === "bstar" ? "circle" : s.type === "buy" ? "arrowUp" : "arrowDown",
         // note already spells out tranche/P&L ("Mua 2/3 (+8.0%)", "Bán hết
         // 2/3 (-3.1%)"...) — falls back to the plain MUA/BÁN label for any
         // signal that somehow doesn't have one.

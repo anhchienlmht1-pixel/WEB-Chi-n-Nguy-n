@@ -2,6 +2,7 @@ import { put, head } from "@vercel/blob";
 import { getFullMarketQuotes } from "../providers/vnstockProvider.js";
 import { getHistoryWithFallback } from "../providers/fallback.js";
 import { dedupeSameDay, computeBuySeries, latestBuySince, checkCanSlimFundamentals } from "./trendScanner.js";
+import { computeBStarState } from "./bstarScanner.js";
 
 // Full-universe (~1,600 HOSE/HNX/UPCOM symbols) trend-following scan,
 // spread across many Cron ticks instead of one request — Vercel's 30s
@@ -31,6 +32,11 @@ export interface ScannedSymbol {
   // Set only when latestBuySince found an active streak AND the symbol
   // passed the CAN SLIM fundamentals screen — what /trend-signals shows.
   buySignal: { buyDate: string; buyPrice: number; signalReturnPercent: number } | null;
+  // Set only when computeBStarState (bstarScanner.ts) says the symbol is
+  // currently inside an open B★ breakout trade AND it passed the CAN SLIM
+  // screen — what /bstar-signals shows. Independent of buySignal above:
+  // a symbol can carry either, both, or neither at the same time.
+  bstarSignal: { buyDate: string; buyPrice: number; signalReturnPercent: number } | null;
   scannedAt: string;
 }
 
@@ -90,22 +96,35 @@ async function scanOneSymbol(seed: RosterSeed): Promise<ScannedSymbol | null> {
     const prev = points.length > 1 ? points[points.length - 2] : null;
     const changePercent = prev && prev.close ? ((last.close - prev.close) / prev.close) * 100 : 0;
 
-    let buySignal: ScannedSymbol["buySignal"] = null;
     const signalDates = latestBuySince(points);
-    if (signalDates) {
-      // Only worth the extra financial-report fetch for symbols that
-      // already cleared the technical condition — keeps the CAN SLIM
-      // check from doubling the cost of every symbol in the roster.
-      const hasSolidFundamentals = await checkCanSlimFundamentals(seed.symbol);
-      if (hasSolidFundamentals) {
-        buySignal = {
-          buyDate: signalDates.buyDate,
-          buyPrice: signalDates.buyPrice,
-          signalReturnPercent: signalDates.buyPrice
-            ? ((last.close - signalDates.buyPrice) / signalDates.buyPrice) * 100
-            : 0,
-        };
-      }
+    const bstarState = computeBStarState(points);
+
+    // Only worth the extra financial-report fetch for symbols that already
+    // cleared at least one technical condition — keeps the CAN SLIM check
+    // from running for every symbol in the roster — and shared between
+    // both combos below instead of fetched twice for a symbol that clears
+    // both.
+    const needsFundamentalsCheck = Boolean(signalDates) || bstarState.isHolding;
+    const hasSolidFundamentals = needsFundamentalsCheck ? await checkCanSlimFundamentals(seed.symbol) : false;
+
+    let buySignal: ScannedSymbol["buySignal"] = null;
+    if (signalDates && hasSolidFundamentals) {
+      buySignal = {
+        buyDate: signalDates.buyDate,
+        buyPrice: signalDates.buyPrice,
+        signalReturnPercent: signalDates.buyPrice
+          ? ((last.close - signalDates.buyPrice) / signalDates.buyPrice) * 100
+          : 0,
+      };
+    }
+
+    let bstarSignal: ScannedSymbol["bstarSignal"] = null;
+    if (bstarState.isHolding && bstarState.buyDate && bstarState.buyPrice && hasSolidFundamentals) {
+      bstarSignal = {
+        buyDate: bstarState.buyDate,
+        buyPrice: bstarState.buyPrice,
+        signalReturnPercent: ((last.close - bstarState.buyPrice) / bstarState.buyPrice) * 100,
+      };
     }
 
     return {
@@ -117,6 +136,7 @@ async function scanOneSymbol(seed: RosterSeed): Promise<ScannedSymbol | null> {
       changePercent,
       isBuy: lastBar?.isBuy ?? false,
       buySignal,
+      bstarSignal,
       scannedAt: new Date().toISOString(),
     };
   } catch {

@@ -275,6 +275,27 @@ export async function fetchTrendBuySignals(): Promise<TrendBuySignal[]> {
   return data.items;
 }
 
+export interface BStarHit {
+  symbol: string;
+  name: string;
+  exchange: string;
+  currency: string;
+  price: number;
+  changePercent: number;
+  buyDate: string;
+  buyPrice: number;
+  signalReturnPercent: number;
+}
+
+// B★ breakout combo (tight ≤5-week base, breakout on ≥1.4x volume, price
+// above MA50; exits on close below MA20) — second, independent scan
+// alongside the default Trend Following one, same full-universe
+// background scan — see server/src/signals/bstarScanner.ts.
+export async function fetchBStarSignals(): Promise<BStarHit[]> {
+  const { data } = await api.get("/bstar-signals");
+  return data.items;
+}
+
 export interface JournalPosition {
   symbol: string;
   name: string;

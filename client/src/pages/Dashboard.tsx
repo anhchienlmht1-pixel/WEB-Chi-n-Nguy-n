@@ -9,6 +9,7 @@ import TechnicalChartPanel from "../components/TechnicalChartPanel";
 import IndexTicker from "../components/IndexTicker";
 import LeaderBoard from "../components/LeaderBoard";
 import TrendSignalScanner from "../components/TrendSignalScanner";
+import BStarScanner from "../components/BStarScanner";
 import SpecialOffers from "../components/SpecialOffers";
 import TrendSystemStats from "../components/TrendSystemStats";
 import TrendJournal from "../components/TrendJournal";
@@ -92,9 +93,10 @@ export default function Dashboard() {
               />
             </div>
 
-            {/* Trend Signals */}
-            <div className="w-full">
+            {/* Trend Signals + B★ */}
+            <div className="w-full space-y-4">
               <TrendSignalScanner onSelectSymbol={setChartSymbol} />
+              <BStarScanner onSelectSymbol={setChartSymbol} />
             </div>
           </div>
         </div>
