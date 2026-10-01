@@ -105,7 +105,7 @@ async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T)
 
 // Live, on-demand fallback over the curated ~70-symbol STOCK_UNIVERSE —
 // used only until the background Cron scan (signals/backgroundScan.ts,
-// full ~1,600-symbol universe) has produced its first result.
+// ~350 most-liquid symbols) has produced its first result.
 export async function scanBStarSignals(): Promise<BStarHit[]> {
   const hits = await mapWithConcurrency(STOCK_UNIVERSE, 20, async (seed): Promise<BStarHit | null> => {
     try {

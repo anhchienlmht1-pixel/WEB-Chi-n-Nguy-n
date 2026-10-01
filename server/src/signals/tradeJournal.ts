@@ -93,12 +93,11 @@ interface CurrentSignal {
   price: number;
 }
 
-// Reads the background Cron scan's full-universe results (see
-// signals/backgroundScan.ts) when available, so the journal covers the
-// same ~1,600-symbol roster as /trend-signals — falling back to a live
-// scan over the curated STOCK_UNIVERSE (the old behavior) only when
-// nothing's been scanned yet (Blob not configured, or the first Cron tick
-// hasn't landed).
+// Reads the background Cron scan's results (see signals/backgroundScan.ts)
+// when available, so the journal covers the same ~350 most-liquid-symbol
+// roster as /trend-signals — falling back to a live scan over the curated
+// STOCK_UNIVERSE (the old behavior) only when nothing's been scanned yet
+// (Blob not configured, or the first Cron tick hasn't landed).
 async function scanCurrentSignals(): Promise<Map<string, CurrentSignal>> {
   const scanned = await getScannedSymbols();
   if (scanned.length > 0) {

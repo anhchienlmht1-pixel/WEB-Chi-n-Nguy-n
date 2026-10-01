@@ -428,11 +428,12 @@ router.get(
   "/trend-signals",
   asyncHandler(async (_req, res) => {
     // Same daily-bar trend-following combo as the chart's own Mua/Bán
-    // markers. Full-universe coverage (~1,600 HOSE/HNX/UPCOM symbols) comes
-    // from the background Cron scan (signals/backgroundScan.ts — routes/
-    // cron.ts), which can't fit in one request the way scanning STOCK_
-    // UNIVERSE's ~70 curated symbols can, so it runs across many ticks and
-    // persists to Blob instead. getScannedSymbols() is just a cheap Blob
+    // markers. Wide coverage (the ~350 most-liquid HOSE/HNX/UPCOM symbols —
+    // see backgroundScan.ts's ROSTER_SIZE) comes from the background Cron
+    // scan (signals/backgroundScan.ts — routes/cron.ts), which can't fit in
+    // one request the way scanning STOCK_UNIVERSE's ~70 curated symbols
+    // can, so it runs across many ticks and persists to Blob instead.
+    // getScannedSymbols() is just a cheap Blob
     // read, so it's called directly (not cache-wrapped) for freshness; only
     // the slow ~70-symbol fallback — used when nothing's been scanned yet
     // (Blob not configured, or the first Cron tick hasn't landed) — gets
