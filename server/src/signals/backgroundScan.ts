@@ -5,18 +5,20 @@ import { dedupeSameDay, computeBuySeries, latestBuySince, checkCanSlimFundamenta
 import { computeBStarState } from "./bstarScanner.js";
 
 // Full-universe (~1,600 HOSE/HNX/UPCOM symbols) trend-following scan,
-// spread across many Cron ticks instead of one request — Vercel's 30s
-// function ceiling (vercel.json) can't fit a live per-symbol history fetch
-// + indicator computation for that many tickers in one call the way the
-// old STOCK_UNIVERSE-only scanBuySignals() could for ~70. Each tick
-// processes as many roster symbols as fit in TIME_BUDGET_MS, persists
-// progress to Vercel Blob, and picks up where it left off next tick —
-// wrapping around to a fresh roster once a full cycle completes. Routes
-// read whatever's in `latestBySymbol` at request time: a continuously
-// self-refreshing, eventually-consistent view rather than an all-or-
-// nothing snapshot.
+// spread across many Cron ticks instead of one request — Vercel's function
+// ceiling (vercel.json's maxDuration — 10s on the Hobby plan this project
+// is actually on; Cron itself is also capped at once/day on Hobby, so a
+// full cycle is necessarily slow — see the note where this is called from
+// routes/cron.ts) can't fit a live per-symbol history fetch + indicator
+// computation for that many tickers in one call the way the old STOCK_
+// UNIVERSE-only scanBuySignals() could for ~70. Each tick processes as
+// many roster symbols as fit in TIME_BUDGET_MS, persists progress to
+// Vercel Blob, and picks up where it left off next tick — wrapping around
+// to a fresh roster once a full cycle completes. Routes read whatever's in
+// `latestBySymbol` at request time: a continuously self-refreshing,
+// eventually-consistent view rather than an all-or-nothing snapshot.
 const BLOB_PATHNAME = "trend-scan/state.json";
-const TIME_BUDGET_MS = 22_000; // safety margin under vercel.json's 30s maxDuration
+const TIME_BUDGET_MS = 8_000; // safety margin under vercel.json's 10s maxDuration (Hobby plan)
 const CONCURRENCY = 20;
 
 export interface ScannedSymbol {
