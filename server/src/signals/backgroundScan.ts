@@ -4,20 +4,24 @@ import { getHistoryWithFallback } from "../providers/fallback.js";
 import { dedupeSameDay, computeBuySeries, latestBuySince, checkCanSlimFundamentals } from "./trendScanner.js";
 import { computeBStarState } from "./bstarScanner.js";
 
-// Full-universe (~1,600 HOSE/HNX/UPCOM symbols) trend-following scan,
-// spread across many Cron ticks instead of one request — Vercel's 30s
-// function ceiling (vercel.json) can't fit a live per-symbol history fetch
-// + indicator computation for that many tickers in one call the way the
-// old STOCK_UNIVERSE-only scanBuySignals() could for ~70. Each tick
-// processes as many roster symbols as fit in TIME_BUDGET_MS, persists
-// progress to Vercel Blob, and picks up where it left off next tick —
-// wrapping around to a fresh roster once a full cycle completes. Routes
-// read whatever's in `latestBySymbol` at request time: a continuously
-// self-refreshing, eventually-consistent view rather than an all-or-
-// nothing snapshot.
+// Trend-following scan over the ROSTER_SIZE most-liquid symbols across the
+// whole exchange board (HOSE/HNX/UPCOM, from getFullMarketQuotes — far
+// more than the old ~70-symbol hand-curated STOCK_UNIVERSE, but short of
+// the full ~1,600-symbol board), spread across many Cron ticks instead of
+// one request. This project is on Vercel's Hobby plan: maxDuration caps at
+// 10s (vercel.json) and Cron fires at most once a day, so a single request
+// can't fit a live per-symbol history fetch + indicator computation across
+// hundreds of tickers, and a full scan cycle is necessarily measured in
+// days rather than minutes. Each tick processes as many roster symbols as
+// fit in TIME_BUDGET_MS, persists progress to Vercel Blob, and picks up
+// where it left off next tick — wrapping around to a fresh roster once a
+// full cycle completes. Routes read whatever's in `latestBySymbol` at
+// request time: a continuously self-refreshing, eventually-consistent view
+// rather than an all-or-nothing snapshot.
 const BLOB_PATHNAME = "trend-scan/state.json";
-const TIME_BUDGET_MS = 22_000; // safety margin under vercel.json's 30s maxDuration
+const TIME_BUDGET_MS = 8_000; // safety margin under vercel.json's 10s maxDuration (Hobby plan)
 const CONCURRENCY = 20;
+const ROSTER_SIZE = 350; // most-liquid symbols scanned per cycle — see runScanBatch
 
 export interface ScannedSymbol {
   symbol: string;
@@ -154,7 +158,18 @@ export async function runScanBatch(): Promise<{ processed: number; cycleComplete
 
   if (state.cursor === 0 || state.roster.length === 0) {
     const quotes = await getFullMarketQuotes("ALL");
-    state.roster = quotes.map((q) => ({ symbol: q.symbol, name: q.name, exchange: q.exchange, currency: q.currency }));
+    // Hobby plan's Cron only fires once a day (see vercel.json), so a
+    // 1,600-symbol roster would take weeks for one full cycle. Narrowing
+    // to the ROSTER_SIZE most liquid tickers (today's price × volume, a
+    // proxy for trading value — not a fixed hand-picked list, so it drifts
+    // with whatever's actually trading) gets a full cycle down to roughly
+    // a week-ish instead, while still covering far more than the old
+    // 73-symbol STOCK_UNIVERSE.
+    state.roster = [...quotes]
+      .filter((q) => q.price > 0 && q.volume > 0)
+      .sort((a, b) => b.price * b.volume - a.price * a.volume)
+      .slice(0, ROSTER_SIZE)
+      .map((q) => ({ symbol: q.symbol, name: q.name, exchange: q.exchange, currency: q.currency }));
     state.cursor = 0;
   }
 
