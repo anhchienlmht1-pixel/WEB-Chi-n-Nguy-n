@@ -9,23 +9,10 @@ import { yahooProvider } from "./yahooProvider.js";
 import { alphaVantageProvider } from "./alphaVantageProvider.js";
 import { finnhubProvider } from "./finnhubProvider.js";
 
-import {
-  registryManager,
-  createMarketChain,
-  createReferenceChain,
-  createFallbackChain,
-  ProviderChain,
-} from "./registry.js";
-import * as metadata from "./metadata.js";
-
-/**
- * Legacy provider map (for backward compatibility)
- */
 const PROVIDERS: Record<string, StockProvider> = {
   mock: mockProvider,
   kbs: kbsMarketProvider,
   vnstock: vnstockProvider,
-  vci: vnstockProvider, // VCI uses vnstock
   tradingview: tradingviewProvider,
   fireant: fireantProvider,
   vndirect: vndirectProvider,
@@ -34,132 +21,18 @@ const PROVIDERS: Record<string, StockProvider> = {
   finnhub: finnhubProvider,
 };
 
-/**
- * Initialize provider registry with all available providers
- * This is called once at server startup
- */
-export function initializeRegistry(): void {
-  try {
-    // Register explorer providers (web scraping)
-    console.log("[Registry] Registering VCI provider...");
-    registryManager.register(metadata.VCI_METADATA, vnstockProvider);
-
-    console.log("[Registry] Registering KBS provider...");
-    registryManager.register(metadata.KBS_METADATA, kbsMarketProvider);
-
-    console.log("[Registry] Registering Fireant provider...");
-    registryManager.register(metadata.FIREANT_METADATA, fireantProvider);
-
-    console.log("[Registry] Registering VNDirect provider...");
-    registryManager.register(metadata.VNDIRECT_METADATA, vndirectProvider);
-
-    // Register connector providers (official APIs)
-    registryManager.register(metadata.FMP_METADATA, mockProvider); // Placeholder
-    registryManager.register(metadata.TRADINGVIEW_METADATA, tradingviewProvider);
-    registryManager.register(metadata.YAHOO_METADATA, yahooProvider);
-    registryManager.register(metadata.FINNHUB_METADATA, finnhubProvider);
-    registryManager.register(metadata.ALPHAVANTAGE_METADATA, alphaVantageProvider);
-
-    // Register mock provider
-    registryManager.register(metadata.MOCK_METADATA, mockProvider);
-
-    const stats = registryManager.getStats();
-    console.log("[Registry] Provider registry initialized:");
-    console.log(`  Total providers: ${stats.totalProviders}`);
-    console.log(`  Enabled providers: ${stats.enabledProviders}`);
-    console.log(`  Explorer providers: ${stats.categories.includes('explorer') ? registryManager.getByCategory('explorer').length : 0}`);
-    console.log(`  Providers list:`, stats.providers.map(p => `${p.id}(${p.enabled ? 'enabled' : 'disabled'})`).join(", "));
-  } catch (error) {
-    console.error("[Registry] Error initializing registry:", error);
-    throw error;
-  }
-}
-
-/**
- * Get a specific provider (legacy interface for backward compatibility)
- */
 export function getProvider(): StockProvider {
-  const primary = registryManager.getPrimary();
-  if (!primary) {
-    throw new Error("No providers available in registry");
+  // KBS is the current default of the upstream vnstock library's own
+  // unified Market/Fundamental classes (verified against vnstock's GitHub
+  // source) — matches what the financial-ratios feature already uses.
+  const id = (process.env.DATA_PROVIDER || "kbs").toLowerCase();
+  const provider = PROVIDERS[id];
+  if (!provider) {
+    throw new Error(
+      `Unknown DATA_PROVIDER "${id}". Valid options: ${Object.keys(PROVIDERS).join(", ")}`
+    );
   }
-  // Support legacy DATA_PROVIDER environment variable
-  const envProvider = process.env.DATA_PROVIDER?.toLowerCase();
-  if (envProvider) {
-    const provider = PROVIDERS[envProvider];
-    if (provider) return provider;
-    console.warn(`[Registry] Unknown DATA_PROVIDER "${envProvider}", using primary provider`);
-  }
-  return primary.provider;
+  return provider;
 }
 
-/**
- * Get a provider by ID (new interface)
- */
-export function getProviderById(id: string): StockProvider | undefined {
-  const registry = registryManager.getProvider(id);
-  return registry?.provider;
-}
-
-/**
- * Unified Market Data API - Real-time quotes, market overview
- * Uses explorer providers (web scraping)
- */
-export const MarketAPI = {
-  getMarketChain(): ProviderChain {
-    return createMarketChain();
-  },
-
-  async getQuote(symbol: string) {
-    const chain = this.getMarketChain();
-    return chain.getQuote(symbol);
-  },
-
-  async getQuotes(symbols: string[]) {
-    const chain = this.getMarketChain();
-    return chain.getQuotes(symbols);
-  },
-
-  async getMarketOverview() {
-    const chain = this.getMarketChain();
-    return chain.getMarketOverview();
-  },
-
-  async getTopTraded(exchange: any) {
-    const chain = this.getMarketChain();
-    return chain.getTopTraded(exchange);
-  },
-};
-
-/**
- * Unified Reference Data API - Company info, fundamentals
- * Uses all providers with fallback
- */
-export const ReferenceAPI = {
-  getReferenceChain(): ProviderChain {
-    return createReferenceChain();
-  },
-
-  async search(query: string) {
-    const chain = this.getReferenceChain();
-    return chain.search(query);
-  },
-};
-
-/**
- * Unified Fallback API - Uses all providers with priority fallback
- */
-export const FallbackAPI = {
-  getFallbackChain(): ProviderChain {
-    return createFallbackChain();
-  },
-
-  async getHistory(symbol: string, range: any) {
-    const chain = this.getFallbackChain();
-    return chain.getHistory(symbol, range);
-  },
-};
-
-// Re-export registry utilities
-export { registryManager, createMarketChain, createReferenceChain, createFallbackChain };
 export type { StockProvider } from "./types.js";
