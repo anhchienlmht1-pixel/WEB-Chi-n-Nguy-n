@@ -17,9 +17,7 @@ import { fetchMoneyFlowTable } from "../providers/moneyFlowSheet.js";
 import { fetchNewsForSymbol, fetchCafefNews } from "../news/cafefNews.js";
 import { getCompanyProfileWithFallback } from "../providers/companyProfileFallback.js";
 import { scanBuySignals } from "../signals/trendScanner.js";
-import { scanBStarSignals } from "../signals/bstarScanner.js";
 import { getTradeJournal } from "../signals/tradeJournal.js";
-import { getScannedSymbols } from "../signals/backgroundScan.js";
 import { scanMovingAverages } from "../signals/maScanner.js";
 import { scanPbComparison, BANK_SYMBOLS, SECURITIES_SYMBOLS, REAL_ESTATE_SYMBOLS } from "../signals/pbScanner.js";
 import { fetchVndirectLogos, fetchVndirectCompanyProfilesRaw } from "../providers/vndirectLogos.js";
@@ -428,66 +426,12 @@ router.get(
   "/trend-signals",
   asyncHandler(async (_req, res) => {
     // Same daily-bar trend-following combo as the chart's own Mua/Bán
-    // markers. Wide coverage (the ~350 most-liquid HOSE/HNX/UPCOM symbols —
-    // see backgroundScan.ts's ROSTER_SIZE) comes from the background Cron
-    // scan (signals/backgroundScan.ts — routes/cron.ts), which can't fit in
-    // one request the way scanning STOCK_UNIVERSE's ~70 curated symbols
-    // can, so it runs across many ticks and persists to Blob instead.
-    // getScannedSymbols() is just a cheap Blob
-    // read, so it's called directly (not cache-wrapped) for freshness; only
-    // the slow ~70-symbol fallback — used when nothing's been scanned yet
-    // (Blob not configured, or the first Cron tick hasn't landed) — gets
-    // its own long-TTL cache entry, so an empty Blob doesn't turn into a
-    // live 70-symbol scan on every request.
-    const scanned = await getScannedSymbols();
-    const data =
-      scanned.length > 0
-        ? scanned
-            .filter((s) => s.buySignal)
-            .map((s) => ({
-              symbol: s.symbol,
-              name: s.name,
-              exchange: s.exchange,
-              currency: s.currency,
-              price: s.price,
-              changePercent: s.changePercent,
-              signalSince: s.buySignal!.buyDate,
-              buyDate: s.buySignal!.buyDate,
-              buyPrice: s.buySignal!.buyPrice,
-              signalReturnPercent: s.buySignal!.signalReturnPercent,
-              sellDate: null,
-            }))
-            .sort((a, b) => b.signalSince.localeCompare(a.signalSince))
-        : await cached("trend-signals-legacy-fallback", 60 * 60, () => scanBuySignals(), { staleOnError: true });
-    res.json({ items: data });
-  })
-);
-
-router.get(
-  "/bstar-signals",
-  asyncHandler(async (_req, res) => {
-    // B★ breakout combo (signals/bstarScanner.ts) — same full-universe
-    // background-scan-first, legacy-70-symbol-fallback pattern as
-    // /trend-signals above, just reading `bstarSignal` instead of
-    // `buySignal` off each scanned symbol.
-    const scanned = await getScannedSymbols();
-    const data =
-      scanned.length > 0
-        ? scanned
-            .filter((s) => s.bstarSignal)
-            .map((s) => ({
-              symbol: s.symbol,
-              name: s.name,
-              exchange: s.exchange,
-              currency: s.currency,
-              price: s.price,
-              changePercent: s.changePercent,
-              buyDate: s.bstarSignal!.buyDate,
-              buyPrice: s.bstarSignal!.buyPrice,
-              signalReturnPercent: s.bstarSignal!.signalReturnPercent,
-            }))
-            .sort((a, b) => b.buyDate.localeCompare(a.buyDate))
-        : await cached("bstar-signals-legacy-fallback", 60 * 60, () => scanBStarSignals(), { staleOnError: true });
+    // markers, scanned across the whole stock universe — a 1h TTL is
+    // plenty since this only moves at most once per trading day (it's
+    // computed off daily closes), and re-scanning ~70 symbols on every
+    // request would be needlessly slow and hammer the price-history
+    // provider for no benefit.
+    const data = await cached("trend-signals", 60 * 60, () => scanBuySignals(), { staleOnError: true });
     res.json({ items: data });
   })
 );
