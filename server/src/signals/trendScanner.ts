@@ -124,7 +124,7 @@ export interface SignalDates {
 
 // CAN SLIM fundamentals check: ROE, Revenue growth, Earnings growth
 // to reduce noise and only show high-quality buy signals
-export async function checkCanSlimFundamentals(symbol: string): Promise<boolean> {
+async function checkCanSlimFundamentals(symbol: string): Promise<boolean> {
   try {
     // Fetch annual income statement for revenue and earnings
     const incomeReport = await fetchFinancialReport(symbol, "KQKD", "year");

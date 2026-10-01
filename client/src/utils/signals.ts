@@ -82,10 +82,6 @@ export interface TradingSignal {
    * ("Mua 2/3 (+8.0%)"), realized P&L for sells ("Bán hết 2/3 (+12.4%)").
    * Unset only for `all`'s raw per-bar entries, which nothing renders. */
   note?: string;
-  /** Which system produced this marker — lets PriceChart draw B★ markers
-   * (utils/bstar.ts) in a visually distinct style from the default Trend
-   * Following combo. Defaults to "trend" wherever omitted. */
-  source?: "trend" | "bstar";
 }
 
 export interface TradingSignalsResult {

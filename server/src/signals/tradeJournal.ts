@@ -2,7 +2,6 @@ import { put, head } from "@vercel/blob";
 import { STOCK_UNIVERSE } from "../providers/universe.js";
 import { getHistoryWithFallback } from "../providers/fallback.js";
 import { computeBuySeries, dedupeSameDay } from "./trendScanner.js";
-import { getScannedSymbols } from "./backgroundScan.js";
 
 // Real, forward-only trade log for "Lịch sử giao dịch" — unlike
 // scanClosedTrades (a backtest that reconstructs every historical
@@ -93,21 +92,7 @@ interface CurrentSignal {
   price: number;
 }
 
-// Reads the background Cron scan's results (see signals/backgroundScan.ts)
-// when available, so the journal covers the same ~350 most-liquid-symbol
-// roster as /trend-signals — falling back to a live scan over the curated
-// STOCK_UNIVERSE (the old behavior) only when nothing's been scanned yet
-// (Blob not configured, or the first Cron tick hasn't landed).
 async function scanCurrentSignals(): Promise<Map<string, CurrentSignal>> {
-  const scanned = await getScannedSymbols();
-  if (scanned.length > 0) {
-    const map = new Map<string, CurrentSignal>();
-    for (const s of scanned) {
-      map.set(s.symbol, { name: s.name, exchange: s.exchange, currency: s.currency, isBuy: s.isBuy, price: s.price });
-    }
-    return map;
-  }
-
   const hits = await mapWithConcurrency(STOCK_UNIVERSE, 20, async (seed) => {
     try {
       const { points: raw } = await getHistoryWithFallback(seed.symbol, "1Y");

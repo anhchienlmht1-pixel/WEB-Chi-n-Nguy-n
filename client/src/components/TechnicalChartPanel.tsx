@@ -3,7 +3,6 @@ import { fetchHistory } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { aggregatePoints, type ChartResolution } from "../utils/aggregate";
 import { computeTradingSignals } from "../utils/signals";
-import { computeBStarSignals } from "../utils/bstar";
 import PriceChart, { type ActiveIndicator, type ChartType, type DrawingTool, type PriceChartHandle } from "./PriceChart";
 import ChartToolbar from "./ChartToolbar";
 import DrawingToolbar from "./DrawingToolbar";
@@ -125,22 +124,6 @@ export default function TechnicalChartPanel({
     [chartPoints, refreshState.data, symbol, resolution]
   );
 
-  // B★'s breakout/base math is defined in trading days (5-week base, 20-day
-  // volume average) — always compute it off daily bars regardless of the
-  // chart's selected resolution (Ngày/Tuần/Tháng), unlike signalResult
-  // above which follows whatever resolution the visible candles use.
-  const bstarSignals = useMemo(() => {
-    if (symbol === "VNINDEX") return [];
-    const source = refreshState.data ?? historyState.data;
-    if (!source) return [];
-    return computeBStarSignals(aggregatePoints(source.points, "D"));
-  }, [symbol, refreshState.data, historyState.data]);
-
-  const allSignals = useMemo(
-    () => [...signalResult.transitions, ...bstarSignals],
-    [signalResult.transitions, bstarSignals]
-  );
-
   return (
     <div
       ref={chartWrapperRef}
@@ -174,7 +157,7 @@ export default function TechnicalChartPanel({
                 ref={chartRef}
                 points={chartPoints}
                 activeIndicators={NO_INDICATORS}
-                signals={allSignals}
+                signals={signalResult.transitions}
                 chartType={chartType}
                 drawingTool={drawingTool}
                 onDrawingComplete={() => setDrawingTool(null)}

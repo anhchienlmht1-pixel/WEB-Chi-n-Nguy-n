@@ -2,7 +2,6 @@ import express from "express";
 import cors from "cors";
 import stocksRouter from "./routes/stocks.js";
 import providersRouter from "./routes/providers.js";
-import cronRouter from "./routes/cron.js";
 import { getProvider, registryManager } from "./providers/index.js";
 
 // Express app construction lives here, separate from index.ts's app.listen(),
@@ -40,8 +39,6 @@ app.use("/api", stocksRouter);
 app.use(stocksRouter);
 app.use("/api/providers", providersRouter);
 app.use("/providers", providersRouter);
-app.use("/api", cronRouter);
-app.use(cronRouter);
 
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   const status = err.status || 500;
