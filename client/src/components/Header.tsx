@@ -8,6 +8,7 @@ import { useTheme } from "../hooks/useTheme";
 
 const NAV_ITEMS = [
   { to: "/thi-truong", label: "Thị trường", end: false },
+  { to: "/tin-hieu", label: "Tín hiệu", end: false },
   { to: "/so-sanh-pb", label: "So sánh P/B", end: false },
 ];
 
