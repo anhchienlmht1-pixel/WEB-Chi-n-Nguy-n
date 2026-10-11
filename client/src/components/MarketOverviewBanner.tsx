@@ -5,8 +5,9 @@ import { fetchHistory, fetchMarketOverview } from "../api/client";
 import { aggregatePoints } from "../utils/aggregate";
 import {
   computeMarketRegimeSeries,
+  computeMoneyFlowPct,
   computeSellPressurePct,
-  summarizeRegime,
+  summarizeRegimeSeries,
   type MarketRegime,
 } from "../utils/marketRegime";
 
@@ -28,7 +29,7 @@ const REGIME_INFO: Record<
     badgeClassName: "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400",
     titleClassName: "text-green-700 dark:text-green-400",
     dotClassName: "bg-green-600",
-    assessment: "Xu hướng tăng được xác nhận trên VNINDEX (SMA20 > SMA50, ADX đủ mạnh, Supertrend tăng).",
+    assessment: "Xu hướng tăng được xác nhận trên VNINDEX (SMA20 > SMA50, ADX đủ mạnh, Supertrend tăng, tính theo tuần).",
     action: "Có thể duy trì hoặc mở thêm vị thế theo xu hướng — vẫn luôn kèm điểm dừng lỗ.",
   },
   watch: {
@@ -37,7 +38,7 @@ const REGIME_INFO: Record<
     badgeClassName: "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400",
     titleClassName: "text-amber-700 dark:text-amber-400",
     dotClassName: "bg-amber-500",
-    assessment: "Xu hướng VNINDEX chưa rõ ràng — ADX chưa đủ mạnh để xác nhận tăng hoặc giảm.",
+    assessment: "Xu hướng VNINDEX chưa rõ ràng (tính theo tuần) — ADX chưa đủ mạnh để xác nhận tăng hoặc giảm.",
     action: "Quan sát thêm, chưa vội giải ngân mạnh cho tới khi xu hướng rõ hơn.",
   },
   caution: {
@@ -46,7 +47,7 @@ const REGIME_INFO: Record<
     badgeClassName: "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400",
     titleClassName: "text-red-700 dark:text-red-400",
     dotClassName: "bg-red-600",
-    assessment: "Xu hướng giảm được xác nhận trên VNINDEX (SMA20 < SMA50 hoặc Supertrend giảm, ADX đủ mạnh).",
+    assessment: "Xu hướng giảm được xác nhận trên VNINDEX (SMA20 < SMA50 hoặc Supertrend giảm, ADX đủ mạnh, tính theo tuần).",
     action: "Hạn chế giải ngân mới, ưu tiên bảo toàn vốn cho tới khi xu hướng đảo chiều.",
   },
 };
@@ -102,20 +103,27 @@ function GaugeBar({
 
 // "Toàn cảnh thị trường" — auto-classifies VNINDEX's current regime using
 // the exact same Trend Following combo as the rest of the site (see
-// utils/marketRegime.ts), instead of a hand-picked editorial call, plus
-// two live gauges built from real data this site already polls: today's
-// VNINDEX volume vs its own 250-session average (money flow proxy — no
-// separate market-wide turnover feed exists to read this from) and the
-// share of the watchlist currently closing down (sell-pressure breadth).
+// utils/marketRegime.ts), fed weekly bars so the call is stable instead of
+// flipping on every daily wiggle, plus two live gauges built from real
+// data this site already polls: today's VNINDEX volume vs its own
+// 250-session daily average (money flow proxy — no separate market-wide
+// turnover feed exists to read this from) and the share of the watchlist
+// currently closing down (sell-pressure breadth).
 export default function MarketOverviewBanner() {
   const { data: historyData } = usePolling(() => fetchHistory("VNINDEX", "MAX"), [], 5 * 60 * 1000);
   const { data: overviewData } = usePolling(() => fetchMarketOverview(), [], 10_000);
 
   const summary = useMemo(() => {
     if (!historyData) return null;
+    const weekly = aggregatePoints(historyData.points, "W");
+    const series = computeMarketRegimeSeries(weekly);
+    return summarizeRegimeSeries(series);
+  }, [historyData]);
+
+  const moneyFlowPct = useMemo(() => {
+    if (!historyData) return null;
     const daily = aggregatePoints(historyData.points, "D");
-    const series = computeMarketRegimeSeries(daily);
-    return summarizeRegime(series);
+    return computeMoneyFlowPct(daily);
   }, [historyData]);
 
   const sellPressurePct = useMemo(() => {
@@ -148,7 +156,7 @@ export default function MarketOverviewBanner() {
             Cập nhật {formatDate(historyData!.points[historyData!.points.length - 1].time)}
           </div>
           <div className="mt-1">
-            Từ {formatDate(summary.sinceTime)} · {summary.sessionsCount} phiên
+            Từ {formatDate(summary.sinceTime)} · {summary.periodsCount} tuần
           </div>
         </div>
       </div>
@@ -165,16 +173,18 @@ export default function MarketOverviewBanner() {
       </div>
 
       <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <GaugeBar
-          title="Dòng tiền"
-          valuePct={summary.moneyFlowPct}
-          max={200}
-          thresholds={[
-            { value: 80, label: "80%: rút" },
-            { value: 120, label: "120%: mạnh" },
-          ]}
-          caption={`Khối lượng khớp lệnh VNINDEX hôm nay bằng ${summary.moneyFlowPct.toFixed(0)}% trung bình 250 phiên gần nhất.`}
-        />
+        {moneyFlowPct !== null && (
+          <GaugeBar
+            title="Dòng tiền"
+            valuePct={moneyFlowPct}
+            max={200}
+            thresholds={[
+              { value: 80, label: "80%: rút" },
+              { value: 120, label: "120%: mạnh" },
+            ]}
+            caption={`Khối lượng khớp lệnh VNINDEX hôm nay bằng ${moneyFlowPct.toFixed(0)}% trung bình 250 phiên gần nhất.`}
+          />
+        )}
         {sellPressurePct !== null && (
           <GaugeBar
             title="Lực bán"
@@ -190,8 +200,8 @@ export default function MarketOverviewBanner() {
       </div>
 
       <p className="mt-3 text-[10px] text-slate-400 dark:text-slate-500">
-        Tự động phân loại từ chỉ báo kỹ thuật của VNINDEX và dữ liệu thị trường thời gian thực — không phải khuyến
-        nghị đầu tư.
+        Trạng thái tự động phân loại từ chỉ báo kỹ thuật của VNINDEX theo tuần; 2 chỉ số bên dưới cập nhật theo ngày
+        từ dữ liệu thị trường thời gian thực — không phải khuyến nghị đầu tư.
       </p>
     </div>
   );

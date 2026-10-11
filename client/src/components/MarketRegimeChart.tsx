@@ -37,6 +37,15 @@ const REGIME_LABEL: Record<MarketRegime, string> = {
   caution: "Thận trọng",
 };
 
+// Chỉ hiển thị 8 năm gần nhất — chỉ báo (SMA50/ADX/Supertrend) vẫn được
+// tính trên toàn bộ lịch sử trước khi cắt, để không bị lệch ở đầu đoạn
+// hiển thị do thiếu dữ liệu làm nóng.
+const DISPLAY_YEARS = 8;
+// Khối lượng khớp lệnh theo tuần so với trung bình 52 tuần (~1 năm) gần
+// nhất — cùng khung tuần với chính biểu đồ này, khác với gauge "Dòng
+// tiền" ở banner (dùng dữ liệu NGÀY, trả lời câu hỏi "hôm nay" tức thời).
+const VOLUME_WINDOW_WEEKS = 52;
+
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
@@ -63,31 +72,31 @@ function VolumeTooltip({ active, payload }: { active?: boolean; payload?: { payl
   );
 }
 
-// Chỉ hiển thị 8 năm gần nhất — chỉ báo (SMA50/ADX/Supertrend) vẫn được
-// tính trên toàn bộ lịch sử trước khi cắt, để không bị lệch ở đầu đoạn
-// hiển thị do thiếu dữ liệu làm nóng.
-const DISPLAY_YEARS = 8;
-
-// "Trạng thái thị trường qua các năm" — VNINDEX's history, shaded by the
-// same regime classification as MarketOverviewBanner (utils/
-// marketRegime.ts), with the % gain reached after each fresh move into
-// "Tích cực" labeled directly on the chart. The panel below plots VNINDEX's
-// own matched volume against its trailing 250-session average, the same
-// money-flow proxy the banner's gauge reads off of.
+// "Trạng thái thị trường qua các năm" — VNINDEX theo TUẦN (không phải
+// ngày — xem utils/marketRegime.ts: chạy combo SMA20/50+ADX+Supertrend
+// trên nến ngày đổi trạng thái liên tục theo từng dao động nhỏ, không
+// phản ánh đúng khái niệm "trạng thái thị trường" kéo dài hàng tháng),
+// shaded by the same regime classification as MarketOverviewBanner, with
+// the % gain reached after each fresh move into "Tích cực" labeled
+// directly on the chart. The panel below plots the same weekly volume
+// against its trailing 52-week average.
 export default function MarketRegimeChart() {
   const { data } = usePolling(() => fetchHistory("VNINDEX", "MAX"), [], 5 * 60 * 1000);
 
   const { series, bands, transitions, volumeRows } = useMemo(() => {
     if (!data) return { series: [], bands: [], transitions: [], volumeRows: [] };
-    const daily = aggregatePoints(data.points, "D");
-    const fullRegimeSeries = computeMarketRegimeSeries(daily);
+    const weekly = aggregatePoints(data.points, "W");
+    const fullRegimeSeries = computeMarketRegimeSeries(weekly);
     if (fullRegimeSeries.length === 0) return { series: [], bands: [], transitions: [], volumeRows: [] };
 
+    const weeklyVolumeByTime = new Map(weekly.map((w) => [w.time, w.volume]));
     const fullVolumeRows = fullRegimeSeries.map((bar, i) => {
-      const windowStart = Math.max(0, i - 249);
+      const windowStart = Math.max(0, i - (VOLUME_WINDOW_WEEKS - 1));
       const windowBars = fullRegimeSeries.slice(windowStart, i + 1);
-      const avgVol = windowBars.reduce((sum, b) => sum + b.volume, 0) / windowBars.length;
-      return { time: bar.time, ratioPct: avgVol > 0 ? (bar.volume / avgVol) * 100 : 0 };
+      const avgVol =
+        windowBars.reduce((sum, b) => sum + (weeklyVolumeByTime.get(b.time) ?? 0), 0) / windowBars.length;
+      const vol = weeklyVolumeByTime.get(bar.time) ?? 0;
+      return { time: bar.time, ratioPct: avgVol > 0 ? (vol / avgVol) * 100 : 0 };
     });
 
     const lastTime = new Date(fullRegimeSeries[fullRegimeSeries.length - 1].time).getTime();
@@ -112,7 +121,7 @@ export default function MarketRegimeChart() {
         </h3>
       </div>
       <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-        VNINDEX theo ngày, {DISPLAY_YEARS} năm gần nhất. Nền màu là trạng thái thị trường; số % là mức tăng tới
+        VNINDEX theo tuần, {DISPLAY_YEARS} năm gần nhất. Nền màu là trạng thái thị trường; số % là mức tăng tới
         đỉnh đạt được sau mỗi lần chuyển sang Tích cực.
       </p>
       <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-slate-500 dark:text-slate-400">
@@ -169,7 +178,7 @@ export default function MarketRegimeChart() {
       </div>
 
       <h4 className="mt-5 text-xs font-semibold text-slate-700 dark:text-slate-300">
-        Khối lượng khớp lệnh so với mức bình thường của 250 phiên
+        Khối lượng khớp lệnh theo tuần so với mức bình thường của {VOLUME_WINDOW_WEEKS} tuần
       </h4>
       <div className="mt-2 h-32">
         <ResponsiveContainer width="100%" height="100%">
