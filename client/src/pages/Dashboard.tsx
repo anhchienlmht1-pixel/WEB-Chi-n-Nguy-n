@@ -8,6 +8,8 @@ import MarketMovers from "../components/MarketMovers";
 import TechnicalChartPanel from "../components/TechnicalChartPanel";
 import IndexTicker from "../components/IndexTicker";
 import LeaderBoard from "../components/LeaderBoard";
+import MarketOverviewBanner from "../components/MarketOverviewBanner";
+import MarketRegimeChart from "../components/MarketRegimeChart";
 import TrendSignalScanner from "../components/TrendSignalScanner";
 import SpecialOffers from "../components/SpecialOffers";
 import TrendSystemStats from "../components/TrendSystemStats";
@@ -61,7 +63,13 @@ export default function Dashboard() {
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-8">
       <div className="space-y-14">
-        {/* Leader Board — first thing a visitor sees */}
+        {/* Market Overview — first thing a visitor sees */}
+        <div className="space-y-4">
+          <MarketOverviewBanner />
+          <MarketRegimeChart />
+        </div>
+
+        {/* Leader Board */}
         <div>
           <div className="mb-5">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">Xếp hạng</h2>
