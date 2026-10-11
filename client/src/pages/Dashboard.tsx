@@ -5,6 +5,7 @@ import TopTraded from "../components/TopTraded";
 import MarketMovers from "../components/MarketMovers";
 import IndexTicker from "../components/IndexTicker";
 import LeaderBoard from "../components/LeaderBoard";
+import LeaderBoardBreadthHistory from "../components/LeaderBoardBreadthHistory";
 import MarketOverviewBanner from "../components/MarketOverviewBanner";
 import MarketRegimeChart from "../components/MarketRegimeChart";
 import SpecialOffers from "../components/SpecialOffers";
@@ -33,6 +34,7 @@ export default function Dashboard() {
             <h3 className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100">Bảng xếp hạng thị trường</h3>
           </div>
           <LeaderBoard />
+          <LeaderBoardBreadthHistory />
         </div>
 
         {/* Index Ticker */}

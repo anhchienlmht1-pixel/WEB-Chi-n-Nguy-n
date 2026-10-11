@@ -184,6 +184,31 @@ export async function fetchStockStrength(): Promise<StockStrengthSheet> {
   return data;
 }
 
+export interface SectorBreadth {
+  sector: string;
+  leadingCount: number;
+  totalCount: number;
+  breadthPct: number;
+}
+
+export interface StockStrengthSnapshot {
+  date: string;
+  leadingCount: number;
+  totalCount: number;
+  breadthPct: number;
+  bySector: SectorBreadth[];
+}
+
+export interface StockStrengthHistory {
+  enabled: boolean;
+  items: StockStrengthSnapshot[];
+}
+
+export async function fetchStockStrengthHistory(): Promise<StockStrengthHistory> {
+  const { data } = await api.get("/stock-strength/history");
+  return data;
+}
+
 export interface PbHistoryTable {
   symbols: string[];
   rows: { date: string; values: (number | null)[] }[];
