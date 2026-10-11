@@ -7,17 +7,21 @@ export type MarketRegime = "positive" | "watch" | "caution";
 export interface RegimeBar {
   time: string;
   close: number;
-  volume: number;
   regime: MarketRegime;
 }
 
 // Same trend-following combo the rest of the site already uses per-stock
 // (SMA20>SMA50, ADX(14)>25, Supertrend(10,3)) — applied to VNINDEX itself
 // instead of an individual symbol, to read the market's own regime rather
-// than any single stock's. "positive" = confirmed uptrend (all 3 agree
-// up), "caution" = confirmed downtrend (SMA20<SMA50 or Supertrend down,
-// with ADX strong enough that it isn't just noise), "watch" = everything
-// in between (choppy / ADX too weak to call a clear trend either way).
+// than any single stock's. Fed WEEKLY bars (not daily): a "market regime"
+// is meant to persist for months, and running this same combo on daily
+// closes flips far too often (every minor wiggle crosses SMA20/SMA50),
+// which read as noise rather than a regime. Weekly smooths that out while
+// still being the identical rule, not a different one.
+// "positive" = confirmed uptrend (all 3 agree up), "caution" = confirmed
+// downtrend (SMA20<SMA50 or Supertrend down, with ADX strong enough that
+// it isn't just noise), "watch" = everything in between (choppy / ADX too
+// weak to call a clear trend either way).
 export function computeMarketRegimeSeries(points: HistoryPoint[]): RegimeBar[] {
   if (points.length < 51) return [];
 
@@ -47,7 +51,7 @@ export function computeMarketRegimeSeries(points: HistoryPoint[]): RegimeBar[] {
     else if ((s20 < s50 || direction === -1) && adxVal > 25) regime = "caution";
     else regime = "watch";
 
-    out.push({ time: points[i].time, close: points[i].close, volume: points[i].volume, regime });
+    out.push({ time: points[i].time, close: points[i].close, regime });
   }
   return out;
 }
@@ -119,36 +123,38 @@ export function findPositiveTransitions(series: RegimeBar[], bands: RegimeBand[]
   return transitions;
 }
 
-export interface MarketOverviewSummary {
+export interface RegimeSummary {
   regime: MarketRegime;
   sinceTime: string;
-  sessionsCount: number;
-  // Today's volume vs the trailing-250-session average, as a % (100% =
-  // exactly average). Uses VNINDEX's own matched volume as the market-wide
-  // money-flow proxy — the only turnover series this site has history for.
-  moneyFlowPct: number;
-  // Share of the currently-polled watchlist quotes closing down today —
-  // a live breadth reading, not a historical series (nothing here persists
-  // day-by-day breadth), labeled Cạn dần / Yếu dần / Còn mạnh.
-  sellPressurePct: number;
+  // Number of consecutive bars (weeks, since computeMarketRegimeSeries is
+  // fed weekly data) the current regime has held.
+  periodsCount: number;
 }
 
-export function summarizeRegime(series: RegimeBar[]): Pick<MarketOverviewSummary, "regime" | "sinceTime" | "sessionsCount" | "moneyFlowPct"> | null {
+export function summarizeRegimeSeries(series: RegimeBar[]): RegimeSummary | null {
   if (series.length === 0) return null;
   const last = series[series.length - 1];
-  let sessionsCount = 1;
+  let periodsCount = 1;
   for (let i = series.length - 2; i >= 0; i--) {
     if (series[i].regime !== last.regime) break;
-    sessionsCount++;
+    periodsCount++;
   }
-  const sinceTime = series[series.length - sessionsCount].time;
+  const sinceTime = series[series.length - periodsCount].time;
+  return { regime: last.regime, sinceTime, periodsCount };
+}
 
-  const windowSize = Math.min(250, series.length);
-  const recentVolumes = series.slice(-windowSize).map((b) => b.volume);
-  const avgVolume = recentVolumes.reduce((a, b) => a + b, 0) / recentVolumes.length;
-  const moneyFlowPct = avgVolume > 0 ? (last.volume / avgVolume) * 100 : 0;
-
-  return { regime: last.regime, sinceTime, sessionsCount, moneyFlowPct };
+// Today's VNINDEX matched volume vs. its own trailing 250-session (daily)
+// average — the only market-wide turnover series this site has history
+// for, used as the "Dòng tiền" gauge's money-flow proxy. Deliberately
+// daily (unlike the weekly regime classification above): "is money
+// flowing in today" is a same-day question, not a months-long one.
+export function computeMoneyFlowPct(dailyPoints: HistoryPoint[]): number | null {
+  if (dailyPoints.length === 0) return null;
+  const last = dailyPoints[dailyPoints.length - 1];
+  const windowSize = Math.min(250, dailyPoints.length);
+  const recent = dailyPoints.slice(-windowSize);
+  const avgVolume = recent.reduce((sum, p) => sum + p.volume, 0) / recent.length;
+  return avgVolume > 0 ? (last.volume / avgVolume) * 100 : 0;
 }
 
 export function computeSellPressurePct(quotes: Quote[]): number {
