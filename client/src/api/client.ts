@@ -209,18 +209,6 @@ export async function fetchStockStrengthHistory(): Promise<StockStrengthHistory>
   return data;
 }
 
-export interface InterestRatePoint {
-  date: string;
-  depositRatePct: number | null;
-  lendingRatePct: number | null;
-  source: string;
-}
-
-export async function fetchInterestRateHistory(): Promise<{ items: InterestRatePoint[] }> {
-  const { data } = await api.get("/interest-rates");
-  return data;
-}
-
 export interface PbHistoryTable {
   symbols: string[];
   rows: { date: string; values: (number | null)[] }[];

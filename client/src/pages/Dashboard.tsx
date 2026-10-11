@@ -8,7 +8,6 @@ import LeaderBoard from "../components/LeaderBoard";
 import LeaderBoardBreadthHistory from "../components/LeaderBoardBreadthHistory";
 import MarketOverviewBanner from "../components/MarketOverviewBanner";
 import MarketRegimeChart from "../components/MarketRegimeChart";
-import InterestRateChart from "../components/InterestRateChart";
 import SpecialOffers from "../components/SpecialOffers";
 import ForeignFlowChart from "../components/ForeignFlowChart";
 import { computeForeignFlowRows } from "../utils/foreignFlow";
@@ -26,7 +25,6 @@ export default function Dashboard() {
         <div className="space-y-4">
           <MarketOverviewBanner />
           <MarketRegimeChart />
-          <InterestRateChart />
         </div>
 
         {/* Leader Board */}
