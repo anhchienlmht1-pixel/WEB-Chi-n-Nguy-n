@@ -18,9 +18,9 @@ import { buildQuarterlySeries, average, last, type QuarterRow } from "../utils/f
 import { formatPercent } from "../utils/format";
 
 const REVENUE_COLOR = "#93c5fd";
-const PROFIT_COLOR = "#00c694";
+const PROFIT_COLOR = "#6b9080";
 const PE_COLOR = "#3b82f6";
-const PB_COLOR = "#00c694";
+const PB_COLOR = "#6b9080";
 const WINDOW = 12;
 
 function fmtBn(v: number | null): string {

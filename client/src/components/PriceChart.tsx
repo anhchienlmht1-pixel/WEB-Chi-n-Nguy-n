@@ -131,12 +131,12 @@ const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
       mainSeries = chart.addSeries(BarSeries, { upColor: UP, downColor: DOWN }, 0);
       mainSeries.setData(candleData);
     } else if (chartType === "line") {
-      mainSeries = chart.addSeries(LineSeries, { color: "#00c694", lineWidth: 2 }, 0);
+      mainSeries = chart.addSeries(LineSeries, { color: "#6b9080", lineWidth: 2 }, 0);
       mainSeries.setData(candleData.map((c) => ({ time: c.time, value: c.close })));
     } else if (chartType === "area") {
       mainSeries = chart.addSeries(
         AreaSeries,
-        { lineColor: "#00c694", topColor: "rgba(0,198,148,0.35)", bottomColor: "rgba(0,198,148,0.02)" },
+        { lineColor: "#6b9080", topColor: "rgba(107,144,128,0.35)", bottomColor: "rgba(107,144,128,0.02)" },
         0
       );
       mainSeries.setData(candleData.map((c) => ({ time: c.time, value: c.close })));
