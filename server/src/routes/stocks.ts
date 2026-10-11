@@ -23,7 +23,6 @@ import { scanPbComparison, BANK_SYMBOLS, SECURITIES_SYMBOLS, REAL_ESTATE_SYMBOLS
 import { fetchVndirectLogos, fetchVndirectCompanyProfilesRaw } from "../providers/vndirectLogos.js";
 import { fetchDomainFavicons, debugFaviconForDomain } from "../providers/domainFavicons.js";
 import { COMPANY_DOMAINS } from "../data/companyDomains.js";
-import { INTEREST_RATE_HISTORY } from "../data/interestRateHistory.js";
 import { buildDailyDigest } from "../digest/marketDigest.js";
 import { enrichDailyDigest } from "../digest/enrich.js";
 import { saveDigestToHistory, listDigestHistory, getDigestFromHistory, isDigestHistoryEnabled } from "../digest/digestHistory.js";
@@ -322,13 +321,6 @@ router.get(
     res.json(data);
   })
 );
-
-// Static, manually-curated list (see data/interestRateHistory.ts for why
-// there's no live feed to poll) — served as-is, no caching needed for a
-// handful of hardcoded points.
-router.get("/interest-rates", (_req, res) => {
-  res.json({ items: INTEREST_RATE_HISTORY });
-});
 
 // Lightweight day-by-day breadth history (leading-stock % overall and per
 // sector) — empty (not an error) when Blob storage isn't configured, so
