@@ -50,6 +50,25 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
+// Recharts' own tick spacing (minTickGap) places ticks every N pixels
+// along the axis, independent of what the formatter prints — with weekly
+// data and a formatter that collapses each tick down to just the year,
+// that produces several adjacent ticks all showing the same year. Passing
+// an explicit `ticks` list (one tick per calendar year, at that year's
+// first bar) sidesteps the auto-placement entirely so each year shows once.
+function yearTicks(rows: { time: string }[]): string[] {
+  const out: string[] = [];
+  let lastYear = "";
+  for (const row of rows) {
+    const year = row.time.slice(0, 4);
+    if (year !== lastYear) {
+      out.push(row.time);
+      lastYear = year;
+    }
+  }
+  return out;
+}
+
 function PriceTooltip({ active, payload }: { active?: boolean; payload?: { payload: { time: string; close: number } }[] }) {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
@@ -112,6 +131,8 @@ export default function MarketRegimeChart() {
 
   if (series.length === 0) return null;
 
+  const xTicks = yearTicks(series);
+
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
       <div className="flex items-center justify-between gap-2">
@@ -138,10 +159,10 @@ export default function MarketRegimeChart() {
           <LineChart data={series} margin={{ top: 20, right: 8, bottom: 0, left: 0 }}>
             <XAxis
               dataKey="time"
+              ticks={xTicks}
               tickFormatter={(t: string) => new Date(t).getFullYear().toString()}
               tick={{ fontSize: 10, fill: "currentColor" }}
               className="text-slate-500 dark:text-slate-400"
-              minTickGap={60}
             />
             <YAxis tick={{ fontSize: 10, fill: "currentColor" }} className="text-slate-500 dark:text-slate-400" width={48} domain={["auto", "auto"]} />
             <Tooltip content={<PriceTooltip />} />
@@ -185,10 +206,10 @@ export default function MarketRegimeChart() {
           <LineChart data={volumeRows} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
             <XAxis
               dataKey="time"
+              ticks={xTicks}
               tickFormatter={(t: string) => new Date(t).getFullYear().toString()}
               tick={{ fontSize: 10, fill: "currentColor" }}
               className="text-slate-500 dark:text-slate-400"
-              minTickGap={60}
             />
             <YAxis tick={{ fontSize: 10, fill: "currentColor" }} className="text-slate-500 dark:text-slate-400" width={40} tickFormatter={(v) => `${v}%`} />
             <ReferenceLine y={120} stroke="#16a34a" strokeDasharray="4 4" strokeOpacity={0.6} />
