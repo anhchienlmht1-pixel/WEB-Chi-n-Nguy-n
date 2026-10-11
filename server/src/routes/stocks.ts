@@ -27,6 +27,11 @@ import { buildDailyDigest } from "../digest/marketDigest.js";
 import { enrichDailyDigest } from "../digest/enrich.js";
 import { saveDigestToHistory, listDigestHistory, getDigestFromHistory, isDigestHistoryEnabled } from "../digest/digestHistory.js";
 import { fetchStockStrength } from "../providers/stockStrength.js";
+import {
+  recordStockStrengthSnapshot,
+  listStockStrengthHistory,
+  isStockStrengthHistoryEnabled,
+} from "../providers/stockStrengthHistory.js";
 import { buildFundInsight } from "../signals/fundInsight.js";
 import inspectFmarketApi from "../providers/fmarketInspect.js";
 
@@ -298,9 +303,33 @@ router.get(
   asyncHandler(async (_req, res) => {
     // Same 5 min TTL reasoning as investment-outlook — the sheet's owner
     // can edit it and see the change on the site fairly quickly, without
-    // hammering Google Sheets on every page view.
-    const data = await cached("stock-strength", 300, fetchStockStrength, { staleOnError: true });
+    // hammering Google Sheets on every page view. Each re-fetch also
+    // records today's breadth snapshot to the durable history archive
+    // (see providers/stockStrengthHistory.ts) — the sheet itself only
+    // ever shows today's scores, so this is the only place that history
+    // ever gets written.
+    const data = await cached(
+      "stock-strength",
+      300,
+      async () => {
+        const sheet = await fetchStockStrength();
+        await recordStockStrengthSnapshot(sheet);
+        return sheet;
+      },
+      { staleOnError: true }
+    );
     res.json(data);
+  })
+);
+
+// Lightweight day-by-day breadth history (leading-stock % overall and per
+// sector) — empty (not an error) when Blob storage isn't configured, so
+// the UI can just hide the chart instead of showing an error state.
+router.get(
+  "/stock-strength/history",
+  asyncHandler(async (_req, res) => {
+    const items = await cached("stock-strength-history", 300, () => listStockStrengthHistory());
+    res.json({ enabled: isStockStrengthHistoryEnabled(), items });
   })
 );
 
