@@ -63,8 +63,13 @@ function VolumeTooltip({ active, payload }: { active?: boolean; payload?: { payl
   );
 }
 
-// "Trạng thái thị trường qua các năm" — VNINDEX's full history, shaded by
-// the same regime classification as MarketOverviewBanner (utils/
+// Chỉ hiển thị 8 năm gần nhất — chỉ báo (SMA50/ADX/Supertrend) vẫn được
+// tính trên toàn bộ lịch sử trước khi cắt, để không bị lệch ở đầu đoạn
+// hiển thị do thiếu dữ liệu làm nóng.
+const DISPLAY_YEARS = 8;
+
+// "Trạng thái thị trường qua các năm" — VNINDEX's history, shaded by the
+// same regime classification as MarketOverviewBanner (utils/
 // marketRegime.ts), with the % gain reached after each fresh move into
 // "Tích cực" labeled directly on the chart. The panel below plots VNINDEX's
 // own matched volume against its trailing 250-session average, the same
@@ -75,16 +80,23 @@ export default function MarketRegimeChart() {
   const { series, bands, transitions, volumeRows } = useMemo(() => {
     if (!data) return { series: [], bands: [], transitions: [], volumeRows: [] };
     const daily = aggregatePoints(data.points, "D");
-    const regimeSeries = computeMarketRegimeSeries(daily);
-    const regimeBands = collapseRegimeBands(regimeSeries);
-    const positiveTransitions = findPositiveTransitions(regimeSeries, regimeBands);
+    const fullRegimeSeries = computeMarketRegimeSeries(daily);
+    if (fullRegimeSeries.length === 0) return { series: [], bands: [], transitions: [], volumeRows: [] };
 
-    const volumeRows = regimeSeries.map((bar, i) => {
+    const fullVolumeRows = fullRegimeSeries.map((bar, i) => {
       const windowStart = Math.max(0, i - 249);
-      const windowBars = regimeSeries.slice(windowStart, i + 1);
+      const windowBars = fullRegimeSeries.slice(windowStart, i + 1);
       const avgVol = windowBars.reduce((sum, b) => sum + b.volume, 0) / windowBars.length;
       return { time: bar.time, ratioPct: avgVol > 0 ? (bar.volume / avgVol) * 100 : 0 };
     });
+
+    const lastTime = new Date(fullRegimeSeries[fullRegimeSeries.length - 1].time).getTime();
+    const cutoff = lastTime - DISPLAY_YEARS * 365 * 86_400_000;
+    const regimeSeries = fullRegimeSeries.filter((bar) => new Date(bar.time).getTime() >= cutoff);
+    const volumeRows = fullVolumeRows.filter((row) => new Date(row.time).getTime() >= cutoff);
+
+    const regimeBands = collapseRegimeBands(regimeSeries);
+    const positiveTransitions = findPositiveTransitions(regimeSeries, regimeBands);
 
     return { series: regimeSeries, bands: regimeBands, transitions: positiveTransitions, volumeRows };
   }, [data]);
@@ -100,8 +112,8 @@ export default function MarketRegimeChart() {
         </h3>
       </div>
       <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-        VNINDEX theo ngày. Nền màu là trạng thái thị trường; số % là mức tăng tới đỉnh đạt được sau mỗi lần chuyển
-        sang Tích cực.
+        VNINDEX theo ngày, {DISPLAY_YEARS} năm gần nhất. Nền màu là trạng thái thị trường; số % là mức tăng tới
+        đỉnh đạt được sau mỗi lần chuyển sang Tích cực.
       </p>
       <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-slate-500 dark:text-slate-400">
         {(["positive", "watch", "caution"] as MarketRegime[]).map((r) => (
