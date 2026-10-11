@@ -11,7 +11,7 @@ export default function StockStrength() {
   const [chartSymbol, setChartSymbol] = useState(DEFAULT_CHART_SYMBOL);
 
   return (
-    <div className="mx-auto max-w-[1600px] px-4 py-6">
+    <div className="mx-auto max-w-[1800px] px-4 py-6">
       <div className="mb-8">
         <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-400">Chiến lược giao dịch</h2>
         <h1 className="mt-1 mb-2 text-3xl font-bold text-slate-900 dark:text-slate-100">

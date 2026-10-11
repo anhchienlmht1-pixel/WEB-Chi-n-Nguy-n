@@ -37,7 +37,7 @@ export default function StockDetail() {
 
   if (quoteState.error && !quote) {
     return (
-      <div className="mx-auto max-w-[1400px] px-4 py-10 text-center">
+      <div className="mx-auto max-w-[1800px] px-4 py-10 text-center">
         <p className="text-slate-500 dark:text-slate-400">
           Không tải được mã "{symbol}": {quoteState.error}
         </p>
@@ -46,7 +46,7 @@ export default function StockDetail() {
   }
 
   return (
-    <div className="mx-auto max-w-[1400px] px-4 py-6">
+    <div className="mx-auto max-w-[1800px] px-4 py-6">
       {quote && (
         <>
           <div className="mb-8 rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900/40">

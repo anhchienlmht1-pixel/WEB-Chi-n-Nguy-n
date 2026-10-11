@@ -61,7 +61,7 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className="mx-auto max-w-[1400px] px-4 py-8">
+    <div className="mx-auto max-w-[1800px] px-4 py-8">
       <div className="space-y-14">
         {/* Market Overview — first thing a visitor sees */}
         <div className="space-y-4">

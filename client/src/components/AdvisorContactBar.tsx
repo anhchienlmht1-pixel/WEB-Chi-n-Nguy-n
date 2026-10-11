@@ -9,7 +9,7 @@ import { ArrowRight, Phone } from "lucide-react";
 export default function AdvisorContactBar() {
   return (
     <div className="sticky bottom-0 z-20 -mx-4 mt-6 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">
-      <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-3">
+      <div className="mx-auto flex max-w-[1800px] flex-wrap items-center justify-between gap-3">
         <div className="min-w-0 text-sm">
           <span className="font-semibold text-slate-900 dark:text-slate-100">Nguyễn Anh Chiến</span>
           <span className="mx-2 text-slate-300 dark:text-slate-700">·</span>
