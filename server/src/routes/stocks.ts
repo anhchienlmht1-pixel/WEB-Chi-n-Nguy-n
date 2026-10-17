@@ -25,7 +25,6 @@ import { fetchDomainFavicons, debugFaviconForDomain } from "../providers/domainF
 import { COMPANY_DOMAINS } from "../data/companyDomains.js";
 import { BANK_DEPOSIT_RATES, BANK_DEPOSIT_RATES_AS_OF } from "../data/bankDepositRates.js";
 import { fetchLiveBankDepositRates } from "../providers/bankRateScraper.js";
-import { VNINDEX_VS_VCB_RATE, VNINDEX_VS_VCB_RATE_AS_OF } from "../data/vnindexVsVcbRate.js";
 import { buildDailyDigest } from "../digest/marketDigest.js";
 import { enrichDailyDigest } from "../digest/enrich.js";
 import { saveDigestToHistory, listDigestHistory, getDigestFromHistory, isDigestHistoryEnabled } from "../digest/digestHistory.js";
@@ -361,13 +360,6 @@ router.get(
     res.json(data);
   })
 );
-
-// Static snapshot (see data/vnindexVsVcbRate.ts) — VNINDEX vs VCB's
-// 6-month deposit rate, weekly, limited to the window SSI's rate history
-// actually covers.
-router.get("/vnindex-vs-vcb-rate", (_req, res) => {
-  res.json({ asOf: VNINDEX_VS_VCB_RATE_AS_OF, points: VNINDEX_VS_VCB_RATE });
-});
 
 router.get(
   "/bank-pb-history",
