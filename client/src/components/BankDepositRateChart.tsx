@@ -44,7 +44,7 @@ function ChartTooltip({ active, payload }: { active?: boolean; payload?: { paylo
 // lãi suất cho vay: SSI không có nguồn nào cho mục này, chỉ có lãi suất
 // tiền gửi theo kỳ hạn của từng ngân hàng). Xem data/bankDepositRates.ts
 // phía server — bảng/biểu đồ này không tự cập nhật theo thời gian thực.
-export default function BankDepositRateTable() {
+export default function BankDepositRateChart() {
   const { data } = usePolling(() => fetchBankDepositRates(), [], 30 * 60 * 1000);
   const [term, setTerm] = useState<SelectedTerm>("avg");
 
@@ -128,50 +128,6 @@ export default function BankDepositRateTable() {
         </p>
       )}
 
-      {/* Full term table */}
-      <div className="mt-4 overflow-x-auto border-t border-slate-200 pt-3 dark:border-slate-800">
-        <table className="w-full min-w-[720px] text-xs">
-          <thead>
-            <tr className="border-b border-slate-200 text-left text-slate-500 dark:border-slate-800 dark:text-slate-400">
-              <th className="sticky left-0 bg-white py-1.5 pr-3 font-medium dark:bg-slate-900/40">Ngân hàng</th>
-              {TERM_KEYS.map((k) => (
-                <th key={k} className="px-2 py-1.5 text-right font-medium tabular-nums">
-                  {k} th
-                </th>
-              ))}
-              <th className="pl-2 py-1.5 text-right font-semibold">Bình quân</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(({ row, avg }) => (
-              <tr key={row.bank} className="border-b border-slate-100 last:border-0 dark:border-slate-800/60">
-                <td className="sticky left-0 bg-white py-1.5 pr-3 font-medium text-slate-900 dark:bg-slate-900/40 dark:text-slate-100">
-                  {row.bank}
-                </td>
-                {TERM_KEYS.map((k) => (
-                  <td
-                    key={k}
-                    className={`px-2 py-1.5 text-right tabular-nums ${
-                      term === k
-                        ? "font-semibold text-emerald-700 dark:text-emerald-400"
-                        : "text-slate-600 dark:text-slate-300"
-                    }`}
-                  >
-                    {row.terms[k] !== null ? row.terms[k]!.toFixed(2) : "—"}
-                  </td>
-                ))}
-                <td
-                  className={`pl-2 py-1.5 text-right font-semibold tabular-nums ${
-                    term === "avg" ? "text-emerald-700 dark:text-emerald-400" : "text-slate-900 dark:text-slate-100"
-                  }`}
-                >
-                  {avg !== null ? `${avg.toFixed(2)}%` : "—"}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
       <p className="mt-2 text-[10px] text-slate-400 dark:text-slate-500">
         "Bình quân" tính trên các kỳ hạn có sản phẩm thực tế (loại bỏ kỳ hạn ngân hàng không công bố). Không gồm tiền
         gửi không kỳ hạn. Không phải khuyến nghị đầu tư.
