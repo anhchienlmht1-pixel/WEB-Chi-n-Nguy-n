@@ -224,17 +224,6 @@ export async function fetchBankDepositRates(): Promise<BankDepositRates> {
   return data;
 }
 
-export interface VnindexVcbRatePoint {
-  date: string;
-  vnindex: number;
-  vcb6mRate: number;
-}
-
-export async function fetchVnindexVsVcbRate(): Promise<{ asOf: string; points: VnindexVcbRatePoint[] }> {
-  const { data } = await api.get("/vnindex-vs-vcb-rate");
-  return data;
-}
-
 export interface PbHistoryTable {
   symbols: string[];
   rows: { date: string; values: (number | null)[] }[];
