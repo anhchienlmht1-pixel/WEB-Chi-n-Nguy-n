@@ -9,6 +9,7 @@ import LeaderBoardBreadthHistory from "../components/LeaderBoardBreadthHistory";
 import MarketOverviewBanner from "../components/MarketOverviewBanner";
 import MarketRegimeChart from "../components/MarketRegimeChart";
 import BankDepositRateChart from "../components/BankDepositRateChart";
+import VnindexVsDepositRateChart from "../components/VnindexVsDepositRateChart";
 import ForeignFlowChart from "../components/ForeignFlowChart";
 import { computeForeignFlowRows } from "../utils/foreignFlow";
 
@@ -26,6 +27,7 @@ export default function Dashboard() {
           <MarketOverviewBanner />
           <MarketRegimeChart />
           <BankDepositRateChart />
+          <VnindexVsDepositRateChart />
         </div>
 
         {/* Leader Board */}
