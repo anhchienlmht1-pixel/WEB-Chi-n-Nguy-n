@@ -209,6 +209,21 @@ export async function fetchStockStrengthHistory(): Promise<StockStrengthHistory>
   return data;
 }
 
+export interface BankDepositRateRow {
+  bank: string;
+  terms: Record<"1" | "3" | "6" | "9" | "12" | "13" | "18" | "24" | "36", number | null>;
+}
+
+export interface BankDepositRates {
+  asOf: string;
+  banks: BankDepositRateRow[];
+}
+
+export async function fetchBankDepositRates(): Promise<BankDepositRates> {
+  const { data } = await api.get("/bank-deposit-rates");
+  return data;
+}
+
 export interface PbHistoryTable {
   symbols: string[];
   rows: { date: string; values: (number | null)[] }[];

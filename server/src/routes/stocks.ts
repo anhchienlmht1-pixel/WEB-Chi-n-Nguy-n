@@ -23,6 +23,7 @@ import { scanPbComparison, BANK_SYMBOLS, SECURITIES_SYMBOLS, REAL_ESTATE_SYMBOLS
 import { fetchVndirectLogos, fetchVndirectCompanyProfilesRaw } from "../providers/vndirectLogos.js";
 import { fetchDomainFavicons, debugFaviconForDomain } from "../providers/domainFavicons.js";
 import { COMPANY_DOMAINS } from "../data/companyDomains.js";
+import { BANK_DEPOSIT_RATES, BANK_DEPOSIT_RATES_AS_OF } from "../data/bankDepositRates.js";
 import { buildDailyDigest } from "../digest/marketDigest.js";
 import { enrichDailyDigest } from "../digest/enrich.js";
 import { saveDigestToHistory, listDigestHistory, getDigestFromHistory, isDigestHistoryEnabled } from "../digest/digestHistory.js";
@@ -332,6 +333,13 @@ router.get(
     res.json({ enabled: isStockStrengthHistoryEnabled(), items });
   })
 );
+
+// Static, manually-curated snapshot (see data/bankDepositRates.ts) — no
+// lending-rate column because SSI has no source for it, only deposit
+// rates per bank/term.
+router.get("/bank-deposit-rates", (_req, res) => {
+  res.json({ asOf: BANK_DEPOSIT_RATES_AS_OF, banks: BANK_DEPOSIT_RATES });
+});
 
 router.get(
   "/bank-pb-history",
