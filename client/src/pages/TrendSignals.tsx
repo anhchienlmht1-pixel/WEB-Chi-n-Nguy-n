@@ -41,7 +41,7 @@ export default function TrendSignals() {
     if (!historyState.data) return [];
     const chartPoints = aggregatePoints(historyState.data.points, "D");
     const result = computeTradingSignals(chartPoints);
-    return result.all;
+    return result.transitions;
   }, [historyState.data]);
 
   return (
