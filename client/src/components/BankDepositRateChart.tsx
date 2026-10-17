@@ -40,10 +40,10 @@ function ChartTooltip({ active, payload }: { active?: boolean; payload?: { paylo
   );
 }
 
-// "Lãi suất huy động trung bình" — snapshot tĩnh lấy từ SSI (không có
-// lãi suất cho vay: SSI không có nguồn nào cho mục này, chỉ có lãi suất
-// tiền gửi theo kỳ hạn của từng ngân hàng). Xem data/bankDepositRates.ts
-// phía server — bảng/biểu đồ này không tự cập nhật theo thời gian thực.
+// "Lãi suất huy động trung bình" — cào trực tiếp từ 24hmoney.vn mỗi giờ
+// (server/src/providers/bankRateScraper.ts), rơi về snapshot tĩnh cũ nếu
+// cào lỗi. Vẫn không có lãi suất cho vay — không nguồn nào ở đây có mục
+// này, chỉ có lãi suất tiền gửi theo kỳ hạn của từng ngân hàng.
 export default function BankDepositRateChart() {
   const { data } = usePolling(() => fetchBankDepositRates(), [], 30 * 60 * 1000);
   const [term, setTerm] = useState<SelectedTerm>("avg");
@@ -72,8 +72,8 @@ export default function BankDepositRateChart() {
         <span className="text-xs text-slate-500 dark:text-slate-400">Cập nhật: {formatDate(data.asOf)}</span>
       </div>
       <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-        Lãi suất tiền gửi (%/năm) theo kỳ hạn của 11 ngân hàng, nguồn SSI — snapshot tĩnh, không gồm lãi suất cho vay
-        (không có nguồn dữ liệu cho mục này).
+        Lãi suất tiền gửi (%/năm) theo kỳ hạn, cào trực tiếp mỗi giờ — không gồm lãi suất cho vay (không có nguồn dữ
+        liệu cho mục này).
       </p>
 
       {/* Term selector */}
