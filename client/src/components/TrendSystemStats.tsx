@@ -13,14 +13,15 @@ export default function TrendSystemStats({ signals, symbol }: Props) {
   }
 
   const stats = useMemo(() => {
-    // Find all "Bán hết" (sell all) signals which mark the end of a trade
-    const sellSignals = signals.filter((s) => s.type === "sell" && s.note?.includes("Bán hết"));
+    // Find all "Đóng deal" signals — always a full close of the position
+    // (whatever tranches were still open), which mark the end of a trade
+    const sellSignals = signals.filter((s) => s.type === "sell" && s.note?.includes("Đóng deal"));
 
     if (sellSignals.length === 0) {
       return null;
     }
 
-    // Extract P&L from the note: "Bán hết 2/3 (+12.4%)" -> 12.4
+    // Extract P&L from the note: "Đóng deal 2/3 (+12.4%)" -> 12.4
     const pnlValues = sellSignals
       .map((signal) => {
         const match = signal.note?.match(/([+-]?\d+\.?\d*)\%/);

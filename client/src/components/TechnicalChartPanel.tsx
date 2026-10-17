@@ -175,7 +175,7 @@ export default function TechnicalChartPanel({
           </div>
         </div>
         <div className="border-t border-slate-200 px-2 pb-2 dark:border-slate-800">
-          <TrendSystemStats signals={signalResult.all} symbol={symbol} />
+          <TrendSystemStats signals={signalResult.transitions} symbol={symbol} />
         </div>
       </div>
     </div>

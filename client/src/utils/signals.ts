@@ -79,7 +79,9 @@ export interface TradingSignal {
   price: number;
   type: "buy" | "sell";
   /** Short label drawn next to the marker — tranche number for buys
-   * ("Mua 2/3 (+8.0%)"), realized P&L for sells ("Bán hết 2/3 (+12.4%)").
+   * ("Mua 2/3 (+8.0%)"), realized P&L for sells ("Đóng deal 2/3 (+12.4%)") —
+   * always a full close of whatever tranches were open, so every sell is
+   * worded "Đóng deal" regardless of whether that was 1/3, 2/3 or 3/3.
    * Unset only for `all`'s raw per-bar entries, which nothing renders. */
   note?: string;
 }
@@ -191,7 +193,7 @@ export function computeTradingSignals(points: HistoryPoint[]): TradingSignalsRes
           time: t,
           price: p.high,
           type: "sell",
-          note: `Bán hết ${open.length}/${TRANCHE_COUNT} (${pct(avgCost, p.close)})`,
+          note: `Đóng deal ${open.length}/${TRANCHE_COUNT} (${pct(avgCost, p.close)})`,
         });
       }
       position = null;
