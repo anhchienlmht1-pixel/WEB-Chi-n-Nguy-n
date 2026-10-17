@@ -24,6 +24,7 @@ import { fetchVndirectLogos, fetchVndirectCompanyProfilesRaw } from "../provider
 import { fetchDomainFavicons, debugFaviconForDomain } from "../providers/domainFavicons.js";
 import { COMPANY_DOMAINS } from "../data/companyDomains.js";
 import { BANK_DEPOSIT_RATES, BANK_DEPOSIT_RATES_AS_OF } from "../data/bankDepositRates.js";
+import { fetchLiveBankDepositRates } from "../providers/bankRateScraper.js";
 import { VNINDEX_VS_VCB_RATE, VNINDEX_VS_VCB_RATE_AS_OF } from "../data/vnindexVsVcbRate.js";
 import { buildDailyDigest } from "../digest/marketDigest.js";
 import { enrichDailyDigest } from "../digest/enrich.js";
@@ -335,12 +336,31 @@ router.get(
   })
 );
 
-// Static, manually-curated snapshot (see data/bankDepositRates.ts) — no
-// lending-rate column because SSI has no source for it, only deposit
-// rates per bank/term.
-router.get("/bank-deposit-rates", (_req, res) => {
-  res.json({ asOf: BANK_DEPOSIT_RATES_AS_OF, banks: BANK_DEPOSIT_RATES });
-});
+// Live-scraped (bankRateScraper.ts, 24hmoney.vn) with a 1h cache — falls
+// back to the old static SSI snapshot (data/bankDepositRates.ts) if the
+// scrape fails (unverified page structure — see that file's own comment).
+// Still no lending-rate column: neither source has one.
+router.get(
+  "/bank-deposit-rates",
+  asyncHandler(async (_req, res) => {
+    const data = await cached(
+      "bank-deposit-rates",
+      3600,
+      async () => {
+        try {
+          return await fetchLiveBankDepositRates();
+        } catch (err) {
+          console.error(
+            `[bank-deposit-rates] Cào live thất bại, dùng snapshot tĩnh: ${err instanceof Error ? err.message : String(err)}`
+          );
+          return { asOf: BANK_DEPOSIT_RATES_AS_OF, banks: BANK_DEPOSIT_RATES };
+        }
+      },
+      { staleOnError: true }
+    );
+    res.json(data);
+  })
+);
 
 // Static snapshot (see data/vnindexVsVcbRate.ts) — VNINDEX vs VCB's
 // 6-month deposit rate, weekly, limited to the window SSI's rate history
