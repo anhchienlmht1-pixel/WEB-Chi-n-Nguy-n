@@ -1,13 +1,8 @@
 import { Route, Routes } from 'react-router-dom'
 import Header from './components/Header'
 import Footer from './components/Footer'
-import Dashboard from './pages/Dashboard'
 import TrendSignals from './pages/TrendSignals'
 import StockDetail from './pages/StockDetail'
-import Watchlist from './pages/Watchlist'
-import PbCompare from './pages/PbCompare'
-import DailyDigest from './pages/DailyDigest'
-import StockStrength from './pages/StockStrength'
 import AccountOpeningGuide from './pages/AccountOpeningGuide'
 
 function App() {
@@ -16,16 +11,10 @@ function App() {
       <Header />
       <main className="flex-1">
         <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/thi-truong" element={<Dashboard />} />
-          <Route path="/tin-hieu" element={<TrendSignals />} />
+          <Route path="/" element={<TrendSignals />} />
           <Route path="/stock/:symbol" element={<StockDetail />} />
-          <Route path="/theo-doi" element={<Watchlist />} />
-          <Route path="/so-sanh-pb" element={<PbCompare />} />
-          <Route path="/ban-tin" element={<DailyDigest />} />
-          <Route path="/suc-manh-co-phieu" element={<StockStrength />} />
           <Route path="/huong-dan-mo-tai-khoan" element={<AccountOpeningGuide />} />
-          <Route path="*" element={<Dashboard />} />
+          <Route path="*" element={<TrendSignals />} />
         </Routes>
       </main>
       <Footer />

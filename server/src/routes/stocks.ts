@@ -1,39 +1,19 @@
 import { Router, Request, Response, NextFunction } from "express";
 import NodeCache from "node-cache";
 import { getProvider } from "../providers/index.js";
-import { HistoryRange, TopExchange } from "../providers/types.js";
-import { VALID_EXCHANGES } from "../providers/topTraded.js";
-import { getFullMarketQuotes } from "../providers/vnstockProvider.js";
+import { HistoryRange } from "../providers/types.js";
 import { KbsPeriodType, KbsReportType } from "../providers/kbsFinancials.js";
 import { fetchFinancialReport } from "../providers/financials.js";
-import {
-  getQuoteWithFallback,
-  getHistoryWithFallback,
-  getMarketOverviewWithFallback,
-  getTopTradedWithFallback,
-} from "../providers/fallback.js";
+import { getQuoteWithFallback, getHistoryWithFallback, getMarketOverviewWithFallback } from "../providers/fallback.js";
 import { fetchInvestmentOutlook } from "../providers/googleSheet.js";
-import { fetchMoneyFlowTable } from "../providers/moneyFlowSheet.js";
-import { fetchNewsForSymbol, fetchCafefNews } from "../news/cafefNews.js";
+import { fetchNewsForSymbol } from "../news/cafefNews.js";
 import { getCompanyProfileWithFallback } from "../providers/companyProfileFallback.js";
 import { scanBuySignals } from "../signals/trendScanner.js";
 import { getTradeJournal } from "../signals/tradeJournal.js";
 import { scanMovingAverages } from "../signals/maScanner.js";
-import { scanPbComparison, BANK_SYMBOLS, SECURITIES_SYMBOLS, REAL_ESTATE_SYMBOLS } from "../signals/pbScanner.js";
 import { fetchVndirectLogos, fetchVndirectCompanyProfilesRaw } from "../providers/vndirectLogos.js";
 import { fetchDomainFavicons, debugFaviconForDomain } from "../providers/domainFavicons.js";
 import { COMPANY_DOMAINS } from "../data/companyDomains.js";
-import { BANK_DEPOSIT_RATES, BANK_DEPOSIT_RATES_AS_OF } from "../data/bankDepositRates.js";
-import { fetchLiveBankDepositRates } from "../providers/bankRateScraper.js";
-import { buildDailyDigest } from "../digest/marketDigest.js";
-import { enrichDailyDigest } from "../digest/enrich.js";
-import { saveDigestToHistory, listDigestHistory, getDigestFromHistory, isDigestHistoryEnabled } from "../digest/digestHistory.js";
-import { fetchStockStrength } from "../providers/stockStrength.js";
-import {
-  recordStockStrengthSnapshot,
-  listStockStrengthHistory,
-  isStockStrengthHistoryEnabled,
-} from "../providers/stockStrengthHistory.js";
 import { buildFundInsight } from "../signals/fundInsight.js";
 import inspectFmarketApi from "../providers/fmarketInspect.js";
 
@@ -84,104 +64,10 @@ function asyncHandler(fn: (req: Request, res: Response) => Promise<void>) {
 }
 
 router.get(
-  "/market/top",
-  asyncHandler(async (req, res) => {
-    const exchange = String(req.query.exchange || "ALL").toUpperCase() as TopExchange;
-    const period = String(req.query.period || "day").toLowerCase() as "day" | "week" | "month";
-    if (!VALID_EXCHANGES.includes(exchange)) {
-      res.status(400).json({ error: `Sàn không hợp lệ. Dùng: ${VALID_EXCHANGES.join(", ")}` });
-      return;
-    }
-    const { items, source } = await cached(`top:${exchange}:${period}`, 60, () => getTopTradedWithFallback(exchange));
-    res.json({ provider: source, exchange, period, items });
-  })
-);
-
-router.get(
   "/market/overview",
   asyncHandler(async (_req, res) => {
     const { quotes, source } = await cached("overview", 30, () => getMarketOverviewWithFallback());
     res.json({ provider: source, quotes });
-  })
-);
-
-// Full exchange board (~1,600 HOSE/HNX/UPCOM tickers), separate from
-// /market/overview's curated ~70-symbol watchlist. Only the vnstock (VCI)
-// source has a verified "list every symbol" endpoint, so this always uses
-// that one directly rather than going through the configured DATA_PROVIDER/
-// fallback chain — disclosed via the response's own "provider" field.
-router.get(
-  "/market/board",
-  asyncHandler(async (req, res) => {
-    const exchange = String(req.query.exchange || "ALL").toUpperCase() as TopExchange;
-    if (!VALID_EXCHANGES.includes(exchange)) {
-      res.status(400).json({ error: `Sàn không hợp lệ. Dùng: ${VALID_EXCHANGES.join(", ")}` });
-      return;
-    }
-    const quotes = await cached(`board:${exchange}`, 60, () => getFullMarketQuotes(exchange));
-    res.json({ provider: "vnstock", exchange, quotes });
-  })
-);
-
-// Cache key includes today's date, so the same article is served all day
-// (one topic per day, as intended) and a fresh one is picked right after
-// midnight without needing a separate cron/scheduler. The in-memory cache
-// alone doesn't survive a new day / server restart / a different
-// serverless instance though — saveDigestToHistory persists the finished
-// article to Vercel Blob (best-effort, awaited so it finishes before the
-// response goes out — see digest/digestHistory.ts) the moment it's first
-// generated, so past articles stay browsable via /market/daily-digest/:date.
-async function loadTodayDigest() {
-  const today = new Date().toISOString().slice(0, 10);
-  return cached(`daily-digest:${today}`, 6 * 60 * 60, async () => {
-    const { quotes, source } = await getMarketOverviewWithFallback();
-    const digest = buildDailyDigest(quotes, source);
-    const enriched = await enrichDailyDigest(digest);
-    await saveDigestToHistory(enriched);
-    return enriched;
-  });
-}
-
-router.get(
-  "/market/daily-digest",
-  asyncHandler(async (_req, res) => {
-    res.json(await loadTodayDigest());
-  })
-);
-
-// Lightweight archive list (date/title/topic/heroStat only, no full article
-// bodies) for a "past bài viết" browser — empty (not an error) when Blob
-// storage isn't configured, so the UI can just hide the archive instead.
-router.get(
-  "/market/daily-digest/history",
-  asyncHandler(async (_req, res) => {
-    const items = await cached("daily-digest-history", 300, () => listDigestHistory());
-    res.json({ enabled: isDigestHistoryEnabled(), items });
-  })
-);
-
-// A specific past day's article, read back from the durable archive.
-router.get(
-  "/market/daily-digest/:date",
-  asyncHandler(async (req, res) => {
-    const date = String(req.params.date);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      res.status(400).json({ error: "Ngày không hợp lệ. Định dạng: YYYY-MM-DD" });
-      return;
-    }
-    const today = new Date().toISOString().slice(0, 10);
-    if (date === today) {
-      res.json(await loadTodayDigest());
-      return;
-    }
-    const data = await cached(`daily-digest:${date}`, 24 * 60 * 60, async () => {
-      const found = await getDigestFromHistory(date);
-      if (!found) {
-        throw Object.assign(new Error(`Không tìm thấy bài viết ngày ${date}.`), { status: 404 });
-      }
-      return found;
-    });
-    res.json(data);
   })
 );
 
@@ -264,15 +150,6 @@ router.get(
 );
 
 router.get(
-  "/market/news",
-  asyncHandler(async (req, res) => {
-    const limit = Math.min(60, Math.max(1, Number(req.query.limit) || 30));
-    const items = await cached(`market-news:${limit}`, 600, () => fetchCafefNews(limit));
-    res.json({ items });
-  })
-);
-
-router.get(
   "/investment-outlook",
   asyncHandler(async (req, res) => {
     const gid = req.query.gid as string | undefined;
@@ -280,116 +157,6 @@ router.get(
     // view, short enough that an edit to the sheet shows up on the site
     // without a deploy.
     const data = await cached(`investment-outlook:${gid ?? "default"}`, 300, () => fetchInvestmentOutlook(gid), {
-      staleOnError: true,
-    });
-    res.json(data);
-  })
-);
-
-router.get(
-  "/money-flow",
-  asyncHandler(async (req, res) => {
-    const gid = req.query.gid as string | undefined;
-    // Same 5 min TTL rationale as /investment-outlook — long enough to not
-    // hammer Google Sheets on every page view, short enough that an edit to
-    // the sheet shows up without a deploy.
-    const data = await cached(`money-flow:${gid ?? "default"}`, 300, () => fetchMoneyFlowTable(gid), {
-      staleOnError: true,
-    });
-    res.json(data);
-  })
-);
-
-router.get(
-  "/stock-strength",
-  asyncHandler(async (_req, res) => {
-    // Same 5 min TTL reasoning as investment-outlook — the sheet's owner
-    // can edit it and see the change on the site fairly quickly, without
-    // hammering Google Sheets on every page view. Each re-fetch also
-    // records today's breadth snapshot to the durable history archive
-    // (see providers/stockStrengthHistory.ts) — the sheet itself only
-    // ever shows today's scores, so this is the only place that history
-    // ever gets written.
-    const data = await cached(
-      "stock-strength",
-      300,
-      async () => {
-        const sheet = await fetchStockStrength();
-        await recordStockStrengthSnapshot(sheet);
-        return sheet;
-      },
-      { staleOnError: true }
-    );
-    res.json(data);
-  })
-);
-
-// Lightweight day-by-day breadth history (leading-stock % overall and per
-// sector) — empty (not an error) when Blob storage isn't configured, so
-// the UI can just hide the chart instead of showing an error state.
-router.get(
-  "/stock-strength/history",
-  asyncHandler(async (_req, res) => {
-    const items = await cached("stock-strength-history", 300, () => listStockStrengthHistory());
-    res.json({ enabled: isStockStrengthHistoryEnabled(), items });
-  })
-);
-
-// Live-scraped (bankRateScraper.ts, 24hmoney.vn) with a 1h cache — falls
-// back to the old static SSI snapshot (data/bankDepositRates.ts) if the
-// scrape fails (unverified page structure — see that file's own comment).
-// Still no lending-rate column: neither source has one.
-router.get(
-  "/bank-deposit-rates",
-  asyncHandler(async (_req, res) => {
-    const data = await cached(
-      "bank-deposit-rates",
-      3600,
-      async () => {
-        try {
-          return await fetchLiveBankDepositRates();
-        } catch (err) {
-          console.error(
-            `[bank-deposit-rates] Cào live thất bại, dùng snapshot tĩnh: ${err instanceof Error ? err.message : String(err)}`
-          );
-          return { asOf: BANK_DEPOSIT_RATES_AS_OF, banks: BANK_DEPOSIT_RATES };
-        }
-      },
-      { staleOnError: true }
-    );
-    res.json(data);
-  })
-);
-
-router.get(
-  "/bank-pb-history",
-  asyncHandler(async (_req, res) => {
-    // P/B pulled live from VCI's verified ratio endpoint (quarterly) across
-    // every bank symbol — replaces the earlier Google-Sheet-backed daily
-    // series. A 1h TTL matches the other sector-wide scans (trend-signals,
-    // ma-scan): fanning out over ~27 symbols on every request would be slow
-    // and unnecessary since quarterly ratios don't change intraday.
-    const data = await cached("bank-pb-history", 60 * 60, () => scanPbComparison(BANK_SYMBOLS), {
-      staleOnError: true,
-    });
-    res.json(data);
-  })
-);
-
-router.get(
-  "/securities-pb-history",
-  asyncHandler(async (_req, res) => {
-    const data = await cached("securities-pb-history", 60 * 60, () => scanPbComparison(SECURITIES_SYMBOLS), {
-      staleOnError: true,
-    });
-    res.json(data);
-  })
-);
-
-router.get(
-  "/realestate-pb-history",
-  asyncHandler(async (_req, res) => {
-    const data = await cached("realestate-pb-history", 60 * 60, () => scanPbComparison(REAL_ESTATE_SYMBOLS), {
       staleOnError: true,
     });
     res.json(data);
