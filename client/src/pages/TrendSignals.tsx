@@ -12,11 +12,11 @@ import { computeTradingSignals } from "../utils/signals";
 
 const DEFAULT_SYMBOL = "VNINDEX";
 
-// "Tín hiệu" tab — the chart + whole-market buy-signal scanner + trade
-// journal used to live on the Dashboard ("Toàn cảnh") page; split out
-// into its own tab so that page stays focused on the market-wide
-// overview (regime banner, Leader Board, movers...) instead of also
-// carrying the single-symbol chart workflow.
+// Homepage — chart + whole-market buy-signal scanner + trade journal.
+// The site is intentionally minimal: one page whose whole job is
+// showing Mua/Bán signals and getting a visitor to open an account,
+// not a market-data portal (overview banner, Leader Board, movers,
+// news... were all cut).
 export default function TrendSignals() {
   const { data } = usePolling(fetchMarketOverview, [], 10000);
   const { symbols: watchlist } = useWatchlist();

@@ -39,18 +39,6 @@ export interface HistoryPoint {
 
 export type HistoryRange = "1D" | "1W" | "1M" | "3M" | "6M" | "1Y" | "5Y" | "MAX";
 
-export type TopExchange = "ALL" | "HOSE" | "HNX" | "UPCOM";
-
-export interface TopTradedItem {
-  symbol: string;
-  exchange: string;
-  name?: string;
-  price?: number;
-  changePercent?: number;
-  volume?: number;
-  value?: number;
-}
-
 export interface SearchResult {
   symbol: string;
   name: string;
@@ -78,100 +66,10 @@ export interface FinancialReport {
 export type FinancialReportType = "KQKD" | "CDKT" | "LCTT" | "CSTC";
 export type FinancialPeriodType = "year" | "quarter";
 
-export interface MoneyFlowRecord {
-  symbol: string;
-  sector: string;
-  score: number;
-  /** 1-based position within its sector, already ranked descending by
-   * score in the sheet itself — highest score first. */
-  rank: number;
-}
-
 export interface NewsItem {
   title: string;
   link: string;
   pubDate?: string;
   description?: string;
   source: string;
-}
-
-export type DigestTopic = "spotlight" | "sector" | "liquidity" | "breadth";
-
-export interface DigestHighlight {
-  label: string;
-  value: string;
-  tone: "up" | "down" | "neutral";
-}
-
-export interface DigestStockRef {
-  symbol: string;
-  name: string;
-  exchange: string;
-  price: number;
-  changePercent: number;
-  volume: number;
-}
-
-export interface DigestHeroStat {
-  value: string;
-  label: string;
-  tone: "up" | "down" | "neutral";
-}
-
-export interface DigestMarketPulse {
-  advancers: number;
-  decliners: number;
-  unchanged: number;
-  total: number;
-  avgChange: number;
-  median: number;
-}
-
-export interface CompanySnapshot {
-  symbol: string;
-  name: string;
-  exchange: string;
-  sector: string | null;
-  businessModel: string | null;
-  charterCapitalText: string | null;
-  listingDate: string | null;
-  valuation: { pe: number | null; pb: number | null; roe: number | null };
-}
-
-export type TrendStance = "MUA" | "DUNG_NGOAI";
-
-export interface TrendAction {
-  symbol: string;
-  stance: TrendStance;
-  stanceLabel: string;
-  signalSince: string | null;
-  reasoning: string;
-}
-
-export interface DailyDigest {
-  date: string;
-  provider: string;
-  topic: DigestTopic;
-  topicLabel: string;
-  title: string;
-  hookLines: [string, string];
-  paragraphs: string[];
-  highlights: DigestHighlight[];
-  heroStat: DigestHeroStat;
-  marketPulse: DigestMarketPulse;
-  relatedStocks: DigestStockRef[];
-  primarySymbol: string | null;
-  company: CompanySnapshot | null;
-  action: TrendAction | null;
-}
-
-// Lightweight entry from GET /market/daily-digest/history — date/title/
-// topic/heroStat only, not the full article body (see server/src/digest/
-// digestHistory.ts).
-export interface DigestHistoryEntry {
-  date: string;
-  topic: DigestTopic;
-  topicLabel: string;
-  title: string;
-  heroStat: DigestHeroStat;
 }

@@ -1,18 +1,13 @@
 import axios from "axios";
 import type {
-  DailyDigest,
-  DigestHistoryEntry,
   FinancialPeriodType,
   FinancialReport,
   FinancialReportType,
   HistoryPoint,
   HistoryRange,
-  MoneyFlowRecord,
   NewsItem,
   Quote,
   SearchResult,
-  TopExchange,
-  TopTradedItem,
 } from "../types";
 
 const api = axios.create({ baseURL: "/api", timeout: 30000 });
@@ -54,48 +49,6 @@ export async function fetchMarketOverview(): Promise<{ provider: string; quotes:
   return data;
 }
 
-export async function fetchMarketBoard(
-  exchange: TopExchange | "ALL" = "ALL"
-): Promise<{ provider: string; exchange: string; quotes: Quote[] }> {
-  const { data } = await api.get("/market/board", { params: { exchange } });
-  return data;
-}
-
-// One auto-generated market note per day — server picks the single most
-// notable topic (spotlight mover / leading sector / liquidity spike /
-// overall breadth) from the day's quotes. See server/src/digest/marketDigest.ts.
-export async function fetchDailyDigest(): Promise<DailyDigest> {
-  const { data } = await api.get("/market/daily-digest");
-  return data;
-}
-
-// Archive of past days' articles (persisted to Vercel Blob server-side —
-// see server/src/digest/digestHistory.ts). `enabled: false` means the
-// server has no Blob store configured yet, not that history is merely
-// empty — callers can use that to hide the archive UI instead of showing
-// an empty list.
-export async function fetchDailyDigestHistory(): Promise<{ enabled: boolean; items: DigestHistoryEntry[] }> {
-  const { data } = await api.get("/market/daily-digest/history");
-  return data;
-}
-
-export async function fetchDailyDigestByDate(date: string): Promise<DailyDigest> {
-  const { data } = await api.get(`/market/daily-digest/${date}`);
-  return data;
-}
-
-// "Sức mạnh dòng tiền" — reads a separately published Google Sheet
-// (server/src/providers/moneyFlowSheet.ts), one row per symbol, column
-// names as authored in the sheet (not fixed ahead of time).
-export async function fetchMoneyFlow(): Promise<{
-  items: MoneyFlowRecord[];
-  sectors: string[];
-  updatedAt: string | null;
-}> {
-  const { data } = await api.get("/money-flow");
-  return data;
-}
-
 export async function fetchQuote(symbol: string, preferSource?: string): Promise<Quote> {
   const { data } = await api.get(`/quote/${encodeURIComponent(symbol)}`, {
     params: preferSource ? { preferSource } : undefined,
@@ -111,14 +64,6 @@ export async function fetchHistory(
   const { data } = await api.get(`/history/${encodeURIComponent(symbol)}`, {
     params: preferSource ? { range, preferSource } : { range },
   });
-  return data;
-}
-
-export async function fetchTopTraded(
-  exchange: TopExchange,
-  period: "day" | "week" | "month" = "day"
-): Promise<{ provider: string; exchange: TopExchange; period: string; items: TopTradedItem[] }> {
-  const { data } = await api.get("/market/top", { params: { exchange, period } });
   return data;
 }
 
@@ -147,11 +92,6 @@ export async function fetchNewsForSymbol(
   return data;
 }
 
-export async function fetchMarketNews(limit = 30): Promise<{ items: NewsItem[] }> {
-  const { data } = await api.get("/market/news", { params: { limit } });
-  return data;
-}
-
 export interface StockOutlookRecord {
   symbol: string;
   updatedAt: string;
@@ -161,86 +101,6 @@ export interface StockOutlookRecord {
 
 export async function fetchInvestmentOutlook(gid?: string): Promise<StockOutlookRecord> {
   const { data } = await api.get("/investment-outlook", { params: gid ? { gid } : undefined });
-  return data;
-}
-
-export interface StockStrengthEntry {
-  symbol: string;
-  score: number;
-}
-
-export interface StockStrengthSector {
-  sector: string;
-  stocks: StockStrengthEntry[];
-}
-
-export interface StockStrengthSheet {
-  asOfDate: string | null;
-  sectors: StockStrengthSector[];
-}
-
-export async function fetchStockStrength(): Promise<StockStrengthSheet> {
-  const { data } = await api.get("/stock-strength");
-  return data;
-}
-
-export interface SectorBreadth {
-  sector: string;
-  leadingCount: number;
-  totalCount: number;
-  breadthPct: number;
-}
-
-export interface StockStrengthSnapshot {
-  date: string;
-  leadingCount: number;
-  totalCount: number;
-  breadthPct: number;
-  bySector: SectorBreadth[];
-}
-
-export interface StockStrengthHistory {
-  enabled: boolean;
-  items: StockStrengthSnapshot[];
-}
-
-export async function fetchStockStrengthHistory(): Promise<StockStrengthHistory> {
-  const { data } = await api.get("/stock-strength/history");
-  return data;
-}
-
-export interface BankDepositRateRow {
-  bank: string;
-  terms: Record<"1" | "3" | "6" | "9" | "12" | "13" | "18" | "24" | "36", number | null>;
-}
-
-export interface BankDepositRates {
-  asOf: string;
-  banks: BankDepositRateRow[];
-}
-
-export async function fetchBankDepositRates(): Promise<BankDepositRates> {
-  const { data } = await api.get("/bank-deposit-rates");
-  return data;
-}
-
-export interface PbHistoryTable {
-  symbols: string[];
-  rows: { date: string; values: (number | null)[] }[];
-}
-
-export async function fetchBankPbHistory(): Promise<PbHistoryTable> {
-  const { data } = await api.get("/bank-pb-history");
-  return data;
-}
-
-export async function fetchSecuritiesPbHistory(): Promise<PbHistoryTable> {
-  const { data } = await api.get("/securities-pb-history");
-  return data;
-}
-
-export async function fetchRealEstatePbHistory(): Promise<PbHistoryTable> {
-  const { data } = await api.get("/realestate-pb-history");
   return data;
 }
 
