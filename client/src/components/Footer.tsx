@@ -20,7 +20,7 @@ export default function Footer() {
               </div>
               <a
                 href="tel:0886284212"
-                className="inline-flex items-center gap-1.5 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100"
+                className="inline-flex items-center gap-1.5 font-semibold text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300"
               >
                 <Phone className="h-3.5 w-3.5" strokeWidth={1.75} />
                 0886.284.212
