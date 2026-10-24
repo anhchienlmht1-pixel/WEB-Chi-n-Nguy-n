@@ -4,50 +4,65 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ---------------------------------------------------------------------------
-   Professional financial palette — muted sage-teal brand kit (from the
-   3-swatch reference: dark pine/charcoal-teal, muted sage-teal, white).
-   Neutral chrome (slate) shifted toward that dark charcoal-teal, anchored
-   on #141E1B (page bg, dark mode) / #2F3E46 (surfaces — the reference's
-   dark swatch, informs the 700/800 borders). Brand accent (emerald) is
-   #6B9080 (solid, e.g. primary buttons — emerald-600, the reference's
-   muted swatch) / #84A98C (bright, e.g. dark-mode icons & highlighted
-   text — emerald-400).
-   Semantic gain/loss colors (see .up/.down below) are intentionally a
-   DIFFERENT, more saturated green from the muted brand accent, so "tăng
-   giá" never gets confused with a brand-colored button or badge.
+   Brand palette — the site's own custom kit (same one used across the
+   bank-analysis video/slide templates), not a stock Tailwind color:
+     - emerald-* = the teal/pine "primary" family (#1F5F57 darkest down to
+       #EEF5F3 lightest) — chrome, headings, links, primary buttons.
+     - orange-*  = the accent family (#E07B39 down to #FCE9DC) — used
+       sparingly for standout numbers/CTAs, never for page chrome.
+     - slate-*   = neutral text/border/grid family (#263238 body text down
+       to #EDF3F1 near-white) — a teal-tinted neutral, not true gray.
+   Each scale's exact given hex lands on 50/300/400/500/600/700 for
+   emerald+slate and 50/200/300/600 for orange; the rest are interpolated
+   to keep the ramp smooth.
+   Semantic gain/loss colors (see .up/.down below) stay on Tailwind's
+   stock green/red (NOT this palette) so "tăng/giảm giá" never gets
+   confused with a brand-colored button or badge.
 --------------------------------------------------------------------------- */
 @theme {
-  --color-slate-50: #f6f8f6;
-  --color-slate-100: #ecf0ed;
-  --color-slate-200: #d7ded9;
-  --color-slate-300: #b9c5bc;
-  --color-slate-400: #8fa395;
-  --color-slate-500: #6b8176;
-  --color-slate-600: #51665a;
-  --color-slate-700: #3c4e44;
-  --color-slate-800: #2f3e46;
-  --color-slate-900: #212e29;
-  --color-slate-950: #141e1b;
+  --color-slate-50: #edf3f1;
+  --color-slate-100: #e3ecea;
+  --color-slate-200: #d5e3e0;
+  --color-slate-300: #c9d3d1;
+  --color-slate-400: #94a1a0;
+  --color-slate-500: #5f6e6e;
+  --color-slate-600: #515f61;
+  --color-slate-700: #435053;
+  --color-slate-800: #344146;
+  --color-slate-900: #263238;
+  --color-slate-950: #1b2529;
 
-  --color-emerald-50: #eef5f0;
-  --color-emerald-100: #dceae1;
-  --color-emerald-300: #a8c7b5;
-  --color-emerald-400: #84a98c;
-  --color-emerald-500: #759c85;
-  --color-emerald-600: #6b9080;
-  --color-emerald-700: #577368;
-  --color-emerald-800: #43594f;
-  --color-emerald-900: #30403a;
-  --color-emerald-950: #1c2721;
+  --color-emerald-50: #eef5f3;
+  --color-emerald-100: #d7ece8;
+  --color-emerald-300: #bfe3dc;
+  --color-emerald-400: #8ccbc0;
+  --color-emerald-500: #55ad9f;
+  --color-emerald-600: #2a8c7d;
+  --color-emerald-700: #1f5f57;
+  --color-emerald-800: #1a4b45;
+  --color-emerald-900: #143a35;
+  --color-emerald-950: #0d2622;
+
+  --color-orange-50: #fce9dc;
+  --color-orange-100: #fadfcb;
+  --color-orange-200: #f6b98e;
+  --color-orange-300: #f2b48a;
+  --color-orange-400: #eca16f;
+  --color-orange-500: #e68e55;
+  --color-orange-600: #e07b39;
+  --color-orange-700: #c2692f;
+  --color-orange-800: #a05526;
+  --color-orange-900: #7a4220;
+  --color-orange-950: #4f2b15;
 }
 
 html {
   color-scheme: light;
-  background-color: #f6f8f6;
+  background-color: #edf3f1;
 }
 html.dark {
   color-scheme: dark;
-  background-color: #141e1b;
+  background-color: #1b2529;
 }
 
 /* Responsive/mobile baseline: block accidental page-level horizontal
@@ -144,6 +159,6 @@ img {
 .dark .flat { color: #94a3b8; }
 
 ::-webkit-scrollbar { height: 8px; width: 8px; }
-::-webkit-scrollbar-thumb { background: #b9c5bc; border-radius: 4px; }
-.dark ::-webkit-scrollbar-thumb { background: #3c4e44; }
+::-webkit-scrollbar-thumb { background: #c9d3d1; border-radius: 4px; }
+.dark ::-webkit-scrollbar-thumb { background: #435053; }
 ::-webkit-scrollbar-track { background: transparent; }

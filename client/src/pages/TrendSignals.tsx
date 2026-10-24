@@ -7,6 +7,7 @@ import TrendSignalScanner from "../components/TrendSignalScanner";
 import TrendSystemStats from "../components/TrendSystemStats";
 import TrendJournal from "../components/TrendJournal";
 import TrendSystemIntro from "../components/TrendSystemIntro";
+import HomeHero from "../components/HomeHero";
 import { aggregatePoints } from "../utils/aggregate";
 import { computeTradingSignals } from "../utils/signals";
 
@@ -47,8 +48,10 @@ export default function TrendSignals() {
   return (
     <div className="mx-auto max-w-[1800px] px-4 py-8">
       <div className="space-y-14">
+        <HomeHero />
+
         {/* Main Chart + Signals Section */}
-        <div>
+        <div id="tin-hieu" className="scroll-mt-20">
           <div className="mb-5">
             <h1 className="text-[28px] font-extrabold leading-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
               Tín hiệu Mua/Bán theo xu hướng
