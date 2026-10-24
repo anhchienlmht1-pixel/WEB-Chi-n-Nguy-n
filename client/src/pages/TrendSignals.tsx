@@ -49,11 +49,13 @@ export default function TrendSignals() {
       <div className="space-y-14">
         {/* Main Chart + Signals Section */}
         <div>
-          <div className="mb-5 flex items-end justify-between gap-4">
-            <div>
-              <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">Phân tích kỹ thuật</h2>
-              <h1 className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">Biểu đồ thị trường</h1>
-            </div>
+          <div className="mb-5">
+            <h1 className="text-[28px] font-extrabold leading-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
+              Tín hiệu Mua/Bán theo xu hướng
+            </h1>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Đang xem {chartSymbol} — quét Trend Following trên toàn thị trường, cập nhật liên tục.
+            </p>
           </div>
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
             {/* Chart */}

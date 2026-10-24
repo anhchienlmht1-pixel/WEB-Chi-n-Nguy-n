@@ -10,7 +10,7 @@ const INDICATORS = ["SMA20 / SMA50", "ADX(14) > 25", "Supertrend(10,3)"];
 
 export default function TrendSystemIntro() {
   return (
-    <div className="rounded-lg border border-slate-800 bg-slate-950 p-3 sm:p-4">
+    <div className="rounded-md border border-slate-800 bg-slate-950 p-3 sm:p-4">
       <div className="flex flex-wrap items-center gap-2">
         <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-400">
           <TrendingUp className="h-3 w-3" strokeWidth={2} />

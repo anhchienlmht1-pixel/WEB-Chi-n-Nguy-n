@@ -49,7 +49,7 @@ export default function StockDetail() {
     <div className="mx-auto max-w-[1800px] px-4 py-6">
       {quote && (
         <>
-          <div className="mb-8 rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900/40">
+          <div className="mb-8 rounded-md border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900/40">
             <div className="flex flex-wrap items-start justify-between gap-6">
               <div className="flex-1">
                 <div className="flex items-center gap-3">
@@ -100,13 +100,13 @@ export default function StockDetail() {
             <div className="space-y-3">
               {!isIndexOrFutures && (
                 <>
-                  <div className="flex gap-1 overflow-x-auto rounded-lg border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-900/40">
+                  <div className="flex gap-1 overflow-x-auto rounded-md border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-900/40">
                     {SIDEBAR_TABS.map((tab) => (
                       <button
                         key={tab.key}
                         type="button"
                         onClick={() => setActiveTab(tab.key)}
-                        className={`shrink-0 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors duration-300 ${
+                        className={`shrink-0 rounded px-3 py-1.5 text-xs font-semibold transition-colors duration-300 ${
                           activeTab === tab.key
                             ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-slate-100"
                             : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
@@ -151,7 +151,7 @@ export default function StockDetail() {
           )}
 
           {isSecuritiesSymbol(quote.symbol) && (
-            <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
+            <div className="mt-6 overflow-hidden rounded-md border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
               <SecuritiesDetailView symbol={quote.symbol} />
             </div>
           )}
@@ -169,7 +169,7 @@ export default function StockDetail() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 transition-colors hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:bg-slate-800/50">
+    <div className="rounded-md border border-slate-200 bg-slate-50 p-3 transition-colors hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:bg-slate-800/50">
       <div className="text-xs font-medium text-slate-600 dark:text-slate-400">{label}</div>
       <div className="mt-1.5 font-semibold tabular-nums text-slate-900 dark:text-slate-100">
         {value}

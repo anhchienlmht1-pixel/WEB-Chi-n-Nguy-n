@@ -41,13 +41,13 @@ export default function SecuritiesDetailView({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex gap-1 rounded-lg border border-slate-200 p-1 text-xs font-medium dark:border-slate-800">
+          <div className="flex gap-1 rounded-md border border-slate-200 p-1 text-xs font-medium dark:border-slate-800">
             {(["quarter", "year"] as PeriodType[]).map((pt) => (
               <button
                 key={pt}
                 type="button"
                 onClick={() => setPeriodType(pt)}
-                className={`rounded-md px-3 py-1 transition-colors ${
+                className={`rounded px-3 py-1 transition-colors ${
                   periodType === pt
                     ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
                     : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
@@ -61,7 +61,7 @@ export default function SecuritiesDetailView({
             <select
               value={symbol}
               onChange={(e) => onSymbolChange(e.target.value)}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
             >
               {SECURITIES_SYMBOL_LIST.map((s) => (
                 <option key={s} value={s}>

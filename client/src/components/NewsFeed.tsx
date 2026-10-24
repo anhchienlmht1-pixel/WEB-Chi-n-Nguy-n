@@ -18,7 +18,7 @@ export default function NewsFeed({ symbol }: { symbol: string }) {
   const items = data?.items ?? [];
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
+    <div className="overflow-hidden rounded-md border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
       <div className="border-b border-slate-200 p-4 dark:border-slate-800">
         <h3 className="flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100">
           <Newspaper className="h-4 w-4 text-slate-400" strokeWidth={1.75} />

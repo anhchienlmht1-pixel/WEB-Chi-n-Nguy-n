@@ -53,7 +53,7 @@ export default function BarLineComboChart({
   const barTicks = [barMin, (barMin + barMax) / 2, barMax];
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
+    <div className="rounded-md border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
       <div className="mb-2 flex items-center justify-between">
         <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{title}</h4>
         <div className="flex gap-3 text-xs font-medium">

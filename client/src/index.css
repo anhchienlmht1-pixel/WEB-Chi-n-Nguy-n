@@ -60,16 +60,16 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
-   Typography — a single, neutral, authoritative sans (Inter) across the whole
-   app. Numbers use tabular figures so columns align like a real trading
-   terminal, without the clunky monospace look.
-   Inter is loaded in index.html.
+   Typography — Be Vietnam Pro, a grotesque sans designed around Vietnamese
+   diacritics (unlike most "safe default" UI fonts, which just bolt Latin
+   Extended onto a Western letterform). Numbers use tabular figures so
+   columns align like a real trading terminal, without the clunky monospace
+   look. Loaded in index.html.
 --------------------------------------------------------------------------- */
 body {
   margin: 0;
-  font-family: "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
+  font-family: "Be Vietnam Pro", system-ui, "Segoe UI", Roboto, sans-serif;
   font-weight: 400;
-  font-feature-settings: "cv11", "ss01";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
@@ -81,11 +81,11 @@ body {
 /* Headings: same family, heavier weight, tighter tracking for an
    institutional, confident feel. */
 h1, h2, h3, h4, h5, h6 {
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: "Be Vietnam Pro", system-ui, sans-serif;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.015em;
 }
-h1 { letter-spacing: -0.028em; }
+h1 { letter-spacing: -0.02em; }
 
 /* All financial data: tabular figures, medium weight for legibility. */
 .price, .number, [class*="rate"], [class*="price"], [class*="quote"],
@@ -111,9 +111,9 @@ img {
 
 /* Typography utility classes (kept for existing usages). */
 .font-heading {
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: "Be Vietnam Pro", system-ui, sans-serif;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.015em;
 }
 
 .font-mono-price {
@@ -123,7 +123,7 @@ img {
 }
 
 .font-body {
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: "Be Vietnam Pro", system-ui, sans-serif;
   font-weight: 400;
 }
 

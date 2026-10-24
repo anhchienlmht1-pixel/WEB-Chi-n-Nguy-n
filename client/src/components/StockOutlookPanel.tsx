@@ -17,7 +17,7 @@ export default function StockOutlookPanel({ symbol }: { symbol: string }) {
   if (!data || data.symbol.trim().toUpperCase() !== symbol.toUpperCase()) return null;
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+    <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
       <div className="mb-1 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Triển vọng cổ phiếu</h2>
         <a

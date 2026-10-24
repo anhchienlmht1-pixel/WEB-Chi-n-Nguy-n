@@ -414,7 +414,7 @@ const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
     <div className="relative w-full">
       <div
         ref={legendRef}
-        className="pointer-events-none absolute left-2 top-2 z-10 flex flex-col gap-0.5 rounded-md bg-white/70 px-2 py-1.5 backdrop-blur-sm dark:bg-slate-950/60"
+        className="pointer-events-none absolute left-2 top-2 z-10 flex flex-col gap-0.5 rounded bg-white/70 px-2 py-1.5 backdrop-blur-sm dark:bg-slate-950/60"
       />
       <div ref={containerRef} className="w-full" />
     </div>

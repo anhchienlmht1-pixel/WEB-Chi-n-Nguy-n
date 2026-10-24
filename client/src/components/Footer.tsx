@@ -36,7 +36,7 @@ export default function Footer() {
                 href="https://www.facebook.com/chiennguyen.taichinh/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors duration-300 hover:border-blue-400 hover:text-blue-600 dark:border-slate-700 dark:text-slate-300 dark:hover:text-blue-400"
+                className="inline-flex items-center gap-1.5 rounded border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors duration-300 hover:border-blue-400 hover:text-blue-600 dark:border-slate-700 dark:text-slate-300 dark:hover:text-blue-400"
               >
                 <Globe className="h-4 w-4" strokeWidth={1.75} />
                 Facebook
@@ -45,7 +45,7 @@ export default function Footer() {
                 href="https://www.youtube.com/@chiennguyen.taichinh"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors duration-300 hover:border-red-400 hover:text-red-600 dark:border-slate-700 dark:text-slate-300 dark:hover:text-red-400"
+                className="inline-flex items-center gap-1.5 rounded border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors duration-300 hover:border-red-400 hover:text-red-600 dark:border-slate-700 dark:text-slate-300 dark:hover:text-red-400"
               >
                 <Video className="h-4 w-4" strokeWidth={1.75} />
                 YouTube
@@ -54,7 +54,7 @@ export default function Footer() {
                 href="https://zalo.me/0886284212"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors duration-300 hover:border-emerald-400 hover:text-emerald-600 dark:border-slate-700 dark:text-slate-300 dark:hover:text-emerald-400"
+                className="inline-flex items-center gap-1.5 rounded border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors duration-300 hover:border-emerald-400 hover:text-emerald-600 dark:border-slate-700 dark:text-slate-300 dark:hover:text-emerald-400"
               >
                 <MessageCircle className="h-4 w-4" strokeWidth={1.75} />
                 Zalo
@@ -63,7 +63,7 @@ export default function Footer() {
                 href="https://zalo.me/g/n1hcdesbqhdutsecnxzg"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors duration-300 hover:border-emerald-400 hover:text-emerald-600 dark:border-slate-700 dark:text-slate-300 dark:hover:text-emerald-400"
+                className="inline-flex items-center gap-1.5 rounded border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors duration-300 hover:border-emerald-400 hover:text-emerald-600 dark:border-slate-700 dark:text-slate-300 dark:hover:text-emerald-400"
               >
                 <Users className="h-4 w-4" strokeWidth={1.75} />
                 Nhóm Zalo

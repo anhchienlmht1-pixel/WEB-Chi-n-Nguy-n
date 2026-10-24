@@ -26,7 +26,7 @@ export default function SystemAssessment({ symbol }: { symbol: string }) {
 
   if (loading && !assessment) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
+      <div className="rounded-md border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
         <div className="h-24 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
       </div>
     );
@@ -37,7 +37,7 @@ export default function SystemAssessment({ symbol }: { symbol: string }) {
   const statusInfo = STATUS_INFO[assessment.status];
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
+    <div className="rounded-md border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
       <div className="flex items-center justify-between gap-2">
         <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
           <LineChart className="h-4 w-4 text-slate-400" strokeWidth={1.75} />
