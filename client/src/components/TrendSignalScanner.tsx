@@ -160,78 +160,74 @@ export default function TrendSignalScanner({
         </div>
       ) : (
         <div className="max-h-96 overflow-y-auto">
+          {/* Column header — kept in lockstep with each row's own grid
+           * template below so the three values line up under their label. */}
+          <div className="grid grid-cols-[1fr_auto_auto] gap-3 border-b border-slate-100 bg-slate-50/80 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-900 dark:bg-slate-900/40 dark:text-slate-400">
+            <span>Mã</span>
+            <span className="text-right">Điểm vào</span>
+            <span className="text-right">Lãi tại điểm mua</span>
+          </div>
           {hits.map((h) => {
             const held = daysHeld(h.buyDate);
             // WatchButton is its own <button> — kept as a sibling rather
             // than nested inside the row's own clickable element, since a
             // <button> (or an <a>) can't validly contain another <button>.
-            const nameBlock = (
+            const symbolBlock = (
               <div className="min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <span className="font-semibold text-slate-900 dark:text-slate-100">{h.symbol}</span>
                   <span className="text-[11px] text-slate-400 dark:text-slate-500">{h.exchange}</span>
                 </div>
-                <div className="mt-0.5 flex items-center gap-1.5 text-xs">
-                  <span className="inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-[11px] font-medium text-green-700 dark:bg-green-950/40 dark:text-green-400">
-                    <span className="h-1.5 w-1.5 rounded-full bg-green-600 dark:bg-green-400" />
-                    Đang mua
-                  </span>
-                  <span className="text-slate-400 dark:text-slate-500">
-                    {held > 0 ? `${held} ngày` : "hôm nay"} · từ {formatSince(h.buyDate)}
-                  </span>
+                <div className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">
+                  {held > 0 ? `${held} ngày` : "hôm nay"}
                 </div>
               </div>
             );
-            const priceBlock = (
+            const entryBlock = (
               <div className="shrink-0 text-right">
-                <div className="tabular-nums font-medium text-slate-900 dark:text-slate-100">
-                  {formatPrice(h.price, h.currency)}
+                <div className="tabular-nums text-xs font-medium text-slate-700 dark:text-slate-300">
+                  {formatPrice(h.buyPrice, h.currency)}
                 </div>
+                <div className="text-[11px] text-slate-400 dark:text-slate-500">{formatSince(h.buyDate)}</div>
+              </div>
+            );
+            const gainBlock = (
+              <div className="shrink-0 text-right">
                 <div
-                  className={`text-xs tabular-nums font-medium ${
-                    h.changePercent > 0
-                      ? "text-green-600 dark:text-green-400"
-                      : h.changePercent < 0
-                        ? "text-red-600 dark:text-red-400"
-                        : "text-slate-400"
-                  }`}
-                  title="Biến động giá trong ngày hôm nay"
-                >
-                  {h.changePercent > 0 ? "▲" : h.changePercent < 0 ? "▼" : ""} {formatPercent(h.changePercent)}
-                </div>
-                <div
-                  className={`mt-1 rounded px-1.5 py-0.5 text-[11px] font-semibold tabular-nums ${
+                  className={`rounded px-1.5 py-0.5 text-xs font-semibold tabular-nums ${
                     h.signalReturnPercent > 0
                       ? "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400"
                       : h.signalReturnPercent < 0
                         ? "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400"
                         : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
                   }`}
-                  title={`Lãi/lỗ tích lũy từ giá lúc vào tín hiệu (${formatPrice(h.buyPrice, h.currency)}) đến giá hiện tại`}
+                  title={`Lãi/lỗ tích lũy từ giá lúc vào tín hiệu (${formatPrice(h.buyPrice, h.currency)}) đến giá hiện tại (${formatPrice(h.price, h.currency)})`}
                 >
-                  {formatPercent(h.signalReturnPercent)} từ tín hiệu
+                  {formatPercent(h.signalReturnPercent)}
                 </div>
               </div>
             );
-            const rowClass = "flex min-w-0 flex-1 items-center justify-between gap-2 text-left";
+            const rowClass = "grid min-w-0 flex-1 grid-cols-[1fr_auto_auto] items-center gap-3 text-left";
             // Switches the sibling chart in place when one's provided
             // (Dashboard/THỰC CHIẾN CP both render this next to a chart);
             // otherwise falls back to navigating to the stock detail page.
             return (
               <div
                 key={h.symbol}
-                className="flex items-center gap-2 border-b border-l-4 border-l-green-500 border-slate-100 px-4 py-3 last:border-b-0 transition-colors hover:bg-green-50/40 dark:border-slate-900 dark:border-l-green-500/60 dark:hover:bg-green-950/20"
+                className="flex items-center gap-2 border-b border-l-4 border-l-green-500 border-slate-100 px-4 py-2.5 last:border-b-0 transition-colors hover:bg-green-50/40 dark:border-slate-900 dark:border-l-green-500/60 dark:hover:bg-green-950/20"
               >
                 <WatchButton symbol={h.symbol} />
                 {onSelectSymbol ? (
                   <button type="button" onClick={() => onSelectSymbol(h.symbol)} className={rowClass}>
-                    {nameBlock}
-                    {priceBlock}
+                    {symbolBlock}
+                    {entryBlock}
+                    {gainBlock}
                   </button>
                 ) : (
                   <Link to={`/stock/${h.symbol}`} className={rowClass}>
-                    {nameBlock}
-                    {priceBlock}
+                    {symbolBlock}
+                    {entryBlock}
+                    {gainBlock}
                   </Link>
                 )}
               </div>
