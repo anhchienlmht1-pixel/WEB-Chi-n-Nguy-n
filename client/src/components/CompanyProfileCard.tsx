@@ -110,7 +110,7 @@ export default function CompanyProfileCard({ symbol, fallbackName }: { symbol: s
   if (!profile && figures.length === 0 && !liveProfile) return null;
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
+    <div className="overflow-hidden rounded-md border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
       <div className="flex flex-wrap items-start justify-between gap-4 p-4">
         <div className="flex min-w-0 items-start gap-3">
           <CompanyLogo symbol={upper} size={44} />

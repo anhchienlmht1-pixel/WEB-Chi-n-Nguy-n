@@ -17,7 +17,7 @@ function InitialsBadge({ symbol, size }: { symbol: string; size: number }) {
   const hue = hueFor(symbol);
   return (
     <span
-      className="inline-flex shrink-0 select-none items-center justify-center rounded-md font-bold"
+      className="inline-flex shrink-0 select-none items-center justify-center rounded font-bold"
       style={{
         width: size,
         height: size,
@@ -45,7 +45,7 @@ export default function CompanyLogo({ symbol, size = 26 }: { symbol: string; siz
       alt={`Logo ${upper}`}
       width={size}
       height={size}
-      className="shrink-0 rounded-md bg-white object-contain"
+      className="shrink-0 rounded bg-white object-contain"
       style={{ width: size, height: size }}
       onError={() => setImgFailed(true)}
     />

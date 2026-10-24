@@ -36,7 +36,7 @@ export default function BankStatementTable({
   const periods = periodType === "quarter" ? data.quarterPeriods : data.yearPeriods;
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
+    <div className="overflow-x-auto rounded-md border border-slate-200 dark:border-slate-800">
       <table className="w-full min-w-[720px] border-collapse text-sm">
         <thead>
           <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800">

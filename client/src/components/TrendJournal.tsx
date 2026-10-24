@@ -21,7 +21,7 @@ export default function TrendJournal() {
 
   if (loading && !journal) {
     return (
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
+      <div className="overflow-hidden rounded-md border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
         <div className="border-b border-slate-200 p-4 dark:border-slate-800">
           <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
             <History className="h-4 w-4 text-slate-400" strokeWidth={1.75} />
@@ -45,7 +45,7 @@ export default function TrendJournal() {
   const lossCount = closed.filter((t) => t.returnPercent < 0).length;
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
+    <div className="overflow-hidden rounded-md border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
       <div className="border-b border-slate-200 p-4 dark:border-slate-800">
         <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
           <History className="h-4 w-4 text-slate-400" strokeWidth={1.75} />

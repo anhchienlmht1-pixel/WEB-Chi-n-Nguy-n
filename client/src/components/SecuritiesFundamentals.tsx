@@ -45,7 +45,7 @@ export default function SecuritiesFundamentals({ symbol }: { symbol: string }) {
   const { data, error, loading } = usePolling(() => fetchSecuritiesData(symbol), [symbol]);
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
+    <div className="overflow-hidden rounded-md border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-4 dark:border-slate-800">
         <div>
           <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Cơ bản (Chứng khoán)</h3>
@@ -53,13 +53,13 @@ export default function SecuritiesFundamentals({ symbol }: { symbol: string }) {
             Nguồn: dữ liệu tự tổng hợp (Excel), cập nhật thủ công khi có kỳ mới.
           </p>
         </div>
-        <div className="flex gap-1 rounded-lg border border-slate-200 p-1 text-xs font-medium dark:border-slate-800">
+        <div className="flex gap-1 rounded-md border border-slate-200 p-1 text-xs font-medium dark:border-slate-800">
           {(["quarter", "year"] as PeriodType[]).map((pt) => (
             <button
               key={pt}
               type="button"
               onClick={() => setPeriodType(pt)}
-              className={`rounded-md px-3 py-1 transition-colors ${
+              className={`rounded px-3 py-1 transition-colors ${
                 periodType === pt
                   ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
                   : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"

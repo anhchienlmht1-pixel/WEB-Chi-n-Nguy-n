@@ -61,7 +61,7 @@ export default function PositionTracker({ symbol, currency }: { symbol: string; 
 
   if (!position || editing) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
+      <div className="rounded-md border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
         <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
           <Wallet className="h-4 w-4 text-slate-400" strokeWidth={1.75} />
           Vị thế của bạn
@@ -78,7 +78,7 @@ export default function PositionTracker({ symbol, currency }: { symbol: string; 
               value={priceInput}
               onChange={(e) => setPriceInput(e.target.value)}
               placeholder={formatPrice(0, currency).replace(/[\d.,]/g, "0")}
-              className="w-28 rounded-md border border-slate-300 px-2 py-1.5 text-sm tabular-nums text-slate-900 outline-none focus:border-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              className="w-28 rounded border border-slate-300 px-2 py-1.5 text-sm tabular-nums text-slate-900 outline-none focus:border-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
             />
           </label>
           <label className="flex flex-col gap-1 text-xs text-slate-500 dark:text-slate-400">
@@ -88,13 +88,13 @@ export default function PositionTracker({ symbol, currency }: { symbol: string; 
               value={dateInput}
               max={todayKey()}
               onChange={(e) => setDateInput(e.target.value)}
-              className="rounded-md border border-slate-300 px-2 py-1.5 text-sm text-slate-900 outline-none focus:border-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              className="rounded border border-slate-300 px-2 py-1.5 text-sm text-slate-900 outline-none focus:border-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
             />
           </label>
           <button
             type="button"
             onClick={submit}
-            className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors duration-300 hover:bg-emerald-700"
+            className="rounded bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors duration-300 hover:bg-emerald-700"
           >
             Lưu
           </button>
@@ -102,7 +102,7 @@ export default function PositionTracker({ symbol, currency }: { symbol: string; 
             <button
               type="button"
               onClick={() => setEditing(false)}
-              className="rounded-md border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition-colors duration-300 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              className="rounded border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition-colors duration-300 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
             >
               Hủy
             </button>
@@ -118,7 +118,7 @@ export default function PositionTracker({ symbol, currency }: { symbol: string; 
   const waitingSettlement = stats !== null && stats.daysHeld < SETTLEMENT_DAYS;
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
+    <div className="rounded-md border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
       <div className="flex items-start justify-between gap-2">
         <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
           <Wallet className="h-4 w-4 text-slate-400" strokeWidth={1.75} />

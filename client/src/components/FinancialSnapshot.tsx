@@ -52,7 +52,7 @@ function ChartTooltip({
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs shadow-sm dark:border-slate-700 dark:bg-slate-900">
+    <div className="rounded border border-slate-200 bg-white px-3 py-2 text-xs shadow-sm dark:border-slate-700 dark:bg-slate-900">
       <div className="font-semibold text-slate-900 dark:text-slate-100">{label}</div>
       {payload.map((p) => (
         <div key={p.name} style={{ color: p.color }}>
@@ -79,7 +79,7 @@ function ChartCard({
   caption: string;
 }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/40">
+    <div className="rounded-md border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/40">
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
         <h4 className="text-xs font-semibold text-slate-800 dark:text-slate-200">{title}</h4>
         {latestLabel && (
@@ -181,7 +181,7 @@ export default function FinancialSnapshot({ symbol }: { symbol: string }) {
 
   if (loading && !data) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
+      <div className="rounded-md border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
         <div className="h-6 w-64 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -198,7 +198,7 @@ export default function FinancialSnapshot({ symbol }: { symbol: string }) {
   const latest = last(rows)!;
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
+    <div className="rounded-md border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
           <LineChartIcon className="h-4 w-4 text-slate-400" strokeWidth={1.75} />

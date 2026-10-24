@@ -59,7 +59,7 @@ export default function TrendSystemStats({ signals, symbol }: Props) {
   }
 
   return (
-    <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/30">
+    <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/30">
       <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
         Thống kê hệ thống Trend Following
       </div>

@@ -129,10 +129,10 @@ export default function TechnicalChartPanel({
       ref={chartWrapperRef}
       onKeyDown={handleChartKeyDown}
       tabIndex={0}
-      className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40 focus:outline-none relative"
+      className="overflow-hidden rounded-md border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40 focus:outline-none relative"
     >
       {searchInput && (
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 bg-slate-600 text-white px-6 py-3 rounded-lg shadow-lg font-bold text-lg">
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 bg-slate-600 text-white px-6 py-3 rounded-md shadow-lg font-bold text-lg">
           Tìm kiếm: <span className="font-black text-xl">{searchInput}</span>
         </div>
       )}

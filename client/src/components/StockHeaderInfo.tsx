@@ -25,7 +25,7 @@ export default function StockHeaderInfo() {
   const isPositive = change >= 0;
 
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 dark:border-slate-800 dark:bg-slate-900/30">
+    <div className="flex items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-4 py-2 dark:border-slate-800 dark:bg-slate-900/30">
       <div className="min-w-0 flex-1">
         <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
           {stockInfo.symbol}

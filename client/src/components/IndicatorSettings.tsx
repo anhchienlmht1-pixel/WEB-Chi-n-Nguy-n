@@ -30,7 +30,7 @@ export default function IndicatorSettings({
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 px-4 pt-24" onClick={onClose}>
       <div
-        className="w-full max-w-sm rounded-lg bg-white shadow-xl dark:bg-slate-900"
+        className="w-full max-w-sm rounded-md bg-white shadow-xl dark:bg-slate-900"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
@@ -60,7 +60,7 @@ export default function IndicatorSettings({
                 step={p.key.toLowerCase().includes("stddev") || p.key.toLowerCase().includes("multiplier") ? 0.1 : 1}
                 value={values[p.key] ?? ""}
                 onChange={(e) => setValues((prev) => ({ ...prev, [p.key]: e.target.value }))}
-                className="w-24 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-right text-sm text-slate-900 outline-none focus:border-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                className="w-24 rounded border border-slate-200 bg-slate-50 px-2 py-1 text-right text-sm text-slate-900 outline-none focus:border-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
               />
             </label>
           ))}
@@ -70,14 +70,14 @@ export default function IndicatorSettings({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md px-3 py-1.5 text-xs font-semibold text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+            className="rounded px-3 py-1.5 text-xs font-semibold text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
           >
             Hủy
           </button>
           <button
             type="button"
             onClick={apply}
-            className="rounded-md bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-700"
+            className="rounded bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-700"
           >
             Áp dụng
           </button>

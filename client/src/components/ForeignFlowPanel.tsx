@@ -87,10 +87,10 @@ export default function ForeignFlowPanel({ quote }: { quote: Quote }) {
   const pathD = history.map((p, i) => `${i === 0 ? "M" : "L"}${xFor(i)},${yFor(p.net)}`).join(" ");
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
+    <div className="rounded-md border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
       <h4 className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">Giao dịch khối ngoại</h4>
 
-      <div className="mb-3 overflow-hidden rounded-md border border-slate-200 dark:border-slate-800">
+      <div className="mb-3 overflow-hidden rounded border border-slate-200 dark:border-slate-800">
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-xs font-medium text-slate-500 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-400">

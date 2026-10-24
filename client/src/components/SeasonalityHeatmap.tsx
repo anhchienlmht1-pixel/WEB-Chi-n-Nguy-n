@@ -24,7 +24,7 @@ export default function SeasonalityHeatmap({ symbol }: { symbol: string }) {
   }, [table]);
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
+    <div className="overflow-hidden rounded-md border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
       <div className="border-b border-slate-200 p-4 dark:border-slate-800">
         <h3 className="font-semibold text-slate-900 dark:text-slate-100">Lợi nhuận theo Tháng/Năm</h3>
         <p className="text-xs text-slate-500 dark:text-slate-400">

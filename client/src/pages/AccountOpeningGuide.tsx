@@ -5,18 +5,17 @@ export default function AccountOpeningGuide() {
     <div className="mx-auto max-w-4xl px-4 py-6">
       {/* Header */}
       <div className="mb-8">
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-400">Hướng dẫn</h2>
-        <h1 className="mt-1 mb-2 flex items-center gap-2 text-3xl font-bold text-slate-900 dark:text-slate-100">
+        <h1 className="flex items-center gap-2 text-[28px] font-extrabold leading-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
           <Smartphone className="h-7 w-7 text-slate-400" strokeWidth={1.75} />
-          Mở Tài Khoản Chứng Khoán
+          Mở tài khoản chứng khoán
         </h1>
-        <p className="text-sm text-slate-600 dark:text-slate-400">
-          Xem video hướng dẫn chi tiết cách mở tài khoản giao dịch chứng khoán
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          Xem video hướng dẫn chi tiết cách mở tài khoản giao dịch chứng khoán.
         </p>
       </div>
 
       {/* Video */}
-      <div className="aspect-video overflow-hidden rounded-lg bg-slate-900">
+      <div className="aspect-video overflow-hidden rounded-md bg-slate-900">
         <iframe
           width="100%"
           height="100%"

@@ -60,7 +60,7 @@ export default function ChartToolbar({
           {symbol}
         </span>
 
-        <div className="flex gap-0.5 rounded-md border border-slate-200 p-0.5 text-xs font-medium dark:border-slate-700">
+        <div className="flex gap-0.5 rounded border border-slate-200 p-0.5 text-xs font-medium dark:border-slate-700">
           {RESOLUTIONS.map((r) => (
             <button
               key={r.value}
@@ -80,14 +80,14 @@ export default function ChartToolbar({
           <button
             type="button"
             onClick={() => setChartTypeOpen((v) => !v)}
-            className="rounded-md px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+            className="rounded px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
           >
             Biểu đồ: {CHART_TYPES.find((c) => c.value === chartType)?.label} ▾
           </button>
           {chartTypeOpen && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setChartTypeOpen(false)} />
-              <div className="absolute left-0 top-full z-20 mt-1 w-32 rounded-md border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
+              <div className="absolute left-0 top-full z-20 mt-1 w-32 rounded border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
                 {CHART_TYPES.map((c) => (
                   <button
                     key={c.value}
@@ -110,7 +110,7 @@ export default function ChartToolbar({
         </div>
 
         {plainSymbol !== "VNINDEX" && (
-          <span className="rounded-md bg-slate-900 px-2 py-1 text-xs font-medium text-white dark:bg-slate-100 dark:text-slate-900">
+          <span className="rounded bg-slate-900 px-2 py-1 text-xs font-medium text-white dark:bg-slate-100 dark:text-slate-900">
             Tín hiệu Mua/Bán
           </span>
         )}

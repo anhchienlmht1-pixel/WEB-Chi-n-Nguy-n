@@ -24,7 +24,7 @@ export default function ChartHoverTooltip({
 }) {
   return (
     <div
-      className="pointer-events-none absolute top-1 z-20 min-w-[170px] max-w-[280px] rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-xs shadow-lg backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800/95"
+      className="pointer-events-none absolute top-1 z-20 min-w-[170px] max-w-[280px] rounded-md border border-slate-200 bg-white/95 px-3 py-2 text-xs shadow-lg backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800/95"
       style={{ left: `${leftPercent}%`, transform: "translateX(-50%)" }}
     >
       <div className="font-semibold text-slate-900 dark:text-slate-100">{period}</div>

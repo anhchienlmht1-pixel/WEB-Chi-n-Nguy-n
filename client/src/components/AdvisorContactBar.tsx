@@ -28,7 +28,7 @@ export default function AdvisorContactBar() {
           href="https://zalo.me/0886284212"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white transition-colors duration-300 hover:bg-emerald-700"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white transition-colors duration-300 hover:bg-emerald-700"
         >
           Tư vấn qua Zalo
           <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
