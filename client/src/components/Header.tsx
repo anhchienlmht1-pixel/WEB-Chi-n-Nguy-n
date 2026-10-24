@@ -31,7 +31,7 @@ export default function Header() {
           <TrendSignalBell />
           <NavLink
             to="/huong-dan-mo-tai-khoan"
-            className="shrink-0 whitespace-nowrap rounded-md bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white transition-colors duration-300 hover:bg-emerald-700"
+            className="shrink-0 whitespace-nowrap rounded-md bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-md"
           >
             Mở tài khoản
           </NavLink>
