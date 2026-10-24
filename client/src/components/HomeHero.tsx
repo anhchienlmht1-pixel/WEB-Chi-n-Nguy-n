@@ -36,14 +36,14 @@ export default function HomeHero() {
         <div className="mt-6 flex flex-wrap gap-3">
           <Link
             to="/huong-dan-mo-tai-khoan"
-            className="inline-flex items-center gap-1.5 rounded bg-orange-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors duration-300 hover:bg-orange-700"
+            className="inline-flex items-center gap-1.5 rounded bg-orange-600 px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-orange-700 hover:shadow-lg"
           >
             Mở tài khoản ngay
             <ArrowRight className="h-4 w-4" strokeWidth={2} />
           </Link>
           <a
             href="#tin-hieu"
-            className="inline-flex items-center gap-1.5 rounded border border-emerald-400/50 px-5 py-2.5 text-sm font-semibold text-emerald-50 transition-colors duration-300 hover:bg-emerald-600/40"
+            className="inline-flex items-center gap-1.5 rounded border border-emerald-400/50 px-5 py-2.5 text-sm font-semibold text-emerald-50 transition-all duration-200 hover:-translate-y-0.5 hover:bg-emerald-600/40 hover:shadow-lg"
           >
             Xem tín hiệu hôm nay
           </a>
@@ -52,7 +52,10 @@ export default function HomeHero() {
 
       <div className="grid grid-cols-1 gap-px bg-emerald-600/40 dark:bg-emerald-950/60 sm:grid-cols-3">
         {FEATURES.map(({ icon: Icon, title, desc }) => (
-          <div key={title} className="bg-emerald-50 p-5 dark:bg-slate-900">
+          <div
+            key={title}
+            className="relative bg-emerald-50 p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:z-10 dark:bg-slate-900"
+          >
             <Icon className="h-5 w-5 text-emerald-700 dark:text-emerald-400" strokeWidth={1.75} />
             <div className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">{title}</div>
             <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{desc}</p>
