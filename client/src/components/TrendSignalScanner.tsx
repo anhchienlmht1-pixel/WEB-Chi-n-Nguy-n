@@ -7,6 +7,7 @@ import { formatPercent, formatPrice } from "../utils/format";
 import { formatSessionDate, isMarketInSession } from "../utils/sessionClose";
 import { useWatchlist } from "../hooks/useWatchlist";
 import WatchButton from "./WatchButton";
+import CompanyLogo from "./CompanyLogo";
 
 // The conclusion only changes once a session closes (15:00) — the server holds it
 // until then — so a gentle poll is enough to pick the new one up.
@@ -31,7 +32,7 @@ function daysHeld(buyIso: string, sessionIso: string): number {
 // up with the others; the wider set kicks in off the panel's own width (container
 // query), since this list sits in a narrow side column on desktop.
 const COLS =
-  "grid-cols-[minmax(0,1fr)_3.5rem_4.5rem_4.75rem] @md:grid-cols-[minmax(0,1fr)_4.5rem_8.5rem_7.5rem]";
+  "grid-cols-[minmax(0,1fr)_3rem_4rem_4.5rem] @md:grid-cols-[minmax(0,1fr)_4.5rem_8.5rem_7.5rem]";
 
 // Reusable card shell so the loading / error / empty / list states all share
 // the same header and framing — the panel never "jumps" between states.
@@ -187,9 +188,9 @@ export default function TrendSignalScanner({
           {/* Sticky column header — shares COLS with every row below, and a
            * spacer the width of the row's star button, so the four labels sit
            * exactly over their values while the list scrolls. */}
-          <div className="sticky top-0 z-20 flex items-center gap-2 border-b border-l-4 border-l-transparent border-slate-100 bg-slate-50 px-4 py-2 text-[11px] font-semibold uppercase tracking-normal text-slate-500 @md:tracking-wide dark:border-slate-900 dark:bg-slate-900 dark:text-slate-400">
+          <div className="sticky top-0 z-20 flex items-center gap-2 border-b border-l-4 border-l-transparent border-slate-100 bg-slate-50 px-3 py-2 @md:px-4 text-[11px] font-semibold uppercase tracking-normal text-slate-500 @md:tracking-wide dark:border-slate-900 dark:bg-slate-900 dark:text-slate-400">
             <span className="w-9 shrink-0" aria-hidden="true" />
-            <div className={`grid min-w-0 flex-1 gap-2 ${COLS}`}>
+            <div className={`grid min-w-0 flex-1 gap-1.5 @md:gap-2 ${COLS}`}>
               <span>Mã</span>
               <span>Sàn</span>
               {/* Full labels everywhere: one line when the panel is wide, two
@@ -220,7 +221,15 @@ export default function TrendSignalScanner({
             // <button> (or an <a>) can't validly contain another <button>.
             const cells = (
               <>
-                <span className="truncate font-semibold text-slate-900 dark:text-slate-100">{h.symbol}</span>
+                <span className="flex min-w-0 items-center gap-1.5 @md:gap-2">
+                  {/* Logo only once the panel is wide enough to keep the symbol
+                   * readable — in the narrowest side-column widths the fixed
+                   * Sàn / Thời gian / Lãi-lỗ columns leave no room for it. */}
+                  <span className="hidden shrink-0 @min-[22rem]:inline-flex">
+                    <CompanyLogo symbol={h.symbol} size={22} fallback="space" />
+                  </span>
+                  <span className="truncate font-semibold text-slate-900 dark:text-slate-100">{h.symbol}</span>
+                </span>
                 <span className="justify-self-start rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                   {h.exchange}
                 </span>
@@ -234,14 +243,14 @@ export default function TrendSignalScanner({
                 </span>
               </>
             );
-            const rowClass = `grid min-w-0 flex-1 items-center gap-2 text-left ${COLS}`;
+            const rowClass = `grid min-w-0 flex-1 items-center gap-1.5 @md:gap-2 text-left ${COLS}`;
             // Switches the sibling chart in place when one's provided
             // (Dashboard/THỰC CHIẾN CP both render this next to a chart);
             // otherwise falls back to navigating to the stock detail page.
             return (
               <div
                 key={h.symbol}
-                className="relative flex items-center gap-2 border-b border-l-4 border-l-green-500 border-slate-100 bg-white px-4 py-2.5 transition-all duration-200 last:border-b-0 hover:-translate-y-0.5 hover:z-10 hover:bg-green-50/40 hover:shadow-md dark:border-slate-900 dark:border-l-green-500/60 dark:bg-slate-900/40 dark:hover:bg-green-950/20"
+                className="relative flex items-center gap-2 border-b border-l-4 border-l-green-500 border-slate-100 bg-white px-3 py-2.5 @md:px-4 transition-all duration-200 last:border-b-0 hover:-translate-y-0.5 hover:z-10 hover:bg-green-50/40 hover:shadow-md dark:border-slate-900 dark:border-l-green-500/60 dark:bg-slate-900/40 dark:hover:bg-green-950/20"
               >
                 <WatchButton symbol={h.symbol} />
                 {onSelectSymbol ? (

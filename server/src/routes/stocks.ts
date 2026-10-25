@@ -14,6 +14,7 @@ import { getTradeJournal } from "../signals/tradeJournal.js";
 import { scanMovingAverages } from "../signals/maScanner.js";
 import { fetchVndirectLogos, fetchVndirectCompanyProfilesRaw } from "../providers/vndirectLogos.js";
 import { fetchDomainFavicons, debugFaviconForDomain } from "../providers/domainFavicons.js";
+import { getCafefLogo, debugCafefLogo, isValidLogoSymbol } from "../providers/cafefLogos.js";
 import { COMPANY_DOMAINS } from "../data/companyDomains.js";
 import { buildFundInsight } from "../signals/fundInsight.js";
 import inspectFmarketApi from "../providers/fmarketInspect.js";
@@ -186,13 +187,37 @@ router.get(
 
     const domain = COMPANY_DOMAINS[symbol] ?? null;
     const faviconTrace = domain ? await debugFaviconForDomain(domain) : null;
+    const cafef = await debugCafefLogo(symbol);
 
     res.json({
       symbol,
+      cafef,
       vndirect: { record: vndirectRecord, error: vndirectError },
       domain,
       faviconTrace,
     });
+  })
+);
+
+// The company's own logo as published on CafeF (see providers/cafefLogos.ts) —
+// the first choice for every logo on the site; the client only falls back to
+// the VNDirect / favicon map below when this 404s. Served from our origin with
+// a long cache lifetime because CafeF's CDN marks these files no-store.
+router.get(
+  "/company-logos/img/:symbol",
+  asyncHandler(async (req, res) => {
+    const symbol = String(req.params.symbol).toUpperCase();
+    const logo = isValidLogoSymbol(symbol) ? await getCafefLogo(symbol) : null;
+    if (!logo) {
+      // Short-lived so a symbol CafeF later gains a logo for isn't stuck on 404.
+      res.set("Cache-Control", "public, max-age=3600, s-maxage=3600").status(404).end();
+      return;
+    }
+    res.set({
+      "Content-Type": logo.contentType,
+      "Cache-Control": "public, max-age=86400, s-maxage=604800, stale-while-revalidate=604800",
+    });
+    res.send(logo.buffer);
   })
 );
 

@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { fetchMarketOverview } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
+import CompanyLogo from "./CompanyLogo";
 
 export default function StockHeaderInfo() {
   const { symbol } = useParams<{ symbol: string }>();
@@ -26,6 +27,7 @@ export default function StockHeaderInfo() {
 
   return (
     <div className="flex items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-4 py-2 dark:border-slate-800 dark:bg-slate-900/30">
+      <CompanyLogo symbol={stockInfo.symbol} size={32} fallback="none" />
       <div className="min-w-0 flex-1">
         <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
           {stockInfo.symbol}

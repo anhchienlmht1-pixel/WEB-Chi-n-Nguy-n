@@ -19,6 +19,7 @@ import SystemAssessment from "../components/SystemAssessment";
 import PositionTracker from "../components/PositionTracker";
 import AdvisorContactBar from "../components/AdvisorContactBar";
 import FinancialSnapshot from "../components/FinancialSnapshot";
+import CompanyLogo from "../components/CompanyLogo";
 
 const SIDEBAR_TABS = [
   { key: "tong-quan", label: "Tổng quan" },
@@ -53,6 +54,7 @@ export default function StockDetail() {
             <div className="flex flex-wrap items-start justify-between gap-6">
               <div className="flex-1">
                 <div className="flex items-center gap-3">
+                  <CompanyLogo symbol={quote.symbol} size={48} fallback="none" />
                   <h1 className="display-heading text-5xl leading-[1.1] text-slate-900 dark:text-slate-100">
                     {quote.symbol}
                   </h1>

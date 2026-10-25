@@ -3,6 +3,7 @@ import { History } from "lucide-react";
 import { usePolling } from "../hooks/usePolling";
 import { fetchTradeJournal } from "../api/client";
 import { formatPrice, formatPercent } from "../utils/format";
+import CompanyLogo from "./CompanyLogo";
 
 const POLL_MS = 5 * 60 * 1000;
 
@@ -83,10 +84,18 @@ export default function TrendJournal() {
                   className="border-b border-slate-100 last:border-0 hover:bg-slate-50 dark:border-slate-900 dark:hover:bg-slate-900/60"
                 >
                   <td className="px-3 py-2">
-                    <Link to={`/stock/${t.symbol}`} className="font-semibold text-slate-900 hover:underline dark:text-slate-100">
-                      {t.symbol}
-                    </Link>
-                    <span className="ml-1 text-[10px] text-slate-400 dark:text-slate-500">{t.exchange}</span>
+                    <div className="flex items-center gap-2">
+                      <CompanyLogo symbol={t.symbol} size={20} fallback="space" />
+                      <div>
+                        <Link
+                          to={`/stock/${t.symbol}`}
+                          className="font-semibold text-slate-900 hover:underline dark:text-slate-100"
+                        >
+                          {t.symbol}
+                        </Link>
+                        <span className="ml-1 text-[10px] text-slate-400 dark:text-slate-500">{t.exchange}</span>
+                      </div>
+                    </div>
                   </td>
                   <td className="px-3 py-2 tabular-nums text-slate-600 dark:text-slate-300">
                     {formatDate(t.buyDate)}

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Bell, Check } from "lucide-react";
 import { useTrendSignalNotifications } from "../hooks/useTrendSignalNotifications";
 import { formatPercent, formatPrice } from "../utils/format";
+import CompanyLogo from "./CompanyLogo";
 
 function formatSince(iso: string): string {
   return new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
@@ -93,11 +94,14 @@ export default function TrendSignalBell() {
                     onClick={() => setOpen(false)}
                     className="flex items-center justify-between gap-2 border-b border-slate-100 px-3 py-2 text-sm last:border-0 hover:bg-slate-50 dark:border-slate-900 dark:hover:bg-slate-800/60"
                   >
-                    <div className="min-w-0">
-                      <span className="font-semibold text-slate-900 dark:text-slate-100">{h.symbol}</span>
-                      <span className="ml-1.5 text-[11px] text-slate-400 dark:text-slate-500">
-                        Từ {formatSince(h.signalSince)}
-                      </span>
+                    <div className="flex min-w-0 items-center gap-2">
+                      <CompanyLogo symbol={h.symbol} size={22} fallback="space" />
+                      <div className="min-w-0">
+                        <span className="font-semibold text-slate-900 dark:text-slate-100">{h.symbol}</span>
+                        <span className="ml-1.5 text-[11px] text-slate-400 dark:text-slate-500">
+                          Từ {formatSince(h.signalSince)}
+                        </span>
+                      </div>
                     </div>
                     <div className="shrink-0 text-right">
                       <div className="tabular-nums text-slate-900 dark:text-slate-100">

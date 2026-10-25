@@ -113,7 +113,7 @@ export default function CompanyProfileCard({ symbol, fallbackName }: { symbol: s
     <div className="overflow-hidden rounded-md border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
       <div className="flex flex-wrap items-start justify-between gap-4 p-4">
         <div className="flex min-w-0 items-start gap-3">
-          <CompanyLogo symbol={upper} size={44} />
+          <CompanyLogo symbol={upper} size={44} fallback="none" />
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">

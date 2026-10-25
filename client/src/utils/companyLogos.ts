@@ -10,7 +10,9 @@ type LogoMap = Record<string, LogoEntry>;
 // dozens of logos at once, and each one asking usePolling to fetch
 // independently would fire dozens of identical requests. This fetches the
 // server's /api/company-logos map (itself a 24h-cached VNDirect bulk pull)
-// exactly once, then just notifies every subscriber when it lands.
+// exactly once, then just notifies every subscriber when it lands. (Only the
+// fallback path — CompanyLogo asks CafeF first, per symbol, and reads this map
+// only for symbols CafeF has no logo for.)
 let cache: LogoMap | null = null;
 let inflight: Promise<LogoMap> | null = null;
 const listeners = new Set<() => void>();

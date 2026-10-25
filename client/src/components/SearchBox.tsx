@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { searchSymbols } from "../api/client";
 import type { SearchResult } from "../types";
+import CompanyLogo from "./CompanyLogo";
 
 export default function SearchBox() {
   const [query, setQuery] = useState("");
@@ -71,7 +72,10 @@ export default function SearchBox() {
               onClick={() => goTo(r.symbol)}
               className="flex w-full items-center justify-between px-4 py-2 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800"
             >
-              <span className="font-semibold text-slate-900 dark:text-slate-100">{r.symbol}</span>
+              <span className="flex items-center gap-2">
+                <CompanyLogo symbol={r.symbol} size={22} fallback="space" />
+                <span className="font-semibold text-slate-900 dark:text-slate-100">{r.symbol}</span>
+              </span>
               <span className="truncate pl-3 text-slate-500 dark:text-slate-400">{r.name}</span>
               <span className="pl-3 text-xs text-slate-400 dark:text-slate-500">{r.exchange}</span>
             </button>
