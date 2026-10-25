@@ -56,6 +56,49 @@
   --color-orange-950: #4f2b15;
 }
 
+/* ---------------------------------------------------------------------------
+   Editorial tokens — the home page / header / footer style (paper, ink and a
+   near-black "band"). Same teal-tinted neutrals as the slate palette above:
+   paper = slate-50 (light) / slate-950 (dark), ink = slate-950 / slate-50.
+     paper : page background            ink  : text, inverted buttons
+     band  : black bars + dark panels   mid  : tinted section background
+     quiet : secondary text (on paper)  quiet-on-band : secondary text on band
+     rule  : hairlines on paper
+--------------------------------------------------------------------------- */
+:root {
+  --paper: #edf3f1;
+  --ink: #1b2529;
+  --band: #0e1416;
+  --mid: #c3d2cf;
+  --quiet: #4a585d;
+  --quiet-on-band: #9db0ac;
+  --rule: rgba(27, 37, 41, 0.18);
+  /* Side padding shared by the header, footer and every page, so their edges
+     line up at any width. */
+  --gutter: clamp(16px, 3.2vw, 56px);
+}
+.dark {
+  --paper: #1b2529;
+  --ink: #edf3f1;
+  --band: #0e1416;
+  --mid: #243238;
+  --quiet: #9db0ac;
+  --quiet-on-band: #9db0ac;
+  --rule: rgba(237, 243, 241, 0.16);
+}
+@theme inline {
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-band: var(--band);
+  --color-mid: var(--mid);
+  --color-quiet: var(--quiet);
+  --color-quiet-on-band: var(--quiet-on-band);
+  --color-rule: var(--rule);
+}
+@utility gutter-x {
+  padding-inline: var(--gutter);
+}
+
 html {
   color-scheme: light;
   background-color: #edf3f1;
@@ -86,6 +129,10 @@ body {
 @theme static {
   --font-sans: "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
   --font-display: "Barlow Condensed", "Oswald", "Arial Narrow", system-ui, sans-serif;
+  /* Editorial headline face (home hero, section titles): Archivo, whose width
+     axis (100–125%) gives the wide, heavy "STOCK" wordmark. Full Vietnamese
+     coverage; Inter is the fallback. */
+  --font-editorial: "Archivo", "Inter", system-ui, sans-serif;
 }
 
 body {
@@ -118,6 +165,16 @@ h1 { letter-spacing: -0.02em; }
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.01em;
+}
+
+/* Editorial headline (home hero + section titles): Archivo, extra-bold. A class
+   in this unlayered sheet (not the `font-editorial` utility) because the
+   unlayered h1–h6 rule above would otherwise win over a layered utility.
+   Width (font-stretch), size and case come from the element. */
+.editorial {
+  font-family: var(--font-editorial);
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 /* All financial data: tabular figures, medium weight for legibility. */

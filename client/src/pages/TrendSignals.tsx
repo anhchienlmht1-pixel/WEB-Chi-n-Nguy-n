@@ -14,7 +14,8 @@ import { dropUnclosedBars } from "../utils/sessionClose";
 
 const DEFAULT_SYMBOL = "VNINDEX";
 
-// Homepage — chart + whole-market buy-signal scanner + trade journal.
+// Homepage — editorial hero, then chart + whole-market buy-signal scanner,
+// the system intro and the trade journal.
 // The site is intentionally minimal: one page whose whole job is
 // showing Mua/Bán signals and getting a visitor to open an account,
 // not a market-data portal (overview banner, Leader Board, movers,
@@ -48,17 +49,22 @@ export default function TrendSignals() {
   }, [historyState.data]);
 
   return (
-    <div className="mx-auto max-w-[1800px] px-4 py-8">
-      <div className="space-y-14">
-        <HomeHero />
+    <>
+      <HomeHero />
 
-        {/* Main Chart + Signals Section */}
-        <div id="tin-hieu" className="scroll-mt-20">
-          <div className="mb-5">
-            <h1 className="display-heading text-4xl leading-[1.1] text-slate-900 dark:text-slate-100 sm:text-5xl">
-              Tín hiệu Mua/Bán theo xu hướng
-            </h1>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+      {/* Chart + whole-market buy-signal list, straight under the hero. */}
+      <section id="tin-hieu" className="scroll-mt-16 bg-mid py-14 sm:py-20">
+        <div className="gutter-x mx-auto max-w-[1800px]">
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-x-10 gap-y-4">
+            <div>
+              <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.16em]">
+                Tín hiệu Mua/Bán theo xu hướng
+              </p>
+              <h2 className="editorial text-[clamp(32px,4.6vw,64px)] uppercase leading-[1.02]">
+                Xu hướng. Kỷ luật. Tín hiệu.
+              </h2>
+            </div>
+            <p className="max-w-md text-sm leading-[1.7]">
               Đang xem {chartSymbol} — quét Trend Following trên toàn thị trường, chốt tín hiệu sau mỗi phiên đóng cửa.
             </p>
           </div>
@@ -79,16 +85,22 @@ export default function TrendSignals() {
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Trend System Intro — right under the chart */}
-        <TrendSystemIntro />
+      <div className="gutter-x mx-auto max-w-[1800px] space-y-10 py-14 sm:py-20">
+        {/* Trend System Intro */}
+        <div id="he-thong" className="scroll-mt-20">
+          <TrendSystemIntro />
+        </div>
 
         {/* Trend System Statistics */}
         {chartSymbol !== "VNINDEX" && <TrendSystemStats signals={signals} symbol={chartSymbol} />}
 
         {/* Trade journal — real, forward-only "lịch sử giao dịch" */}
-        <TrendJournal />
+        <div id="nhat-ky" className="scroll-mt-20">
+          <TrendJournal />
+        </div>
       </div>
-    </div>
+    </>
   );
 }

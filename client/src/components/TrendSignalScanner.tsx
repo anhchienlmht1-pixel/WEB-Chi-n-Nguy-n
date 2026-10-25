@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { TrendingUp, Clock, RefreshCw, Star, Search } from "lucide-react";
+import { Clock, RefreshCw, Star, Search } from "lucide-react";
 import { usePolling } from "../hooks/usePolling";
 import { fetchTrendBuyResult } from "../api/client";
 import { formatPercent, formatPrice } from "../utils/format";
@@ -34,19 +34,19 @@ function daysHeld(buyIso: string, sessionIso: string): number {
 const COLS =
   "grid-cols-[minmax(0,1fr)_3rem_4rem_4.5rem] @md:grid-cols-[minmax(0,1fr)_4.5rem_8.5rem_7.5rem]";
 
+// The list is a black panel in both themes (the editorial "band" colour), with
+// square corners to match the rest of the home page.
+const SHELL = "overflow-hidden bg-band text-white shadow-[0_24px_60px_rgba(0,0,0,0.28)]";
+const TITLE = "text-xs font-bold uppercase tracking-[0.14em]";
+
 // Reusable card shell so the loading / error / empty / list states all share
 // the same header and framing — the panel never "jumps" between states.
 function Panel({ children, subtitle }: { children: ReactNode; subtitle?: ReactNode }) {
   return (
-    <div className="overflow-hidden rounded-md border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
-      <div className="border-b border-slate-200 p-4 dark:border-slate-800">
-        <div className="flex items-center gap-2">
-          <span className="flex h-6 w-6 items-center justify-center rounded bg-green-100 dark:bg-green-950/50">
-            <TrendingUp className="h-3.5 w-3.5 text-green-700 dark:text-green-400" strokeWidth={2} />
-          </span>
-          <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Tín hiệu MUA</h4>
-        </div>
-        <p className="mt-1.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+    <div className={SHELL}>
+      <div className="border-b border-white/10 px-5 pb-4 pt-5">
+        <h4 className={TITLE}>Tín hiệu MUA</h4>
+        <p className="mt-2.5 text-xs leading-relaxed text-quiet-on-band">
           {subtitle ?? "Cổ phiếu đang trong xu hướng tăng và chưa xuất hiện điểm bán."}
         </p>
       </div>
@@ -82,8 +82,8 @@ export default function TrendSignalScanner({
         <div className="space-y-2 p-4">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="flex items-center gap-3">
-              <div className="h-8 w-8 shrink-0 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
-              <div className="h-6 flex-1 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
+              <div className="h-8 w-8 shrink-0 animate-pulse bg-white/10" />
+              <div className="h-6 flex-1 animate-pulse bg-white/10" />
             </div>
           ))}
         </div>
@@ -98,13 +98,13 @@ export default function TrendSignalScanner({
     return (
       <Panel subtitle="Cổ phiếu đang trong xu hướng tăng và chưa xuất hiện điểm bán.">
         <div className="flex flex-col items-center gap-3 p-6 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-            <Clock className="h-5 w-5 text-slate-500 dark:text-slate-400" strokeWidth={1.75} />
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10">
+            <Clock className="h-5 w-5 text-quiet-on-band" strokeWidth={1.75} />
           </div>
-          <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+          <p className="text-sm font-medium text-white">
             {isTimeout ? "Đang tổng hợp dữ liệu thị trường" : "Chưa tải được danh sách tín hiệu"}
           </p>
-          <p className="max-w-xs text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+          <p className="max-w-xs text-xs leading-relaxed text-quiet-on-band">
             {isTimeout
               ? "Lần tải đầu tiên hệ thống cần quét khoảng 70 mã nên có thể mất vài giây. Bạn hãy thử lại nhé."
               : "Có thể do kết nối tạm thời gián đoạn. Vui lòng thử lại sau giây lát."}
@@ -112,7 +112,7 @@ export default function TrendSignalScanner({
           <button
             type="button"
             onClick={refetch}
-            className="mt-1 inline-flex items-center gap-1.5 rounded bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition-colors duration-300 hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+            className="mt-1 inline-flex items-center gap-1.5 border border-white px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition-colors duration-300 hover:bg-white hover:text-band"
           >
             <RefreshCw className="h-3.5 w-3.5" strokeWidth={2} />
             Thử lại
@@ -132,16 +132,16 @@ export default function TrendSignalScanner({
 
   const subtitle = (
     <>
-      <span className="font-medium text-green-700 dark:text-green-400">{hits.length} cổ phiếu</span> đang trong xu hướng
+      <span className="font-semibold text-green-400">{hits.length} cổ phiếu</span> đang trong xu hướng
       tăng, chưa xuất hiện điểm bán.
       <span
-        className="mt-0.5 block text-[11px] text-slate-400 dark:text-slate-500"
+        className="mt-0.5 block text-[11px] text-quiet-on-band/70"
         title="Điều kiện: SMA20 > SMA50, ADX(14) > 25 và Supertrend(10,3) đang báo tăng. Tính trên nến ngày đã đóng cửa; kết luận mới chỉ có sau 15:00."
       >
         {sessionLabel} · Trend Following ⓘ
       </span>
       {inSession && (
-        <span className="mt-0.5 block text-[11px] text-amber-600 dark:text-amber-400">
+        <span className="mt-0.5 block text-[11px] text-amber-400">
           Đang trong phiên: kết luận mới sẽ chốt sau 15:00.
         </span>
       )}
@@ -149,23 +149,18 @@ export default function TrendSignalScanner({
   );
 
   return (
-    <div className="overflow-hidden rounded-md border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 p-4 dark:border-slate-800">
+    <div className={SHELL}>
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/10 px-5 pb-4 pt-5">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded bg-green-100 dark:bg-green-950/50">
-              <TrendingUp className="h-3.5 w-3.5 text-green-700 dark:text-green-400" strokeWidth={2} />
-            </span>
-            <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Tín hiệu MUA</h4>
-          </div>
-          <p className="mt-1.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{subtitle}</p>
+          <h4 className={TITLE}>Tín hiệu MUA</h4>
+          <p className="mt-2.5 text-xs leading-relaxed text-quiet-on-band">{subtitle}</p>
         </div>
         {hits.length > 0 && (
           <button
             type="button"
             onClick={() => addMany(hits.map((h) => h.symbol))}
             title="Thêm tất cả mã trong danh sách vào mục theo dõi của bạn"
-            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded border border-green-600 bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 transition-all duration-200 hover:-translate-y-0.5 hover:bg-green-100 hover:shadow-md dark:border-green-500/50 dark:bg-green-950/30 dark:text-green-400 dark:hover:bg-green-950/50"
+            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap border border-[#2fb39a] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#2fb39a] transition-colors duration-200 hover:bg-[#2fb39a] hover:text-band"
           >
             <Star className="h-3.5 w-3.5" strokeWidth={2} />
             Theo dõi tất cả
@@ -175,11 +170,11 @@ export default function TrendSignalScanner({
 
       {hits.length === 0 ? (
         <div className="flex flex-col items-center gap-2 p-6 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-            <Search className="h-5 w-5 text-slate-500 dark:text-slate-400" strokeWidth={1.75} />
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10">
+            <Search className="h-5 w-5 text-quiet-on-band" strokeWidth={1.75} />
           </div>
-          <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Chưa có mã nào khớp tín hiệu MUA</p>
-          <p className="max-w-xs text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+          <p className="text-sm font-medium text-white">Chưa có mã nào khớp tín hiệu MUA</p>
+          <p className="max-w-xs text-xs leading-relaxed text-quiet-on-band">
             Hiện không cổ phiếu nào hội đủ 3 điều kiện của xu hướng tăng. Danh sách được chốt lại sau mỗi phiên đóng cửa (15:00).
           </p>
         </div>
@@ -188,7 +183,7 @@ export default function TrendSignalScanner({
           {/* Sticky column header — shares COLS with every row below, and a
            * spacer the width of the row's star button, so the four labels sit
            * exactly over their values while the list scrolls. */}
-          <div className="sticky top-0 z-20 flex items-center gap-2 border-b border-l-4 border-l-transparent border-slate-100 bg-slate-50 px-3 py-2 @md:px-4 text-[11px] font-semibold uppercase tracking-normal text-slate-500 @md:tracking-wide dark:border-slate-900 dark:bg-slate-900 dark:text-slate-400">
+          <div className="sticky top-0 z-20 flex items-center gap-2 bg-[#1a2123] px-3 py-3 text-[10px] font-semibold uppercase tracking-normal text-quiet-on-band @md:px-5 @md:tracking-[0.1em]">
             <span className="w-9 shrink-0" aria-hidden="true" />
             <div className={`grid min-w-0 flex-1 gap-1.5 @md:gap-2 ${COLS}`}>
               <span>Mã</span>
@@ -209,10 +204,10 @@ export default function TrendSignalScanner({
             const held = daysHeld(h.buyDate, sessionDate);
             const gainClass =
               h.signalReturnPercent > 0
-                ? "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400"
+                ? "bg-green-400/15 text-green-400"
                 : h.signalReturnPercent < 0
-                  ? "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400"
-                  : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400";
+                  ? "bg-red-400/15 text-red-300"
+                  : "bg-white/10 text-quiet-on-band";
             // Entry price/date are no longer their own column — they live in
             // the row tooltip alongside the current price.
             const rowTitle = `${h.symbol}: vào tín hiệu ngày ${formatSince(h.buyDate)} ở giá ${formatPrice(h.buyPrice, h.currency)}, giá đóng cửa phiên ${formatSessionDate(sessionDate)} ${formatPrice(h.price, h.currency)}`;
@@ -228,16 +223,16 @@ export default function TrendSignalScanner({
                   <span className="hidden shrink-0 @min-[22rem]:inline-flex">
                     <CompanyLogo symbol={h.symbol} size={22} fallback="space" />
                   </span>
-                  <span className="truncate font-semibold text-slate-900 dark:text-slate-100">{h.symbol}</span>
+                  <span className="truncate font-bold tracking-[0.02em] text-white">{h.symbol}</span>
                 </span>
-                <span className="justify-self-start rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                <span className="justify-self-start bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-[#d4dedc]">
                   {h.exchange}
                 </span>
-                <span className="justify-self-end whitespace-nowrap text-xs tabular-nums text-slate-700 dark:text-slate-300">
+                <span className="justify-self-end whitespace-nowrap text-xs tabular-nums text-[#d4dedc]">
                   {held > 0 ? `${held} ngày` : "Mới vào"}
                 </span>
                 <span
-                  className={`justify-self-end whitespace-nowrap rounded px-1.5 py-0.5 text-xs font-semibold tabular-nums ${gainClass}`}
+                  className={`justify-self-end whitespace-nowrap px-1.5 py-0.5 text-xs font-bold tabular-nums ${gainClass}`}
                 >
                   {formatPercent(h.signalReturnPercent)}
                 </span>
@@ -250,9 +245,9 @@ export default function TrendSignalScanner({
             return (
               <div
                 key={h.symbol}
-                className="relative flex items-center gap-2 border-b border-l-4 border-l-green-500 border-slate-100 bg-white px-3 py-2.5 @md:px-4 transition-all duration-200 last:border-b-0 hover:-translate-y-0.5 hover:z-10 hover:bg-green-50/40 hover:shadow-md dark:border-slate-900 dark:border-l-green-500/60 dark:bg-slate-900/40 dark:hover:bg-green-950/20"
+                className="relative flex items-center gap-2 border-t border-white/[0.08] px-3 py-3 transition-colors duration-200 hover:bg-white/5 @md:px-5"
               >
-                <WatchButton symbol={h.symbol} />
+                <WatchButton symbol={h.symbol} onDark />
                 {onSelectSymbol ? (
                   <button type="button" title={rowTitle} onClick={() => onSelectSymbol(h.symbol)} className={rowClass}>
                     {cells}

@@ -1,7 +1,9 @@
 import { Star } from "lucide-react";
 import { useWatchlist } from "../hooks/useWatchlist";
 
-export default function WatchButton({ symbol }: { symbol: string }) {
+// onDark: for use on the black editorial panels, where the light-theme greys
+// would vanish.
+export default function WatchButton({ symbol, onDark = false }: { symbol: string; onDark?: boolean }) {
   const { isWatched, toggle } = useWatchlist();
   const watched = isWatched(symbol);
 
@@ -14,7 +16,11 @@ export default function WatchButton({ symbol }: { symbol: string }) {
       }}
       title={watched ? "Bỏ theo dõi" : "Thêm vào danh sách theo dõi"}
       className={`flex h-9 w-9 items-center justify-center rounded border transition-colors duration-300 ${
-        watched
+        onDark
+          ? watched
+            ? "border-amber-400 bg-amber-400/10 text-amber-400"
+            : "border-white/20 text-quiet-on-band hover:border-amber-400 hover:text-amber-400"
+          : watched
           ? "border-amber-400 bg-amber-50 text-amber-500 dark:border-amber-600 dark:bg-amber-950/20 dark:text-amber-400"
           : "border-slate-300 text-slate-400 hover:border-amber-400 hover:bg-amber-50 hover:text-amber-500 dark:border-slate-700 dark:text-slate-500 dark:hover:border-amber-600 dark:hover:bg-amber-950/10 dark:hover:text-amber-400"
       }`}

@@ -1,13 +1,15 @@
 import { Route, Routes } from 'react-router-dom'
 import Header from './components/Header'
 import Footer from './components/Footer'
+import ScrollToHash from './components/ScrollToHash'
 import TrendSignals from './pages/TrendSignals'
 import StockDetail from './pages/StockDetail'
 import AccountOpeningGuide from './pages/AccountOpeningGuide'
 
 function App() {
   return (
-    <div className="flex min-h-svh flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <div className="flex min-h-svh flex-col bg-paper text-ink">
+      <ScrollToHash />
       <Header />
       <main className="flex-1">
         <Routes>

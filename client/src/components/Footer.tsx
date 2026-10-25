@@ -1,88 +1,81 @@
-import { Globe, Video, MessageCircle, Users, Phone } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Phone } from "lucide-react";
 
+const HEAD = "mb-4 text-[11px] font-bold uppercase tracking-[0.14em]";
+const LINK = "text-quiet-on-band transition-colors duration-200 hover:text-white";
+
+const SOCIAL = [
+  { label: "Facebook", href: "https://www.facebook.com/chiennguyen.taichinh/" },
+  { label: "YouTube", href: "https://www.youtube.com/@chiennguyen.taichinh" },
+  { label: "Zalo", href: "https://zalo.me/0886284212" },
+  { label: "Nhóm Zalo", href: "https://zalo.me/g/n1hcdesbqhdutsecnxzg" },
+];
+
+// Editorial footer: always a black band (both themes), so it uses the dark
+// logo variant.
 export default function Footer() {
   return (
-    <footer className="border-t border-slate-200 bg-slate-50 py-8 dark:border-slate-800 dark:bg-slate-900/30">
-      <div className="mx-auto max-w-[1800px] px-4">
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {/* Contact Info */}
-          <div>
-            <h4 className="font-semibold text-slate-900 dark:text-slate-100">Liên hệ</h4>
-            <div className="mt-3 space-y-2 text-sm">
-              <div>
-                <p className="font-medium text-slate-900 dark:text-slate-100">
-                  Nguyễn Anh Chiến
-                </p>
-                <p className="text-slate-600 dark:text-slate-400">Chuyên viên tư vấn đầu tư</p>
-                <p className="mt-1 text-slate-600 dark:text-slate-400">
-                  CTCP Chứng khoán KAFI
-                </p>
-              </div>
-              <a
-                href="tel:0886284212"
-                className="inline-flex items-center gap-1.5 font-semibold text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300"
-              >
-                <Phone className="h-3.5 w-3.5" strokeWidth={1.75} />
-                0886.284.212
-              </a>
-            </div>
-          </div>
-
-          {/* Community */}
-          <div>
-            <h4 className="font-semibold text-slate-900 dark:text-slate-100">Theo dõi</h4>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <a
-                href="https://www.facebook.com/chiennguyen.taichinh/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors duration-300 hover:border-blue-400 hover:text-blue-600 dark:border-slate-700 dark:text-slate-300 dark:hover:text-blue-400"
-              >
-                <Globe className="h-4 w-4" strokeWidth={1.75} />
-                Facebook
-              </a>
-              <a
-                href="https://www.youtube.com/@chiennguyen.taichinh"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors duration-300 hover:border-red-400 hover:text-red-600 dark:border-slate-700 dark:text-slate-300 dark:hover:text-red-400"
-              >
-                <Video className="h-4 w-4" strokeWidth={1.75} />
-                YouTube
-              </a>
-              <a
-                href="https://zalo.me/0886284212"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors duration-300 hover:border-emerald-400 hover:text-emerald-600 dark:border-slate-700 dark:text-slate-300 dark:hover:text-emerald-400"
-              >
-                <MessageCircle className="h-4 w-4" strokeWidth={1.75} />
-                Zalo
-              </a>
-              <a
-                href="https://zalo.me/g/n1hcdesbqhdutsecnxzg"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors duration-300 hover:border-emerald-400 hover:text-emerald-600 dark:border-slate-700 dark:text-slate-300 dark:hover:text-emerald-400"
-              >
-                <Users className="h-4 w-4" strokeWidth={1.75} />
-                Nhóm Zalo
-              </a>
-            </div>
-          </div>
-
-          {/* Disclaimer */}
-          <div>
-            <h4 className="font-semibold text-slate-900 dark:text-slate-100">Lưu ý</h4>
-            <p className="mt-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-              Các tín hiệu và dữ liệu được cung cấp chỉ mang tính chất minh họa, không phải lời khuyên đầu tư. Quý khách
-              vui lòng tham khảo ý kiến chuyên viên trước khi quyết định đầu tư.
+    <footer id="footer" className="scroll-mt-20 bg-band text-white">
+      <div className="gutter-x mx-auto max-w-[1800px] pb-7 pt-14">
+        <div className="flex flex-wrap justify-between gap-x-16 gap-y-10">
+          <div className="max-w-sm flex-1 basis-72">
+            <img src="/logo-cstock-dark.svg" alt="C Stock" className="block h-[52px]! w-auto" />
+            <p className="mt-5 text-[13px] leading-[1.7] text-quiet-on-band">
+              Công cụ theo dõi tín hiệu mua bán theo xu hướng cho nhà đầu tư chứng khoán Việt Nam.
             </p>
+          </div>
+
+          <div className="flex flex-wrap gap-x-16 gap-y-8">
+            <div>
+              <h4 className={HEAD}>Khám phá</h4>
+              <div className="flex flex-col gap-2.5 text-xs">
+                <Link to={{ pathname: "/", hash: "#tin-hieu" }} className={LINK}>
+                  Tín hiệu mua
+                </Link>
+                <Link to={{ pathname: "/", hash: "#nhat-ky" }} className={LINK}>
+                  Nhật ký giao dịch
+                </Link>
+                <Link to="/huong-dan-mo-tai-khoan" className={LINK}>
+                  Hướng dẫn mở tài khoản
+                </Link>
+              </div>
+            </div>
+
+            <div>
+              <h4 className={HEAD}>Liên hệ</h4>
+              <div className="space-y-1 text-xs">
+                <p className="font-semibold text-white">Nguyễn Anh Chiến</p>
+                <p className="text-quiet-on-band">Chuyên viên tư vấn đầu tư</p>
+                <p className="text-quiet-on-band">CTCP Chứng khoán KAFI</p>
+                <a
+                  href="tel:0886284212"
+                  className="mt-2.5 inline-flex items-center gap-1.5 font-semibold text-orange-400 transition-colors hover:text-orange-300"
+                >
+                  <Phone className="h-3.5 w-3.5" strokeWidth={1.75} />
+                  0886.284.212
+                </a>
+              </div>
+            </div>
+
+            <div>
+              <h4 className={HEAD}>Theo dõi</h4>
+              <div className="flex flex-col gap-2.5 text-xs">
+                {SOCIAL.map(({ label, href }) => (
+                  <a key={label} href={href} target="_blank" rel="noopener noreferrer" className={LINK}>
+                    {label}
+                  </a>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="mt-8 border-t border-slate-200 pt-4 text-center text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
-          <p>© 2024 - 2025. Nền tảng phân tích thị trường chứng khoán Việt Nam</p>
+        <div className="mt-11 flex flex-wrap justify-between gap-x-8 gap-y-3 border-t border-white/10 pt-5 text-[11px] leading-[1.7] text-quiet-on-band">
+          <p className="max-w-2xl">
+            Các tín hiệu và dữ liệu được cung cấp chỉ mang tính chất minh họa, không phải lời khuyên đầu tư. Quý khách
+            vui lòng tham khảo ý kiến chuyên viên trước khi quyết định đầu tư.
+          </p>
+          <p>© 2024 – 2026 Nền tảng phân tích thị trường chứng khoán Việt Nam</p>
         </div>
       </div>
     </footer>

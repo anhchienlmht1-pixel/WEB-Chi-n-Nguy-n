@@ -36,7 +36,7 @@ export default function StockDetail() {
 
   if (quoteState.error && !quote) {
     return (
-      <div className="mx-auto max-w-[1800px] px-4 py-10 text-center">
+      <div className="gutter-x mx-auto max-w-[1800px] py-10 text-center">
         <p className="text-slate-500 dark:text-slate-400">
           Không tải được mã "{symbol}": {quoteState.error}
         </p>
@@ -45,7 +45,7 @@ export default function StockDetail() {
   }
 
   return (
-    <div className="mx-auto max-w-[1800px] px-4 py-6">
+    <div className="gutter-x mx-auto max-w-[1800px] py-6">
       {quote && (
         <>
           <StockSummary quote={quote} isIndexOrFutures={isIndexOrFutures} />
