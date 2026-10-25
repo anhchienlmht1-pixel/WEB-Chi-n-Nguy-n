@@ -177,6 +177,62 @@ h1 { letter-spacing: -0.02em; }
   letter-spacing: -0.02em;
 }
 
+/* ---------------------------------------------------------------------------
+   Motion — the home hero's entrance. Same rules as the rest of the UI: only
+   transform + opacity, durations from the 100/150/200/300ms scale, ease-out on
+   enter, no bounce, no looping. A sequence is made with staggered
+   `--delay`s (set per element in HomeHero.tsx), not with longer durations.
+   Under prefers-reduced-motion everything is a plain ≤150ms fade, no movement.
+--------------------------------------------------------------------------- */
+:root {
+  --motion-100: 100ms;
+  --motion-150: 150ms;
+  --motion-200: 200ms;
+  --motion-300: 300ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes enter-up {
+  from { opacity: 0; transform: translateY(var(--enter-y, 8px)); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes enter-side {
+  from { opacity: 0; transform: translateX(16px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes enter-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes enter-rule {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.enter,
+.enter-bull,
+.enter-fade,
+.enter-rule {
+  animation-duration: var(--motion-300);
+  animation-timing-function: var(--ease-out);
+  animation-delay: var(--delay, 0ms);
+  animation-fill-mode: both;
+}
+.enter { animation-name: enter-up; }
+.enter-bull { animation-name: enter-side; transform-origin: 62% 100%; }
+.enter-fade { animation-name: enter-fade; animation-duration: var(--motion-200); }
+.enter-rule { animation-name: enter-rule; animation-duration: var(--motion-200); }
+.enter-200 { animation-duration: var(--motion-200); }
+@media (prefers-reduced-motion: reduce) {
+  .enter,
+  .enter-bull,
+  .enter-fade,
+  .enter-rule {
+    animation-name: enter-fade;
+    animation-duration: var(--motion-150);
+    animation-timing-function: ease;
+    animation-delay: 0ms;
+  }
+}
+
 /* All financial data: tabular figures, medium weight for legibility. */
 .price, .number, [class*="rate"], [class*="price"], [class*="quote"],
 .tabular-nums, [class*="percentage"], [class*="change"],

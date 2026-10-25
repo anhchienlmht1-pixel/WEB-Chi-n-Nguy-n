@@ -107,6 +107,11 @@ const FEATURES: Feature[] = [
 
 const SMALL_CAPS = "text-xs font-semibold uppercase tracking-[0.14em]";
 
+const TAGLINE = ["Tín hiệu rõ ràng.", "Kỷ luật là lợi thế.", "Quyết định là của bạn."];
+
+// Start delay (ms) of an entrance animation — read by .enter-* in index.css.
+const delay = (ms: number) => ({ "--delay": `${ms}ms` }) as CSSProperties;
+
 // Homepage hero, editorial style: a giant "STOCK" wordmark with the bull
 // standing in front of it, a CTA row, then a black strip of four features.
 export default function HomeHero() {
@@ -117,15 +122,18 @@ export default function HomeHero() {
     <>
       <section className="gutter-x pb-11 pt-12" style={stage}>
         <div className="mx-auto max-w-[1800px]">
+          {/* Entrance motion (see .enter-* in index.css): opacity + transform
+              only, 300ms/200ms, ease-out; the sequence is built from staggered
+              delays, not longer durations. Reduced motion → plain fades. */}
           <div className="relative z-[3] max-w-[300px]">
             <p className="text-xs font-semibold uppercase leading-[1.9] tracking-[0.16em]">
-              Tín hiệu rõ ràng.
-              <br />
-              Kỷ luật là lợi thế.
-              <br />
-              Quyết định là của bạn.
+              {TAGLINE.map((line, i) => (
+                <span key={line} className="enter enter-200 block" style={delay(i * 60)}>
+                  {line}
+                </span>
+              ))}
             </p>
-            <div className="mt-3.5 h-0.5 w-[30px] bg-ink" />
+            <div className="enter-rule mt-3.5 h-0.5 w-[30px] origin-left bg-ink" style={delay(220)} />
           </div>
 
           <div className="relative mt-3" style={{ height: "calc(var(--fs) * 1.7)" }}>
@@ -138,34 +146,50 @@ export default function HomeHero() {
                 letterSpacing: "-0.02em",
               }}
             >
-              <span className="sr-only">C </span>STOCK
+              <span className="sr-only">C STOCK</span>
+              {/* One span per letter so they can rise in turn; the visible
+                  letters are hidden from screen readers (the sr-only text
+                  above carries the name). */}
+              {"STOCK".split("").map((ch, i) => (
+                <span
+                  key={i}
+                  aria-hidden="true"
+                  className="enter inline-block"
+                  style={{ ...delay(i * 50), "--enter-y": "0.06em" } as CSSProperties}
+                >
+                  {ch}
+                </span>
+              ))}
             </h1>
-            {/* Soft halo so the bull reads against the letters behind it. */}
-            <div
-              aria-hidden="true"
-              className="absolute bottom-0 z-[1] opacity-75"
-              style={{
-                left: "62%",
-                transform: "translateX(-50%)",
-                width: "calc(var(--fs) * 1.5)",
-                height: "60%",
-                background: "radial-gradient(closest-side, var(--paper), transparent)",
-              }}
-            />
-            <img
-              src="/hero-bull.png"
-              alt="Con bò đang lao tới trước những cây nến tăng"
-              width={640}
-              height={672}
-              className="absolute z-[2] block w-auto max-w-none"
-              // Inline: the unlayered `img { height: auto }` in index.css would
-              // beat a utility class here.
-              style={{ left: "62%", bottom: "-2%", transform: "translateX(-50%)", height: "100%" }}
-            />
+            {/* Halo + bull enter together as one layer. */}
+            <div className="enter-bull absolute inset-0 z-[1]" style={delay(280)}>
+              {/* Soft halo so the bull reads against the letters behind it. */}
+              <div
+                aria-hidden="true"
+                className="absolute bottom-0 z-[1] opacity-75"
+                style={{
+                  left: "62%",
+                  transform: "translateX(-50%)",
+                  width: "calc(var(--fs) * 1.5)",
+                  height: "60%",
+                  background: "radial-gradient(closest-side, var(--paper), transparent)",
+                }}
+              />
+              <img
+                src="/hero-bull.png"
+                alt="Con bò đang lao tới trước những cây nến tăng"
+                width={640}
+                height={672}
+                className="absolute z-[2] block w-auto max-w-none"
+                // Inline: the unlayered `img { height: auto }` in index.css would
+                // beat a utility class here.
+                style={{ left: "62%", bottom: "-2%", transform: "translateX(-50%)", height: "100%" }}
+              />
+            </div>
           </div>
 
           <div className="relative z-[3] mt-9 flex flex-wrap items-center justify-between gap-x-6 gap-y-5">
-            <div className={`flex flex-wrap items-center gap-x-7 gap-y-5 ${SMALL_CAPS}`}>
+            <div className={`enter-fade flex flex-wrap items-center gap-x-7 gap-y-5 ${SMALL_CAPS}`} style={delay(560)}>
               <Link
                 to="/huong-dan-mo-tai-khoan"
                 className="bg-ink px-7 py-[17px] text-paper transition-opacity hover:opacity-80"
@@ -182,7 +206,7 @@ export default function HomeHero() {
                 </svg>
               </a>
             </div>
-            <div className="text-right">
+            <div className="enter-fade text-right" style={delay(640)}>
               <p className={`${SMALL_CAPS} leading-[1.8] tracking-[0.16em]`}>Trend Following</p>
               <div className="ml-auto mt-2.5 h-0.5 w-[30px] bg-ink" />
             </div>
