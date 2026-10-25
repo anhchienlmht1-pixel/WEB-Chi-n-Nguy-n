@@ -5,8 +5,8 @@ export default function AccountOpeningGuide() {
     <div className="mx-auto max-w-4xl px-4 py-6">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="flex items-center gap-2 text-[28px] font-extrabold leading-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
-          <Smartphone className="h-7 w-7 text-slate-400" strokeWidth={1.75} />
+        <h1 className="display-heading flex items-center gap-2 text-4xl leading-[1.1] text-slate-900 dark:text-slate-100 sm:text-5xl">
+          <Smartphone className="h-8 w-8 shrink-0 text-slate-400" strokeWidth={1.75} />
           Mở tài khoản chứng khoán
         </h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">

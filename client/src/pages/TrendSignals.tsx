@@ -53,7 +53,7 @@ export default function TrendSignals() {
         {/* Main Chart + Signals Section */}
         <div id="tin-hieu" className="scroll-mt-20">
           <div className="mb-5">
-            <h1 className="text-[28px] font-extrabold leading-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
+            <h1 className="display-heading text-4xl leading-[1.1] text-slate-900 dark:text-slate-100 sm:text-5xl">
               Tín hiệu Mua/Bán theo xu hướng
             </h1>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">

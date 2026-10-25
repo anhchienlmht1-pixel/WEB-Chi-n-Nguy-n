@@ -26,7 +26,7 @@ export default function HomeHero() {
     <section className="overflow-hidden rounded-md bg-emerald-700 dark:bg-emerald-900">
       <div className="px-6 py-10 sm:px-10 sm:py-14">
         <p className="text-xs font-semibold uppercase tracking-wider text-emerald-200">Chiến Nguyễn Stock</p>
-        <h2 className="mt-2 max-w-xl text-2xl font-extrabold leading-tight text-white sm:text-3xl">
+        <h2 className="display-heading mt-3 max-w-3xl text-[44px] leading-[1.1] text-white sm:text-6xl">
           Tín hiệu mua bán rõ ràng, mở tài khoản là giao dịch ngay
         </h2>
         <p className="mt-3 max-w-lg text-sm leading-relaxed text-emerald-100">
@@ -57,7 +57,7 @@ export default function HomeHero() {
             className="relative bg-emerald-50 p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:z-10 dark:bg-slate-900"
           >
             <Icon className="h-5 w-5 text-emerald-700 dark:text-emerald-400" strokeWidth={1.75} />
-            <div className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">{title}</div>
+            <div className="display-heading mt-2 text-2xl leading-tight text-slate-900 dark:text-slate-100">{title}</div>
             <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{desc}</p>
           </div>
         ))}

@@ -75,15 +75,22 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
-   Typography — Be Vietnam Pro, a grotesque sans designed around Vietnamese
-   diacritics (unlike most "safe default" UI fonts, which just bolt Latin
-   Extended onto a Western letterform). Numbers use tabular figures so
-   columns align like a real trading terminal, without the clunky monospace
-   look. Loaded in index.html.
+   Typography — a "Bebas Neue + Inter" pairing: a tall, condensed, all-caps
+   display face for big headlines, Inter for everything you read or scan.
+   Bebas Neue itself has no Vietnamese tone marks (it lacks 92 of the 130
+   Vietnamese letters, so Ệ/Ả/Ơ… fall back to a serif), so the display face
+   is Barlow Condensed — the closest proportions with full Vietnamese
+   coverage. Inter covers Vietnamese too. Both are loaded in index.html.
+   Numbers use tabular figures so columns align like a real trading terminal.
 --------------------------------------------------------------------------- */
+@theme static {
+  --font-sans: "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Barlow Condensed", "Oswald", "Arial Narrow", system-ui, sans-serif;
+}
+
 body {
   margin: 0;
-  font-family: "Be Vietnam Pro", system-ui, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-sans);
   font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -93,14 +100,25 @@ body {
   letter-spacing: -0.006em;
 }
 
-/* Headings: same family, heavier weight, tighter tracking for an
-   institutional, confident feel. */
+/* Headings: Inter, heavier weight, tighter tracking — panel and section
+   titles stay compact and easy to scan. Page-level headlines opt into the
+   condensed display style with .display-heading below. */
 h1, h2, h3, h4, h5, h6 {
-  font-family: "Be Vietnam Pro", system-ui, sans-serif;
+  font-family: var(--font-sans);
   font-weight: 700;
   letter-spacing: -0.015em;
 }
 h1 { letter-spacing: -0.02em; }
+
+/* Big condensed all-caps headline (hero, page titles, feature titles).
+   Size and line-height come from utilities on the element — the condensed
+   face needs a larger size than Inter for the same presence. */
+.display-heading {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
 
 /* All financial data: tabular figures, medium weight for legibility. */
 .price, .number, [class*="rate"], [class*="price"], [class*="quote"],
@@ -126,7 +144,7 @@ img {
 
 /* Typography utility classes (kept for existing usages). */
 .font-heading {
-  font-family: "Be Vietnam Pro", system-ui, sans-serif;
+  font-family: var(--font-sans);
   font-weight: 700;
   letter-spacing: -0.015em;
 }
@@ -138,7 +156,7 @@ img {
 }
 
 .font-body {
-  font-family: "Be Vietnam Pro", system-ui, sans-serif;
+  font-family: var(--font-sans);
   font-weight: 400;
 }
 
