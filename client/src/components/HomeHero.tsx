@@ -109,8 +109,112 @@ const SMALL_CAPS = "text-xs font-semibold uppercase tracking-[0.14em]";
 
 const TAGLINE = ["Tín hiệu rõ ràng.", "Kỷ luật là lợi thế.", "Quyết định là của bạn."];
 
-// Start delay (ms) of an entrance animation — read by .enter-* in index.css.
-const delay = (ms: number) => ({ "--delay": `${ms}ms` }) as CSSProperties;
+// Start delay / duration (ms) of an intro animation — read by .hero-* in
+// index.css. The whole intro is a one-time ~3s sequence (see .ux-profile.md).
+const motion = (delayMs: number, durMs?: number) =>
+  ({ "--delay": `${delayMs}ms`, ...(durMs ? { "--dur": `${durMs}ms` } : {}) }) as CSSProperties;
+
+// Decorative rising candles + trend line along the bottom of the hero. Seeded,
+// so it's the same every visit; pure ornament (aria-hidden), not market data.
+const BAND_N = 28;
+const BAND_W = 100; // viewBox units; height 40
+const BAND_H = 40;
+const bandY = (v: number) => BAND_H - v * 38;
+const bandX = (i: number) => 3 + ((i + 0.5) * 94) / BAND_N;
+
+const BAND = (() => {
+  let seed = 11;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const candles = [];
+  for (let i = 0; i < BAND_N; i++) {
+    const base = 0.12 + 0.68 * (i / (BAND_N - 1));
+    const c = Math.min(0.86, Math.max(0.08, base + (rnd() - 0.5) * 0.18));
+    const up = rnd() > 0.22;
+    const body = 0.06 + rnd() * 0.09;
+    const o = up ? c - body : c + body * 0.8;
+    const hi = Math.min(1, Math.max(o, c) + 0.03 + rnd() * 0.07);
+    const lo = Math.max(0.02, Math.min(o, c) - 0.03 - rnd() * 0.07);
+    candles.push({ o, c, hi, lo, up });
+  }
+  // Line through a 5-point moving average of the candle tops, so it reads as a
+  // trend rather than tracing every candle.
+  const tops = candles.map((k) => Math.max(k.o, k.c));
+  const pts = tops.map((_, i) => {
+    const from = Math.max(0, i - 2);
+    const to = Math.min(tops.length - 1, i + 2);
+    let sum = 0;
+    for (let j = from; j <= to; j++) sum += tops[j];
+    return [bandX(i), bandY(Math.min(1, sum / (to - from + 1) + 0.1))] as const;
+  });
+  let d = `M ${pts[0][0]} ${pts[0][1]}`;
+  for (let i = 1; i < pts.length; i++) {
+    const [px, py] = pts[i - 1];
+    const [cx, cy] = pts[i];
+    const mx = (px + cx) / 2;
+    d += ` C ${mx} ${py}, ${mx} ${cy}, ${cx} ${cy}`;
+  }
+  const last = pts[pts.length - 1];
+  return { candles, d, end: { left: last[0], bottom: ((BAND_H - last[1]) / BAND_H) * 100 } };
+})();
+
+function HeroBand() {
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-[clamp(70px,8.5vw,130px)]"
+    >
+      <svg
+        className="absolute inset-0 h-full w-full opacity-30"
+        viewBox={`0 0 ${BAND_W} ${BAND_H}`}
+        preserveAspectRatio="none"
+      >
+        {BAND.candles.map((k, i) => {
+          const x = bandX(i);
+          const col = k.up ? "#2a8c7d" : "#94a1a0";
+          const top = bandY(Math.max(k.o, k.c));
+          const bot = bandY(Math.min(k.o, k.c));
+          return (
+            <g key={i} className="hero-candle" style={motion(100 + i * 40, 500)}>
+              <line
+                x1={x}
+                x2={x}
+                y1={bandY(k.hi)}
+                y2={bandY(k.lo)}
+                stroke={col}
+                strokeWidth={1.5}
+                vectorEffect="non-scaling-stroke"
+              />
+              <rect x={x - 0.65} y={top} width={1.3} height={Math.max(0.6, bot - top)} fill={col} />
+            </g>
+          );
+        })}
+      </svg>
+      {/* The trend line is revealed left to right by an animated clip-path. */}
+      <div className="hero-line absolute inset-0" style={motion(500, 1900)}>
+        <svg
+          className="h-full w-full"
+          viewBox={`0 0 ${BAND_W} ${BAND_H}`}
+          preserveAspectRatio="none"
+          overflow="visible"
+        >
+          <path
+            d={BAND.d}
+            fill="none"
+            stroke="#2fb39a"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
+      </div>
+      <span
+        className="hero-fade absolute h-2.5 w-2.5 -translate-x-1/2 translate-y-1/2 rounded-full bg-[#2fb39a]"
+        style={{ left: `${BAND.end.left}%`, bottom: `${BAND.end.bottom}%`, ...motion(2400, 400) }}
+      />
+    </div>
+  );
+}
 
 // Homepage hero, editorial style: a giant "STOCK" wordmark with the bull
 // standing in front of it, a CTA row, then a black strip of four features.
@@ -120,23 +224,22 @@ export default function HomeHero() {
 
   return (
     <>
-      <section className="gutter-x pb-11 pt-12" style={stage}>
+      <section className="gutter-x relative isolate pb-[clamp(96px,11vw,170px)] pt-12" style={stage}>
+        <HeroBand />
         <div className="mx-auto max-w-[1800px]">
-          {/* Entrance motion (see .enter-* in index.css): opacity + transform
-              only, 300ms/200ms, ease-out; the sequence is built from staggered
-              delays, not longer durations. Reduced motion → plain fades. */}
           <div className="relative z-[3] max-w-[300px]">
             <p className="text-xs font-semibold uppercase leading-[1.9] tracking-[0.16em]">
               {TAGLINE.map((line, i) => (
-                <span key={line} className="enter enter-200 block" style={delay(i * 60)}>
+                <span key={line} className="hero-up block" style={motion(1500 + i * 110, 600)}>
                   {line}
                 </span>
               ))}
             </p>
-            <div className="enter-rule mt-3.5 h-0.5 w-[30px] origin-left bg-ink" style={delay(220)} />
+            <div className="hero-rule mt-3.5 h-0.5 w-[30px] bg-ink" style={motion(2000, 500)} />
           </div>
 
-          <div className="relative mt-3" style={{ height: "calc(var(--fs) * 1.7)" }}>
+          {/* The stage shakes a few pixels when the bull lands (~1.8s). */}
+          <div className="hero-shake relative mt-3" style={{ height: "calc(var(--fs) * 1.7)", ...motion(1750, 450) }}>
             <h1
               className="absolute inset-x-0 bottom-0 z-0 m-0 whitespace-nowrap text-center editorial text-ink"
               style={{
@@ -147,22 +250,21 @@ export default function HomeHero() {
               }}
             >
               <span className="sr-only">C STOCK</span>
-              {/* One span per letter so they can rise in turn; the visible
-                  letters are hidden from screen readers (the sr-only text
-                  above carries the name). */}
+              {/* One masked span per letter so they rise in turn, then a teal
+                  pass runs through them; hidden from screen readers (the
+                  sr-only text above carries the name). */}
               {"STOCK".split("").map((ch, i) => (
-                <span
-                  key={i}
-                  aria-hidden="true"
-                  className="enter inline-block"
-                  style={{ ...delay(i * 50), "--enter-y": "0.06em" } as CSSProperties}
-                >
-                  {ch}
+                <span key={i} aria-hidden="true" className="hero-mask">
+                  <span className="hero-letter inline-block" style={motion(150 + i * 90, 850)}>
+                    <span className="hero-scan inline-block" style={motion(2300 + i * 130, 520)}>
+                      {ch}
+                    </span>
+                  </span>
                 </span>
               ))}
             </h1>
-            {/* Halo + bull enter together as one layer. */}
-            <div className="enter-bull absolute inset-0 z-[1]" style={delay(280)}>
+            {/* Halo + bull charge in together as one layer. */}
+            <div className="hero-charge absolute inset-0 z-[1]" style={motion(950, 1000)}>
               {/* Soft halo so the bull reads against the letters behind it. */}
               <div
                 aria-hidden="true"
@@ -189,7 +291,10 @@ export default function HomeHero() {
           </div>
 
           <div className="relative z-[3] mt-9 flex flex-wrap items-center justify-between gap-x-6 gap-y-5">
-            <div className={`enter-fade flex flex-wrap items-center gap-x-7 gap-y-5 ${SMALL_CAPS}`} style={delay(560)}>
+            <div
+              className={`hero-fade flex flex-wrap items-center gap-x-7 gap-y-5 ${SMALL_CAPS}`}
+              style={motion(1500, 500)}
+            >
               <Link
                 to="/huong-dan-mo-tai-khoan"
                 className="bg-ink px-7 py-[17px] text-paper transition-opacity hover:opacity-80"
@@ -206,7 +311,7 @@ export default function HomeHero() {
                 </svg>
               </a>
             </div>
-            <div className="enter-fade text-right" style={delay(640)}>
+            <div className="hero-fade text-right" style={motion(1700, 500)}>
               <p className={`${SMALL_CAPS} leading-[1.8] tracking-[0.16em]`}>Trend Following</p>
               <div className="ml-auto mt-2.5 h-0.5 w-[30px] bg-ink" />
             </div>
