@@ -45,18 +45,70 @@ export interface HistoryWithSource {
   source: string;
 }
 
-export async function getQuoteWithFallback(symbol: string, preferSource?: string): Promise<QuoteWithSource> {
-  const errors: string[] = [];
-  for (const provider of orderedProviders(preferSource)) {
-    try {
-      return { quote: await provider.getQuote(symbol), source: provider.id };
-    } catch (err) {
-      errors.push(`${provider.id}: ${errorMessage(err).slice(0, 150)}`);
-    }
-  }
-  throw Object.assign(new Error(`Tất cả nguồn giá đều lỗi cho ${symbol}. ${errors.join(" | ")}`), {
-    status: 502,
+// How long the current source gets before the next one is started *in
+// parallel* (first good answer wins). The old loop only moved on after a
+// source failed, so one slow-but-alive source (KBS answering in 6s, say) made
+// every request 6s even though the next source would have answered in 300ms.
+// Hedging only costs an extra upstream call when the primary is already slow.
+const HEDGE_MS = Number(process.env.PROVIDER_HEDGE_MS) || 1500;
+
+// Runs `attempt` against the providers in order: the next one starts when the
+// previous fails or after HEDGE_MS, whichever comes first, and the first
+// success is returned. Rejects with every provider's error once all failed.
+function firstSuccess<T>(
+  providers: StockProvider[],
+  attempt: (provider: StockProvider) => Promise<T>
+): Promise<{ value: T; source: string }> {
+  return new Promise((resolve, reject) => {
+    const errors: string[] = [];
+    let next = 0;
+    let running = 0;
+    let settled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    const launch = () => {
+      clearTimeout(timer);
+      if (settled || next >= providers.length) return;
+      const provider = providers[next++];
+      running++;
+      // Promise.resolve().then(): a provider that throws synchronously must
+      // count as a failed attempt, not blow up inside a timer callback.
+      Promise.resolve()
+        .then(() => attempt(provider))
+        .then(
+        (value) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          resolve({ value, source: provider.id });
+        },
+        (err) => {
+          running--;
+          errors.push(`${provider.id}: ${errorMessage(err).slice(0, 150)}`);
+          if (settled) return;
+          if (next < providers.length) launch();
+          else if (running === 0) {
+            settled = true;
+            clearTimeout(timer);
+            reject(new Error(errors.join(" | ")));
+          }
+        }
+      );
+      if (next < providers.length) timer = setTimeout(launch, HEDGE_MS);
+    };
+    launch();
   });
+}
+
+export async function getQuoteWithFallback(symbol: string, preferSource?: string): Promise<QuoteWithSource> {
+  try {
+    const { value, source } = await firstSuccess(orderedProviders(preferSource), (p) => p.getQuote(symbol));
+    return { quote: value, source };
+  } catch (err) {
+    throw Object.assign(new Error(`Tất cả nguồn giá đều lỗi cho ${symbol}. ${errorMessage(err)}`), {
+      status: 502,
+    });
+  }
 }
 
 export async function getHistoryWithFallback(
@@ -64,20 +116,19 @@ export async function getHistoryWithFallback(
   range: HistoryRange,
   preferSource?: string
 ): Promise<HistoryWithSource> {
-  const errors: string[] = [];
-  for (const provider of orderedProviders(preferSource)) {
-    try {
-      const points = await provider.getHistory(symbol, range);
-      if (points.length > 0) return { points, source: provider.id };
-      errors.push(`${provider.id}: dữ liệu rỗng`);
-    } catch (err) {
-      errors.push(`${provider.id}: ${errorMessage(err).slice(0, 150)}`);
-    }
+  try {
+    const { value, source } = await firstSuccess(orderedProviders(preferSource), async (p) => {
+      const points = await p.getHistory(symbol, range);
+      if (points.length === 0) throw new Error("dữ liệu rỗng");
+      return points;
+    });
+    return { points: value, source };
+  } catch (err) {
+    throw Object.assign(
+      new Error(`Tất cả nguồn lịch sử giá đều lỗi cho ${symbol} (${range}). ${errorMessage(err)}`),
+      { status: 502 }
+    );
   }
-  throw Object.assign(
-    new Error(`Tất cả nguồn lịch sử giá đều lỗi cho ${symbol} (${range}). ${errors.join(" | ")}`),
-    { status: 502 }
-  );
 }
 
 export interface MarketOverviewWithSource {

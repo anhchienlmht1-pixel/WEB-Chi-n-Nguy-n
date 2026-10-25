@@ -37,7 +37,7 @@ export default function TrendSignals() {
   }, [buySignalsState.data, watchlist, chartSymbol]);
 
   // Fetch history for signal computation
-  const historyState = usePolling(() => fetchHistory(chartSymbol, "MAX"), [chartSymbol], 5000);
+  const historyState = usePolling(() => fetchHistory(chartSymbol, "MAX"), [chartSymbol], 30000);
 
   // Compute trading signals
   const signals = useMemo(() => {

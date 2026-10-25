@@ -46,54 +46,68 @@ export default function StockDetail() {
 
   return (
     <div className="gutter-x mx-auto max-w-[1800px] py-6">
+      {/* The chart only needs the symbol from the URL, so it starts loading its
+          history right away, in parallel with the quote. It used to wait for
+          the quote (to pin the same data source), so the two network round
+          trips ran one after the other. Everything that needs the quote
+          (summary, side panels, tables) still waits for it. */}
+      {quote ? (
+        <StockSummary quote={quote} isIndexOrFutures={isIndexOrFutures} />
+      ) : (
+        <div
+          aria-hidden
+          className="mb-8 h-[30rem] animate-pulse rounded-md border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/40 lg:h-48"
+        />
+      )}
+
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[2fr_1fr]">
+        <div>
+          <TechnicalChartPanel symbol={symbol} height={440} />
+
+          {quote && (
+            <p className="mt-4 text-xs text-slate-400 dark:text-slate-600">
+              Cập nhật lúc {new Date(quote.updatedAt).toLocaleTimeString("vi-VN")}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-3">
+          {quote && !isIndexOrFutures && (
+            <>
+              <div className="flex gap-1 overflow-x-auto rounded-md border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-900/40">
+                {SIDEBAR_TABS.map((tab) => (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => setActiveTab(tab.key)}
+                    className={`shrink-0 rounded px-3 py-1.5 text-xs font-semibold transition-colors duration-300 ${
+                      activeTab === tab.key
+                        ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-slate-100"
+                        : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {activeTab === "tong-quan" && (
+                <div className="space-y-3">
+                  <PositionTracker symbol={quote.symbol} currency={quote.currency} />
+                  <CompanyProfileCard symbol={quote.symbol} fallbackName={quote.name} />
+                  <ForeignFlowPanel quote={quote} />
+                </div>
+              )}
+              {activeTab === "tin-hieu" && <SystemAssessment symbol={quote.symbol} />}
+              {activeTab === "ctck-kn" && <StockOutlookPanel symbol={quote.symbol} />}
+              {activeTab === "tin-tuc" && <NewsFeed symbol={quote.symbol} />}
+            </>
+          )}
+        </div>
+      </div>
+
       {quote && (
         <>
-          <StockSummary quote={quote} isIndexOrFutures={isIndexOrFutures} />
-
-          <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[2fr_1fr]">
-            <div>
-              <TechnicalChartPanel symbol={symbol} preferSource={quote.source} height={440} />
-
-              <p className="mt-4 text-xs text-slate-400 dark:text-slate-600">
-                Cập nhật lúc {new Date(quote.updatedAt).toLocaleTimeString("vi-VN")}
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              {!isIndexOrFutures && (
-                <>
-                  <div className="flex gap-1 overflow-x-auto rounded-md border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-900/40">
-                    {SIDEBAR_TABS.map((tab) => (
-                      <button
-                        key={tab.key}
-                        type="button"
-                        onClick={() => setActiveTab(tab.key)}
-                        className={`shrink-0 rounded px-3 py-1.5 text-xs font-semibold transition-colors duration-300 ${
-                          activeTab === tab.key
-                            ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-slate-100"
-                            : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
-                        }`}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  {activeTab === "tong-quan" && (
-                    <div className="space-y-3">
-                      <PositionTracker symbol={quote.symbol} currency={quote.currency} />
-                      <CompanyProfileCard symbol={quote.symbol} fallbackName={quote.name} />
-                      <ForeignFlowPanel quote={quote} />
-                    </div>
-                  )}
-                  {activeTab === "tin-hieu" && <SystemAssessment symbol={quote.symbol} />}
-                  {activeTab === "ctck-kn" && <StockOutlookPanel symbol={quote.symbol} />}
-                  {activeTab === "tin-tuc" && <NewsFeed symbol={quote.symbol} />}
-                </>
-              )}
-            </div>
-          </div>
-
           {!isIndexOrFutures && (
             <div className="mt-6">
               <FinancialSnapshot symbol={quote.symbol} />

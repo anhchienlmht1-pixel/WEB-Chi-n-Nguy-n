@@ -4,15 +4,24 @@ import { fetchMarketOverview } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import CompanyLogo from "./CompanyLogo";
 
+// The chip only makes sense on a stock page, so the market board (the whole
+// universe, ~200 quotes) is only fetched and polled when there is a symbol.
+// It used to download the entire board every 5s on every page. Note the Header
+// is mounted outside <Routes>, so useParams() has no :symbol here today and the
+// chip stays hidden (as it always has) — now without the background polling.
 export default function StockHeaderInfo() {
   const { symbol } = useParams<{ symbol: string }>();
+  return symbol ? <StockChip symbol={symbol} /> : null;
+}
 
-  // Fetch market data to get current stock info
-  const { data } = usePolling(fetchMarketOverview, [], 5000);
+function StockChip({ symbol }: { symbol: string }) {
+  // Fetch market data to get current stock info. The server refreshes the
+  // board every 30s, so polling faster than this only repeats the same data.
+  const { data } = usePolling(fetchMarketOverview, [], 15000);
 
   // Find the current stock in market overview
   const stockInfo = useMemo(() => {
-    if (!symbol || !data) return null;
+    if (!data) return null;
     return data.quotes.find((q) => q.symbol === symbol);
   }, [symbol, data]);
 

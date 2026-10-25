@@ -44,27 +44,65 @@ api.interceptors.response.use(undefined, (error) => {
   return Promise.reject(error);
 });
 
-export async function fetchMarketOverview(): Promise<{ provider: string; quotes: Quote[] }> {
-  const { data } = await api.get("/market/overview");
-  return data;
+// Several components on one page ask for the same thing at the same moment
+// (a stock page mounts the chart, seasonality, position tracker… which each
+// want the same 30-year history; the header and the home page both poll the
+// market board). Share one request between them: a pending request is always
+// reused, and a finished one for `ttlMs` more. Failures are never kept, so a
+// retry really retries. Callers only read the result, so sharing it is safe.
+interface Shared {
+  promise: Promise<unknown>;
+  settledAt?: number;
+}
+const sharedRequests = new Map<string, Shared>();
+
+function shared<T>(key: string, ttlMs: number, load: () => Promise<T>): Promise<T> {
+  const hit = sharedRequests.get(key);
+  if (hit && (hit.settledAt === undefined || Date.now() - hit.settledAt < ttlMs)) {
+    return hit.promise as Promise<T>;
+  }
+  const entry: Shared = { promise: load() };
+  sharedRequests.set(key, entry);
+  const forget = () => {
+    if (sharedRequests.get(key) === entry) sharedRequests.delete(key);
+  };
+  entry.promise.then(
+    () => {
+      entry.settledAt = Date.now();
+      setTimeout(forget, ttlMs);
+    },
+    forget
+  );
+  return entry.promise as Promise<T>;
 }
 
-export async function fetchQuote(symbol: string, preferSource?: string): Promise<Quote> {
-  const { data } = await api.get(`/quote/${encodeURIComponent(symbol)}`, {
-    params: preferSource ? { preferSource } : undefined,
+export function fetchMarketOverview(): Promise<{ provider: string; quotes: Quote[] }> {
+  return shared("overview", 5000, async () => {
+    const { data } = await api.get("/market/overview");
+    return data;
   });
-  return data;
 }
 
-export async function fetchHistory(
+export function fetchQuote(symbol: string, preferSource?: string): Promise<Quote> {
+  return shared(`quote:${symbol}:${preferSource ?? ""}`, 3000, async () => {
+    const { data } = await api.get(`/quote/${encodeURIComponent(symbol)}`, {
+      params: preferSource ? { preferSource } : undefined,
+    });
+    return data;
+  });
+}
+
+export function fetchHistory(
   symbol: string,
   range: HistoryRange,
   preferSource?: string
 ): Promise<{ symbol: string; range: HistoryRange; points: HistoryPoint[]; source?: string }> {
-  const { data } = await api.get(`/history/${encodeURIComponent(symbol)}`, {
-    params: preferSource ? { range, preferSource } : { range },
+  return shared(`history:${symbol}:${range}:${preferSource ?? ""}`, 10000, async () => {
+    const { data } = await api.get(`/history/${encodeURIComponent(symbol)}`, {
+      params: preferSource ? { range, preferSource } : { range },
+    });
+    return data;
   });
-  return data;
 }
 
 export async function fetchFinancials(

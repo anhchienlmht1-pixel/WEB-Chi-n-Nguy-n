@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from "express";
 import NodeCache from "node-cache";
 import { getProvider } from "../providers/index.js";
-import { HistoryRange } from "../providers/types.js";
+import { HistoryRange, Quote } from "../providers/types.js";
 import { KbsPeriodType, KbsReportType } from "../providers/kbsFinancials.js";
 import { fetchFinancialReport } from "../providers/financials.js";
 import { getQuoteWithFallback, getHistoryWithFallback, getMarketOverviewWithFallback } from "../providers/fallback.js";
@@ -36,6 +36,13 @@ const VALID_PERIOD_TYPES: KbsPeriodType[] = ["year", "quarter"];
 // history, where silently serving a stale number would be misleading.
 const lastGood = new Map<string, unknown>();
 
+// Requests for the same key that arrive while the first one is still loading
+// share its promise. Without this a cold cache (every new serverless
+// instance) meant N identical upstream calls for N concurrent page requests —
+// a stock page asks for the same 30-year history from several components at
+// once — and the extra load slowed the one call that mattered.
+const inflight = new Map<string, Promise<unknown>>();
+
 function cached<T>(
   key: string,
   ttl: number,
@@ -44,7 +51,11 @@ function cached<T>(
 ): Promise<T> {
   const hit = cache.get<T>(key);
   if (hit !== undefined) return Promise.resolve(hit);
-  return loader()
+  const pending = inflight.get(key);
+  if (pending) return pending as Promise<T>;
+
+  const run = Promise.resolve()
+    .then(loader)
     .then((value) => {
       cache.set(key, value, ttl);
       if (opts?.staleOnError) lastGood.set(key, value);
@@ -59,6 +70,32 @@ function cached<T>(
       }
       throw err;
     });
+  inflight.set(key, run);
+  const done = () => {
+    if (inflight.get(key) === run) inflight.delete(key);
+  };
+  run.then(done, done);
+  return run;
+}
+
+// Lets Vercel's edge cache answer repeat requests without waking a function
+// (each serverless instance has its own cold in-memory cache above). The
+// browser still revalidates (max-age=0 + ETag), so polling gets a cheap 304
+// when nothing changed. Only set on success — errors are never cached.
+function edgeCache(res: Response, sMaxAge: number, staleWhileRevalidate: number): void {
+  res.set("Cache-Control", `public, max-age=0, s-maxage=${sMaxAge}, stale-while-revalidate=${staleWhileRevalidate}`);
+}
+
+// A fresh market-overview board (the header / home page poll it every few
+// seconds) already holds this symbol's price from the same source, so a
+// quote request can be answered from memory instead of a new upstream call.
+// Only used when the board came from the source this request would try first,
+// so the shape/source match what getQuoteWithFallback would have returned.
+function quoteFromOverview(symbol: string, preferSource?: string): { quote: Quote; source: string } | undefined {
+  const overview = cache.get<{ quotes: Quote[]; source: string }>("overview");
+  if (!overview || overview.source !== (preferSource ?? getProvider().id)) return undefined;
+  const quote = overview.quotes.find((q) => q.symbol === symbol);
+  return quote ? { quote, source: overview.source } : undefined;
 }
 
 function asyncHandler(fn: (req: Request, res: Response) => Promise<void>) {
@@ -69,6 +106,7 @@ router.get(
   "/market/overview",
   asyncHandler(async (_req, res) => {
     const { quotes, source } = await cached("overview", 30, () => getMarketOverviewWithFallback());
+    edgeCache(res, 10, 20);
     res.json({ provider: source, quotes });
   })
 );
@@ -82,9 +120,10 @@ router.get(
     // stay pinned to that source instead of independently re-resolving the
     // fallback chain, which could otherwise land on a different provider.
     const preferSource = (req.query.preferSource as string) || undefined;
-    const { quote, source } = await cached(`quote:${symbol}:${preferSource ?? ""}`, 20, () =>
-      getQuoteWithFallback(symbol, preferSource)
-    );
+    const { quote, source } =
+      quoteFromOverview(symbol, preferSource) ??
+      (await cached(`quote:${symbol}:${preferSource ?? ""}`, 20, () => getQuoteWithFallback(symbol, preferSource)));
+    edgeCache(res, 10, 10);
     res.json({ ...quote, source });
   })
 );
@@ -102,6 +141,7 @@ router.get(
     const { points, source } = await cached(`history:${symbol}:${range}:${preferSource ?? ""}`, 120, () =>
       getHistoryWithFallback(symbol, range, preferSource)
     );
+    edgeCache(res, 60, 120);
     res.json({ symbol, range, points, source });
   })
 );

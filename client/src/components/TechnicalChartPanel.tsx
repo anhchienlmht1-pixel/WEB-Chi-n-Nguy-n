@@ -99,17 +99,17 @@ export default function TechnicalChartPanel({
   // Always fetch the full daily history — the resolution tabs (Ngày/Tuần/
   // Tháng) roll those daily bars up client-side, so switching resolution
   // changes what one candle represents instead of just the visible range.
-  const historyState = usePolling(() => fetchHistory(symbol, "MAX", preferSource), [symbol, preferSource]);
-
-  // Poll for fresh data every 5 seconds to get faster signal updates
-  const refreshState = usePolling(() => fetchHistory(symbol, "MAX", preferSource), [symbol, preferSource], 5000);
+  // One request, refreshed every 30s: this used to be two identical hooks
+  // (one of them re-downloading all ~30 years every 5s), but the server only
+  // refreshes history every ~2 minutes, so the extra traffic bought nothing
+  // and kept the main thread busy re-parsing and re-computing signals.
+  const historyState = usePolling(() => fetchHistory(symbol, "MAX", preferSource), [symbol, preferSource], 30000);
 
   const chartPoints = useMemo(
     () => (historyState.data ? aggregatePoints(historyState.data.points, resolution) : []),
     [historyState.data, resolution]
   );
 
-  // Recompute signals using the refreshed data for faster updates
   const signalResult = useMemo(
     () => {
       // Don't show signals for VNINDEX
@@ -120,11 +120,11 @@ export default function TechnicalChartPanel({
       // have already closed. Today's candle is still drawn (chartPoints) but
       // never carries a Mua/Bán marker until the 15:00 close, so a marker
       // can't appear and vanish while the bar is still moving.
-      const source = refreshState.data?.points ?? historyState.data?.points;
+      const source = historyState.data?.points;
       if (!source) return { all: [], transitions: [] };
       return computeTradingSignals(aggregatePoints(dropUnclosedBars(source), resolution));
     },
-    [historyState.data, refreshState.data, symbol, resolution]
+    [historyState.data, symbol, resolution]
   );
 
   return (

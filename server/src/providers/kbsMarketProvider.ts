@@ -1,6 +1,7 @@
 import { StockProvider, Quote, HistoryPoint, HistoryRange, SearchResult } from "./types.js";
 import { STOCK_UNIVERSE, findSeed } from "./universe.js";
 import { INDEX_UNIVERSE, findIndexSeed } from "./indices.js";
+import { fetchWithTimeout } from "./http.js";
 
 // KB Securities (KBS) — the *current* default market-data source of the
 // vnstock library's unified `Market`/`Fundamental` classes (verified against
@@ -24,7 +25,7 @@ const HEADERS = {
 };
 
 async function fetchJson(url: string, init?: RequestInit): Promise<any> {
-  const res = await fetch(url, { ...init, headers: { ...HEADERS, ...(init?.headers ?? {}) } });
+  const res = await fetchWithTimeout(url, { ...init, headers: { ...HEADERS, ...(init?.headers ?? {}) } });
   const rawBody = await res.text();
   if (!res.ok) {
     console.error(`[kbs-market] HTTP ${res.status} for ${url}: ${rawBody.slice(0, 400)}`);

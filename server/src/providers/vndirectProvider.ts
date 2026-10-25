@@ -1,5 +1,6 @@
 import { StockProvider, Quote, HistoryPoint, HistoryRange, SearchResult } from "./types.js";
 import { STOCK_UNIVERSE, findSeed } from "./universe.js";
+import { fetchWithTimeout } from "./http.js";
 
 // VNDirect Securities public (unofficial, undocumented) endpoints — same ones
 // that power their own trading platform charts. No API key required, but
@@ -10,7 +11,7 @@ const CHART_BASE = "https://dchart-api.vndirect.com.vn/dchart";
 const FINFO_BASE = "https://finfo-api.vndirect.com.vn/v4";
 
 async function fetchJson(url: string): Promise<any> {
-  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  const res = await fetchWithTimeout(url, { headers: { Accept: "application/json" } });
   if (!res.ok) {
     throw Object.assign(new Error(`VNDirect request failed: ${res.status}`), {
       status: res.status,

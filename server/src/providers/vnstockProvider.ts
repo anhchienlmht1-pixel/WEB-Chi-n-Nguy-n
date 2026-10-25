@@ -9,6 +9,7 @@ import {
 } from "./types.js";
 import { STOCK_UNIVERSE, findSeed } from "./universe.js";
 import { INDEX_UNIVERSE, findIndexSeed } from "./indices.js";
+import { fetchWithTimeout } from "./http.js";
 
 // Same data source as the vnstock library (vnstocks.com): VCI / Vietcap
 // Securities' trading API. Endpoints, payloads and response shapes below were
@@ -36,7 +37,7 @@ function sleep(ms: number): Promise<void> {
 }
 
 async function fetchJson(url: string, init?: RequestInit, attempt = 0): Promise<any> {
-  const res = await fetch(url, { ...init, headers: { ...HEADERS, ...(init?.headers ?? {}) } });
+  const res = await fetchWithTimeout(url, { ...init, headers: { ...HEADERS, ...(init?.headers ?? {}) } });
   if ((res.status === 429 || res.status >= 500) && attempt < 1) {
     await sleep(1500);
     return fetchJson(url, init, attempt + 1);
