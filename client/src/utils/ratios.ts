@@ -20,6 +20,10 @@ export const PB_MATCH = (n: string) => /p\s*\/\s*b/.test(n);
 // either one depending on which happens to come first in the response.
 export const ROE_MATCH = (n: string) => /\broe\b/.test(n);
 export const ROA_MATCH = (n: string) => /\broa\b/.test(n);
+// Per-share rows of the same CSTC report. Matched by their abbreviations as
+// whole words; if a report has no such row the caller simply shows nothing.
+export const EPS_MATCH = (n: string) => /\beps\b/.test(n);
+export const BVPS_MATCH = (n: string) => /\bbvps\b/.test(n) || /giá trị sổ sách/.test(n);
 
 // KBS doesn't document exact CSTC row IDs, so P/E and ROE are found by name
 // match (same approach used elsewhere for KBS reports) — "P/E" and "ROE" are
@@ -35,7 +39,7 @@ export function findRatioItem(report: FinancialReport, test: (name: string) => b
 // — a live report already caught this exact assumption being wrong for a
 // chart's timeline), so "latest" has to be resolved by actually parsing the
 // period labels rather than trusting periods[periods.length - 1].
-function findLatest(report: FinancialReport, test: (name: string) => boolean): RatioValue | null {
+export function findLatest(report: FinancialReport, test: (name: string) => boolean): RatioValue | null {
   const order = sortPeriodIndices(report.periods, "asc");
   const latestIdx = order[order.length - 1];
   if (latestIdx === undefined) return null;
