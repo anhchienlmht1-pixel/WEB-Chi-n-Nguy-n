@@ -13,12 +13,24 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">
       <div className="mx-auto flex max-w-[1800px] items-center gap-3 px-4 py-3">
-        <NavLink
-          to="/"
-          className="flex shrink-0 items-center gap-2 text-lg font-bold text-slate-900 dark:text-slate-100"
-        >
-          <img src="/logo-bull.png" alt="" className="h-8 w-8 shrink-0 object-contain" />
-          <span className="hidden sm:inline">Chiến Nguyễn Stock</span>
+        <NavLink to="/" aria-label="C Stock — Trang chủ" className="flex shrink-0 items-center">
+          {/* The two SVGs are theme-specific (light/dark gradients), so pick by theme.
+              <picture> makes the browser fetch only the one that matches the viewport:
+              icon-only below sm, icon + STOCK wordmark from sm up. */}
+          <picture>
+            <source
+              media="(max-width: 639px)"
+              srcSet={theme === "dark" ? "/logo-cstock-icon-dark.svg" : "/logo-cstock-icon-light.svg"}
+            />
+            <img
+              src={theme === "dark" ? "/logo-cstock-dark.svg" : "/logo-cstock-light.svg"}
+              alt="C Stock"
+              // "!" = important: index.css has an unlayered `img { height: auto }` that
+              // would otherwise beat these layered utilities and show the SVG at its
+              // intrinsic 120px height.
+              className="h-10! w-auto shrink-0 sm:h-11!"
+            />
+          </picture>
         </NavLink>
 
         <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-2 sm:flex-none sm:gap-3">

@@ -39,7 +39,7 @@ function sendBrowserNotification(freshHits: TrendBuySignal[]) {
     freshHits.length === 1
       ? `Trend-following (SMA20>SMA50, ADX(14)>25, Supertrend tăng) — giá ${freshHits[0].price.toLocaleString("vi-VN")}`
       : freshHits.map((h) => h.symbol).join(", ");
-  const notif = new Notification(title, { body, icon: "/logo-bull.png", tag: "trend-signals" });
+  const notif = new Notification(title, { body, icon: "/logo-cstock-icon.png", tag: "trend-signals" });
   notif.onclick = () => {
     window.focus();
     if (freshHits.length === 1) window.location.href = `/stock/${freshHits[0].symbol}`;
