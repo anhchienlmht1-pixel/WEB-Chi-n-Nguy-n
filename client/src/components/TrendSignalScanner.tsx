@@ -22,6 +22,13 @@ function daysHeld(iso: string): number {
   return Math.max(0, Math.floor(diff / 86_400_000));
 }
 
+// Column template shared by the header and every row: Mã | Sàn | Thời gian
+// nắm giữ | Lãi/lỗ hiện tại. Fixed widths (not `auto`) so each row's columns line
+// up with the others; the wider set kicks in off the panel's own width (container
+// query), since this list sits in a narrow side column on desktop.
+const COLS =
+  "grid-cols-[minmax(0,1fr)_3.5rem_4.5rem_4.75rem] @md:grid-cols-[minmax(0,1fr)_4.5rem_8.5rem_7.5rem]";
+
 // Reusable card shell so the loading / error / empty / list states all share
 // the same header and framing — the panel never "jumps" between states.
 function Panel({ children, subtitle }: { children: ReactNode; subtitle?: ReactNode }) {
@@ -159,55 +166,58 @@ export default function TrendSignalScanner({
           </p>
         </div>
       ) : (
-        <div className="max-h-96 overflow-y-auto">
-          {/* Column header — kept in lockstep with each row's own grid
-           * template below so the three values line up under their label. */}
-          <div className="grid grid-cols-[1fr_auto_auto] gap-3 border-b border-slate-100 bg-slate-50/80 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-900 dark:bg-slate-900/40 dark:text-slate-400">
-            <span>Mã</span>
-            <span className="text-right">Điểm vào</span>
-            <span className="text-right">Lãi tại điểm mua</span>
+        <div className="@container max-h-96 overflow-y-auto">
+          {/* Sticky column header — shares COLS with every row below, and a
+           * spacer the width of the row's star button, so the four labels sit
+           * exactly over their values while the list scrolls. */}
+          <div className="sticky top-0 z-20 flex items-center gap-2 border-b border-l-4 border-l-transparent border-slate-100 bg-slate-50 px-4 py-2 text-[11px] font-semibold uppercase tracking-normal text-slate-500 @md:tracking-wide dark:border-slate-900 dark:bg-slate-900 dark:text-slate-400">
+            <span className="w-9 shrink-0" aria-hidden="true" />
+            <div className={`grid min-w-0 flex-1 gap-2 ${COLS}`}>
+              <span>Mã</span>
+              <span>Sàn</span>
+              {/* Full labels everywhere: one line when the panel is wide, two
+               * lines (break before the 2nd half) when it's a narrow column. */}
+              <span className="text-right leading-tight">
+                Thời gian <br className="@md:hidden" />
+                nắm giữ
+              </span>
+              <span className="text-right leading-tight">
+                Lãi/lỗ <br className="@md:hidden" />
+                hiện tại
+              </span>
+            </div>
           </div>
           {hits.map((h) => {
             const held = daysHeld(h.buyDate);
+            const gainClass =
+              h.signalReturnPercent > 0
+                ? "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400"
+                : h.signalReturnPercent < 0
+                  ? "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400"
+                  : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400";
+            // Entry price/date are no longer their own column — they live in
+            // the row tooltip alongside the current price.
+            const rowTitle = `${h.symbol}: vào tín hiệu ngày ${formatSince(h.buyDate)} ở giá ${formatPrice(h.buyPrice, h.currency)}, giá hiện tại ${formatPrice(h.price, h.currency)}`;
             // WatchButton is its own <button> — kept as a sibling rather
             // than nested inside the row's own clickable element, since a
             // <button> (or an <a>) can't validly contain another <button>.
-            const symbolBlock = (
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-semibold text-slate-900 dark:text-slate-100">{h.symbol}</span>
-                  <span className="text-[11px] text-slate-400 dark:text-slate-500">{h.exchange}</span>
-                </div>
-                <div className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">
-                  {held > 0 ? `${held} ngày` : "hôm nay"}
-                </div>
-              </div>
-            );
-            const entryBlock = (
-              <div className="shrink-0 text-right">
-                <div className="tabular-nums text-xs font-medium text-slate-700 dark:text-slate-300">
-                  {formatPrice(h.buyPrice, h.currency)}
-                </div>
-                <div className="text-[11px] text-slate-400 dark:text-slate-500">{formatSince(h.buyDate)}</div>
-              </div>
-            );
-            const gainBlock = (
-              <div className="shrink-0 text-right">
-                <div
-                  className={`rounded px-1.5 py-0.5 text-xs font-semibold tabular-nums ${
-                    h.signalReturnPercent > 0
-                      ? "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400"
-                      : h.signalReturnPercent < 0
-                        ? "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400"
-                        : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
-                  }`}
-                  title={`Lãi/lỗ tích lũy từ giá lúc vào tín hiệu (${formatPrice(h.buyPrice, h.currency)}) đến giá hiện tại (${formatPrice(h.price, h.currency)})`}
+            const cells = (
+              <>
+                <span className="truncate font-semibold text-slate-900 dark:text-slate-100">{h.symbol}</span>
+                <span className="justify-self-start rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                  {h.exchange}
+                </span>
+                <span className="justify-self-end whitespace-nowrap text-xs tabular-nums text-slate-700 dark:text-slate-300">
+                  {held > 0 ? `${held} ngày` : "Hôm nay"}
+                </span>
+                <span
+                  className={`justify-self-end whitespace-nowrap rounded px-1.5 py-0.5 text-xs font-semibold tabular-nums ${gainClass}`}
                 >
                   {formatPercent(h.signalReturnPercent)}
-                </div>
-              </div>
+                </span>
+              </>
             );
-            const rowClass = "grid min-w-0 flex-1 grid-cols-[1fr_auto_auto] items-center gap-3 text-left";
+            const rowClass = `grid min-w-0 flex-1 items-center gap-2 text-left ${COLS}`;
             // Switches the sibling chart in place when one's provided
             // (Dashboard/THỰC CHIẾN CP both render this next to a chart);
             // otherwise falls back to navigating to the stock detail page.
@@ -218,16 +228,12 @@ export default function TrendSignalScanner({
               >
                 <WatchButton symbol={h.symbol} />
                 {onSelectSymbol ? (
-                  <button type="button" onClick={() => onSelectSymbol(h.symbol)} className={rowClass}>
-                    {symbolBlock}
-                    {entryBlock}
-                    {gainBlock}
+                  <button type="button" title={rowTitle} onClick={() => onSelectSymbol(h.symbol)} className={rowClass}>
+                    {cells}
                   </button>
                 ) : (
-                  <Link to={`/stock/${h.symbol}`} className={rowClass}>
-                    {symbolBlock}
-                    {entryBlock}
-                    {gainBlock}
+                  <Link to={`/stock/${h.symbol}`} title={rowTitle} className={rowClass}>
+                    {cells}
                   </Link>
                 )}
               </div>
