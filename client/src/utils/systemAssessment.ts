@@ -1,6 +1,7 @@
 import { sma, adx } from "technicalindicators";
 import type { HistoryPoint } from "../types";
 import { computeSupertrend } from "./signals";
+import { dropUnclosedBars } from "./sessionClose";
 
 export type SystemStatus = "buy" | "watch" | "avoid";
 
@@ -22,12 +23,15 @@ function fmt(v: number): string {
 
 // Same SMA20/SMA50/ADX(14)/Supertrend(10,3) combo as the chart's own
 // Mua/Bán markers (see utils/signals.ts computeTradingSignals) and the
-// server-side scanner — but read off just the LATEST bar to describe
-// "where does this symbol stand right now" instead of a Mua/Bán event
+// server-side scanner — but read off just the LATEST closed bar to describe
+// "where does this symbol stand" instead of a Mua/Bán event
 // series. Every number in the narrative is a real, current indicator
 // reading; nothing here is a backtested probability or win-rate claim,
 // since none has been computed for this specific setup.
-export function buildSystemAssessment(points: HistoryPoint[]): SystemAssessment | null {
+export function buildSystemAssessment(allPoints: HistoryPoint[]): SystemAssessment | null {
+  // "Chỉ kết luận khi đóng phiên": the verdict reads the latest CLOSED daily
+  // bar, not today's candle while it is still forming.
+  const points = dropUnclosedBars(allPoints);
   if (points.length < 51) return null;
 
   const closes = points.map((p) => p.close);

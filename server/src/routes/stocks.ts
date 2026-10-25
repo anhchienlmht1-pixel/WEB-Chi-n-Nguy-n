@@ -8,7 +8,8 @@ import { getQuoteWithFallback, getHistoryWithFallback, getMarketOverviewWithFall
 import { fetchInvestmentOutlook } from "../providers/googleSheet.js";
 import { fetchNewsForSymbol } from "../news/cafefNews.js";
 import { getCompanyProfileWithFallback } from "../providers/companyProfileFallback.js";
-import { scanBuySignals } from "../signals/trendScanner.js";
+import { scanBuySignalsWithSession, type TrendScanResult } from "../signals/trendScanner.js";
+import { isSettlingWindow, lastClosedSessionDate } from "../signals/sessionClose.js";
 import { getTradeJournal } from "../signals/tradeJournal.js";
 import { scanMovingAverages } from "../signals/maScanner.js";
 import { fetchVndirectLogos, fetchVndirectCompanyProfilesRaw } from "../providers/vndirectLogos.js";
@@ -246,17 +247,54 @@ router.get(
   })
 );
 
+// "Chỉ kết luận khi đóng phiên": the buy list is computed from CLOSED daily
+// bars only (see signals/sessionClose.ts), so it can change at most once per
+// session — right after the 15:00 close. It's cached per closed session: the
+// key rolls over at 15:00 and, until then, the previous session's conclusion
+// keeps being served untouched. Just after the close the provider may still be
+// settling the final bar, so that half hour is re-scanned every 5 minutes;
+// afterwards a result is good for hours (15 minutes if the provider still has
+// no bar for the closed session yet, e.g. a holiday or a lagging feed).
+let lastTrendResult: TrendScanResult | null = null;
+let trendInFlight: Promise<TrendScanResult> | null = null;
+
+async function loadTrendSignals(): Promise<TrendScanResult> {
+  const closed = lastClosedSessionDate();
+  const key = `trend-signals:${closed}`;
+  const hit = cache.get<TrendScanResult>(key);
+  if (hit) return hit;
+  if (trendInFlight) return trendInFlight;
+
+  trendInFlight = (async () => {
+    try {
+      const result = await scanBuySignalsWithSession();
+      lastTrendResult = result;
+      const lagging = result.sessionDate < closed;
+      const ttl = isSettlingWindow() ? 5 * 60 : lagging ? 15 * 60 : 6 * 60 * 60;
+      cache.set(key, result, ttl);
+      return result;
+    } catch (err) {
+      // Serve the previous conclusion rather than an error; deliberately not
+      // cached, so the next request tries the scan again.
+      if (lastTrendResult) {
+        console.error(
+          `[trend-signals] quét lỗi, dùng tạm kết luận phiên ${lastTrendResult.sessionDate}: ${err instanceof Error ? err.message : String(err)}`
+        );
+        return lastTrendResult;
+      }
+      throw err;
+    } finally {
+      trendInFlight = null;
+    }
+  })();
+  return trendInFlight;
+}
+
 router.get(
   "/trend-signals",
   asyncHandler(async (_req, res) => {
-    // Same daily-bar trend-following combo as the chart's own Mua/Bán
-    // markers, scanned across the whole stock universe — a 1h TTL is
-    // plenty since this only moves at most once per trading day (it's
-    // computed off daily closes), and re-scanning ~70 symbols on every
-    // request would be needlessly slow and hammer the price-history
-    // provider for no benefit.
-    const data = await cached("trend-signals", 60 * 60, () => scanBuySignals(), { staleOnError: true });
-    res.json({ items: data });
+    const { items, sessionDate } = await loadTrendSignals();
+    res.json({ items, sessionDate });
   })
 );
 

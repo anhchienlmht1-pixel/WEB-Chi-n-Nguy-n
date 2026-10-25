@@ -2,6 +2,7 @@ import { put, head } from "@vercel/blob";
 import { STOCK_UNIVERSE } from "../providers/universe.js";
 import { getHistoryWithFallback } from "../providers/fallback.js";
 import { computeBuySeries, dedupeSameDay } from "./trendScanner.js";
+import { barDateICT, dropUnclosedBars, lastClosedSessionDate } from "./sessionClose.js";
 
 // Real, forward-only trade log for "Lịch sử giao dịch" — unlike
 // scanClosedTrades (a backtest that reconstructs every historical
@@ -9,6 +10,10 @@ import { computeBuySeries, dedupeSameDay } from "./trendScanner.js";
 // the system's own Mua/Bán combo (SMA20 > SMA50, ADX(14) > 25,
 // Supertrend(10,3)) actually signals from this date onward, so the
 // numbers can't be accused of being cherry-picked in hindsight.
+//
+// "Chỉ kết luận khi đóng phiên": entries and exits are only ever decided from
+// sessions that have already closed (after 15:00 ICT), and are dated with that
+// session's Vietnam date — never from a half-formed bar mid-session.
 export const JOURNAL_START_DATE = "2026-09-24";
 
 const BLOB_PATHNAME = "trade-journal/state.json";
@@ -67,9 +72,11 @@ async function writeState(state: JournalState): Promise<void> {
   });
 }
 
-function todayKey(): string {
-  return new Date().toISOString().slice(0, 10);
-}
+// A failed/empty attempt (data for the closed session not published yet, or a
+// holiday with no new bar) is retried at most this often, so the journal
+// route's short cache can't turn into a full-universe scan every 5 minutes.
+const RETRY_AFTER_MS = 15 * 60 * 1000;
+let lastAttemptMs = 0;
 
 async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
   const results: R[] = new Array(items.length);
@@ -92,14 +99,29 @@ interface CurrentSignal {
   price: number;
 }
 
-async function scanCurrentSignals(): Promise<Map<string, CurrentSignal>> {
+interface CurrentSignals {
+  signals: Map<string, CurrentSignal>;
+  /** Vietnam date (YYYY-MM-DD) of the newest closed bar seen, null if none. */
+  dataDate: string | null;
+}
+
+async function scanCurrentSignals(): Promise<CurrentSignals> {
   const hits = await mapWithConcurrency(STOCK_UNIVERSE, 20, async (seed) => {
     try {
       const { points: raw } = await getHistoryWithFallback(seed.symbol, "1Y");
-      const series = computeBuySeries(dedupeSameDay(raw));
+      // Closed sessions only — today's bar is dropped until after 15:00 ICT.
+      const series = computeBuySeries(dropUnclosedBars(dedupeSameDay(raw)));
       const last = series[series.length - 1];
       if (!last) return null;
-      return { symbol: seed.symbol, name: seed.name, exchange: seed.exchange, currency: seed.currency, isBuy: last.isBuy, price: last.close };
+      return {
+        symbol: seed.symbol,
+        name: seed.name,
+        exchange: seed.exchange,
+        currency: seed.currency,
+        isBuy: last.isBuy,
+        price: last.close,
+        barDate: barDateICT(last.time),
+      };
     } catch {
       // A single symbol's data being unavailable for today's run must not
       // block the rest of the scan — see the loop below, which also keeps
@@ -109,22 +131,32 @@ async function scanCurrentSignals(): Promise<Map<string, CurrentSignal>> {
   });
 
   const map = new Map<string, CurrentSignal>();
+  let dataDate: string | null = null;
   for (const h of hits) {
-    if (h) map.set(h.symbol, { name: h.name, exchange: h.exchange, currency: h.currency, isBuy: h.isBuy, price: h.price });
+    if (!h) continue;
+    map.set(h.symbol, { name: h.name, exchange: h.exchange, currency: h.currency, isBuy: h.isBuy, price: h.price });
+    if (h.barDate && (!dataDate || h.barDate > dataDate)) dataDate = h.barDate;
   }
-  return map;
+  return { signals: map, dataDate };
 }
 
-// Brings the journal up to date with today's signals (at most once per
-// calendar day — see the lastRunDate guard) and persists the result.
+// Brings the journal up to date with the latest CLOSED session's signals (at
+// most once per session — see the lastRunDate guard) and persists the result.
+// lastRunDate / buyDate / sellDate are all that session's Vietnam date.
 async function updateTradeJournal(): Promise<JournalState> {
   const state = await readState();
-  const today = todayKey();
-  if (today < JOURNAL_START_DATE) return state;
-  if (state.lastRunDate === today) return state;
+  const expected = lastClosedSessionDate();
+  if (expected < JOURNAL_START_DATE) return state;
+  if (state.lastRunDate !== null && state.lastRunDate >= expected) return state;
+  if (Date.now() - lastAttemptMs < RETRY_AFTER_MS) return state;
+  lastAttemptMs = Date.now();
 
-  const signals = await scanCurrentSignals();
-  if (signals.size === 0) return state; // scan failed entirely — don't touch positions on bad data
+  const { signals, dataDate } = await scanCurrentSignals();
+  if (signals.size === 0 || dataDate === null) return state; // scan failed entirely — don't touch positions on bad data
+  // The closed session's bar isn't published yet (provider lag) or it was a
+  // holiday — nothing new to conclude; try again later.
+  if (dataDate < expected) return state;
+  const sessionDate = dataDate;
 
   const openBySymbol = new Map(state.open.map((p) => [p.symbol, p]));
   const nextOpen: JournalPosition[] = [];
@@ -133,14 +165,14 @@ async function updateTradeJournal(): Promise<JournalState> {
   for (const pos of state.open) {
     const sig = signals.get(pos.symbol);
     if (!sig || sig.isBuy) {
-      // Missing today (fetch failed) or still buying — keep it open.
+      // Missing in this run (fetch failed) or still buying — keep it open.
       nextOpen.push(pos);
       continue;
     }
-    const holdingDays = Math.round((new Date(today).getTime() - new Date(pos.buyDate).getTime()) / 86_400_000);
+    const holdingDays = Math.round((new Date(sessionDate).getTime() - new Date(pos.buyDate).getTime()) / 86_400_000);
     newlyClosed.push({
       ...pos,
-      sellDate: today,
+      sellDate: sessionDate,
       sellPrice: sig.price,
       returnPercent: ((sig.price - pos.buyPrice) / pos.buyPrice) * 100,
       holdingDays,
@@ -154,13 +186,13 @@ async function updateTradeJournal(): Promise<JournalState> {
       name: sig.name,
       exchange: sig.exchange,
       currency: sig.currency,
-      buyDate: today,
+      buyDate: sessionDate,
       buyPrice: sig.price,
     });
   }
 
   const next: JournalState = {
-    lastRunDate: today,
+    lastRunDate: sessionDate,
     open: nextOpen,
     closed: [...newlyClosed, ...state.closed].slice(0, MAX_CLOSED_ENTRIES),
   };

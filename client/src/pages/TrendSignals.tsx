@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { fetchHistory, fetchTrendBuySignals, fetchMarketOverview } from "../api/client";
+import { fetchHistory, fetchTrendBuyResult, fetchMarketOverview } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { useWatchlist } from "../hooks/useWatchlist";
 import TechnicalChartPanel from "../components/TechnicalChartPanel";
@@ -10,6 +10,7 @@ import TrendSystemIntro from "../components/TrendSystemIntro";
 import HomeHero from "../components/HomeHero";
 import { aggregatePoints } from "../utils/aggregate";
 import { computeTradingSignals } from "../utils/signals";
+import { dropUnclosedBars } from "../utils/sessionClose";
 
 const DEFAULT_SYMBOL = "VNINDEX";
 
@@ -27,10 +28,10 @@ export default function TrendSignals() {
   // visitor sees would show no signal at all — once the buy-signal scan
   // comes back, swap the default over to the first stock actually on a
   // live signal (but only if nobody's picked/kept their own symbol yet).
-  const buySignalsState = usePolling(() => fetchTrendBuySignals(), [], 5 * 60 * 1000);
+  const buySignalsState = usePolling(() => fetchTrendBuyResult(), [], 5 * 60 * 1000);
   useEffect(() => {
     if (watchlist.length > 0 || chartSymbol !== DEFAULT_SYMBOL) return;
-    const first = buySignalsState.data?.[0]?.symbol;
+    const first = buySignalsState.data?.items[0]?.symbol;
     if (first) setChartSymbol(first);
   }, [buySignalsState.data, watchlist, chartSymbol]);
 
@@ -40,7 +41,8 @@ export default function TrendSignals() {
   // Compute trading signals
   const signals = useMemo(() => {
     if (!historyState.data) return [];
-    const chartPoints = aggregatePoints(historyState.data.points, "D");
+    // Closed sessions only — see utils/sessionClose.ts.
+    const chartPoints = aggregatePoints(dropUnclosedBars(historyState.data.points), "D");
     const result = computeTradingSignals(chartPoints);
     return result.transitions;
   }, [historyState.data]);
@@ -57,7 +59,7 @@ export default function TrendSignals() {
               Tín hiệu Mua/Bán theo xu hướng
             </h1>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Đang xem {chartSymbol} — quét Trend Following trên toàn thị trường, cập nhật liên tục.
+              Đang xem {chartSymbol} — quét Trend Following trên toàn thị trường, chốt tín hiệu sau mỗi phiên đóng cửa.
             </p>
           </div>
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">

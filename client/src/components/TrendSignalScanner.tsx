@@ -2,24 +2,28 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { TrendingUp, Clock, RefreshCw, Star, Search } from "lucide-react";
 import { usePolling } from "../hooks/usePolling";
-import { fetchTrendBuySignals } from "../api/client";
+import { fetchTrendBuyResult } from "../api/client";
 import { formatPercent, formatPrice } from "../utils/format";
+import { formatSessionDate, isMarketInSession } from "../utils/sessionClose";
 import { useWatchlist } from "../hooks/useWatchlist";
 import WatchButton from "./WatchButton";
 
-const POLL_MS = 5 * 60 * 1000; // server caches the scan for 1h — no point polling faster
+// The conclusion only changes once a session closes (15:00) — the server holds it
+// until then — so a gentle poll is enough to pick the new one up.
+const POLL_MS = 5 * 60 * 1000;
 
 function formatSince(iso: string): string {
   return new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
 }
 
-// Whole days between the buy date and today, so the user reads "đang nắm giữ
-// N ngày" instead of decoding a bare date.
-function daysHeld(iso: string): number {
-  const start = new Date(iso).getTime();
-  if (Number.isNaN(start)) return 0;
-  const diff = Date.now() - start;
-  return Math.max(0, Math.floor(diff / 86_400_000));
+// Whole days between the buy date and the session the list was concluded on
+// (not "now"), so the holding time and the P/L next to it describe the same
+// closing price: "đang nắm giữ N ngày" instead of decoding a bare date.
+function daysHeld(buyIso: string, sessionIso: string): number {
+  const start = new Date(buyIso).getTime();
+  const end = new Date(sessionIso).getTime();
+  if (Number.isNaN(start) || Number.isNaN(end)) return 0;
+  return Math.max(0, Math.round((end - start) / 86_400_000));
 }
 
 // Column template shared by the header and every row: Mã | Sàn | Thời gian
@@ -64,7 +68,9 @@ export default function TrendSignalScanner({
    * Falls back to a normal /stock/:symbol navigation when omitted. */
   onSelectSymbol?: (symbol: string) => void;
 }) {
-  const { data: hits, error, loading, refetch } = usePolling(() => fetchTrendBuySignals(), [], POLL_MS);
+  const { data: result, error, loading, refetch } = usePolling(() => fetchTrendBuyResult(), [], POLL_MS);
+  const hits = result?.items ?? null;
+  const sessionDate = result?.sessionDate ?? null;
   const { addMany } = useWatchlist();
 
   // First load — the server scans ~70 symbols, so tell the user it's working
@@ -115,7 +121,13 @@ export default function TrendSignalScanner({
     );
   }
 
-  if (!hits) return null;
+  if (!hits || !sessionDate) return null;
+
+  // "Chỉ kết luận khi đóng phiên": during the 09:00–15:00 session the list is
+  // still the previous session's conclusion — say so, instead of letting a
+  // reader assume it is moving with the live price.
+  const inSession = isMarketInSession();
+  const sessionLabel = `Chốt phiên ${formatSessionDate(sessionDate)}`;
 
   const subtitle = (
     <>
@@ -123,10 +135,15 @@ export default function TrendSignalScanner({
       tăng, chưa xuất hiện điểm bán.
       <span
         className="mt-0.5 block text-[11px] text-slate-400 dark:text-slate-500"
-        title="Điều kiện: SMA20 > SMA50, ADX(14) > 25 và Supertrend(10,3) đang báo tăng"
+        title="Điều kiện: SMA20 > SMA50, ADX(14) > 25 và Supertrend(10,3) đang báo tăng. Tính trên nến ngày đã đóng cửa; kết luận mới chỉ có sau 15:00."
       >
-        Hệ thống Trend Following · cập nhật mỗi giờ ⓘ
+        {sessionLabel} · Trend Following ⓘ
       </span>
+      {inSession && (
+        <span className="mt-0.5 block text-[11px] text-amber-600 dark:text-amber-400">
+          Đang trong phiên: kết luận mới sẽ chốt sau 15:00.
+        </span>
+      )}
     </>
   );
 
@@ -162,7 +179,7 @@ export default function TrendSignalScanner({
           </div>
           <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Chưa có mã nào khớp tín hiệu MUA</p>
           <p className="max-w-xs text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-            Hiện không cổ phiếu nào hội đủ 3 điều kiện của xu hướng tăng. Danh sách sẽ tự cập nhật mỗi giờ.
+            Hiện không cổ phiếu nào hội đủ 3 điều kiện của xu hướng tăng. Danh sách được chốt lại sau mỗi phiên đóng cửa (15:00).
           </p>
         </div>
       ) : (
@@ -188,7 +205,7 @@ export default function TrendSignalScanner({
             </div>
           </div>
           {hits.map((h) => {
-            const held = daysHeld(h.buyDate);
+            const held = daysHeld(h.buyDate, sessionDate);
             const gainClass =
               h.signalReturnPercent > 0
                 ? "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400"
@@ -197,7 +214,7 @@ export default function TrendSignalScanner({
                   : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400";
             // Entry price/date are no longer their own column — they live in
             // the row tooltip alongside the current price.
-            const rowTitle = `${h.symbol}: vào tín hiệu ngày ${formatSince(h.buyDate)} ở giá ${formatPrice(h.buyPrice, h.currency)}, giá hiện tại ${formatPrice(h.price, h.currency)}`;
+            const rowTitle = `${h.symbol}: vào tín hiệu ngày ${formatSince(h.buyDate)} ở giá ${formatPrice(h.buyPrice, h.currency)}, giá đóng cửa phiên ${formatSessionDate(sessionDate)} ${formatPrice(h.price, h.currency)}`;
             // WatchButton is its own <button> — kept as a sibling rather
             // than nested inside the row's own clickable element, since a
             // <button> (or an <a>) can't validly contain another <button>.
@@ -208,7 +225,7 @@ export default function TrendSignalScanner({
                   {h.exchange}
                 </span>
                 <span className="justify-self-end whitespace-nowrap text-xs tabular-nums text-slate-700 dark:text-slate-300">
-                  {held > 0 ? `${held} ngày` : "Hôm nay"}
+                  {held > 0 ? `${held} ngày` : "Mới vào"}
                 </span>
                 <span
                   className={`justify-self-end whitespace-nowrap rounded px-1.5 py-0.5 text-xs font-semibold tabular-nums ${gainClass}`}

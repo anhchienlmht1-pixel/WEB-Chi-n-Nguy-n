@@ -6,7 +6,9 @@ import { fetchTrendBuySignals, type TrendBuySignal } from "../api/client";
 // re-triggers the badge, but the same symbol starting a genuinely fresh
 // streak later (after its previous one ended) does.
 const STORAGE_KEY = "stockdash.trendSignalsAcked";
-const POLL_MS = 5 * 60 * 1000; // server caches the scan for 1h — matches TrendSignalScanner's own cadence
+// The list is only re-concluded once a session closes (15:00), and the server
+// freezes it until then — polling just picks up the new conclusion promptly.
+const POLL_MS = 5 * 60 * 1000;
 
 function readAcked(): Record<string, string> {
   try {
@@ -37,7 +39,7 @@ function sendBrowserNotification(freshHits: TrendBuySignal[]) {
       : `${freshHits.length} mã có tín hiệu MUA mới`;
   const body =
     freshHits.length === 1
-      ? `Trend-following (SMA20>SMA50, ADX(14)>25, Supertrend tăng) — giá ${freshHits[0].price.toLocaleString("vi-VN")}`
+      ? `Chốt phiên: Trend-following (SMA20>SMA50, ADX(14)>25, Supertrend tăng) — giá đóng cửa ${freshHits[0].price.toLocaleString("vi-VN")}`
       : freshHits.map((h) => h.symbol).join(", ");
   const notif = new Notification(title, { body, icon: "/logo-cstock-icon.png", tag: "trend-signals" });
   notif.onclick = () => {

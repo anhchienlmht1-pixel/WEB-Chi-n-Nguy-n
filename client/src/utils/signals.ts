@@ -1,6 +1,7 @@
 import { sma, adx, atr } from "technicalindicators";
 import type { HistoryPoint } from "../types";
 import { toSeconds, alignTail, alignTailField } from "./indicatorCatalog";
+import { dropUnclosedBars } from "./sessionClose";
 
 export interface SupertrendPoint {
   time: number;
@@ -205,8 +206,10 @@ export function computeTradingSignals(points: HistoryPoint[]): TradingSignalsRes
   return { all, transitions };
 }
 
-/** Just the latest bar's signal (or null if neither condition matched) — for compact summaries. */
-export function latestSignal(points: HistoryPoint[]): "buy" | "sell" | null {
+/** Just the latest CLOSED bar's signal (or null if neither condition matched) —
+ * for compact summaries. Today's bar is ignored until the 15:00 close. */
+export function latestSignal(allPoints: HistoryPoint[]): "buy" | "sell" | null {
+  const points = dropUnclosedBars(allPoints);
   if (points.length === 0) return null;
   const { all } = computeTradingSignals(points);
   if (all.length === 0) return null;

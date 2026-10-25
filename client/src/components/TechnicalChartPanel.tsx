@@ -3,6 +3,7 @@ import { fetchHistory } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { aggregatePoints, type ChartResolution } from "../utils/aggregate";
 import { computeTradingSignals } from "../utils/signals";
+import { dropUnclosedBars } from "../utils/sessionClose";
 import PriceChart, { type ActiveIndicator, type ChartType, type DrawingTool, type PriceChartHandle } from "./PriceChart";
 import ChartToolbar from "./ChartToolbar";
 import DrawingToolbar from "./DrawingToolbar";
@@ -115,13 +116,15 @@ export default function TechnicalChartPanel({
       if (symbol === "VNINDEX") {
         return { all: [], transitions: [] };
       }
-      // Use refreshState data if available, otherwise fall back to historyState
-      const pointsToUse = refreshState.data
-        ? aggregatePoints(refreshState.data.points, resolution)
-        : chartPoints;
-      return computeTradingSignals(pointsToUse);
+      // "Chỉ kết luận khi đóng phiên": markers are computed from sessions that
+      // have already closed. Today's candle is still drawn (chartPoints) but
+      // never carries a Mua/Bán marker until the 15:00 close, so a marker
+      // can't appear and vanish while the bar is still moving.
+      const source = refreshState.data?.points ?? historyState.data?.points;
+      if (!source) return { all: [], transitions: [] };
+      return computeTradingSignals(aggregatePoints(dropUnclosedBars(source), resolution));
     },
-    [chartPoints, refreshState.data, symbol, resolution]
+    [historyState.data, refreshState.data, symbol, resolution]
   );
 
   return (

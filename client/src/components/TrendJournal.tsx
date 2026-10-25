@@ -116,8 +116,8 @@ export default function TrendJournal() {
       )}
 
       <p className="border-t border-slate-100 px-4 py-2 text-[10px] text-slate-400 dark:border-slate-900 dark:text-slate-500">
-        Ghi nhận tín hiệu thật theo thời gian thực từ {formatDate(startDate)} — không phải dữ liệu backtest. Deal đóng
-        khi tín hiệu Bán kích hoạt (SMA20 cắt xuống SMA50 hoặc Supertrend đảo chiều). Không phải lời khuyên đầu tư.
+        Ghi nhận tín hiệu thật, chốt sau mỗi phiên đóng cửa (15:00) từ {formatDate(startDate)} — không phải dữ liệu
+        backtest. Giá mua/bán là giá đóng cửa phiên. Deal đóng khi tín hiệu Bán kích hoạt (SMA20 cắt xuống SMA50 hoặc Supertrend đảo chiều). Không phải lời khuyên đầu tư.
       </p>
     </div>
   );

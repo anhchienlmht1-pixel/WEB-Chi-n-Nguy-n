@@ -4,6 +4,7 @@ import { getHistoryWithFallback } from "../providers/fallback.js";
 import { fetchFinancialReport } from "../providers/financials.js";
 import { extractKeyRatios } from "../digest/ratios.js";
 import type { HistoryPoint } from "../providers/types.js";
+import { barDateICT, dropUnclosedBars } from "./sessionClose.js";
 
 // Same trend-following combo as the chart's own Mua/Bán markers
 // (client/src/utils/signals.ts computeTradingSignals — SMA20 > SMA50,
@@ -278,12 +279,32 @@ async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T)
   return results;
 }
 
+export interface TrendScanResult {
+  items: BuySignalHit[];
+  /** YYYY-MM-DD (Vietnam date) of the latest CLOSED session the scan used —
+   * the "Chốt phiên dd/mm" the UI labels the list with. */
+  sessionDate: string;
+}
+
 export async function scanBuySignals(): Promise<BuySignalHit[]> {
+  return (await scanBuySignalsWithSession()).items;
+}
+
+// "Chỉ kết luận khi đóng phiên": only bars of sessions that have already
+// closed (after 15:00 ICT) are used — today's bar is dropped until then, so
+// the list, the buy price and the P/L ("price" = last closed price) can't
+// move or flip while the market is still trading.
+export async function scanBuySignalsWithSession(): Promise<TrendScanResult> {
   const failed = new Map<string, string>();
+  let sessionDate: string | null = null;
   const hits = await mapWithConcurrency(STOCK_UNIVERSE, 20, async (seed): Promise<BuySignalHit | null> => {
     try {
       const { points: raw } = await getHistoryWithFallback(seed.symbol, "1Y");
-      const points = dedupeSameDay(raw);
+      const points = dropUnclosedBars(dedupeSameDay(raw));
+      if (points.length > 0) {
+        const barDate = barDateICT(points[points.length - 1].time);
+        if (barDate && (!sessionDate || barDate > sessionDate)) sessionDate = barDate;
+      }
       const signalDates = latestBuySince(points);
       if (!signalDates || points.length === 0) {
         if (points.length === 0) {
@@ -341,5 +362,10 @@ export async function scanBuySignals(): Promise<BuySignalHit[]> {
       Object.fromEntries(upcomFailed));
   }
 
-  return results;
+  // No symbol returned a single closed bar: the data source is down, not "no
+  // signals today". Throwing keeps an empty list from being cached for the
+  // whole session — the route falls back to the last good result instead.
+  if (!sessionDate) throw new Error("Không lấy được dữ liệu nến đã đóng phiên để chốt tín hiệu");
+
+  return { items: results, sessionDate };
 }

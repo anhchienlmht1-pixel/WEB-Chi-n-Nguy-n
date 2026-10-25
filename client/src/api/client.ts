@@ -166,13 +166,25 @@ export interface TrendBuySignal {
   sellDate: string | null;
 }
 
+export interface TrendBuyResult {
+  items: TrendBuySignal[];
+  // Vietnam date (YYYY-MM-DD) of the closed session this conclusion was
+  // drawn from — the list only changes after a session closes (15:00), so
+  // during the day it still reads "Chốt phiên <the previous session>".
+  sessionDate: string;
+}
+
 // Same trend-following combo as a chart's own Mua/Bán markers (SMA20 >
 // SMA50, ADX(14) > 25, Supertrend(10,3) uptrend), scanned across the whole
-// stock universe server-side and cached for an hour — see
-// server/src/signals/trendScanner.ts.
-export async function fetchTrendBuySignals(): Promise<TrendBuySignal[]> {
+// stock universe server-side from CLOSED daily bars only ("chỉ kết luận khi
+// đóng phiên") — see server/src/signals/trendScanner.ts.
+export async function fetchTrendBuyResult(): Promise<TrendBuyResult> {
   const { data } = await api.get("/trend-signals");
-  return data.items;
+  return { items: data.items, sessionDate: data.sessionDate };
+}
+
+export async function fetchTrendBuySignals(): Promise<TrendBuySignal[]> {
+  return (await fetchTrendBuyResult()).items;
 }
 
 export interface JournalPosition {

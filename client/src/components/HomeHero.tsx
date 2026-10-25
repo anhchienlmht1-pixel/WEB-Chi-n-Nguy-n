@@ -5,12 +5,12 @@ const FEATURES = [
   {
     icon: Radar,
     title: "Quét toàn thị trường",
-    desc: "Tự động rà soát hơn 70 mã mỗi giờ theo hệ thống Trend Following.",
+    desc: "Tự động rà soát hơn 70 mã trên nến ngày đã đóng cửa theo hệ thống Trend Following.",
   },
   {
     icon: Clock3,
-    title: "Cập nhật liên tục",
-    desc: "Tín hiệu Mua/Bán và nhật ký giao dịch làm mới theo thời gian thực.",
+    title: "Chốt sau mỗi phiên",
+    desc: "Tín hiệu Mua/Bán và nhật ký giao dịch chỉ kết luận sau 15:00, không nhảy số trong phiên.",
   },
   {
     icon: ShieldCheck,
