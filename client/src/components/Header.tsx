@@ -8,8 +8,6 @@ import { useTheme } from "../hooks/useTheme";
 // Section links of the home page — hash links, scrolled to by ScrollToHash.
 const NAV = [
   { hash: "#tin-hieu", label: "Tín hiệu" },
-  { hash: "#he-thong", label: "Hệ thống" },
-  { hash: "#nhat-ky", label: "Nhật ký" },
 ];
 
 // Editorial header: a thin black utility bar (scrolls away) above a sticky

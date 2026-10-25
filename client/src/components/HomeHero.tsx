@@ -75,9 +75,9 @@ const FEATURES: Feature[] = [
       </svg>
     ),
     title: "Chốt sau mỗi phiên",
-    desc: "Tín hiệu Mua/Bán và nhật ký giao dịch chỉ kết luận sau 15:00, không nhảy số trong phiên.",
-    linkLabel: "Xem nhật ký",
-    to: "#nhat-ky",
+    desc: "Tín hiệu Mua/Bán chỉ kết luận sau 15:00, không nhảy số trong phiên.",
+    linkLabel: "Xem tín hiệu chốt phiên",
+    to: "#tin-hieu",
   },
   {
     icon: (

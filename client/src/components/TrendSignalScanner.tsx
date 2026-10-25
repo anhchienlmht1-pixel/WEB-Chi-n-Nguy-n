@@ -41,9 +41,9 @@ const TITLE = "text-xs font-bold uppercase tracking-[0.14em]";
 
 // Reusable card shell so the loading / error / empty / list states all share
 // the same header and framing — the panel never "jumps" between states.
-function Panel({ children, subtitle }: { children: ReactNode; subtitle?: ReactNode }) {
+function Panel({ children, subtitle, fill }: { children: ReactNode; subtitle?: ReactNode; fill?: boolean }) {
   return (
-    <div className={SHELL}>
+    <div className={`${SHELL} ${fill ? "flex h-full flex-col" : ""}`}>
       <div className="border-b border-white/10 px-5 pb-4 pt-5">
         <h4 className={TITLE}>Tín hiệu MUA</h4>
         <p className="mt-2.5 text-xs leading-relaxed text-quiet-on-band">
@@ -62,12 +62,17 @@ function Panel({ children, subtitle }: { children: ReactNode; subtitle?: ReactNo
 // dozens of per-symbol history fetches itself.
 export default function TrendSignalScanner({
   onSelectSymbol,
+  fill = false,
 }: {
   /** Switches the chart sitting next to this panel to the clicked symbol
    * in place, instead of navigating away to the stock detail page —
    * passed on every page that renders this beside a TechnicalChartPanel.
    * Falls back to a normal /stock/:symbol navigation when omitted. */
   onSelectSymbol?: (symbol: string) => void;
+  /** Stretch to the height of the parent (which must have one) instead of
+   * sizing to the content: the header stays put and only the list scrolls.
+   * Used to keep the panel exactly as tall as the chart next to it. */
+  fill?: boolean;
 }) {
   const { data: result, error, loading, refetch } = usePolling(() => fetchTrendBuyResult(), [], POLL_MS);
   const hits = result?.items ?? null;
@@ -78,7 +83,7 @@ export default function TrendSignalScanner({
   // instead of leaving a bare spinner that reads as "broken".
   if (loading && !hits) {
     return (
-      <Panel subtitle="Đang quét toàn bộ thị trường để tìm cổ phiếu đang tăng giá…">
+      <Panel fill={fill} subtitle="Đang quét toàn bộ thị trường để tìm cổ phiếu đang tăng giá…">
         <div className="space-y-2 p-4">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="flex items-center gap-3">
@@ -96,7 +101,7 @@ export default function TrendSignalScanner({
   if (error && !hits) {
     const isTimeout = /timeout/i.test(error);
     return (
-      <Panel subtitle="Cổ phiếu đang trong xu hướng tăng và chưa xuất hiện điểm bán.">
+      <Panel fill={fill} subtitle="Cổ phiếu đang trong xu hướng tăng và chưa xuất hiện điểm bán.">
         <div className="flex flex-col items-center gap-3 p-6 text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10">
             <Clock className="h-5 w-5 text-quiet-on-band" strokeWidth={1.75} />
@@ -149,8 +154,8 @@ export default function TrendSignalScanner({
   );
 
   return (
-    <div className={SHELL}>
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/10 px-5 pb-4 pt-5">
+    <div className={`${SHELL} ${fill ? "flex h-full flex-col" : ""}`}>
+      <div className="flex shrink-0 flex-wrap items-start justify-between gap-3 border-b border-white/10 px-5 pb-4 pt-5">
         <div className="min-w-0 flex-1">
           <h4 className={TITLE}>Tín hiệu MUA</h4>
           <p className="mt-2.5 text-xs leading-relaxed text-quiet-on-band">{subtitle}</p>
@@ -179,7 +184,7 @@ export default function TrendSignalScanner({
           </p>
         </div>
       ) : (
-        <div className="@container max-h-96 overflow-y-auto">
+        <div className={`@container overflow-y-auto ${fill ? "min-h-0 flex-1" : "max-h-96"}`}>
           {/* Sticky column header — shares COLS with every row below, and a
            * spacer the width of the row's star button, so the four labels sit
            * exactly over their values while the list scrolls. */}

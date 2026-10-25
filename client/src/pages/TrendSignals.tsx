@@ -5,8 +5,6 @@ import { useWatchlist } from "../hooks/useWatchlist";
 import TechnicalChartPanel from "../components/TechnicalChartPanel";
 import TrendSignalScanner from "../components/TrendSignalScanner";
 import TrendSystemStats from "../components/TrendSystemStats";
-import TrendJournal from "../components/TrendJournal";
-import TrendSystemIntro from "../components/TrendSystemIntro";
 import HomeHero from "../components/HomeHero";
 import { aggregatePoints } from "../utils/aggregate";
 import { computeTradingSignals } from "../utils/signals";
@@ -14,8 +12,7 @@ import { dropUnclosedBars } from "../utils/sessionClose";
 
 const DEFAULT_SYMBOL = "VNINDEX";
 
-// Homepage — editorial hero, then chart + whole-market buy-signal scanner,
-// the system intro and the trade journal.
+// Homepage — editorial hero, then chart + whole-market buy-signal scanner.
 // The site is intentionally minimal: one page whose whole job is
 // showing Mua/Bán signals and getting a visitor to open an account,
 // not a market-data portal (overview banner, Leader Board, movers,
@@ -79,27 +76,22 @@ export default function TrendSignals() {
               />
             </div>
 
-            {/* Trend Signals */}
-            <div className="w-full">
-              <TrendSignalScanner onSelectSymbol={setChartSymbol} />
+            {/* Trend Signals — from lg up the list is stretched to exactly the
+                chart card's height (absolute fill, so the list itself never makes
+                the row taller than the chart) and scrolls inside; below lg the
+                columns stack and it gets a fixed height. */}
+            <div className="relative h-[32rem] lg:h-auto">
+              <div className="h-full lg:absolute lg:inset-0">
+                <TrendSignalScanner onSelectSymbol={setChartSymbol} fill />
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <div className="gutter-x mx-auto max-w-[1800px] space-y-10 py-14 sm:py-20">
-        {/* Trend System Intro */}
-        <div id="he-thong" className="scroll-mt-20">
-          <TrendSystemIntro />
-        </div>
-
+      <div className="gutter-x mx-auto max-w-[1800px] py-14 sm:py-20">
         {/* Trend System Statistics */}
         {chartSymbol !== "VNINDEX" && <TrendSystemStats signals={signals} symbol={chartSymbol} />}
-
-        {/* Trade journal — real, forward-only "lịch sử giao dịch" */}
-        <div id="nhat-ky" className="scroll-mt-20">
-          <TrendJournal />
-        </div>
       </div>
     </>
   );

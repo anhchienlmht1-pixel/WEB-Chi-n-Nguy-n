@@ -32,9 +32,6 @@ export default function Footer() {
                 <Link to={{ pathname: "/", hash: "#tin-hieu" }} className={LINK}>
                   Tín hiệu mua
                 </Link>
-                <Link to={{ pathname: "/", hash: "#nhat-ky" }} className={LINK}>
-                  Nhật ký giao dịch
-                </Link>
                 <Link to="/huong-dan-mo-tai-khoan" className={LINK}>
                   Hướng dẫn mở tài khoản
                 </Link>
