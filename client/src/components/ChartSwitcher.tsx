@@ -22,12 +22,15 @@ export default function ChartSwitcher({
   height = 420,
   preferSource,
   onSymbolChange,
+  hideStats,
 }: {
   symbol: string;
   height?: number;
   preferSource?: string;
   /** Set where the symbol is local state (homepage); shows a search box. */
   onSymbolChange?: (symbol: string) => void;
+  /** Passed through to the own chart: skip its stats block (homepage shows a card). */
+  hideStats?: boolean;
 }) {
   const [view, setView] = useState<View>("tv");
   const [looked, setLooked] = useState<{ symbol: string; exchange: string | null } | null>(null);
@@ -58,7 +61,7 @@ export default function ChartSwitcher({
         <div
           role="tablist"
           aria-label="Loại biểu đồ"
-          className="flex gap-1 rounded-md border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-900/40"
+          className="flex gap-1 rounded-md bg-emerald-50 p-1"
         >
           {TABS.map((tab) => {
             const disabled = tab.key === "tv" && !pending && !tvSymbol;
@@ -72,10 +75,8 @@ export default function ChartSwitcher({
                 disabled={disabled}
                 title={disabled ? "TradingView không có mã này" : undefined}
                 onClick={() => setView(tab.key)}
-                className={`shrink-0 rounded px-3 py-1.5 text-xs font-semibold transition-colors duration-300 disabled:cursor-not-allowed disabled:opacity-40 ${
-                  selected
-                    ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-slate-100"
-                    : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                className={`min-h-9 shrink-0 rounded px-4 text-base font-bold transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-40 ${
+                  selected ? "bg-white text-emerald-700 shadow-sm" : "text-slate-600 hover:text-emerald-700"
                 }`}
               >
                 {tab.label}
@@ -86,7 +87,7 @@ export default function ChartSwitcher({
         {/* In the "Tín hiệu" tab the own chart's toolbar already has this box. */}
         {active === "tv" && onSymbolChange && (
           <div className="min-w-[160px] flex-1">
-            <SymbolPicker value={symbol} onChange={onSymbolChange} />
+            <SymbolPicker large value={symbol} onChange={onSymbolChange} />
           </div>
         )}
       </div>
@@ -107,6 +108,7 @@ export default function ChartSwitcher({
           height={height}
           onSymbolChange={onSymbolChange}
           preferSource={preferSource}
+          hideStats={hideStats}
         />
       )}
     </div>

@@ -1,23 +1,21 @@
 @import "tailwindcss";
 
-/* Class-based dark mode: `dark:` variants apply when <html class="dark">. */
+/* Class-based dark mode: `dark:` variants apply when <html class="dark">.
+   The redesigned site is light-only (white background), so nothing sets the
+   class any more; the variants in older components are simply inert. */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ---------------------------------------------------------------------------
-   Brand palette — the site's own custom kit (same one used across the
-   bank-analysis video/slide templates), not a stock Tailwind color:
-     - emerald-* = the teal/pine "primary" family (#1F5F57 darkest down to
-       #EEF5F3 lightest) — chrome, headings, links, primary buttons.
-     - orange-*  = the accent family (#E07B39 down to #FCE9DC) — used
-       sparingly for standout numbers/CTAs, never for page chrome.
-     - slate-*   = neutral text/border/grid family (#263238 body text down
-       to #EDF3F1 near-white) — a teal-tinted neutral, not true gray.
-   Each scale's exact given hex lands on 50/300/400/500/600/700 for
-   emerald+slate and 50/200/300/600 for orange; the rest are interpolated
-   to keep the ramp smooth.
-   Semantic gain/loss colors (see .up/.down below) stay on Tailwind's
-   stock green/red (NOT this palette) so "tăng/giảm giá" never gets
-   confused with a brand-colored button or badge.
+   Brand palette — the site's own colour kit:
+     - emerald-* = the teal family (#1F5F57 darkest down to #EEF5F3 lightest):
+       headings, links, chrome, general data.
+     - orange-*  = the accent family (#E07B39 down to #FCE9DC): ONLY for the
+       one thing on a screen that needs attention (the account-opening button,
+       a single highlighted point) — never for chrome, never more than one
+       orange element per chart.
+     - slate-*   = teal-tinted neutral for text, borders and grid
+       (#263238 body text down to #EDF3F1).
+   Negative values use #C0392B (.down below).
 --------------------------------------------------------------------------- */
 @theme {
   --color-slate-50: #edf3f1;
@@ -50,41 +48,28 @@
   --color-orange-400: #eca16f;
   --color-orange-500: #e68e55;
   --color-orange-600: #e07b39;
-  --color-orange-700: #c2692f;
+  --color-orange-700: #b5571f;
   --color-orange-800: #a05526;
   --color-orange-900: #7a4220;
   --color-orange-950: #4f2b15;
 }
 
-/* ---------------------------------------------------------------------------
-   Editorial tokens — the home page / header / footer style (paper, ink and a
-   near-black "band"). Same teal-tinted neutrals as the slate palette above:
-   paper = slate-50 (light) / slate-950 (dark), ink = slate-950 / slate-50.
-     paper : page background            ink  : text, inverted buttons
-     band  : black bars + dark panels   mid  : tinted section background
-     quiet : secondary text (on paper)  quiet-on-band : secondary text on band
-     rule  : hairlines on paper
---------------------------------------------------------------------------- */
+/* Page tokens (used as bg-paper / text-ink / bg-band / bg-mid / text-quiet…):
+     paper : page background (white)        ink   : body text
+     band  : the footer's teal band         mid   : soft teal card / section tint
+     quiet : secondary text on paper        quiet-on-band : text on the band
+     rule  : hairlines and card borders */
 :root {
-  --paper: #edf3f1;
-  --ink: #1b2529;
-  --band: #0e1416;
-  --mid: #c3d2cf;
-  --quiet: #4a585d;
-  --quiet-on-band: #9db0ac;
-  --rule: rgba(27, 37, 41, 0.18);
+  --paper: #ffffff;
+  --ink: #263238;
+  --band: #1f5f57;
+  --mid: #eef5f3;
+  --quiet: #5f6e6e;
+  --quiet-on-band: #d7ece8;
+  --rule: #d5e3e0;
   /* Side padding shared by the header, footer and every page, so their edges
      line up at any width. */
-  --gutter: clamp(16px, 3.2vw, 56px);
-}
-.dark {
-  --paper: #1b2529;
-  --ink: #edf3f1;
-  --band: #0e1416;
-  --mid: #243238;
-  --quiet: #9db0ac;
-  --quiet-on-band: #9db0ac;
-  --rule: rgba(237, 243, 241, 0.16);
+  --gutter: clamp(20px, 4vw, 48px);
 }
 @theme inline {
   --color-paper: var(--paper);
@@ -101,11 +86,11 @@
 
 html {
   color-scheme: light;
-  background-color: #edf3f1;
-}
-html.dark {
-  color-scheme: dark;
-  background-color: #1b2529;
+  background-color: #ffffff;
+  /* Calibri sets small for its nominal size; 17px keeps every rem-based size on
+     the site (most of the data tables are text-xs / text-sm) comfortably
+     readable. */
+  font-size: 17px;
 }
 
 /* Responsive/mobile baseline: block accidental page-level horizontal
@@ -118,25 +103,20 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
-   Typography — a "Bebas Neue + Inter" pairing: a tall, condensed, all-caps
-   display face for big headlines, Inter for everything you read or scan.
-   Bebas Neue itself has no Vietnamese tone marks (it lacks 92 of the 130
-   Vietnamese letters, so Ệ/Ả/Ơ… fall back to a serif), so the display face
-   is Barlow Condensed — the closest proportions with full Vietnamese
-   coverage. Inter covers Vietnamese too. Both are loaded in index.html.
-   Numbers use tabular figures so columns align like a real trading terminal.
+   Typography — Calibri everywhere (Carlito, the metric-compatible open font,
+   where Calibri isn't installed). Headings are bold teal; numbers use tabular
+   figures so columns line up like a trading terminal.
 --------------------------------------------------------------------------- */
 @theme static {
-  --font-sans: "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
-  --font-display: "Barlow Condensed", "Oswald", "Arial Narrow", system-ui, sans-serif;
-  /* Editorial headline face (home hero, section titles): Archivo, whose width
-     axis (100–125%) gives the wide, heavy "STOCK" wordmark. Full Vietnamese
-     coverage; Inter is the fallback. */
-  --font-editorial: "Archivo", "Inter", system-ui, sans-serif;
+  --font-sans: Calibri, Carlito, "Segoe UI", system-ui, sans-serif;
+  --font-display: Calibri, Carlito, "Segoe UI", system-ui, sans-serif;
+  --font-editorial: Calibri, Carlito, "Segoe UI", system-ui, sans-serif;
 }
 
 body {
   margin: 0;
+  background-color: var(--paper);
+  color: var(--ink);
   font-family: var(--font-sans);
   font-weight: 400;
   -webkit-font-smoothing: antialiased;
@@ -144,47 +124,28 @@ body {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   touch-action: manipulation;
-  letter-spacing: -0.006em;
 }
 
-/* Headings: Inter, heavier weight, tighter tracking — panel and section
-   titles stay compact and easy to scan. Page-level headlines opt into the
-   condensed display style with .display-heading below. */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-sans);
   font-weight: 700;
-  letter-spacing: -0.015em;
-}
-h1 { letter-spacing: -0.02em; }
-
-/* Big condensed all-caps headline (hero, page titles, feature titles).
-   Size and line-height come from utilities on the element — the condensed
-   face needs a larger size than Inter for the same presence. */
-.display-heading {
-  font-family: var(--font-display);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.01em;
 }
 
-/* Editorial headline (home hero + section titles): Archivo, extra-bold. A class
-   in this unlayered sheet (not the `font-editorial` utility) because the
-   unlayered h1–h6 rule above would otherwise win over a layered utility.
-   Width (font-stretch), size and case come from the element. */
-.editorial {
-  font-family: var(--font-editorial);
-  font-weight: 800;
-  letter-spacing: -0.02em;
+/* Page and section headings are teal. In the base layer so any utility class
+   on a heading (text-white in the footer, text-slate-900 in a card) still wins. */
+@layer base {
+  h1, h2 {
+    color: var(--color-emerald-700);
+  }
 }
 
-/* ---------------------------------------------------------------------------
-   Motion. App chrome follows the 100/150/200/300ms scale, ease-out on enter,
-   transform + opacity only (see .ux-profile.md). The home hero's one-time
-   intro (.hero-*) is the documented marketing exception: longer, staggered via
-   per-element `--delay` / `--dur` (set in HomeHero.tsx), may reveal with
-   clip-path and tint letters with color, never loops, never animates layout.
-   Under prefers-reduced-motion it is a plain 150ms fade.
---------------------------------------------------------------------------- */
+/* Keyboard focus: a visible teal ring on everything focusable. */
+:focus-visible {
+  outline: 2px solid var(--color-emerald-700);
+  outline-offset: 2px;
+}
+
+/* App-chrome motion scale; transform + opacity only. */
 :root {
   --motion-100: 100ms;
   --motion-150: 150ms;
@@ -192,94 +153,12 @@ h1 { letter-spacing: -0.02em; }
   --motion-300: 300ms;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
-@keyframes hero-rise {
-  from { transform: translateY(105%); }
-  to { transform: none; }
-}
-@keyframes hero-up {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: none; }
-}
-@keyframes hero-charge {
-  from { opacity: 0; transform: translateX(16vw) scale(0.9); }
-  to { opacity: 1; transform: none; }
-}
-@keyframes hero-fade {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes hero-grow {
-  from { transform: scaleY(0); }
-  to { transform: scaleY(1); }
-}
-@keyframes hero-rule {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
-}
-@keyframes hero-reveal {
-  from { clip-path: inset(0 100% 0 0); }
-  to { clip-path: inset(0 0 0 0); }
-}
-/* Impact when the bull lands: a few damped pixels, then still. */
-@keyframes hero-shake {
-  0% { transform: translate(0, 0); }
-  15% { transform: translate(3px, -4px); }
-  30% { transform: translate(-2px, 3px); }
-  45% { transform: translate(1.5px, -2px); }
-  60% { transform: translate(-1px, 1px); }
-  100% { transform: translate(0, 0); }
-}
-/* One teal pass through a letter, back to ink. */
-@keyframes hero-scan {
-  0%, 100% { color: var(--ink); }
-  50% { color: #2fb39a; }
-}
-.hero-letter,
-.hero-up,
-.hero-charge,
-.hero-fade,
-.hero-rule,
-.hero-candle,
-.hero-line,
-.hero-shake,
-.hero-scan {
-  animation-duration: var(--dur, var(--motion-300));
-  animation-timing-function: var(--ease-out);
-  animation-delay: var(--delay, 0ms);
-  animation-fill-mode: both;
-}
-.hero-letter { animation-name: hero-rise; }
-.hero-up { animation-name: hero-up; }
-.hero-charge { animation-name: hero-charge; transform-origin: 62% 100%; }
-.hero-fade { animation-name: hero-fade; }
-.hero-rule { animation-name: hero-rule; transform-origin: left center; }
-.hero-candle { animation-name: hero-grow; transform-box: fill-box; transform-origin: 50% 100%; }
-.hero-line { animation-name: hero-reveal; animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1); }
-.hero-shake { animation-name: hero-shake; animation-timing-function: ease-out; }
-.hero-scan { animation-name: hero-scan; animation-timing-function: ease-in-out; }
-/* Letters rise from behind a mask at the baseline. */
-.hero-mask {
-  display: inline-block;
-  overflow: hidden;
-  vertical-align: bottom;
-  padding: 0.12em 0.015em 0;
-  margin-top: -0.12em;
-}
 @media (prefers-reduced-motion: reduce) {
-  .hero-letter,
-  .hero-up,
-  .hero-charge,
-  .hero-fade,
-  .hero-rule,
-  .hero-candle,
-  .hero-line,
-  .hero-shake {
-    animation-name: hero-fade;
-    animation-duration: var(--motion-150);
-    animation-timing-function: ease;
-    animation-delay: 0ms;
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
-  .hero-scan { animation: none; }
 }
 
 /* All financial data: tabular figures, medium weight for legibility. */
@@ -308,7 +187,6 @@ img {
 .font-heading {
   font-family: var(--font-sans);
   font-weight: 700;
-  letter-spacing: -0.015em;
 }
 
 .font-mono-price {
@@ -328,17 +206,15 @@ img {
 }
 
 /* ---------------------------------------------------------------------------
-   Semantic gain/loss colors — the core of a stock platform.
-   trendClass() in utils/format.ts emits .up / .down / .flat everywhere.
+   Semantic gain/loss colours — trendClass() in utils/format.ts emits
+   .up / .down / .flat everywhere. Gains are the deep teal (7.9:1 on white),
+   losses the palette's red #C0392B (5.4:1); the ▲ ▼ glyphs and the sign carry
+   the meaning too, so colour is never the only cue.
 --------------------------------------------------------------------------- */
-.up { color: #16a34a; }
-.down { color: #dc2626; }
-.flat { color: #64748b; }
-.dark .up { color: #22c55e; }
-.dark .down { color: #f87171; }
-.dark .flat { color: #94a3b8; }
+.up { color: #1f5f57; }
+.down { color: #c0392b; }
+.flat { color: #5f6e6e; }
 
 ::-webkit-scrollbar { height: 8px; width: 8px; }
 ::-webkit-scrollbar-thumb { background: #c9d3d1; border-radius: 4px; }
-.dark ::-webkit-scrollbar-thumb { background: #435053; }
 ::-webkit-scrollbar-track { background: transparent; }

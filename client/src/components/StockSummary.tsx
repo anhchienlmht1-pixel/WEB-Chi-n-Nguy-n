@@ -171,23 +171,26 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
           * identity -> price -> session figures -> company figures. */}
       <div className="contents lg:order-1 lg:flex lg:flex-col">
         <div className="order-1 flex gap-4 p-4">
-          <div className="flex h-[88px] w-[88px] shrink-0 flex-col items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-900 text-white shadow-sm">
+          <div className="flex h-[88px] w-[88px] shrink-0 flex-col items-center justify-center gap-1.5 rounded-md bg-emerald-700 text-white">
             <CompanyLogo symbol={symbol} size={40} fallback="none" />
             <span
-              className={`display-heading leading-none ${symbol.length <= 4 ? "text-xl" : symbol.length <= 6 ? "text-base" : "text-xs"}`}
+              className={`font-bold leading-none ${symbol.length <= 4 ? "text-xl" : symbol.length <= 6 ? "text-base" : "text-xs"}`}
             >
               {symbol}
             </span>
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-3">
-              <div className="flex min-w-0 flex-wrap items-center gap-2">
-                <h1 className="text-lg font-bold leading-snug text-slate-900 dark:text-slate-100">{quote.name}</h1>
-                {quote.exchange && (
-                  <span className="rounded bg-emerald-600 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white">
-                    {quote.exchange}
-                  </span>
-                )}
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-3xl font-bold leading-tight">{symbol}</h1>
+                  {quote.exchange && (
+                    <span className="rounded bg-emerald-700 px-2 py-0.5 text-sm font-bold uppercase tracking-wide text-white">
+                      {quote.exchange}
+                    </span>
+                  )}
+                </div>
+                <p className="mt-0.5 text-base leading-snug text-slate-600">{quote.name}</p>
               </div>
               <WatchButton symbol={symbol} />
             </div>
@@ -198,7 +201,7 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
                   href={websiteHref(website)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-medium text-emerald-700 hover:underline dark:text-emerald-400"
+                  className="font-bold text-emerald-700 hover:underline"
                 >
                   {websiteLabel(website)}
                 </a>
@@ -235,8 +238,8 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
       {/* Price + valuation */}
       <div className="order-2 border-t border-slate-200 lg:order-3 lg:border-l lg:border-t-0 dark:border-slate-800">
         <div className="border-b border-slate-100 px-4 py-4 text-center dark:border-slate-800/70">
-          <div className={`text-4xl font-bold tabular-nums ${tone}`}>{fmt(quote.price)}</div>
-          <div className={`mt-1 text-sm font-semibold tabular-nums ${tone}`}>
+          <div className={`text-5xl font-bold leading-tight tabular-nums ${tone}`}>{fmt(quote.price)}</div>
+          <div className={`mt-1 text-base font-bold tabular-nums ${tone}`}>
             {arrow} {fmt(Math.abs(quote.change))} ({Math.abs(quote.changePercent).toFixed(2)}%)
           </div>
           <DayRange quote={quote} fmt={fmt} />

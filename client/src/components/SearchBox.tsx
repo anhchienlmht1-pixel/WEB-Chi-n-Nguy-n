@@ -52,6 +52,10 @@ export default function SearchBox() {
   return (
     <div ref={containerRef} className="relative w-full max-w-sm">
       <input
+        type="text"
+        inputMode="search"
+        autoComplete="off"
+        aria-label="Tìm mã cổ phiếu"
         value={query}
         onChange={(e) => {
           setQuery(e.target.value);
@@ -61,23 +65,23 @@ export default function SearchBox() {
         onKeyDown={(e) => {
           if (e.key === "Enter" && results.length > 0) goTo(results[0].symbol);
         }}
-        placeholder="Tìm mã cổ phiếu (VD: VNM, HPG, FPT)..."
-        className="w-full rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
+        placeholder="Tìm mã cổ phiếu"
+        className="h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base text-slate-900 placeholder:text-slate-500 focus:border-emerald-700"
       />
       {open && results.length > 0 && (
-        <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-md border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+        <div className="absolute right-0 z-20 mt-1 w-72 max-w-[calc(100vw-2.5rem)] overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg">
           {results.map((r) => (
             <button
               key={r.symbol}
               onClick={() => goTo(r.symbol)}
-              className="flex w-full items-center justify-between px-4 py-2 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="flex min-h-11 w-full items-center justify-between px-4 py-2 text-left text-sm hover:bg-slate-50"
             >
               <span className="flex items-center gap-2">
                 <CompanyLogo symbol={r.symbol} size={22} fallback="space" />
-                <span className="font-semibold text-slate-900 dark:text-slate-100">{r.symbol}</span>
+                <span className="font-bold text-slate-900">{r.symbol}</span>
               </span>
-              <span className="truncate pl-3 text-slate-500 dark:text-slate-400">{r.name}</span>
-              <span className="pl-3 text-xs text-slate-400 dark:text-slate-500">{r.exchange}</span>
+              <span className="truncate pl-3 text-slate-600">{r.name}</span>
+              <span className="pl-3 text-xs text-slate-500">{r.exchange}</span>
             </button>
           ))}
         </div>

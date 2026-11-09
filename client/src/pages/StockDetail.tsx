@@ -36,7 +36,7 @@ export default function StockDetail() {
 
   if (quoteState.error && !quote) {
     return (
-      <div className="gutter-x mx-auto max-w-[1800px] py-10 text-center">
+      <div className="gutter-x mx-auto max-w-[1280px] py-10 text-center">
         <p className="text-slate-500 dark:text-slate-400">
           Không tải được mã "{symbol}": {quoteState.error}
         </p>
@@ -45,7 +45,7 @@ export default function StockDetail() {
   }
 
   return (
-    <div className="gutter-x mx-auto max-w-[1800px] py-6">
+    <div className="gutter-x mx-auto max-w-[1280px] py-8">
       {/* The chart only needs the symbol from the URL, so it starts loading its
           history right away, in parallel with the quote. It used to wait for
           the quote (to pin the same data source), so the two network round
@@ -65,7 +65,7 @@ export default function StockDetail() {
           <ChartSwitcher symbol={symbol} height={440} />
 
           {quote && (
-            <p className="mt-4 text-xs text-slate-400 dark:text-slate-600">
+            <p className="mt-4 text-sm text-slate-600">
               Cập nhật lúc {new Date(quote.updatedAt).toLocaleTimeString("vi-VN")}
             </p>
           )}
@@ -74,16 +74,16 @@ export default function StockDetail() {
         <div className="space-y-3">
           {quote && !isIndexOrFutures && (
             <>
-              <div className="flex gap-1 overflow-x-auto rounded-md border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-900/40">
+              <div role="tablist" aria-label="Thông tin mã" className="flex gap-1 overflow-x-auto rounded-md bg-emerald-50 p-1">
                 {SIDEBAR_TABS.map((tab) => (
                   <button
                     key={tab.key}
                     type="button"
                     onClick={() => setActiveTab(tab.key)}
-                    className={`shrink-0 rounded px-3 py-1.5 text-xs font-semibold transition-colors duration-300 ${
-                      activeTab === tab.key
-                        ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-slate-100"
-                        : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                    role="tab"
+                    aria-selected={activeTab === tab.key}
+                    className={`min-h-9 shrink-0 rounded px-3 text-base font-bold transition-colors duration-200 ${
+                      activeTab === tab.key ? "bg-white text-emerald-700 shadow-sm" : "text-slate-600 hover:text-emerald-700"
                     }`}
                   >
                     {tab.label}

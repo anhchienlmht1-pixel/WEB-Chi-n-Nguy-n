@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { fetchHistory, fetchTrendBuyResult, fetchMarketOverview } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { useWatchlist } from "../hooks/useWatchlist";
@@ -12,7 +13,7 @@ import { dropUnclosedBars } from "../utils/sessionClose";
 
 const DEFAULT_SYMBOL = "VNINDEX";
 
-// Homepage — editorial hero, then chart + whole-market buy-signal scanner.
+// Homepage — hero, then chart + whole-market buy-signal scanner + stats.
 // The site is intentionally minimal: one page whose whole job is
 // showing Mua/Bán signals and getting a visitor to open an account,
 // not a market-data portal (overview banner, Leader Board, movers,
@@ -49,50 +50,68 @@ export default function TrendSignals() {
     <>
       <HomeHero />
 
-      {/* Chart + whole-market buy-signal list, straight under the hero. */}
-      <section id="tin-hieu" className="scroll-mt-16 bg-mid py-14 sm:py-20">
-        <div className="gutter-x mx-auto max-w-[1800px]">
-          <div className="mb-8 flex flex-wrap items-end justify-between gap-x-10 gap-y-4">
-            <div>
-              <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.16em]">
-                Tín hiệu Mua/Bán theo xu hướng
-              </p>
-              <h2 className="editorial text-[clamp(32px,4.6vw,64px)] uppercase leading-[1.02]">
-                Xu hướng. Kỷ luật. Tín hiệu.
-              </h2>
-            </div>
-            <p className="max-w-md text-sm leading-[1.7]">
-              Đang xem {chartSymbol} — quét Trend Following trên toàn thị trường, chốt tín hiệu sau mỗi phiên đóng cửa.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
-            {/* Chart */}
-            <div className="min-w-0">
-              <ChartSwitcher
-                symbol={chartSymbol}
-                height={420}
-                onSymbolChange={setChartSymbol}
-                preferSource={data?.quotes.find((q) => q.symbol === chartSymbol)?.source}
-              />
-            </div>
+      {/* Chart + whole-market buy-signal list + the system's stats. */}
+      <section id="tin-hieu" className="gutter-x mx-auto max-w-[1280px] scroll-mt-20 py-16">
+        <div className="mb-6 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+          <h2 className="text-[clamp(1.5rem,2.6vw,2rem)] font-bold leading-tight">Tín hiệu chốt phiên</h2>
+          <p className="text-base text-slate-600">Cập nhật sau 15:00 · Đang xem {chartSymbol}</p>
+        </div>
 
-            {/* Trend Signals — from lg up the list is stretched to exactly the
-                chart card's height (absolute fill, so the list itself never makes
-                the row taller than the chart) and scrolls inside; below lg the
-                columns stack and it gets a fixed height. */}
-            <div className="relative h-[32rem] lg:h-auto">
-              <div className="h-full lg:absolute lg:inset-0">
-                <TrendSignalScanner onSelectSymbol={setChartSymbol} fill />
-              </div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
+          <div className="min-w-0">
+            <ChartSwitcher
+              symbol={chartSymbol}
+              height={420}
+              onSymbolChange={setChartSymbol}
+              preferSource={data?.quotes.find((q) => q.symbol === chartSymbol)?.source}
+              hideStats
+            />
+          </div>
+
+          {/* From lg up the list is stretched to exactly the chart column's
+              height (absolute fill, so the list itself never makes the row
+              taller than the chart) and scrolls inside; below lg the columns
+              stack and it gets a fixed height. */}
+          <div className="relative h-[32rem] lg:h-auto">
+            <div className="h-full lg:absolute lg:inset-0">
+              <TrendSignalScanner onSelectSymbol={setChartSymbol} fill />
             </div>
           </div>
         </div>
+
+        <div className="mt-6">
+          <TrendSystemStats signals={signals} symbol={chartSymbol} />
+        </div>
       </section>
 
-      <div className="gutter-x mx-auto max-w-[1800px] py-14 sm:py-20">
-        {/* Trend System Statistics */}
-        {chartSymbol !== "VNINDEX" && <TrendSystemStats signals={signals} symbol={chartSymbol} />}
-      </div>
+      <section className="gutter-x mx-auto max-w-[1280px] pb-16">
+        <div className="flex flex-wrap items-center justify-between gap-x-10 gap-y-6 rounded-md bg-emerald-50 p-[clamp(1.5rem,4vw,2.5rem)]">
+          <div className="min-w-0 flex-[1_1_26rem]">
+            <h2 className="text-balance text-[clamp(1.5rem,2.6vw,2rem)] font-bold leading-tight">
+              Mở tài khoản miễn phí, có chuyên viên hỗ trợ trực tiếp
+            </h2>
+            <p className="mt-3 max-w-xl text-lg leading-relaxed text-slate-900">
+              Không phí duy trì. Xem video hướng dẫn hoặc nhắn Zalo cho chuyên viên tư vấn để được mở tài khoản nhanh.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-4">
+            <Link
+              to="/huong-dan-mo-tai-khoan"
+              className="inline-flex min-h-13 items-center justify-center rounded-md bg-orange-600 px-7 text-lg font-bold text-slate-950 transition-colors duration-200 hover:bg-orange-500"
+            >
+              Mở tài khoản
+            </Link>
+            <a
+              href="https://zalo.me/0886284212"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-13 items-center justify-center rounded-md border-2 border-emerald-700 px-6 text-lg font-bold text-emerald-700 transition-colors duration-200 hover:bg-white"
+            >
+              Tư vấn qua Zalo
+            </a>
+          </div>
+        </div>
+      </section>
     </>
   );
 }

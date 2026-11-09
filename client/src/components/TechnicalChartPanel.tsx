@@ -22,6 +22,7 @@ export default function TechnicalChartPanel({
   height = 420,
   preferSource,
   onSymbolChange,
+  hideStats = false,
 }: {
   symbol: string;
   height?: number;
@@ -34,6 +35,9 @@ export default function TechnicalChartPanel({
    * page's standalone chart), not where it comes from the URL (stock
    * detail's own chart, driven by react-router's :symbol param). */
   onSymbolChange?: (symbol: string) => void;
+  /** Leaves out the Trend Following stats block under the chart — for pages
+   * that show the same stats as a card of their own (the homepage). */
+  hideStats?: boolean;
 }) {
   const [resolution, setResolution] = useState<ChartResolution>("D");
   const [chartType, setChartType] = useState<ChartType>("candlestick");
@@ -177,9 +181,11 @@ export default function TechnicalChartPanel({
             )}
           </div>
         </div>
-        <div className="border-t border-slate-200 px-2 pb-2 dark:border-slate-800">
-          <TrendSystemStats signals={signalResult.transitions} symbol={symbol} />
-        </div>
+        {!hideStats && (
+          <div className="border-t border-slate-200 px-2 pb-2 dark:border-slate-800">
+            <TrendSystemStats signals={signalResult.transitions} symbol={symbol} />
+          </div>
+        )}
       </div>
     </div>
   );

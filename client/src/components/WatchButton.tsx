@@ -1,31 +1,31 @@
 import { Star } from "lucide-react";
 import { useWatchlist } from "../hooks/useWatchlist";
 
-// onDark: for use on the black editorial panels, where the light-theme greys
-// would vanish.
-export default function WatchButton({ symbol, onDark = false }: { symbol: string; onDark?: boolean }) {
+// Star toggle for the personal watchlist. Teal when watched (not amber/orange:
+// orange is reserved for the one attention point on a screen).
+export default function WatchButton({ symbol }: { symbol: string }) {
   const { isWatched, toggle } = useWatchlist();
   const watched = isWatched(symbol);
+  const label = watched ? `Bỏ theo dõi ${symbol}` : `Thêm ${symbol} vào danh sách theo dõi`;
 
   return (
     <button
+      type="button"
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
         toggle(symbol);
       }}
-      title={watched ? "Bỏ theo dõi" : "Thêm vào danh sách theo dõi"}
-      className={`flex h-9 w-9 items-center justify-center rounded border transition-colors duration-300 ${
-        onDark
-          ? watched
-            ? "border-amber-400 bg-amber-400/10 text-amber-400"
-            : "border-white/20 text-quiet-on-band hover:border-amber-400 hover:text-amber-400"
-          : watched
-          ? "border-amber-400 bg-amber-50 text-amber-500 dark:border-amber-600 dark:bg-amber-950/20 dark:text-amber-400"
-          : "border-slate-300 text-slate-400 hover:border-amber-400 hover:bg-amber-50 hover:text-amber-500 dark:border-slate-700 dark:text-slate-500 dark:hover:border-amber-600 dark:hover:bg-amber-950/10 dark:hover:text-amber-400"
+      title={label}
+      aria-label={label}
+      aria-pressed={watched}
+      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md border transition-colors duration-200 ${
+        watched
+          ? "border-emerald-700 bg-emerald-50 text-emerald-700"
+          : "border-slate-300 text-slate-500 hover:border-emerald-700 hover:text-emerald-700"
       }`}
     >
-      <Star className="h-4 w-4" strokeWidth={1.75} fill={watched ? "currentColor" : "none"} />
+      <Star className="h-4 w-4" strokeWidth={1.75} fill={watched ? "currentColor" : "none"} aria-hidden="true" />
     </button>
   );
 }

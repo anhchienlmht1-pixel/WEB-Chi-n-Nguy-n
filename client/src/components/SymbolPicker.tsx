@@ -3,7 +3,17 @@ import { searchSymbols } from "../api/client";
 import type { SearchResult } from "../types";
 import CompanyLogo from "./CompanyLogo";
 
-export default function SymbolPicker({ value, onChange }: { value: string; onChange: (symbol: string) => void }) {
+export default function SymbolPicker({
+  value,
+  onChange,
+  large = false,
+}: {
+  value: string;
+  onChange: (symbol: string) => void;
+  /** Taller 44px field with larger type — for the page-level chart bar. The
+   * default compact size is the one the chart's own toolbar uses. */
+  large?: boolean;
+}) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [open, setOpen] = useState(false);
@@ -61,7 +71,12 @@ export default function SymbolPicker({ value, onChange }: { value: string; onCha
           if (e.key === "Enter" && results.length > 0) select(results[0].symbol);
         }}
         placeholder="Đổi mã cổ phiếu..."
-        className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-900 placeholder:font-normal placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
+        aria-label="Đổi mã cổ phiếu"
+        className={
+          large
+            ? "h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base font-bold text-slate-900 placeholder:font-normal placeholder:text-slate-500 focus:border-emerald-700"
+            : "w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-900 placeholder:font-normal placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
+        }
       />
       {open && results.length > 0 && (
         <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-md border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">

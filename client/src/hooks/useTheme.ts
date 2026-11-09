@@ -4,10 +4,16 @@ const STORAGE_KEY = "stockdash.theme";
 
 export type Theme = "light" | "dark";
 
-// Module-level store so every consumer (header toggle, TradingView widget)
-// sees the same theme and re-renders together. Defaults to light (white
-// background) unless the visitor has explicitly switched to dark before.
-let theme: Theme = localStorage.getItem(STORAGE_KEY) === "dark" ? "dark" : "light";
+// Module-level store so every consumer (charts, TradingView widget) sees the
+// same theme and re-renders together. The redesigned site is light-only
+// (white background): a "dark" value saved by an earlier version is ignored
+// and cleared, and the header no longer offers a toggle.
+let theme: Theme = "light";
+try {
+  localStorage.removeItem(STORAGE_KEY);
+} catch {
+  /* storage unavailable — nothing to clear */
+}
 const listeners = new Set<() => void>();
 
 function applyToDocument() {
