@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { fetchHistory, fetchTrendBuyResult, fetchMarketOverview } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { useWatchlist } from "../hooks/useWatchlist";
-import TechnicalChartPanel from "../components/TechnicalChartPanel";
+import ChartSwitcher from "../components/ChartSwitcher";
 import TrendSignalScanner from "../components/TrendSignalScanner";
 import TrendSystemStats from "../components/TrendSystemStats";
 import HomeHero from "../components/HomeHero";
@@ -68,7 +68,7 @@ export default function TrendSignals() {
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
             {/* Chart */}
             <div className="min-w-0">
-              <TechnicalChartPanel
+              <ChartSwitcher
                 symbol={chartSymbol}
                 height={420}
                 onSymbolChange={setChartSymbol}

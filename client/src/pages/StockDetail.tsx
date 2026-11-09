@@ -2,7 +2,7 @@ import { useParams } from "react-router-dom";
 import { useState } from "react";
 import { fetchQuote } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
-import TechnicalChartPanel from "../components/TechnicalChartPanel";
+import ChartSwitcher from "../components/ChartSwitcher";
 import SeasonalityHeatmap from "../components/SeasonalityHeatmap";
 import NewsFeed from "../components/NewsFeed";
 import BankFundamentals from "../components/BankFundamentals";
@@ -62,7 +62,7 @@ export default function StockDetail() {
 
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[2fr_1fr]">
         <div>
-          <TechnicalChartPanel symbol={symbol} height={440} />
+          <ChartSwitcher symbol={symbol} height={440} />
 
           {quote && (
             <p className="mt-4 text-xs text-slate-400 dark:text-slate-600">
