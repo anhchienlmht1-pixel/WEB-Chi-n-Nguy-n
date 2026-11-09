@@ -61,7 +61,7 @@ export default function TrendSignals() {
           <div className="min-w-0">
             <ChartSwitcher
               symbol={chartSymbol}
-              height={420}
+              height={500}
               onSymbolChange={setChartSymbol}
               preferSource={data?.quotes.find((q) => q.symbol === chartSymbol)?.source}
               hideStats

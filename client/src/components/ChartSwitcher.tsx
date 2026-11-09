@@ -34,6 +34,9 @@ export default function ChartSwitcher({
 }) {
   const [view, setView] = useState<View>("tv");
   const [looked, setLooked] = useState<{ symbol: string; exchange: string | null } | null>(null);
+  // TradingView symbols the widget turned out not to carry (it fell back to a
+  // foreign stock): those are shown on the own chart instead.
+  const [blocked, setBlocked] = useState<string[]>([]);
 
   // Indices are mapped by name; a stock's exchange (HOSE/HNX/UPCOM) comes from
   // its quote — the same request the page itself makes, deduped in api/client.
@@ -51,9 +54,11 @@ export default function ChartSwitcher({
 
   const resolvedExchange = looked?.symbol === symbol ? looked.exchange : undefined;
   const pending = needsLookup && looked?.symbol !== symbol;
-  const tvSymbol = pending ? null : toTradingViewSymbol(symbol, resolvedExchange);
-  // No TradingView listing (UPCOM index, unknown exchange…) → own chart only.
+  const mapped = pending ? null : toTradingViewSymbol(symbol, resolvedExchange);
+  const tvSymbol = mapped && !blocked.includes(mapped) ? mapped : null;
+  // No TradingView listing (UPCOM index, unknown exchange, widget fell back…) → own chart only.
   const active: View = !pending && !tvSymbol ? "signal" : view;
+  const hiddenByGuard = !pending && !!mapped && !tvSymbol;
 
   return (
     <div>
@@ -92,13 +97,24 @@ export default function ChartSwitcher({
         )}
       </div>
 
+      {hiddenByGuard && (
+        <p role="status" className="mb-2 text-base text-slate-600">
+          TradingView chưa hiển thị được mã {symbol}, đang dùng biểu đồ tín hiệu của hệ thống.
+        </p>
+      )}
+
       {active === "tv" ? (
         tvSymbol ? (
-          <TradingViewChart tvSymbol={tvSymbol} height={height + 60} />
+          <TradingViewChart
+            key={tvSymbol}
+            tvSymbol={tvSymbol}
+            height={height + 60}
+            onUnavailable={(s) => setBlocked((b) => (b.includes(s) ? b : [...b, s]))}
+          />
         ) : (
           <div
             aria-hidden
-            className="animate-pulse rounded-md border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/40"
+            className="animate-pulse rounded-md border border-slate-200 bg-slate-50"
             style={{ height: height + 60 }}
           />
         )
