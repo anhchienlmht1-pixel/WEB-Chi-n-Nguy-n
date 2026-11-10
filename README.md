@@ -2,7 +2,7 @@
 
 Ứng dụng theo dõi giá cổ phiếu theo thời gian thực gồm 3 phần:
 
-- **`client/`** — React + TypeScript + Vite + Tailwind CSS, hỗ trợ giao diện sáng/tối; biểu đồ ở trang chi tiết dùng widget chính thức của TradingView (tải trực tiếp trong trình duyệt người xem, không qua backend).
+- **`client/`** — React + TypeScript + Vite + Tailwind CSS, giao diện nền trắng; biểu đồ nến của hệ thống (lightweight-charts) kèm điểm MUA/BÁN Trend Following.
 - **`server/`** — Express (TypeScript), dùng khi tự host (VPS, Render, Railway, Docker...).
 - **`api/`** — cùng logic đó viết dưới dạng Vercel Serverless Functions, dùng khi deploy trên Vercel (Vercel không chạy Express thường trú được).
 

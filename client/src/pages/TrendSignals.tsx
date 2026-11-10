@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { fetchHistory, fetchTrendBuyResult, fetchMarketOverview } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { useWatchlist } from "../hooks/useWatchlist";
-import ChartSwitcher from "../components/ChartSwitcher";
+import TechnicalChartPanel from "../components/TechnicalChartPanel";
 import TrendSignalScanner from "../components/TrendSignalScanner";
 import TrendSystemStats from "../components/TrendSystemStats";
 import HomeHero from "../components/HomeHero";
@@ -59,9 +59,9 @@ export default function TrendSignals() {
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
           <div className="min-w-0">
-            <ChartSwitcher
+            <TechnicalChartPanel
               symbol={chartSymbol}
-              height={520}
+              height={480}
               onSymbolChange={setChartSymbol}
               preferSource={data?.quotes.find((q) => q.symbol === chartSymbol)?.source}
               hideStats
