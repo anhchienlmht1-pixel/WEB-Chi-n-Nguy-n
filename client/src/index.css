@@ -69,7 +69,7 @@
   --rule: #d5e3e0;
   /* Side padding shared by the header, footer and every page, so their edges
      line up at any width. */
-  --gutter: clamp(20px, 4vw, 48px);
+  --gutter: clamp(16px, 2vw, 32px);
 }
 @theme inline {
   --color-paper: var(--paper);
@@ -90,7 +90,7 @@ html {
   /* Calibri sets small for its nominal size; 17px keeps every rem-based size on
      the site (most of the data tables are text-xs / text-sm) comfortably
      readable. */
-  font-size: 17px;
+  font-size: 15px;
 }
 
 /* Responsive/mobile baseline: block accidental page-level horizontal

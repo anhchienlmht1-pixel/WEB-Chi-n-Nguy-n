@@ -51,7 +51,7 @@ export default function TrendSignals() {
       <HomeHero />
 
       {/* Chart + whole-market buy-signal list + the system's stats. */}
-      <section id="tin-hieu" className="gutter-x mx-auto max-w-[1280px] scroll-mt-20 py-16">
+      <section id="tin-hieu" className="gutter-x mx-auto max-w-[1600px] scroll-mt-20 py-12">
         <div className="mb-6 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
           <h2 className="text-[clamp(1.5rem,2.6vw,2rem)] font-bold leading-tight">Tín hiệu chốt phiên</h2>
           <p className="text-base text-slate-600">Cập nhật sau 15:00 · Đang xem {chartSymbol}</p>
@@ -61,7 +61,7 @@ export default function TrendSignals() {
           <div className="min-w-0">
             <ChartSwitcher
               symbol={chartSymbol}
-              height={500}
+              height={520}
               onSymbolChange={setChartSymbol}
               preferSource={data?.quotes.find((q) => q.symbol === chartSymbol)?.source}
               hideStats
@@ -84,7 +84,7 @@ export default function TrendSignals() {
         </div>
       </section>
 
-      <section className="gutter-x mx-auto max-w-[1280px] pb-16">
+      <section className="gutter-x mx-auto max-w-[1600px] pb-12">
         <div className="flex flex-wrap items-center justify-between gap-x-10 gap-y-6 rounded-md bg-emerald-50 p-[clamp(1.5rem,4vw,2.5rem)]">
           <div className="min-w-0 flex-[1_1_26rem]">
             <h2 className="text-balance text-[clamp(1.5rem,2.6vw,2rem)] font-bold leading-tight">

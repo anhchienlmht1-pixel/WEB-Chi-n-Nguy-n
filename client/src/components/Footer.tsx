@@ -16,7 +16,7 @@ const SOCIAL = [
 export default function Footer() {
   return (
     <footer id="footer" className="scroll-mt-20 bg-band text-white">
-      <div className="gutter-x mx-auto max-w-[1280px] pb-7 pt-14">
+      <div className="gutter-x mx-auto max-w-[1600px] pb-7 pt-14">
         <div className="flex flex-wrap justify-between gap-x-16 gap-y-10">
           <div className="max-w-sm flex-1 basis-72">
             <img src="/logo-cstock-dark.svg" alt="C Stock" className="block h-[52px]! w-auto" />

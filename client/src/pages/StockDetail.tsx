@@ -36,7 +36,7 @@ export default function StockDetail() {
 
   if (quoteState.error && !quote) {
     return (
-      <div className="gutter-x mx-auto max-w-[1280px] py-10 text-center">
+      <div className="gutter-x mx-auto max-w-[1600px] py-10 text-center">
         <p className="text-slate-500 dark:text-slate-400">
           Không tải được mã "{symbol}": {quoteState.error}
         </p>
@@ -45,7 +45,7 @@ export default function StockDetail() {
   }
 
   return (
-    <div className="gutter-x mx-auto max-w-[1280px] py-8">
+    <div className="gutter-x mx-auto max-w-[1600px] py-8">
       {/* The chart only needs the symbol from the URL, so it starts loading its
           history right away, in parallel with the quote. It used to wait for
           the quote (to pin the same data source), so the two network round
@@ -62,7 +62,7 @@ export default function StockDetail() {
 
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[2fr_1fr]">
         <div>
-          <ChartSwitcher symbol={symbol} height={500} />
+          <ChartSwitcher symbol={symbol} height={520} />
 
           {quote && (
             <p className="mt-4 text-sm text-slate-600">

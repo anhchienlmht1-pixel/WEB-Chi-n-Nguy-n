@@ -69,7 +69,7 @@ const FEATURES: Feature[] = [
 export default function HomeHero() {
   return (
     <section className="border-b border-slate-200">
-      <div className="gutter-x mx-auto flex max-w-[1280px] flex-wrap items-center gap-12 py-16">
+      <div className="gutter-x mx-auto flex max-w-[1600px] flex-wrap items-center gap-12 py-12">
         <div className="min-w-0 flex-[1_1_26rem]">
           <p className="mb-4 text-sm font-bold uppercase tracking-[0.08em] text-emerald-700">
             Trend Following · Chốt sổ sau 15:00
@@ -98,7 +98,7 @@ export default function HomeHero() {
           <p className="mt-8 text-base text-slate-600">Tín hiệu rõ ràng. Kỷ luật là lợi thế. Quyết định là của bạn.</p>
         </div>
 
-        <ul className="grid min-w-0 flex-[1_1_26rem] grid-cols-[repeat(auto-fit,minmax(min(14rem,100%),1fr))] gap-4">
+        <ul className="grid min-w-0 flex-[1_1_26rem] grid-cols-1 gap-4 sm:grid-cols-2">
           {FEATURES.map((f) => (
             <li key={f.title} className="flex flex-col gap-3 rounded-md bg-emerald-50 p-6">
               <span className="text-emerald-700">{f.icon}</span>

@@ -17,7 +17,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white">
-      <div className="gutter-x mx-auto flex max-w-[1280px] flex-wrap items-center gap-x-6 gap-y-1 py-3">
+      <div className="gutter-x mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-6 gap-y-1 py-3">
         <NavLink to="/" aria-label="C Stock — Trang chủ" className="flex shrink-0 items-center">
           {/* <picture> makes the browser fetch only the variant that fits: icon
               only below sm, icon + STOCK wordmark from sm up. */}
