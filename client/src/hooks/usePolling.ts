@@ -21,12 +21,21 @@ export function usePolling<T>(
   const [reloadTick, setReloadTick] = useState(0);
   const fetcherRef = useRef(fetcher);
   fetcherRef.current = fetcher;
+  // What the data was fetched for. When the inputs change (another symbol, say)
+  // the old data must go: it belongs to something else, and keeping it on screen
+  // until the new request lands — or for good, if that request fails — shows one
+  // stock's prices and signals under another stock's name. A manual refetch or a
+  // timed refresh keeps the data, so those never blank the screen.
+  const depsKey = deps.map(String).join("\u0001");
+  const depsKeyRef = useRef(depsKey);
 
   const refetch = useCallback(() => setReloadTick((t) => t + 1), []);
 
   useEffect(() => {
     let cancelled = false;
-    setState((s) => ({ ...s, loading: true, error: null }));
+    const inputsChanged = depsKeyRef.current !== depsKey;
+    depsKeyRef.current = depsKey;
+    setState((s) => ({ data: inputsChanged ? null : s.data, error: null, loading: true }));
 
     async function load() {
       try {
