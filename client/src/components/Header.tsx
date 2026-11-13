@@ -5,8 +5,8 @@ import TrendSignalBell from "./TrendSignalBell";
 
 const NAV_BASE =
   "inline-flex min-h-11 items-center whitespace-nowrap border-b-2 text-base font-bold transition-colors duration-200";
-const NAV_ACTIVE = "border-emerald-700 text-emerald-700";
-const NAV_IDLE = "border-transparent text-slate-900 hover:text-emerald-700";
+const NAV_ACTIVE = "border-brand-700 text-brand-700";
+const NAV_IDLE = "border-transparent text-slate-900 hover:text-brand-700";
 
 // White header with a hairline underneath: logo, the two sections of the site,
 // stock search, the signal bell and — the one orange thing in the chrome — the

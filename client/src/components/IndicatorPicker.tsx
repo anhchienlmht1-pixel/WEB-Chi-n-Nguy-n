@@ -51,12 +51,12 @@ export default function IndicatorPicker({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Tìm kiếm"
-            className="w-full rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            className="w-full rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
           />
         </div>
 
         <div className="overflow-y-auto px-2 py-2">
-          <div className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+          <div className="px-3 py-1 text-[11px] font-semibold text-slate-400 dark:text-slate-500">
             Tên script
           </div>
           {results.length === 0 && (

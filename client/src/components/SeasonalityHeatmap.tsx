@@ -51,13 +51,13 @@ export default function SeasonalityHeatmap({ symbol }: { symbol: string }) {
           <table className="w-full min-w-[560px] border-collapse text-sm">
             <thead>
               <tr>
-                <th className="w-16 px-2 py-1.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+                <th className="w-16 px-2 py-1.5 text-left text-xs font-medium text-slate-500">
                   Năm
                 </th>
                 {MONTH_LABELS.map((m) => (
                   <th
                     key={m}
-                    className="px-2 py-1.5 text-center text-xs font-medium uppercase tracking-wide text-slate-500"
+                    className="px-2 py-1.5 text-center text-xs font-medium text-slate-500"
                   >
                     {m}
                   </th>

@@ -21,8 +21,8 @@ export default function WatchButton({ symbol }: { symbol: string }) {
       aria-pressed={watched}
       className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md border transition-colors duration-200 ${
         watched
-          ? "border-emerald-700 bg-emerald-50 text-emerald-700"
-          : "border-slate-300 text-slate-500 hover:border-emerald-700 hover:text-emerald-700"
+          ? "border-brand-700 bg-brand-50 text-brand-700"
+          : "border-slate-300 text-slate-500 hover:border-brand-700 hover:text-brand-700"
       }`}
     >
       <Star className="h-4 w-4" strokeWidth={1.75} fill={watched ? "currentColor" : "none"} aria-hidden="true" />

@@ -7,39 +7,44 @@
 
 /* ---------------------------------------------------------------------------
    Brand palette — the site's own colour kit:
-     - emerald-* = the teal family (#1F5F57 darkest down to #EEF5F3 lightest):
-       headings, links, chrome, general data.
-     - orange-*  = the accent family (#E07B39 down to #FCE9DC): ONLY for the
+     - brand-*  = navy (#14284B darkest down to #EAEFF6 lightest): headings,
+       links, chrome, header/footer, general data. NOT used for gains: a rising
+       price is green, so brand colour never reads as a signal.
+     - gain / down = the only two semantic colours (#17804F up, #C0392B down).
+     - orange-* = the accent family (#E07B39 down to #FCE9DC): ONLY for the
        one thing on a screen that needs attention (the account-opening button,
        a single highlighted point) — never for chrome, never more than one
        orange element per chart.
-     - slate-*   = teal-tinted neutral for text, borders and grid
-       (#263238 body text down to #EDF3F1).
-   Negative values use #C0392B (.down below).
+     - slate-*  = blue-grey neutral for text, borders and grid
+       (#1B2733 body text down to #F4F6F8).
+   Blocks: white with a 1px #D9E0E7 border and 4px corners; a grey fill
+   (slate-50) never comes with a border; full-width bars are square.
 --------------------------------------------------------------------------- */
 @theme {
-  --color-slate-50: #edf3f1;
-  --color-slate-100: #e3ecea;
-  --color-slate-200: #d5e3e0;
-  --color-slate-300: #c9d3d1;
-  --color-slate-400: #94a1a0;
-  --color-slate-500: #5f6e6e;
-  --color-slate-600: #515f61;
-  --color-slate-700: #435053;
-  --color-slate-800: #344146;
-  --color-slate-900: #263238;
-  --color-slate-950: #1b2529;
+  --color-slate-50: #f4f6f8;
+  --color-slate-100: #e6ebf0;
+  --color-slate-200: #d9e0e7;
+  --color-slate-300: #c5ced8;
+  --color-slate-400: #94a1b0;
+  --color-slate-500: #5b6b7a;
+  --color-slate-600: #4a5968;
+  --color-slate-700: #3a4756;
+  --color-slate-800: #2a3644;
+  --color-slate-900: #1b2733;
+  --color-slate-950: #121a22;
 
-  --color-emerald-50: #eef5f3;
-  --color-emerald-100: #d7ece8;
-  --color-emerald-300: #bfe3dc;
-  --color-emerald-400: #8ccbc0;
-  --color-emerald-500: #55ad9f;
-  --color-emerald-600: #2a8c7d;
-  --color-emerald-700: #1f5f57;
-  --color-emerald-800: #1a4b45;
-  --color-emerald-900: #143a35;
-  --color-emerald-950: #0d2622;
+  --color-brand-50: #eaeff6;
+  --color-brand-100: #dde6f3;
+  --color-brand-300: #b8c7de;
+  --color-brand-400: #8ea4c4;
+  --color-brand-500: #5b78a3;
+  --color-brand-600: #2f4f84;
+  --color-brand-700: #14284b;
+  --color-brand-800: #0f1f3a;
+  --color-brand-900: #0a1629;
+  --color-brand-950: #060d19;
+
+  --color-gain: #17804f;
 
   --color-orange-50: #fce9dc;
   --color-orange-100: #fadfcb;
@@ -52,21 +57,28 @@
   --color-orange-800: #a05526;
   --color-orange-900: #7a4220;
   --color-orange-950: #4f2b15;
+
+  /* Small, even corners everywhere. */
+  --radius-sm: 3px;
+  --radius-md: 4px;
+  --radius-lg: 4px;
+  --radius-xl: 6px;
+  --radius-2xl: 6px;
 }
 
 /* Page tokens (used as bg-paper / text-ink / bg-band / bg-mid / text-quiet…):
      paper : page background (white)        ink   : body text
-     band  : the footer's teal band         mid   : soft teal card / section tint
+     band  : the footer's navy band         mid   : soft grey fill / section tint
      quiet : secondary text on paper        quiet-on-band : text on the band
      rule  : hairlines and card borders */
 :root {
   --paper: #ffffff;
-  --ink: #263238;
-  --band: #1f5f57;
-  --mid: #eef5f3;
-  --quiet: #5f6e6e;
-  --quiet-on-band: #d7ece8;
-  --rule: #d5e3e0;
+  --ink: #1b2733;
+  --band: #14284b;
+  --mid: #f4f6f8;
+  --quiet: #5b6b7a;
+  --quiet-on-band: #c9d3e0;
+  --rule: #d9e0e7;
   /* Side padding shared by the header, footer and every page, so their edges
      line up at any width. */
   --gutter: clamp(16px, 2vw, 32px);
@@ -87,7 +99,7 @@
 html {
   color-scheme: light;
   background-color: #ffffff;
-  /* Calibri sets small for its nominal size; 17px keeps every rem-based size on
+  /* Calibri sets small for its nominal size; 15px keeps every rem-based size on
      the site (most of the data tables are text-xs / text-sm) comfortably
      readable. */
   font-size: 15px;
@@ -104,7 +116,7 @@ body {
 
 /* ---------------------------------------------------------------------------
    Typography — Calibri everywhere (Carlito, the metric-compatible open font,
-   where Calibri isn't installed). Headings are bold teal; numbers use tabular
+   where Calibri isn't installed). Headings are bold navy; numbers use tabular
    figures so columns line up like a trading terminal.
 --------------------------------------------------------------------------- */
 @theme static {
@@ -135,13 +147,13 @@ h1, h2, h3, h4, h5, h6 {
    on a heading (text-white in the footer, text-slate-900 in a card) still wins. */
 @layer base {
   h1, h2 {
-    color: var(--color-emerald-700);
+    color: var(--color-brand-700);
   }
 }
 
-/* Keyboard focus: a visible teal ring on everything focusable. */
+/* Keyboard focus: a visible navy ring on everything focusable. */
 :focus-visible {
-  outline: 2px solid var(--color-emerald-700);
+  outline: 2px solid var(--color-brand-700);
   outline-offset: 2px;
 }
 
@@ -207,14 +219,14 @@ img {
 
 /* ---------------------------------------------------------------------------
    Semantic gain/loss colours — trendClass() in utils/format.ts emits
-   .up / .down / .flat everywhere. Gains are the deep teal (7.9:1 on white),
+   .up / .down / .flat everywhere. Gains are green #17804F (5.0:1 on white),
    losses the palette's red #C0392B (5.4:1); the ▲ ▼ glyphs and the sign carry
    the meaning too, so colour is never the only cue.
 --------------------------------------------------------------------------- */
-.up { color: #1f5f57; }
+.up { color: #17804f; }
 .down { color: #c0392b; }
-.flat { color: #5f6e6e; }
+.flat { color: #5b6b7a; }
 
 ::-webkit-scrollbar { height: 8px; width: 8px; }
-::-webkit-scrollbar-thumb { background: #c9d3d1; border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: #c5ced8; border-radius: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }

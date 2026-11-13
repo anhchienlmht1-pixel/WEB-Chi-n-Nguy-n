@@ -15,7 +15,7 @@ export default function AdvisorContactBar() {
           <span className="mx-2 text-slate-300">·</span>
           <a
             href="tel:0886284212"
-            className="inline-flex min-h-11 items-center gap-1 font-bold text-emerald-700 hover:underline"
+            className="inline-flex min-h-11 items-center gap-1 font-bold text-brand-700 hover:underline"
           >
             <Phone className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
             0886.284.212

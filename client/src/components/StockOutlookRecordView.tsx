@@ -14,7 +14,7 @@ export function StockOutlookRecordView({ record }: { record: StockOutlookRecord 
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
         <div className="rounded-md border border-slate-200 p-4 dark:border-slate-800">
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+          <h2 className="mb-2 text-xs font-semibold text-slate-400 dark:text-slate-500">
             Triển vọng đầu tư
           </h2>
           {record.outlookText ? (
@@ -27,7 +27,7 @@ export function StockOutlookRecordView({ record }: { record: StockOutlookRecord 
         </div>
 
         <div className="rounded-md border border-slate-200 p-4 dark:border-slate-800">
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+          <h2 className="mb-2 text-xs font-semibold text-slate-400 dark:text-slate-500">
             Giá khuyến nghị
           </h2>
           {record.recommendations.length > 0 ? (

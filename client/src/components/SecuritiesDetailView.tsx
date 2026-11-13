@@ -92,7 +92,7 @@ export default function SecuritiesDetailView({
         <div className="space-y-6 p-4">
           {CHART_GROUPS.map((group) => (
             <div key={group.section}>
-              <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+              <h4 className="mb-3 text-xs font-bold text-slate-600 dark:text-slate-300">
                 {group.section}
               </h4>
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

@@ -131,7 +131,7 @@ function KpiTable({ periodData, showYoy }: { periodData: BankPeriodData; showYoy
     <div className="overflow-x-auto border-b border-slate-200 dark:border-slate-800">
       <table className="w-full min-w-[520px] border-collapse text-sm">
         <thead>
-          <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800">
+          <tr className="border-b border-slate-200 text-left text-xs text-slate-500 dark:border-slate-800">
             <th className="px-4 py-3 font-medium">Chỉ tiêu</th>
             <th className="whitespace-nowrap px-4 py-3 text-right font-medium">
               {latest >= 0 ? periodData.periods[latest] : "—"}

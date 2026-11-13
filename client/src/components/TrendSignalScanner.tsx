@@ -32,7 +32,7 @@ function daysHeld(buyIso: string, sessionIso: string): number {
 const COLS = "grid-cols-[minmax(0,1fr)_5.5rem_5rem]";
 
 const SHELL = "overflow-hidden rounded-md border border-slate-200 bg-white";
-const TITLE = "text-xl font-bold leading-snug text-emerald-700";
+const TITLE = "text-xl font-bold leading-snug text-brand-700";
 
 // Reusable card shell so the loading / error / empty / list states all share
 // the same header and framing — the panel never "jumps" between states.
@@ -51,15 +51,15 @@ function Panel({
 }) {
   return (
     <div className={`${SHELL} ${fill ? "flex h-full flex-col" : ""}`}>
-      <div className="shrink-0 px-5 pb-3 pt-5">
-        <div className="flex items-center gap-3">
-          <h3 className={`${TITLE} whitespace-nowrap`}>Tín hiệu MUA</h3>
-          {badge}
-        </div>
-        <p className="mt-1.5 text-sm leading-normal text-slate-600">
+      <div className="flex shrink-0 items-baseline justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-2.5 sm:px-5">
+        <h3 className={`${TITLE} whitespace-nowrap`}>Tín hiệu MUA</h3>
+        {badge}
+      </div>
+      <div className="shrink-0 px-4 pb-2 pt-2.5 sm:px-5">
+        <p className="text-sm leading-normal text-slate-500">
           {subtitle ?? "Cổ phiếu đang trong xu hướng tăng và chưa xuất hiện điểm bán."}
         </p>
-        {action && <div className="mt-2">{action}</div>}
+        {action && <div className="mt-1.5">{action}</div>}
       </div>
       {children}
     </div>
@@ -114,9 +114,7 @@ export default function TrendSignalScanner({
     return (
       <Panel fill={fill}>
         <div className="flex flex-col items-center gap-3 p-6 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50">
-            <Clock className="h-5 w-5 text-emerald-700" strokeWidth={1.75} aria-hidden="true" />
-          </div>
+          <Clock className="h-6 w-6 text-brand-700" strokeWidth={1.75} aria-hidden="true" />
           <p className="text-base font-bold text-slate-900">
             {isTimeout ? "Đang tổng hợp dữ liệu thị trường" : "Chưa tải được danh sách tín hiệu"}
           </p>
@@ -128,7 +126,7 @@ export default function TrendSignalScanner({
           <button
             type="button"
             onClick={refetch}
-            className="mt-1 inline-flex min-h-11 items-center gap-2 rounded-md border-2 border-emerald-700 px-4 text-base font-bold text-emerald-700 transition-colors duration-200 hover:bg-emerald-50"
+            className="mt-1 inline-flex min-h-11 items-center gap-2 rounded-md border border-brand-700 px-4 text-base font-bold text-brand-700 transition-colors duration-200 hover:bg-brand-50"
           >
             <RefreshCw className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
             Thử lại
@@ -148,10 +146,9 @@ export default function TrendSignalScanner({
 
   const subtitle = (
     <>
-      <span className="font-bold text-emerald-700">{hits.length} cổ phiếu</span> đang trong xu hướng tăng, chưa xuất hiện
-      điểm bán.
+      Đang trong xu hướng tăng, chưa xuất hiện điểm bán.
       <span
-        className="mt-0.5 block text-sm text-slate-600"
+        className="mt-0.5 block"
         title="Điều kiện: SMA20 > SMA50, ADX(14) > 25 và Supertrend(10,3) đang báo tăng. Tính trên nến ngày đã đóng cửa; kết luận mới chỉ có sau 15:00."
       >
         {sessionLabel} · Trend Following ⓘ
@@ -169,9 +166,7 @@ export default function TrendSignalScanner({
       fill={fill}
       subtitle={subtitle}
       badge={
-        <span className="whitespace-nowrap rounded-full bg-emerald-50 px-3 py-0.5 text-sm font-bold text-emerald-700">
-          {hits.length} mã
-        </span>
+        <span className="whitespace-nowrap text-base font-bold text-slate-900">{hits.length} mã</span>
       }
       action={
         hits.length > 0 ? (
@@ -179,7 +174,7 @@ export default function TrendSignalScanner({
             type="button"
             onClick={() => addMany(hits.map((h) => h.symbol))}
             title="Thêm tất cả mã trong danh sách vào mục theo dõi của bạn"
-            className="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-md border-2 border-emerald-700 px-3 text-sm font-bold text-emerald-700 transition-colors duration-200 hover:bg-emerald-50"
+            className="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-md border border-brand-700 px-3 text-sm font-bold text-brand-700 transition-colors duration-200 hover:bg-brand-50"
           >
             <Star className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
             Theo dõi tất cả
@@ -189,9 +184,7 @@ export default function TrendSignalScanner({
     >
       {hits.length === 0 ? (
         <div className="flex flex-col items-center gap-2 p-6 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50">
-            <Search className="h-5 w-5 text-emerald-700" strokeWidth={1.75} aria-hidden="true" />
-          </div>
+          <Search className="h-6 w-6 text-brand-700" strokeWidth={1.75} aria-hidden="true" />
           <p className="text-base font-bold text-slate-900">Chưa có mã nào khớp tín hiệu MUA</p>
           <p className="max-w-xs text-sm leading-normal text-slate-600">
             Hiện không cổ phiếu nào hội đủ 3 điều kiện của xu hướng tăng. Danh sách được chốt lại sau mỗi phiên đóng cửa
@@ -199,11 +192,11 @@ export default function TrendSignalScanner({
           </p>
         </div>
       ) : (
-        <div className={`overflow-y-auto border-t border-slate-200 ${fill ? "min-h-0 flex-1" : "max-h-[28rem]"}`}>
+        <div className={`overflow-y-auto ${fill ? "min-h-0 flex-1" : "max-h-[28rem]"}`}>
           {/* Sticky column header — shares COLS with every row below, and a
            * spacer the width of the row's star button, so the labels sit
            * exactly over their values while the list scrolls. */}
-          <div className="sticky top-0 z-20 flex items-center gap-2 border-b border-slate-200 bg-emerald-50 px-3 py-2 text-xs font-bold uppercase tracking-[0.06em] text-slate-600 sm:px-5">
+          <div className="sticky top-0 z-20 flex items-center gap-2 border-y border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-600 sm:px-5">
             <span className="w-11 shrink-0" aria-hidden="true" />
             <div className={`grid min-w-0 flex-1 gap-2 ${COLS}`}>
               <span>Mã</span>
@@ -215,7 +208,7 @@ export default function TrendSignalScanner({
             const held = daysHeld(h.buyDate, sessionDate);
             const gainClass =
               h.signalReturnPercent > 0
-                ? "text-emerald-700"
+                ? "text-gain"
                 : h.signalReturnPercent < 0
                   ? "text-[#c0392b]"
                   : "text-slate-600";
@@ -232,7 +225,7 @@ export default function TrendSignalScanner({
                   </span>
                   <span className="flex min-w-0 flex-col">
                     <span className="truncate text-lg font-bold leading-tight text-slate-900">{h.symbol}</span>
-                    <span className="truncate text-sm leading-tight text-slate-600">{h.exchange}</span>
+                    <span className="truncate text-sm leading-tight text-slate-500">{h.exchange}</span>
                   </span>
                 </span>
                 <span className="flex flex-col text-slate-900">

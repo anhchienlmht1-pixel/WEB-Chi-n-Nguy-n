@@ -15,7 +15,7 @@ export default function WordCloud({
 
   return (
     <div>
-      <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+      <h4 className="text-xs font-semibold text-slate-400 dark:text-slate-500">
         {heading}
       </h4>
       {subheading && <p className="text-xs text-slate-400 dark:text-slate-500">{subheading}</p>}

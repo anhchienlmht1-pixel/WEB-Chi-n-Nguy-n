@@ -86,9 +86,9 @@ function DayRange({ quote, fmt }: { quote: Quote; fmt: (n: number) => string }) 
         role="img"
         aria-label={`Giá hiện tại nằm ở ${Math.round(pct)}% khoảng thấp nhất–cao nhất của phiên`}
       >
-        <div className="h-full rounded-full bg-emerald-500" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-brand-500" style={{ width: `${pct}%` }} />
         <span
-          className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-emerald-600 shadow dark:border-slate-900"
+          className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-brand-600 shadow dark:border-slate-900"
           style={{ left: `${pct}%` }}
         />
       </div>
@@ -171,7 +171,7 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
           * identity -> price -> session figures -> company figures. */}
       <div className="contents lg:order-1 lg:flex lg:flex-col">
         <div className="order-1 flex gap-4 p-4">
-          <div className="flex h-[88px] w-[88px] shrink-0 flex-col items-center justify-center gap-1.5 rounded-md bg-emerald-700 text-white">
+          <div className="flex h-[88px] w-[88px] shrink-0 flex-col items-center justify-center gap-1.5 rounded-md bg-brand-700 text-white">
             <CompanyLogo symbol={symbol} size={40} fallback="none" />
             <span
               className={`font-bold leading-none ${symbol.length <= 4 ? "text-xl" : symbol.length <= 6 ? "text-base" : "text-xs"}`}
@@ -185,7 +185,7 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
                 <div className="flex flex-wrap items-center gap-2">
                   <h1 className="text-3xl font-bold leading-tight">{symbol}</h1>
                   {quote.exchange && (
-                    <span className="rounded bg-emerald-700 px-2 py-0.5 text-sm font-bold uppercase tracking-wide text-white">
+                    <span className="rounded bg-brand-700 px-2 py-0.5 text-sm font-bold text-white">
                       {quote.exchange}
                     </span>
                   )}
@@ -201,7 +201,7 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
                   href={websiteHref(website)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-bold text-emerald-700 hover:underline"
+                  className="font-bold text-brand-700 hover:underline"
                 >
                   {websiteLabel(website)}
                 </a>

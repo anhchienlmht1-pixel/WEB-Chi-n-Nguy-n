@@ -94,7 +94,7 @@ export default function PositionTracker({ symbol, currency }: { symbol: string; 
           <button
             type="button"
             onClick={submit}
-            className="rounded bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors duration-300 hover:bg-emerald-700"
+            className="rounded bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors duration-300 hover:bg-brand-700"
           >
             Lưu
           </button>

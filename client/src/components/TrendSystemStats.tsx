@@ -17,11 +17,11 @@ function formatDay(seconds: number): string {
 
 // Tile: label over a big number.
 function Tile({ label, value, tone }: { label: string; value: string | number; tone?: "up" | "down" }) {
-  const color = tone === "up" ? "text-emerald-700" : tone === "down" ? "text-[#c0392b]" : "text-slate-900";
+  const color = tone === "up" ? "text-gain" : tone === "down" ? "text-[#c0392b]" : "text-slate-900";
   return (
-    <div className="rounded-md bg-emerald-50 px-4 py-4">
-      <p className="text-base text-slate-600">{label}</p>
-      <p className={`mt-1 text-3xl font-bold leading-tight tabular-nums ${color}`}>{value}</p>
+    <div className="flex-[1_1_9rem] border-l border-slate-200 px-4 py-3 first:border-l-0">
+      <p className="text-sm text-slate-500">{label}</p>
+      <p className={`mt-0.5 text-2xl font-bold leading-tight tabular-nums ${color}`}>{value}</p>
     </div>
   );
 }
@@ -68,14 +68,14 @@ export default function TrendSystemStats({ signals, symbol }: Props) {
     `${n < 0 ? "−" : ""}${Math.abs(n).toLocaleString("vi-VN", { minimumFractionDigits: digits, maximumFractionDigits: digits })}%`;
 
   return (
-    <section aria-label={`Thống kê hệ thống ${symbol}`} className="rounded-md border border-slate-200 p-6">
-      <div className="mb-5 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-        <h3 className="text-xl font-bold leading-snug text-emerald-700">Thống kê hệ thống · {symbol}</h3>
-        <p className="text-base text-slate-600">
+    <section aria-label={`Thống kê hệ thống ${symbol}`}>
+      <div className="mb-2.5 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+        <h3 className="text-xl font-bold leading-snug text-brand-700">Kết quả các lệnh đã đóng · {symbol}</h3>
+        <p className="text-sm text-slate-500">
           Giai đoạn: {stats.from} – {stats.to}
         </p>
       </div>
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(9.5rem,100%),1fr))] gap-4">
+      <div className="flex flex-wrap rounded-md border border-slate-200">
         <Tile label="Tổng giao dịch" value={stats.total} />
         <Tile label="Thắng" value={stats.wins} tone="up" />
         <Tile label="Thua" value={stats.losses} tone="down" />
@@ -87,7 +87,7 @@ export default function TrendSystemStats({ signals, symbol }: Props) {
           tone={stats.avgPnl > 0 ? "up" : stats.avgPnl < 0 ? "down" : undefined}
         />
       </div>
-      <p className="mt-4 text-sm leading-normal text-slate-600">
+      <p className="mt-3 text-sm leading-normal text-slate-500">
         Dựa trên các giao dịch đã đóng theo tín hiệu Trend Following (SMA20 &gt; SMA50, ADX(14) &gt; 25, Supertrend(10,3)).
         P&L trung bình là trung bình đơn giản trên các lệnh đã đóng. Chỉ mang tính chất minh họa, không phải lời khuyên đầu
         tư.

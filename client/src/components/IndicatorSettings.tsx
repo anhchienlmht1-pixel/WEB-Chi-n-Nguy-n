@@ -60,7 +60,7 @@ export default function IndicatorSettings({
                 step={p.key.toLowerCase().includes("stddev") || p.key.toLowerCase().includes("multiplier") ? 0.1 : 1}
                 value={values[p.key] ?? ""}
                 onChange={(e) => setValues((prev) => ({ ...prev, [p.key]: e.target.value }))}
-                className="w-24 rounded border border-slate-200 bg-slate-50 px-2 py-1 text-right text-sm text-slate-900 outline-none focus:border-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                className="w-24 rounded border border-slate-200 bg-slate-50 px-2 py-1 text-right text-sm text-slate-900 outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
               />
             </label>
           ))}

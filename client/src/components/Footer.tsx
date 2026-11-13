@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Phone } from "lucide-react";
 
-const HEAD = "mb-2 text-sm font-bold uppercase tracking-[0.08em] text-white";
+const HEAD = "mb-2 text-base font-bold text-white";
 const LINK =
   "inline-flex min-h-8 items-center text-base text-quiet-on-band transition-colors duration-200 hover:text-white hover:underline";
 
@@ -12,7 +12,7 @@ const SOCIAL = [
   { label: "Nhóm Zalo", href: "https://zalo.me/g/n1hcdesbqhdutsecnxzg" },
 ];
 
-// Teal band footer; uses the dark logo variant.
+// Navy band footer; uses the dark logo variant.
 export default function Footer() {
   return (
     <footer id="footer" className="scroll-mt-20 bg-band text-white">

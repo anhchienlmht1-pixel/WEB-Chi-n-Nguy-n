@@ -74,7 +74,7 @@ export default function StockDetail() {
         <div className="space-y-3">
           {quote && !isIndexOrFutures && (
             <>
-              <div role="tablist" aria-label="Thông tin mã" className="flex gap-1 overflow-x-auto rounded-md bg-emerald-50 p-1">
+              <div role="tablist" aria-label="Thông tin mã" className="flex gap-1 overflow-x-auto border-b border-slate-200">
                 {SIDEBAR_TABS.map((tab) => (
                   <button
                     key={tab.key}
@@ -82,8 +82,10 @@ export default function StockDetail() {
                     onClick={() => setActiveTab(tab.key)}
                     role="tab"
                     aria-selected={activeTab === tab.key}
-                    className={`min-h-9 shrink-0 rounded px-3 text-base font-bold transition-colors duration-200 ${
-                      activeTab === tab.key ? "bg-white text-emerald-700 shadow-sm" : "text-slate-600 hover:text-emerald-700"
+                    className={`-mb-px min-h-11 shrink-0 border-b-2 px-3 text-base font-bold transition-colors duration-200 ${
+                      activeTab === tab.key
+                        ? "border-brand-700 text-brand-700"
+                        : "border-transparent text-slate-600 hover:text-brand-700"
                     }`}
                   >
                     {tab.label}

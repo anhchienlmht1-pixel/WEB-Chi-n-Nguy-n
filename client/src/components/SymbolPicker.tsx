@@ -74,8 +74,8 @@ export default function SymbolPicker({
         aria-label="Đổi mã cổ phiếu"
         className={
           large
-            ? "h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base font-bold text-slate-900 placeholder:font-normal placeholder:text-slate-500 focus:border-emerald-700"
-            : "w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-900 placeholder:font-normal placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
+            ? "h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base font-bold text-slate-900 placeholder:font-normal placeholder:text-slate-500 focus:border-brand-700"
+            : "w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-900 placeholder:font-normal placeholder:text-slate-400 focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
         }
       />
       {open && results.length > 0 && (

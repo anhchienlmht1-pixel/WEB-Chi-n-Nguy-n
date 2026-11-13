@@ -6,7 +6,6 @@ export default function AccountOpeningGuide() {
   return (
     <div className="gutter-x mx-auto flex max-w-[1040px] flex-col gap-10 py-14">
       <div className="flex flex-col gap-3">
-        <p className="text-sm font-bold uppercase tracking-[0.08em] text-emerald-700">Hướng dẫn</p>
         <h1 className="text-balance text-[clamp(1.75rem,3.2vw,2.25rem)] font-bold leading-tight">
           Mở tài khoản chứng khoán
         </h1>
@@ -16,7 +15,7 @@ export default function AccountOpeningGuide() {
       </div>
 
       {/* Video */}
-      <div className="aspect-video overflow-hidden rounded-md bg-emerald-700">
+      <div className="aspect-video overflow-hidden rounded-md border border-slate-200 bg-slate-950">
         <iframe
           width="100%"
           height="100%"
@@ -29,8 +28,8 @@ export default function AccountOpeningGuide() {
       </div>
 
       <div className="flex flex-wrap items-stretch gap-6">
-        <div className="flex min-w-0 flex-[1_1_22rem] flex-col gap-3 rounded-md bg-emerald-50 p-7">
-          <ShieldCheck className="h-7 w-7 text-emerald-700" strokeWidth={1.75} aria-hidden="true" />
+        <div className="flex min-w-0 flex-[1_1_22rem] flex-col gap-3 rounded-md border border-slate-200 p-7">
+          <ShieldCheck className="h-7 w-7 text-brand-700" strokeWidth={1.75} aria-hidden="true" />
           <h2 className="text-2xl font-bold leading-snug">Mở tài khoản miễn phí</h2>
           <p className="text-lg leading-relaxed text-slate-900">
             Không phí duy trì, được hỗ trợ trực tiếp bởi chuyên viên tư vấn.
@@ -40,10 +39,10 @@ export default function AccountOpeningGuide() {
         <div className="flex min-w-0 flex-[1_1_22rem] flex-col gap-1.5 rounded-md border border-slate-200 p-7">
           <h2 className="mb-1.5 text-2xl font-bold leading-snug">Cần người hỗ trợ?</h2>
           <p className="text-lg font-bold leading-snug text-slate-900">Nguyễn Anh Chiến</p>
-          <p className="text-base leading-normal text-slate-600">Chuyên viên tư vấn đầu tư — CTCP Chứng khoán KAFI</p>
+          <p className="text-base leading-normal text-slate-500">Chuyên viên tư vấn đầu tư — CTCP Chứng khoán KAFI</p>
           <a
             href="tel:0886284212"
-            className="inline-flex min-h-11 items-center gap-2 text-lg font-bold text-emerald-700 hover:underline"
+            className="inline-flex min-h-11 items-center gap-2 text-lg font-bold text-brand-700 hover:underline"
           >
             <Phone className="h-[18px] w-[18px]" strokeWidth={1.75} aria-hidden="true" />
             0886.284.212

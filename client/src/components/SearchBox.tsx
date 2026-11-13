@@ -66,7 +66,7 @@ export default function SearchBox() {
           if (e.key === "Enter" && results.length > 0) goTo(results[0].symbol);
         }}
         placeholder="Tìm mã cổ phiếu"
-        className="h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base text-slate-900 placeholder:text-slate-500 focus:border-emerald-700"
+        className="h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base text-slate-900 placeholder:text-slate-500 focus:border-brand-700"
       />
       {open && results.length > 0 && (
         <div className="absolute right-0 z-20 mt-1 w-72 max-w-[calc(100vw-2.5rem)] overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg">

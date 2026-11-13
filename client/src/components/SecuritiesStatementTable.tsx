@@ -37,7 +37,7 @@ export default function SecuritiesStatementTable({
     <div className="overflow-x-auto rounded-md border border-slate-200 dark:border-slate-800">
       <table className="w-full min-w-[720px] border-collapse text-sm">
         <thead>
-          <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800">
+          <tr className="border-b border-slate-200 text-left text-xs text-slate-500 dark:border-slate-800">
             <th className="sticky left-0 z-10 bg-white px-4 py-3 font-medium dark:bg-slate-900">Chỉ tiêu</th>
             {periods.map((p, i) => (
               <th key={`${p}-${i}`} className="whitespace-nowrap px-4 py-3 text-right font-medium">
