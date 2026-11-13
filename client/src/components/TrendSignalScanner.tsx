@@ -69,7 +69,7 @@ function Panel({
 // Lists every stock in the universe currently on a buy signal per the same
 // trend-following combo as the chart's own Mua/Bán markers (SMA20 > SMA50,
 // ADX(14) > 25, Supertrend(10,3) uptrend) — computed once server-side
-// across ~70 symbols and cached, rather than the browser looping through
+// across ~200 symbols and cached, rather than the browser looping through
 // dozens of per-symbol history fetches itself.
 export default function TrendSignalScanner({
   onSelectSymbol,
@@ -90,7 +90,7 @@ export default function TrendSignalScanner({
   const sessionDate = result?.sessionDate ?? null;
   const { addMany } = useWatchlist();
 
-  // First load — the server scans ~70 symbols, so tell the user it's working
+  // First load — the server scans ~200 symbols, so tell the user it's working
   // instead of leaving a bare spinner that reads as "broken".
   if (loading && !hits) {
     return (
@@ -122,7 +122,7 @@ export default function TrendSignalScanner({
           </p>
           <p className="max-w-xs text-sm leading-normal text-slate-600">
             {isTimeout
-              ? "Lần tải đầu tiên hệ thống cần quét khoảng 70 mã nên có thể mất vài giây. Bạn hãy thử lại nhé."
+              ? "Lần tải đầu tiên hệ thống cần quét gần 200 mã nên có thể mất vài giây. Bạn hãy thử lại nhé."
               : "Có thể do kết nối tạm thời gián đoạn. Vui lòng thử lại sau giây lát."}
           </p>
           <button

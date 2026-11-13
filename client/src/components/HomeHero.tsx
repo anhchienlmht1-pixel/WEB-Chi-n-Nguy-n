@@ -30,7 +30,7 @@ const FEATURES: Feature[] = [
       </svg>
     ),
     title: "Quét toàn thị trường",
-    desc: "Tự động rà soát hơn 70 mã trên nến ngày đã đóng cửa theo hệ thống Trend Following.",
+    desc: "Tự động rà soát gần 200 mã trên nến ngày đã đóng cửa theo hệ thống Trend Following.",
   },
   {
     icon: (
