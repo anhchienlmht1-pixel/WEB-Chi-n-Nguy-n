@@ -14,13 +14,14 @@ const DEFAULT_SYMBOL = "VNINDEX";
 
 // "2026-11-09" -> "09/11/2026"
 function longDate(iso: string): string {
-  const [y, m, d] = iso.split("-");
+  const [y, m, d] = iso.slice(0, 10).split("-");
   return y && m && d ? `${d}/${m}/${y}` : iso;
 }
 
 // "2026-11-03" -> "03/11"
 function shortDate(iso: string): string {
-  const [, m, d] = iso.split("-");
+  // Dates may arrive as full timestamps ("2026-11-13T07:00:00.000Z").
+  const [, m, d] = iso.slice(0, 10).split("-");
   return m && d ? `${d}/${m}` : iso;
 }
 
