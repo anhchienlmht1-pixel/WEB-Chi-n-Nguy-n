@@ -18,13 +18,6 @@ function longDate(iso: string): string {
   return y && m && d ? `${d}/${m}/${y}` : iso;
 }
 
-// "2026-11-03" -> "03/11"
-function shortDate(iso: string): string {
-  // Dates may arrive as full timestamps ("2026-11-13T07:00:00.000Z").
-  const [, m, d] = iso.slice(0, 10).split("-");
-  return m && d ? `${d}/${m}` : iso;
-}
-
 const H2 = "text-xl font-bold leading-snug";
 
 // Homepage. No hero: the first thing on the page is the day's result — one
@@ -60,7 +53,7 @@ export default function TrendSignals() {
     return result.transitions;
   }, [historyState.data]);
 
-  // The day's result in one sentence, from the same list the table shows.
+  // Session date for the (screen-reader) page heading.
   const summary = useMemo(() => {
     const result = buySignalsState.data;
     if (!result) return null;
@@ -73,35 +66,14 @@ export default function TrendSignals() {
     return { total: items.length, losing, latest, sessionDate: result.sessionDate };
   }, [buySignalsState.data]);
 
-  let sentence: string;
-  if (!summary) {
-    sentence = buySignalsState.error
-      ? "Chưa tải được danh sách tín hiệu. Vui lòng thử lại sau giây lát."
-      : "Đang quét thị trường để tìm cổ phiếu đang trong xu hướng tăng…";
-  } else if (summary.total === 0) {
-    sentence = "Hiện chưa có mã nào hội đủ điều kiện MUA. Danh sách chốt sau 15:00 mỗi phiên.";
-  } else {
-    sentence =
-      `${summary.total} mã đang giữ tín hiệu mua` +
-      (summary.losing > 0 ? `, trong đó ${summary.losing} mã đang lỗ` : "") +
-      "." +
-      (summary.latest ? ` Mã vào gần nhất là ${summary.latest.symbol} (${shortDate(summary.latest.buyDate)}).` : "") +
-      " Danh sách chốt sau 15:00 mỗi phiên.";
-  }
-
   return (
     <div className="theme-dark">
-    <section id="tin-hieu" className="gutter-x mx-auto max-w-[1600px] scroll-mt-20 pb-12 pt-7">
-      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-1">
-        <div className="min-w-0">
-          <p className="mb-1 text-base font-bold text-[#b9cba9]">Theo xu hướng. Cắt lỗ có kỷ luật.</p>
-          <h1 className="text-[1.75rem] font-bold leading-tight">
-            {summary ? `Tín hiệu lệnh sau phiên ${longDate(summary.sessionDate)}` : "Tín hiệu lệnh"}
-          </h1>
-          <p className="mt-1.5 text-base text-slate-900">{sentence}</p>
-        </div>
-        <p className="text-sm text-slate-500">Đang xem {chartSymbol}</p>
-      </div>
+    <section id="tin-hieu" className="gutter-x mx-auto max-w-[1600px] scroll-mt-20 pb-12 pt-5">
+      {/* Minimal: no page title or summary sentence — the chart and the list
+          speak for themselves. The heading stays for screen readers. */}
+      <h1 className="sr-only">
+        {summary ? `Tín hiệu lệnh sau phiên ${longDate(summary.sessionDate)}` : "Tín hiệu lệnh"}
+      </h1>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
         <div className="min-w-0">
@@ -111,6 +83,7 @@ export default function TrendSignals() {
             onSymbolChange={setChartSymbol}
             preferSource={data?.quotes.find((q) => q.symbol === chartSymbol)?.source}
             hideStats
+            hideDrawingTools
           />
         </div>
 

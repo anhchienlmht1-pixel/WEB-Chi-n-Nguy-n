@@ -23,6 +23,7 @@ export default function TechnicalChartPanel({
   preferSource,
   onSymbolChange,
   hideStats = false,
+  hideDrawingTools = false,
 }: {
   symbol: string;
   height?: number;
@@ -38,6 +39,9 @@ export default function TechnicalChartPanel({
   /** Leaves out the Trend Following stats block under the chart — for pages
    * that show the same stats as a card of their own (the homepage). */
   hideStats?: boolean;
+  /** Leaves out the drawing tools column (trend line, level, box, text) — the
+   * minimal homepage chart. */
+  hideDrawingTools?: boolean;
 }) {
   const [resolution, setResolution] = useState<ChartResolution>("D");
   const [chartType, setChartType] = useState<ChartType>("candlestick");
@@ -157,7 +161,9 @@ export default function TechnicalChartPanel({
 
       <div className="flex flex-col">
         <div className="flex flex-1">
-          <DrawingToolbar tool={drawingTool} onSelect={setDrawingTool} onClear={() => chartRef.current?.clearDrawings()} />
+          {!hideDrawingTools && (
+            <DrawingToolbar tool={drawingTool} onSelect={setDrawingTool} onClear={() => chartRef.current?.clearDrawings()} />
+          )}
           <div className="min-w-0 flex-1 p-2">
             {chartPoints.length > 0 ? (
               <PriceChart
