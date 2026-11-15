@@ -48,7 +48,7 @@ export default function SystemAssessment({ symbol }: { symbol: string }) {
       <p className="mt-3 text-xs leading-relaxed text-slate-600 dark:text-slate-400">{assessment.narrative}</p>
       <p className="mt-3 text-xs font-medium leading-relaxed text-slate-800 dark:text-slate-200">{assessment.actionLine}</p>
       <p className="mt-3 text-[10px] text-slate-400 dark:text-slate-500">
-        Tự động sinh từ hệ thống Trend Following (SMA20/50, ADX(14), Supertrend(10,3)) tại thời điểm hiện tại — không
+        Tự động sinh từ hệ thống theo xu hướng (SMA20/50, ADX(14), Supertrend(10,3)) tại thời điểm hiện tại — không
         phải khuyến nghị đầu tư.
       </p>
     </div>

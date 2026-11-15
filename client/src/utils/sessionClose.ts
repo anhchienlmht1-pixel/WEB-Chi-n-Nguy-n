@@ -72,6 +72,6 @@ export function dropUnclosedBars<T extends { time: string }>(points: T[], now: D
 
 /** "2026-10-23" -> "23/10" for labels such as "Chốt phiên 23/10". */
 export function formatSessionDate(iso: string): string {
-  const [, m, d] = iso.split("-");
+  const [, m, d] = iso.slice(0, 10).split("-");
   return m && d ? `${d}/${m}` : iso;
 }

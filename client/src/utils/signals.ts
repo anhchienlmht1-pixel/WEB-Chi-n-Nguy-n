@@ -80,9 +80,9 @@ export interface TradingSignal {
   price: number;
   type: "buy" | "sell";
   /** Short label drawn next to the marker — tranche number for buys
-   * ("Mua 2/3 (+8.0%)"), realized P&L for sells ("Đóng deal 2/3 (+12.4%)") —
+   * ("Mua 2/3 (+8.0%)"), realized P&L for sells ("Đóng lệnh 2/3 (+12,4%)") —
    * always a full close of whatever tranches were open, so every sell is
-   * worded "Đóng deal" regardless of whether that was 1/3, 2/3 or 3/3.
+   * worded "Đóng lệnh" regardless of whether that was 1/3, 2/3 or 3/3.
    * Unset only for `all`'s raw per-bar entries, which nothing renders. */
   note?: string;
 }
@@ -115,7 +115,7 @@ interface Position {
 
 function pct(from: number, to: number): string {
   const v = ((to - from) / from) * 100;
-  return `${v >= 0 ? "+" : ""}${v.toFixed(1)}%`;
+  return `${v >= 0 ? "+" : ""}${v.toFixed(1).replace(".", ",")}%`;
 }
 
 // Buy: SMA20 > SMA50, ADX(14) > 25, Supertrend(10,3) uptrend.
@@ -194,7 +194,7 @@ export function computeTradingSignals(points: HistoryPoint[]): TradingSignalsRes
           time: t,
           price: p.high,
           type: "sell",
-          note: `Đóng deal ${open.length}/${TRANCHE_COUNT} (${pct(avgCost, p.close)})`,
+          note: `Đóng lệnh ${open.length}/${TRANCHE_COUNT} (${pct(avgCost, p.close)})`,
         });
       }
       position = null;

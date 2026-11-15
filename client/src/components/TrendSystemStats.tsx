@@ -27,18 +27,18 @@ function Tile({ label, value, tone }: { label: string; value: string | number; t
 }
 
 // Trend Following results for the symbol on the chart: completed trades only
-// ("Đóng deal" sells), straight from the same signal list the chart's markers
+// ("Đóng lệnh" sells), straight from the same signal list the chart's markers
 // are drawn from.
 export default function TrendSystemStats({ signals, symbol }: Props) {
   const stats = useMemo(() => {
-    // All "Đóng deal" signals — always a full close of the position (whatever
+    // All "Đóng lệnh" signals — always a full close of the position (whatever
     // tranches were still open), which mark the end of a trade.
-    const closes = signals.filter((s) => s.type === "sell" && s.note?.includes("Đóng deal"));
-    // P&L sits in the note: "Đóng deal 2/3 (+12.4%)" -> 12.4
+    const closes = signals.filter((s) => s.type === "sell" && s.note?.includes("Đóng lệnh"));
+    // P&L sits in the note: "Đóng lệnh 2/3 (+12,4%)" -> 12.4
     const trades = closes
       .map((s) => {
-        const match = s.note?.match(/([+-]?\d+\.?\d*)%/);
-        return match ? { pnl: parseFloat(match[1]), time: s.time } : null;
+        const match = s.note?.match(/([+-]?\d+[.,]?\d*)%/);
+        return match ? { pnl: parseFloat(match[1].replace(",", ".")), time: s.time } : null;
       })
       .filter((t): t is { pnl: number; time: number } => t !== null);
     if (trades.length === 0) return null;

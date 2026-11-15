@@ -13,8 +13,16 @@ import CompanyLogo from "./CompanyLogo";
 // until then — so a gentle poll is enough to pick the new one up.
 const POLL_MS = 5 * 60 * 1000;
 
+// "13/11" — built by hand: toLocaleDateString("vi-VN") gives "13-11" in some browsers.
 function formatSince(iso: string): string {
-  return new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso.slice(5, 10).split("-").reverse().join("/");
+  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+// "+0,96%" — Vietnamese decimal comma for the list.
+function formatPct(percent: number): string {
+  return formatPercent(percent).replace(".", ",");
 }
 
 // Whole days between the buy date and the session the list was concluded on
@@ -52,14 +60,14 @@ function Panel({
   return (
     <div className={`${SHELL} ${fill ? "flex h-full flex-col" : ""}`}>
       <div className="flex shrink-0 items-baseline justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-2.5 sm:px-5">
-        <h3 className={`${TITLE} whitespace-nowrap`}>Tín hiệu MUA</h3>
+        <h3 className={`${TITLE} whitespace-nowrap`}>Tín hiệu lệnh</h3>
         {badge}
       </div>
-      <div className="shrink-0 px-4 pb-2 pt-2.5 sm:px-5">
-        <p className="text-sm leading-normal text-slate-500">
-          {subtitle ?? "Cổ phiếu đang trong xu hướng tăng và chưa xuất hiện điểm bán."}
+      <div className="flex shrink-0 items-baseline justify-between gap-3 px-4 py-2 sm:px-5">
+        <p className="min-w-0 text-sm leading-normal text-slate-500">
+          {subtitle ?? "Mã đang tăng, chưa có điểm bán."}
         </p>
-        {action && <div className="mt-1.5">{action}</div>}
+        {action}
       </div>
       {children}
     </div>
@@ -146,12 +154,8 @@ export default function TrendSignalScanner({
 
   const subtitle = (
     <>
-      Đang trong xu hướng tăng, chưa xuất hiện điểm bán.
-      <span
-        className="mt-0.5 block"
-        title="Điều kiện: SMA20 > SMA50, ADX(14) > 25 và Supertrend(10,3) đang báo tăng. Tính trên nến ngày đã đóng cửa; kết luận mới chỉ có sau 15:00."
-      >
-        {sessionLabel} · Trend Following ⓘ
+      <span title="Mã đang lên đều, đà đủ mạnh và chưa gãy xu hướng (đường trung bình giá, độ mạnh xu hướng, Supertrend), tính trên nến ngày đã đóng cửa. Kết luận mới chỉ có sau 15:00.">
+        {sessionLabel} · mã đang tăng, chưa có điểm bán
       </span>
       {inSession && (
         <span className="mt-0.5 block text-sm font-bold text-orange-700">
@@ -174,10 +178,10 @@ export default function TrendSignalScanner({
             type="button"
             onClick={() => addMany(hits.map((h) => h.symbol))}
             title="Thêm tất cả mã trong danh sách vào mục theo dõi của bạn"
-            className="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-md border border-brand-700 px-3 text-sm font-bold text-brand-700 transition-colors duration-200 hover:bg-brand-50"
+            className="inline-flex min-h-11 shrink-0 items-center gap-1 whitespace-nowrap text-sm font-bold text-brand-700 hover:underline"
           >
-            <Star className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
-            Theo dõi tất cả
+            <Star className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
+            Theo dõi hết
           </button>
         ) : undefined
       }
@@ -185,7 +189,7 @@ export default function TrendSignalScanner({
       {hits.length === 0 ? (
         <div className="flex flex-col items-center gap-2 p-6 text-center">
           <Search className="h-6 w-6 text-brand-700" strokeWidth={1.75} aria-hidden="true" />
-          <p className="text-base font-bold text-slate-900">Chưa có mã nào khớp tín hiệu MUA</p>
+          <p className="text-base font-bold text-slate-900">Chưa có mã nào đang có tín hiệu mua</p>
           <p className="max-w-xs text-sm leading-normal text-slate-600">
             Hiện không cổ phiếu nào hội đủ 3 điều kiện của xu hướng tăng. Danh sách được chốt lại sau mỗi phiên đóng cửa
             (15:00).
@@ -197,7 +201,7 @@ export default function TrendSignalScanner({
            * spacer the width of the row's star button, so the labels sit
            * exactly over their values while the list scrolls. */}
           <div className="sticky top-0 z-20 flex items-center gap-2 border-y border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-600 sm:px-5">
-            <span className="w-11 shrink-0" aria-hidden="true" />
+            <span className="w-8 shrink-0" aria-hidden="true" />
             <div className={`grid min-w-0 flex-1 gap-2 ${COLS}`}>
               <span>Mã</span>
               <span>Ngày vào</span>
@@ -207,13 +211,9 @@ export default function TrendSignalScanner({
           {hits.map((h) => {
             const held = daysHeld(h.buyDate, sessionDate);
             const gainClass =
-              h.signalReturnPercent > 0
-                ? "text-gain"
-                : h.signalReturnPercent < 0
-                  ? "text-[#c0392b]"
-                  : "text-slate-600";
+              h.signalReturnPercent > 0 ? "up" : h.signalReturnPercent < 0 ? "down" : "flat";
             // Entry price/date and the current price live in the row tooltip.
-            const rowTitle = `${h.symbol}: vào tín hiệu ngày ${formatSince(h.buyDate)} ở giá ${formatPrice(h.buyPrice, h.currency)}, giá đóng cửa phiên ${formatSessionDate(sessionDate)} ${formatPrice(h.price, h.currency)}`;
+            const rowTitle = `${h.symbol}: vào lệnh ngày ${formatSince(h.buyDate)} ở giá ${formatPrice(h.buyPrice, h.currency)}, giá đóng cửa phiên ${formatSessionDate(sessionDate)} ${formatPrice(h.price, h.currency)}`;
             // WatchButton is its own <button> — kept as a sibling rather
             // than nested inside the row's own clickable element, since a
             // <button> (or an <a>) can't validly contain another <button>.
@@ -233,7 +233,7 @@ export default function TrendSignalScanner({
                   <span className="text-sm leading-tight text-slate-600">{held > 0 ? `${held} ngày` : "Mới vào"}</span>
                 </span>
                 <span className={`justify-self-end whitespace-nowrap text-base font-bold tabular-nums ${gainClass}`}>
-                  {formatPercent(h.signalReturnPercent)}
+                  {formatPct(h.signalReturnPercent)}
                 </span>
               </>
             );
@@ -243,7 +243,7 @@ export default function TrendSignalScanner({
             return (
               <div
                 key={h.symbol}
-                className="relative flex min-h-15 items-center gap-2 border-b border-slate-100 px-3 py-2 transition-colors duration-200 hover:bg-slate-50 sm:px-5"
+                className="group relative flex min-h-15 items-center gap-2 border-b border-slate-100 px-3 py-2 transition-colors duration-200 hover:bg-slate-50 sm:px-5"
               >
                 <WatchButton symbol={h.symbol} />
                 {onSelectSymbol ? (

@@ -30,8 +30,8 @@ export default function TrendSignalBell() {
       <button
         type="button"
         onClick={toggle}
-        title="Tín hiệu MUA (Trend Following)"
-        aria-label="Tín hiệu MUA (Trend Following)"
+        title="Tín hiệu lệnh (theo xu hướng)"
+        aria-label="Tín hiệu lệnh (theo xu hướng)"
         className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-slate-300 transition-colors duration-300 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
       >
         <Bell className="h-4 w-4 text-slate-600 dark:text-slate-300" strokeWidth={1.75} />
@@ -49,7 +49,7 @@ export default function TrendSignalBell() {
           <div className="absolute right-0 z-40 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg dark:border-slate-800 dark:bg-slate-900">
             <div className="border-b border-slate-200 px-3 py-2 dark:border-slate-800">
               <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                Tín hiệu MUA (Trend Following)
+                Tín hiệu lệnh (theo xu hướng)
               </div>
               <div className="text-xs text-slate-400 dark:text-slate-500">
                 SMA20&gt;SMA50, ADX(14)&gt;25, Supertrend(10,3) tăng
