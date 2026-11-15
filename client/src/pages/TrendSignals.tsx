@@ -81,7 +81,7 @@ export default function TrendSignals() {
     sentence = "Hiện chưa có mã nào hội đủ điều kiện MUA. Danh sách chốt sau 15:00 mỗi phiên.";
   } else {
     sentence =
-      `${summary.total} mã đang giữ tín hiệu MUA` +
+      `${summary.total} mã đang giữ tín hiệu mua` +
       (summary.losing > 0 ? `, trong đó ${summary.losing} mã đang lỗ` : "") +
       "." +
       (summary.latest ? ` Mã vào gần nhất là ${summary.latest.symbol} (${shortDate(summary.latest.buyDate)}).` : "") +
@@ -89,11 +89,13 @@ export default function TrendSignals() {
   }
 
   return (
-    <section id="tin-hieu" className="gutter-x mx-auto max-w-[1600px] scroll-mt-20 pb-10 pt-7">
+    <div className="theme-dark">
+    <section id="tin-hieu" className="gutter-x mx-auto max-w-[1600px] scroll-mt-20 pb-12 pt-7">
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-1">
         <div className="min-w-0">
+          <p className="mb-1 text-base font-bold text-[#b9cba9]">Theo xu hướng. Cắt lỗ có kỷ luật.</p>
           <h1 className="text-[1.75rem] font-bold leading-tight">
-            {summary ? `Tín hiệu MUA sau phiên ${longDate(summary.sessionDate)}` : "Tín hiệu MUA"}
+            {summary ? `Tín hiệu lệnh sau phiên ${longDate(summary.sessionDate)}` : "Tín hiệu lệnh"}
           </h1>
           <p className="mt-1.5 text-base text-slate-900">{sentence}</p>
         </div>
@@ -141,16 +143,22 @@ export default function TrendSignals() {
         <div className="min-w-0 flex-[1.3_1_28rem]">
           <h2 className={H2}>Hệ thống chọn mã thế nào</h2>
           <p className="mt-2 max-w-2xl text-base text-slate-900">
-            Một mã vào danh sách MUA khi cả ba điều kiện cùng đúng trên nến ngày đã đóng cửa:
+            Mỗi ngày sau 15:00, hệ thống tự lọc ra những mã đang đi lên rõ ràng. Anh chị không cần ngồi dò hàng trăm mã.
           </p>
-          <ol className="mt-2 max-w-2xl list-decimal space-y-0.5 pl-5 text-base text-slate-900">
-            <li>đường trung bình 20 phiên (SMA20) nằm trên đường 50 phiên (SMA50);</li>
-            <li>chỉ báo sức mạnh xu hướng ADX(14) lớn hơn 25;</li>
-            <li>Supertrend(10,3) đang báo xu hướng tăng.</li>
-          </ol>
-          <p className="mt-2 max-w-2xl text-base text-slate-900">
-            Kết luận chỉ chốt sau 15:00, nên danh sách không đổi trong phiên. Đây là công cụ tham khảo, quyết định mua
-            bán là của nhà đầu tư.
+          <ul className="mt-2 max-w-2xl border-t border-slate-200 text-base text-slate-800">
+            <li className="border-b border-slate-200 py-2">
+              <b className="text-slate-950">Chỉ chọn mã đang lên đều,</b> không chọn mã chỉ nhích lên một hôm.
+            </li>
+            <li className="border-b border-slate-200 py-2">
+              <b className="text-slate-950">Chỉ chọn khi đà đủ mạnh,</b> bỏ qua mã đi ngang lình xình.
+            </li>
+            <li className="border-b border-slate-200 py-2">
+              <b className="text-slate-950">Xu hướng gãy thì mã tự rời danh sách,</b> nhắc anh chị cân nhắc thoát, không ôm hàng.
+            </li>
+          </ul>
+          <p className="mt-2 max-w-2xl text-sm text-slate-500">
+            Dựa trên đường trung bình giá, độ mạnh xu hướng và Supertrend, tính trên giá đóng cửa. Danh sách không đổi
+            trong phiên. Chỉ để tham khảo, quyết định mua bán là của nhà đầu tư.
           </p>
         </div>
       </div>
@@ -165,7 +173,7 @@ export default function TrendSignals() {
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
           <Link
             to="/huong-dan-mo-tai-khoan"
-            className="inline-flex min-h-11 items-center justify-center rounded-md bg-orange-600 px-5 text-base font-bold text-slate-950 transition-colors duration-200 hover:bg-orange-500"
+            className="inline-flex min-h-11 items-center justify-center rounded-md bg-orange-600 px-5 text-base font-bold text-[#1b1f1a] transition-colors duration-200 hover:bg-orange-500"
           >
             Mở tài khoản
           </Link>
@@ -180,5 +188,6 @@ export default function TrendSignals() {
         </div>
       </div>
     </section>
+    </div>
   );
 }

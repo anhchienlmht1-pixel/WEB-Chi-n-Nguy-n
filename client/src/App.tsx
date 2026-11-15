@@ -5,6 +5,7 @@ import ScrollToHash from './components/ScrollToHash'
 import TrendSignals from './pages/TrendSignals'
 import StockDetail from './pages/StockDetail'
 import AccountOpeningGuide from './pages/AccountOpeningGuide'
+import About from './pages/About'
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <Route path="/" element={<TrendSignals />} />
           <Route path="/stock/:symbol" element={<StockDetail />} />
           <Route path="/huong-dan-mo-tai-khoan" element={<AccountOpeningGuide />} />
+          <Route path="/gioi-thieu" element={<About />} />
           <Route path="*" element={<TrendSignals />} />
         </Routes>
       </main>

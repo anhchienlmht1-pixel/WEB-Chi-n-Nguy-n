@@ -101,18 +101,20 @@ const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
   useEffect(() => {
     if (!containerRef.current || !legendRef.current) return;
 
-    const dark = theme === "dark";
+    // Dark when the app theme says so or when the chart sits on a .theme-dark
+    // surface (the moss-dark home page).
+    const dark = theme === "dark" || !!containerRef.current.closest(".theme-dark");
     const chart = createChart(containerRef.current, {
       layout: {
         background: { type: ColorType.Solid, color: "transparent" },
-        textColor: dark ? "#8aa8ad" : "#64748b",
+        textColor: dark ? "#8fa882" : "#64748b",
       },
       grid: {
-        vertLines: { color: dark ? "#16333b" : "#e2e8f0" },
-        horzLines: { color: dark ? "#16333b" : "#e2e8f0" },
+        vertLines: { color: dark ? "#1b261b" : "#e2e8f0" },
+        horzLines: { color: dark ? "#1b261b" : "#e2e8f0" },
       },
-      rightPriceScale: { borderColor: dark ? "#16333b" : "#e2e8f0" },
-      timeScale: { borderColor: dark ? "#16333b" : "#e2e8f0" },
+      rightPriceScale: { borderColor: dark ? "#2a3828" : "#e2e8f0" },
+      timeScale: { borderColor: dark ? "#2a3828" : "#e2e8f0" },
       height,
       width: containerRef.current.clientWidth,
     });
@@ -276,7 +278,7 @@ const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
         if (getComputedStyle(paneEl).position === "static") paneEl.style.position = "relative";
         const el = document.createElement("div");
         el.className =
-          "pointer-events-none absolute left-2 top-1 z-10 flex flex-wrap items-baseline gap-x-2 rounded bg-white/70 px-1.5 py-0.5 text-[11px] tabular-nums backdrop-blur-sm dark:bg-slate-950/60";
+          "pointer-events-none absolute left-2 top-1 z-10 flex flex-wrap items-baseline gap-x-2 rounded bg-white/70 px-1.5 py-0.5 text-[11px] tabular-nums backdrop-blur-sm";
         paneEl.appendChild(el);
         paneHeaderEls.set(ind, el);
       }
@@ -414,7 +416,7 @@ const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
     <div className="relative w-full">
       <div
         ref={legendRef}
-        className="pointer-events-none absolute left-2 top-2 z-10 flex flex-col gap-0.5 rounded bg-white/70 px-2 py-1.5 backdrop-blur-sm dark:bg-slate-950/60"
+        className="pointer-events-none absolute left-2 top-2 z-10 flex flex-col gap-0.5 rounded bg-white/70 px-2 py-1.5 backdrop-blur-sm"
       />
       <div ref={containerRef} className="w-full" />
     </div>

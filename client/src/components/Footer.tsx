@@ -12,16 +12,16 @@ const SOCIAL = [
   { label: "Nhóm Zalo", href: "https://zalo.me/g/n1hcdesbqhdutsecnxzg" },
 ];
 
-// Navy band footer; uses the dark logo variant.
+// Moss-green band footer; uses the light-on-dark Bull Stock logo.
 export default function Footer() {
   return (
     <footer id="footer" className="scroll-mt-20 bg-band text-white">
       <div className="gutter-x mx-auto max-w-[1600px] pb-7 pt-14">
         <div className="flex flex-wrap justify-between gap-x-16 gap-y-10">
           <div className="max-w-sm flex-1 basis-72">
-            <img src="/logo-cstock-dark.svg" alt="C Stock" className="block h-[52px]! w-auto" />
+            <img src="/logo-bullstock-dark.svg" alt="Bull Stock" className="block h-[52px]! w-auto" />
             <p className="mt-5 text-base leading-relaxed text-quiet-on-band">
-              Công cụ theo dõi tín hiệu mua bán theo xu hướng cho nhà đầu tư chứng khoán Việt Nam.
+              Theo xu hướng. Cắt lỗ có kỷ luật. Không yêu cổ phiếu, chỉ nhìn vào giá và khối lượng.
             </p>
           </div>
 
@@ -29,7 +29,10 @@ export default function Footer() {
             <div className="flex min-w-36 flex-col gap-1">
               <h4 className={HEAD}>Khám phá</h4>
               <Link to={{ pathname: "/", hash: "#tin-hieu" }} className={LINK}>
-                Tín hiệu mua
+                Tín hiệu lệnh
+              </Link>
+              <Link to="/gioi-thieu" className={LINK}>
+                Giới thiệu
               </Link>
               <Link to="/huong-dan-mo-tai-khoan" className={LINK}>
                 Hướng dẫn mở tài khoản
@@ -66,7 +69,7 @@ export default function Footer() {
             Các tín hiệu và dữ liệu được cung cấp chỉ mang tính chất minh họa, không phải lời khuyên đầu tư. Quý khách
             vui lòng tham khảo ý kiến chuyên viên trước khi quyết định đầu tư.
           </p>
-          <p>© 2024 – 2026 Nền tảng phân tích thị trường chứng khoán Việt Nam</p>
+          <p>© 2024 – 2026 Bull Stock</p>
         </div>
       </div>
     </footer>

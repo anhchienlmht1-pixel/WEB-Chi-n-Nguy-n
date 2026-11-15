@@ -33,16 +33,17 @@
   --color-slate-900: #1b2733;
   --color-slate-950: #121a22;
 
-  --color-brand-50: #eaeff6;
-  --color-brand-100: #dde6f3;
-  --color-brand-300: #b8c7de;
-  --color-brand-400: #8ea4c4;
-  --color-brand-500: #5b78a3;
-  --color-brand-600: #2f4f84;
-  --color-brand-700: #14284b;
-  --color-brand-800: #0f1f3a;
-  --color-brand-900: #0a1629;
-  --color-brand-950: #060d19;
+  /* Bull Stock moss green (#3E503C) — was navy. */
+  --color-brand-50: #f2f5ef;
+  --color-brand-100: #e7ece2;
+  --color-brand-300: #c9d5bf;
+  --color-brand-400: #a9c29a;
+  --color-brand-500: #7c9a6a;
+  --color-brand-600: #5e7a55;
+  --color-brand-700: #3e503c;
+  --color-brand-800: #2c3a2a;
+  --color-brand-900: #1a2418;
+  --color-brand-950: #0b110d;
 
   --color-gain: #17804f;
 
@@ -74,10 +75,10 @@
 :root {
   --paper: #ffffff;
   --ink: #1b2733;
-  --band: #14284b;
+  --band: #3e503c;
   --mid: #f4f6f8;
   --quiet: #5b6b7a;
-  --quiet-on-band: #c9d3e0;
+  --quiet-on-band: #d5dfcc;
   --rule: #d9e0e7;
   /* Side padding shared by the header, footer and every page, so their edges
      line up at any width. */
@@ -230,3 +231,69 @@ img {
 ::-webkit-scrollbar { height: 8px; width: 8px; }
 ::-webkit-scrollbar-thumb { background: #c5ced8; border-radius: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
+
+/* ---------------------------------------------------------------------------
+   Dark moss surface (Bull Stock). Wrap a page or the header in .theme-dark:
+   the neutral and brand scales flip inside it, so components written for the
+   white page (text-slate-900, bg-white, border-slate-200, text-brand-700…)
+   read correctly on #0B110D without per-component dark variants. Charts check
+   for an ancestor .theme-dark and switch to their dark colours. --color-white
+   flips too (bg-white panels go dark, text-white on a flipped bg-slate-900
+   button stays readable), so text that must stay white uses text-[#fff].
+--------------------------------------------------------------------------- */
+.theme-dark {
+  --paper: #0b110d;
+  --ink: #d5dfcc;
+  --mid: #121a11;
+  --quiet: #8fa882;
+  --rule: rgba(185, 203, 169, 0.2);
+  --color-white: #121a11;
+  --color-slate-50: #18221a;
+  --color-slate-100: #1e2a1e;
+  --color-slate-200: #2a3828;
+  --color-slate-300: #3a4a38;
+  --color-slate-400: #6f8466;
+  --color-slate-500: #8fa882;
+  --color-slate-600: #a9b8a0;
+  --color-slate-700: #c2ceb8;
+  --color-slate-800: #d5dfcc;
+  --color-slate-900: #e7ece2;
+  --color-slate-950: #f4f7f1;
+  --color-brand-50: #18221a;
+  --color-brand-100: #1e2a1e;
+  --color-brand-300: #3a4a38;
+  --color-brand-400: #5e7a55;
+  --color-brand-500: #7c9a6a;
+  --color-brand-600: #a9c29a;
+  --color-brand-700: #b9cba9;
+  --color-brand-800: #d5dfcc;
+  --color-gain: #3fd07a;
+  background-color: var(--paper);
+  color: var(--ink);
+}
+.theme-dark h1, .theme-dark h2 { color: #ffffff; }
+.theme-dark .up { color: #3fd07a; }
+.theme-dark .down { color: #ff6b6b; }
+.theme-dark .flat { color: #8fa882; }
+/* Orange buttons keep dark text on any surface. */
+.theme-dark .text-on-accent { color: #1b1f1a; }
+
+/* Landing page: a decorative price board scrolling behind the hero. */
+.pb-wrap { position: absolute; inset: -20px -40px; opacity: 0.55; overflow: hidden; pointer-events: none; }
+.pb { border-collapse: collapse; width: 100%; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 13px; font-variant-numeric: tabular-nums; animation: pbscroll 40s linear infinite; }
+.pb td { padding: 7px 12px; text-align: right; white-space: nowrap; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+.pb td.k { background: rgba(255, 255, 255, 0.04); }
+.pb .u { color: #3fd07a; } .pb .d { color: #ff5c5c; } .pb .r { color: #e6c34a; } .pb .c { color: #d27bff; } .pb .f { color: #4fc3f7; }
+.pb .fu { animation: flashu 4s ease-out infinite; }
+.pb .fd { animation: flashd 4s ease-out infinite; }
+@keyframes flashu { 0%, 8% { background: rgba(63, 208, 122, 0.55); color: #fff; } 30%, 100% { background: transparent; } }
+@keyframes flashd { 0%, 8% { background: rgba(255, 92, 92, 0.55); color: #fff; } 30%, 100% { background: transparent; } }
+@keyframes pbscroll { from { transform: translateY(0); } to { transform: translateY(-50%); } }
+.dt-rise { animation: dtrise 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.dt-rise-2 { animation-delay: 0.15s; }
+.dt-rise-3 { animation-delay: 0.3s; }
+@keyframes dtrise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+.dt-out { color: transparent; -webkit-text-stroke: 1.5px #b9cba9; }
+@media (prefers-reduced-motion: reduce) {
+  .pb, .pb .fu, .pb .fd, .dt-rise { animation: none !important; }
+}

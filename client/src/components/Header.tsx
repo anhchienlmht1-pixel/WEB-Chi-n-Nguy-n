@@ -5,44 +5,44 @@ import TrendSignalBell from "./TrendSignalBell";
 
 const NAV_BASE =
   "inline-flex min-h-11 items-center whitespace-nowrap border-b-2 text-base font-bold transition-colors duration-200";
-const NAV_ACTIVE = "border-brand-700 text-brand-700";
-const NAV_IDLE = "border-transparent text-slate-900 hover:text-brand-700";
+const NAV_ACTIVE = "border-[#b9cba9] text-[#fff]";
+const NAV_IDLE = "border-transparent text-[#e7ece2] hover:text-[#fff]";
 
-// White header with a hairline underneath: logo, the two sections of the site,
-// stock search, the signal bell and — the one orange thing in the chrome — the
-// account-opening button.
+// Moss-green bar: Bull Stock logo, the three sections, stock search, the
+// signal bell and — the one orange thing in the chrome — the account button.
+// It is a .theme-dark surface so the search box and bell read on the green.
 export default function Header() {
   const { pathname } = useLocation();
   const onGuide = pathname.startsWith("/huong-dan-mo-tai-khoan");
+  const onAbout = pathname.startsWith("/gioi-thieu");
+  const onSignals = !onGuide && !onAbout;
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200 bg-white">
-      <div className="gutter-x mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-6 gap-y-1 py-3">
-        <NavLink to="/" aria-label="C Stock — Trang chủ" className="flex shrink-0 items-center">
-          {/* <picture> makes the browser fetch only the variant that fits: icon
-              only below sm, icon + STOCK wordmark from sm up. */}
+    <header className="theme-dark sticky top-0 z-30 border-b border-[#4f6349] bg-[#3e503c]!">
+      <div className="gutter-x mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-6 gap-y-1 py-2.5">
+        <NavLink to="/" aria-label="Bull Stock — Trang chủ" className="flex shrink-0 items-center">
           <picture>
-            <source media="(max-width: 639px)" srcSet="/logo-cstock-icon-light.svg" />
+            <source media="(max-width: 639px)" srcSet="/logo-bullstock-icon-dark.svg" />
             <img
-              src="/logo-cstock-light.svg"
-              alt="C Stock"
-              // "!" = important: index.css has an unlayered `img { height: auto }`
-              // that would otherwise beat these layered utilities and show the
-              // SVG at its intrinsic 120px height.
+              src="/logo-bullstock-dark.svg"
+              alt="Bull Stock"
+              // "!" beats the unlayered `img { height: auto }` in index.css.
               className="h-10! w-auto shrink-0 sm:h-11!"
             />
           </picture>
         </NavLink>
 
-        {/* Own row under the logo on phones, inline from md up. */}
         <nav aria-label="Điều hướng chính" className="order-last flex w-full items-center gap-6 md:order-none md:w-auto">
           <Link
             to={{ pathname: "/", hash: "#tin-hieu" }}
-            aria-current={!onGuide ? "page" : undefined}
-            className={`${NAV_BASE} ${!onGuide ? NAV_ACTIVE : NAV_IDLE}`}
+            aria-current={onSignals ? "page" : undefined}
+            className={`${NAV_BASE} ${onSignals ? NAV_ACTIVE : NAV_IDLE}`}
           >
             Tín hiệu
           </Link>
+          <NavLink to="/gioi-thieu" className={({ isActive }) => `${NAV_BASE} ${isActive ? NAV_ACTIVE : NAV_IDLE}`}>
+            Giới thiệu
+          </NavLink>
           <NavLink
             to="/huong-dan-mo-tai-khoan"
             className={({ isActive }) => `${NAV_BASE} ${isActive ? NAV_ACTIVE : NAV_IDLE}`}
@@ -52,8 +52,6 @@ export default function Header() {
         </nav>
 
         <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-2 sm:flex-none sm:gap-3">
-          {/* Empty (nothing to show) off the stock pages — collapse it so it
-              doesn't leave a gap. */}
           <div className="min-w-0 flex-1 empty:hidden sm:w-40 sm:flex-none lg:w-52">
             <StockHeaderInfo />
           </div>
@@ -61,11 +59,9 @@ export default function Header() {
             <SearchBox />
           </div>
           <TrendSignalBell />
-          {/* Below sm the bar has no room for it next to the search box; the
-              guide link in the row above leads to the same page. */}
           <NavLink
             to="/huong-dan-mo-tai-khoan"
-            className="hidden min-h-11 shrink-0 items-center whitespace-nowrap rounded-md bg-orange-600 px-5 text-base font-bold text-slate-950 transition-colors duration-200 hover:bg-orange-500 sm:inline-flex"
+            className="hidden min-h-11 shrink-0 items-center whitespace-nowrap rounded-md bg-orange-600 px-5 text-base font-bold text-[#1b1f1a] transition-colors duration-200 hover:bg-orange-500 sm:inline-flex"
           >
             Mở tài khoản
           </NavLink>
