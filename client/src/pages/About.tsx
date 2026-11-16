@@ -6,7 +6,7 @@ import HeroBullCharge from "../components/HeroBullCharge";
 // for an investor, how the signal tool works, opening an account at KAFI, and
 // who is behind it. Dark moss surface throughout; the only motion is the
 // decorative price board behind the hero, a one-time rise-in of the title, and a
-// neon bull charging up the chart on the right of the hero (HeroBullCharge).
+// neon bull charging out of the dark on the right of the hero (HeroBullCharge).
 
 const SYMBOLS = [
   "ACB", "BID", "BSR", "CTG", "FPT", "GAS", "GVR", "HDB", "HPG", "LPB", "MBB", "MCH", "MSN", "MWG",
@@ -172,10 +172,10 @@ export default function About() {
           className="pointer-events-none absolute inset-x-0 bottom-0 h-48"
           style={{ background: "linear-gradient(180deg, rgba(11,17,13,0) 0%, #0b110d 100%)" }}
         />
-        {/* Neon bull charging up the chart, on the right of the message (wide screens) */}
+        {/* Neon bull charging out of the dark, on the right of the message (wide screens) */}
         <div
           className="absolute inset-y-0 right-0 hidden w-[58%] items-center justify-end lg:flex"
-          style={{ background: "radial-gradient(ellipse 46% 52% at 68% 50%, rgba(11,17,13,0.94) 55%, rgba(11,17,13,0) 100%)" }}
+          style={{ background: "radial-gradient(ellipse 50% 58% at 68% 48%, rgba(11,17,13,0.9) 40%, rgba(11,17,13,0) 100%)" }}
         >
           <HeroBullCharge className="pointer-events-auto h-full max-h-[760px] w-auto max-w-full object-contain" />
         </div>

@@ -1,13 +1,13 @@
 import { useEffect, useRef } from "react";
 
-// Hero animation on the Giới thiệu page: a neon bull charges up the candle chart
-// and butts the tallest candle. The clip (the owner's own GIF, smoothed to 30 fps)
+// Hero animation on the Giới thiệu page: a neon bull rises out of the dark and
+// charges forward through green lightning. The clip (the owner's own GIF, smoothed to 30 fps)
 // plays once and holds its last frame; hovering it plays it again. Black in the
 // clip is dropped with mix-blend "screen" so it sits on the dark hero.
 // Reduced motion: only the final frame is shown.
 
 // Soft oval fade so the clip has no visible edge on the hero.
-const MASK = "radial-gradient(ellipse 50% 50% at 50% 50%, #000 70%, transparent 100%)";
+const MASK = "radial-gradient(ellipse 60% 60% at 50% 45%, #000 58%, transparent 100%)";
 
 export default function HeroBullCharge({ className = "" }: { className?: string }) {
   const ref = useRef<HTMLVideoElement>(null);
