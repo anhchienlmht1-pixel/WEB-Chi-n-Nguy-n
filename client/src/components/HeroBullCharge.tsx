@@ -27,7 +27,21 @@ export default function HeroBullCharge({ className = "" }: { className?: string 
   };
 
   // Ease-in-out like the bull: slow start, fast charge, soft landing.
-  const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+  // The bull only moves while it actually leaps in the clip (about 50%–88% of
+  // it): before that it rises out of the dark in place, so it never skates.
+  // It covers a short diagonal — up and to the right — and lands softly.
+  const LEAP_FROM = 0.5;
+  const LEAP_TO = 0.88;
+  const SHORT = 0.32; // share of the full left→right distance covered by the leap
+  const RISE = 70; // px it climbs during the leap
+  const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+  const pose = (p: number) => {
+    const full = travel();
+    const k = easeOut(Math.min(1, Math.max(0, (p - LEAP_FROM) / (LEAP_TO - LEAP_FROM))));
+    const x = full * (1 - SHORT) + full * SHORT * k;
+    const y = RISE * (1 - k);
+    return `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0)`;
+  };
 
   // The travel is driven by the clip's own clock, so the bull's position always
   // matches the frame on screen, even if the video stalls while loading.
@@ -37,7 +51,7 @@ export default function HeroBullCharge({ className = "" }: { className?: string 
     if (!b || !v) return;
     const d = Number.isFinite(v.duration) && v.duration > 0 ? v.duration : 1;
     const p = Math.min(1, v.currentTime / d);
-    b.style.transform = `translate3d(${(travel() * ease(p)).toFixed(1)}px,0,0)`;
+    b.style.transform = pose(p);
     if (!v.paused && !v.ended) raf.current = requestAnimationFrame(follow);
   };
 
@@ -48,11 +62,11 @@ export default function HeroBullCharge({ className = "" }: { className?: string 
     cancelAnimationFrame(raf.current);
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       if (v.readyState >= 1) v.currentTime = v.duration || 0;
-      b.style.transform = `translate3d(${travel()}px,0,0)`;
+      b.style.transform = pose(1);
       return;
     }
     v.currentTime = 0;
-    b.style.transform = "translate3d(0,0,0)";
+    b.style.transform = pose(0);
     v.play()
       .then(() => {
         raf.current = requestAnimationFrame(follow);

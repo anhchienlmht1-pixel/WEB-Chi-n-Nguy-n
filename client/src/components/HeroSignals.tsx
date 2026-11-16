@@ -62,9 +62,10 @@ export default function HeroSignals() {
   const { data: journal } = usePolling(() => fetchTradeJournal(), [], POLL_MS);
 
   const session = scan?.sessionDate ?? "";
-  const holding = scan?.items ?? [];
+  const holding = Array.isArray(scan?.items) ? scan.items : [];
   const buys = session ? holding.filter((h) => day(h.buyDate) === session) : [];
-  const exits = session && journal ? journal.closed.filter((t) => day(t.sellDate) === session) : [];
+  const closedAll = Array.isArray(journal?.closed) ? journal.closed : [];
+  const exits = session ? closedAll.filter((t) => day(t.sellDate) === session) : [];
 
   let rows: Row[] = [
     ...buys.map((h) => ({
@@ -100,7 +101,7 @@ export default function HeroSignals() {
       }));
   }
 
-  const closed = journal?.closed ?? [];
+  const closed = closedAll;
   const n = closed.length;
   const wins = closed.filter((t) => t.returnPercent > 0);
   const losses = closed.filter((t) => t.returnPercent < 0);
@@ -112,7 +113,7 @@ export default function HeroSignals() {
         Điểm mua, điểm bán theo xu hướng · cập nhật mỗi phiên sau 15:00 · lệnh nào cũng ghi lại, thắng hay thua.
       </p>
 
-      {!scan ? (
+      {!scan || !session ? (
         <div aria-busy="true" className="space-y-3">
           <div className="h-4 w-56 animate-pulse rounded bg-[rgba(255,255,255,0.06)]" />
           <div className="h-14 w-80 animate-pulse rounded bg-[rgba(255,255,255,0.06)]" />
@@ -152,7 +153,7 @@ export default function HeroSignals() {
             </ul>
           )}
 
-          {journal && (
+          {journal?.startDate && (
             <p className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-[0.95rem] text-[#a9b8a0]">
               {n === 0 ? (
                 <span>Nhật ký lệnh thật bắt đầu từ {dmy(journal.startDate)}, chưa có lệnh nào đóng.</span>
