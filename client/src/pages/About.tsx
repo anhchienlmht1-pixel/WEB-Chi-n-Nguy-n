@@ -179,7 +179,7 @@ export default function About() {
           <div className="pointer-events-auto max-w-[580px]">
             <HeroSignals />
 
-            <div className="mt-8 flex flex-wrap items-center gap-3">
+            <div className="mt-6 flex flex-wrap items-center gap-3">
               <Link to="/huong-dan-mo-tai-khoan" className={BTN_ORANGE}>
                 Mở tài khoản
               </Link>

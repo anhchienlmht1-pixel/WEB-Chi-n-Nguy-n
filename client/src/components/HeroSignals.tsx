@@ -1,16 +1,18 @@
 import { Link } from "react-router-dom";
 import { usePolling } from "../hooks/usePolling";
-import { fetchTrendBuyResult, fetchTradeJournal } from "../api/client";
+import { fetchHistory, fetchTrendBuyResult, fetchTradeJournal } from "../api/client";
 import { formatPrice } from "../utils/format";
 
-// Opening block of the Giới thiệu page: what the last closed session changed in
-// the signal list (new buys, exits) and the system's real track record, so a
-// visitor sees in a few seconds what the site is for. Data: the same scan and
-// forward-only trade journal as the signal list on the home page.
+// Opening block of the Giới thiệu page: "Hôm nay mua gì, bán gì." and one card
+// with what the last closed session changed in the signal list — new buys,
+// exits, how many are held — plus the system's real track record. Data: the
+// same scan and forward-only trade journal as the signal list on the home page.
 
 const POLL_MS = 5 * 60 * 1000;
-const LINE = "border-[rgba(213,223,204,0.16)]";
+const LINE = "border-[rgba(213,223,204,0.14)]";
 const WEEKDAY = ["Chủ nhật", "thứ Hai", "thứ Ba", "thứ Tư", "thứ Năm", "thứ Sáu", "thứ Bảy"];
+const UP = "#3fd07a";
+const DOWN = "#ff5c5c";
 
 const day = (iso: string) => iso.slice(0, 10);
 function dmy(iso: string): string {
@@ -30,30 +32,84 @@ function pct(n: number, digits = 1, sign = true): string {
   const s = Math.abs(n).toLocaleString("vi-VN", { minimumFractionDigits: digits, maximumFractionDigits: digits });
   return `${n < 0 ? "−" : sign && n > 0 ? "+" : ""}${s}%`;
 }
-const tone = (n: number) => (n > 0 ? "text-[#3fd07a]" : n < 0 ? "text-[#ff5c5c]" : "text-[#d5dfcc]");
+const toneHex = (n: number) => (n > 0 ? UP : n < 0 ? DOWN : "#d5dfcc");
 
-type Row = { key: string; kind: "MUA" | "BÁN" | "GIỮ"; symbol: string; note: string; value: string; valueCls: string };
+// Small closing-price line for the last month; nothing is drawn until it loads.
+function Spark({ symbol, color }: { symbol: string; color: string }) {
+  const { data } = usePolling(() => fetchHistory(symbol, "1M"), [symbol]);
+  const pts = (data?.points ?? []).map((p) => p.close).filter((v) => Number.isFinite(v));
+  if (pts.length < 2) return <span className="block h-6 w-20" aria-hidden="true" />;
+  const mn = Math.min(...pts);
+  const mx = Math.max(...pts);
+  const xy = pts
+    .map((v, i) => `${((i / (pts.length - 1)) * 80).toFixed(1)},${(23 - ((v - mn) / (mx - mn || 1)) * 22).toFixed(1)}`)
+    .join(" ");
+  return (
+    <svg width="80" height="24" viewBox="0 0 80 24" aria-hidden="true" className="block">
+      <polyline points={xy} fill="none" stroke={color} strokeWidth="1.6" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+type Row = {
+  key: string;
+  kind: "MUA" | "BÁN" | "GIỮ";
+  symbol: string;
+  note: string;
+  value: string;
+  color: string;
+};
 
 function SignalRow({ r }: { r: Row }) {
   const badge =
     r.kind === "MUA"
-      ? "bg-[rgba(63,208,122,0.16)] text-[#3fd07a]"
+      ? "bg-[rgba(63,208,122,0.14)] text-[#3fd07a]"
       : r.kind === "BÁN"
-        ? "bg-[rgba(255,92,92,0.14)] text-[#ff5c5c]"
+        ? "bg-[rgba(255,92,92,0.13)] text-[#ff5c5c]"
         : "bg-[rgba(185,203,169,0.12)] text-[#b9cba9]";
   return (
-    <li className={`border-b last:border-b-0 ${LINE}`}>
+    <li className={`border-t ${LINE}`}>
       <Link
         to={`/stock/${r.symbol}`}
-        className="fx-row grid min-h-12 grid-cols-[3.25rem_minmax(0,1fr)_auto] items-center gap-3 px-3 py-2 transition-colors duration-200 hover:bg-[rgba(127,214,168,0.06)]"
+        className="fx-row grid min-h-14 grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-3.5 px-4 py-2.5 transition-colors duration-200 hover:bg-[rgba(127,214,168,0.06)] sm:grid-cols-[3rem_minmax(0,1fr)_5rem_5rem] sm:px-[18px]"
       >
-        <span className={`inline-flex h-6.5 items-center justify-center rounded text-xs font-bold ${badge}`}>{r.kind}</span>
-        <span className="min-w-0 truncate">
-          <b className="text-lg text-[#fff]">{r.symbol}</b> <span className="text-sm text-[#8fa882]">{r.note}</span>
+        <span className={`inline-flex h-6 items-center justify-center rounded text-[11px] font-bold tracking-[0.04em] ${badge}`}>
+          {r.kind}
         </span>
-        <b className={`text-lg tabular-nums ${r.valueCls}`}>{r.value}</b>
+        <span className="min-w-0">
+          <b className="block text-lg leading-tight text-[#fff]">{r.symbol}</b>
+          <span className="block truncate text-[0.8rem] text-[#8fa882]">{r.note}</span>
+        </span>
+        <span className="hidden sm:block">
+          <Spark symbol={r.symbol} color={r.color} />
+        </span>
+        <b className="text-right text-lg tabular-nums" style={{ color: r.color }}>
+          {r.value}
+        </b>
       </Link>
     </li>
+  );
+}
+
+function Stat({ n, label, color = "#fff" }: { n: number; label: string; color?: string }) {
+  return (
+    <div className={`flex-1 border-l px-4 py-3.5 first:border-l-0 sm:px-[18px] ${LINE}`}>
+      <b className="block text-[1.9rem] leading-none tabular-nums" style={{ color }}>
+        {n}
+      </b>
+      <span className="mt-1.5 block text-[0.8rem] text-[#8fa882]">{label}</span>
+    </div>
+  );
+}
+
+function Perf({ label, value, color = "#fff" }: { label: string; value: string; color?: string }) {
+  return (
+    <div className={`basis-1/2 border-l px-4 py-3 odd:border-l-0 sm:basis-0 sm:flex-1 sm:odd:border-l sm:first:border-l-0 sm:px-[18px] ${LINE}`}>
+      <span className="block text-xs text-[#8fa882]">{label}</span>
+      <b className="mt-0.5 block text-[1.05rem] tabular-nums" style={{ color }}>
+        {value}
+      </b>
+    </div>
   );
 }
 
@@ -63,8 +119,8 @@ export default function HeroSignals() {
 
   const session = scan?.sessionDate ?? "";
   const holding = Array.isArray(scan?.items) ? scan.items : [];
-  const buys = session ? holding.filter((h) => day(h.buyDate) === session) : [];
   const closedAll = Array.isArray(journal?.closed) ? journal.closed : [];
+  const buys = session ? holding.filter((h) => day(h.buyDate) === session) : [];
   const exits = session ? closedAll.filter((t) => day(t.sellDate) === session) : [];
 
   let rows: Row[] = [
@@ -72,22 +128,21 @@ export default function HeroSignals() {
       key: "b" + h.symbol,
       kind: "MUA" as const,
       symbol: h.symbol,
-      note: `vào ${dm(h.buyDate)}`,
+      note: `Vào lệnh ${dm(h.buyDate)} · giá đóng cửa`,
       value: formatPrice(h.buyPrice, h.currency),
-      valueCls: "text-[#3fd07a]",
+      color: UP,
     })),
     ...exits.map((t) => ({
       key: "s" + t.symbol + t.sellDate,
       kind: "BÁN" as const,
       symbol: t.symbol,
-      note: `giữ ${t.holdingDays} ngày`,
+      note: `Giữ ${t.holdingDays} ngày · thoát ${dm(t.sellDate)}`,
       value: pct(t.returnPercent),
-      valueCls: tone(t.returnPercent),
+      color: toneHex(t.returnPercent),
     })),
   ];
-  // Quiet session: show what the system is holding instead of an empty box.
-  const quiet = rows.length === 0;
-  if (quiet) {
+  // Quiet session: show what the system is holding instead of an empty list.
+  if (rows.length === 0) {
     rows = [...holding]
       .sort((a, b) => b.signalReturnPercent - a.signalReturnPercent)
       .slice(0, 4)
@@ -95,92 +150,79 @@ export default function HeroSignals() {
         key: "h" + h.symbol,
         kind: "GIỮ" as const,
         symbol: h.symbol,
-        note: `từ ${dm(h.buyDate)}`,
+        note: `Giữ từ ${dm(h.buyDate)}`,
         value: pct(h.signalReturnPercent),
-        valueCls: tone(h.signalReturnPercent),
+        color: toneHex(h.signalReturnPercent),
       }));
   }
 
-  const closed = closedAll;
-  const n = closed.length;
-  const wins = closed.filter((t) => t.returnPercent > 0);
-  const losses = closed.filter((t) => t.returnPercent < 0);
-  const avg = (xs: typeof closed) => (xs.length ? xs.reduce((a, t) => a + t.returnPercent, 0) / xs.length : 0);
+  const n = closedAll.length;
+  const wins = closedAll.filter((t) => t.returnPercent > 0);
+  const losses = closedAll.filter((t) => t.returnPercent < 0);
+  const avg = (xs: typeof closedAll) => (xs.length ? xs.reduce((a, t) => a + t.returnPercent, 0) / xs.length : 0);
 
   return (
     <div>
-      <p className="mb-4 text-[1.0625rem] font-bold leading-snug text-[#b9cba9]">
-        Điểm mua, điểm bán theo xu hướng · cập nhật mỗi phiên sau 15:00 · lệnh nào cũng ghi lại, thắng hay thua.
+      <p className="text-[0.95rem] font-bold uppercase tracking-[0.06em] text-[#b9cba9]">Tín hiệu theo xu hướng</p>
+      <h1 className="dt-rise mt-2.5 text-[clamp(2.6rem,5.6vw,3.4rem)] font-bold leading-[1.08] tracking-[-0.015em] text-[#fff]!">
+        Hôm nay mua gì,
+        <br />
+        <span className="text-[#b9cba9]">bán gì.</span>
+      </h1>
+      <p className="mt-3.5 max-w-[560px] text-lg leading-normal text-[#d5dfcc]">
+        Mỗi phiên sau 15:00, hệ thống chốt danh sách mã vào và ra. Lệnh nào cũng ghi lại, thắng hay thua.
       </p>
 
-      {!scan || !session ? (
-        <div aria-busy="true" className="space-y-3">
-          <div className="h-4 w-56 animate-pulse rounded bg-[rgba(255,255,255,0.06)]" />
-          <div className="h-14 w-80 animate-pulse rounded bg-[rgba(255,255,255,0.06)]" />
-          <div className="h-14 w-72 animate-pulse rounded bg-[rgba(255,255,255,0.06)]" />
-        </div>
-      ) : (
-        <>
-          <p className="flex items-center gap-2 font-mono text-sm text-[#8fa882]">
-            <span aria-hidden="true" className="hero-pulse inline-block h-2 w-2 rounded-full bg-[#3fd07a]" />
-            Chốt phiên {weekday(session)} {dmy(session)}
-          </p>
-          <h1 className="dt-rise mt-2 text-[clamp(2.6rem,6vw,3.9rem)] font-bold leading-[1.08] tracking-[-0.01em] text-[#fff]!">
-            {quiet ? (
-              <>
-                Không có lệnh mới
-                <br />
-                <span className="text-[#b9cba9]">đang giữ {holding.length} mã</span>
-              </>
-            ) : (
-              <>
-                {buys.length} mã mới vào
-                <br />
-                <span className="text-[#b9cba9]">{exits.length} mã thoát lệnh</span>
-              </>
+      <section
+        aria-label="Tín hiệu phiên gần nhất"
+        className="mt-6 max-w-[600px] overflow-hidden rounded-xl border border-[rgba(213,223,204,0.18)] bg-[rgba(14,21,15,0.9)] shadow-[0_24px_60px_-30px_rgba(0,0,0,0.8)]"
+      >
+        {!scan || !session ? (
+          <div aria-busy="true" className="space-y-3 p-5">
+            <div className="h-4 w-48 animate-pulse rounded bg-[rgba(255,255,255,0.06)]" />
+            <div className="h-10 w-full animate-pulse rounded bg-[rgba(255,255,255,0.06)]" />
+            <div className="h-10 w-full animate-pulse rounded bg-[rgba(255,255,255,0.06)]" />
+          </div>
+        ) : (
+          <>
+            <header className={`flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b px-4 py-3 sm:px-[18px] ${LINE}`}>
+              <span className="flex items-center gap-2 text-sm font-bold text-[#fff]">
+                <span aria-hidden="true" className="hero-pulse inline-block h-2 w-2 rounded-full bg-[#3fd07a]" />
+                Chốt phiên {weekday(session)} {dmy(session)}
+              </span>
+              <span className="text-[0.8rem] text-[#8fa882]">Phiên tới: cập nhật sau 15:00</span>
+            </header>
+            <div className="flex">
+              <Stat n={buys.length} label="Mã mua mới" color={buys.length ? UP : "#fff"} />
+              <Stat n={exits.length} label="Mã thoát lệnh" />
+              <Stat n={holding.length} label="Đang giữ" />
+            </div>
+            {rows.length > 0 && (
+              <ul>
+                {rows.map((r) => (
+                  <SignalRow key={r.key} r={r} />
+                ))}
+              </ul>
             )}
-          </h1>
-          <p className="mt-3 text-lg leading-snug text-[#d5dfcc]">
-            Hệ thống đang giữ <b className="text-[#fff]">{holding.length} mã</b> · tín hiệu mới sau{" "}
-            <b className="text-[#fff]">15:00</b>.
-          </p>
-
-          {rows.length > 0 && (
-            <ul className={`mt-5 overflow-hidden rounded-[10px] border ${LINE} bg-[rgba(18,26,17,0.85)]`}>
-              {rows.map((r) => (
-                <SignalRow key={r.key} r={r} />
-              ))}
-            </ul>
-          )}
-
-          {journal?.startDate && (
-            <p className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-[0.95rem] text-[#a9b8a0]">
-              {n === 0 ? (
-                <span>Nhật ký lệnh thật bắt đầu từ {dmy(journal.startDate)}, chưa có lệnh nào đóng.</span>
-              ) : (
-                <>
-                  <span>
-                    Lệnh thật từ {dm(journal.startDate)}: <b className="text-[#fff]">{n} lệnh</b>
-                  </span>
-                  <span>
-                    Thắng <b className="text-[#fff]">{pct((wins.length / n) * 100, 0, false)}</b>
-                  </span>
-                  {wins.length > 0 && (
-                    <span>
-                      Thắng TB <b className="text-[#3fd07a]">{pct(avg(wins))}</b>
-                    </span>
-                  )}
-                  {losses.length > 0 && (
-                    <span>
-                      Thua TB <b className="text-[#ff5c5c]">{pct(avg(losses))}</b>
-                    </span>
-                  )}
-                </>
-              )}
-            </p>
-          )}
-        </>
-      )}
+            {journal?.startDate && (
+              <div className={`flex flex-wrap border-t bg-[rgba(255,255,255,0.02)] ${LINE}`}>
+                {n === 0 ? (
+                  <p className="px-4 py-3 text-sm text-[#a9b8a0] sm:px-[18px]">
+                    Nhật ký lệnh thật bắt đầu từ {dmy(journal.startDate)}, chưa có lệnh nào đóng.
+                  </p>
+                ) : (
+                  <>
+                    <Perf label={`Lệnh thật từ ${dm(journal.startDate)}`} value={`${n} lệnh`} />
+                    <Perf label="Tỷ lệ thắng" value={pct((wins.length / n) * 100, 0, false)} />
+                    <Perf label="Thắng trung bình" value={wins.length ? pct(avg(wins)) : "—"} color={UP} />
+                    <Perf label="Thua trung bình" value={losses.length ? pct(avg(losses)) : "—"} color={DOWN} />
+                  </>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </section>
     </div>
   );
 }
