@@ -173,8 +173,8 @@ export default function About() {
           className="pointer-events-none absolute inset-x-0 bottom-0 h-48"
           style={{ background: "linear-gradient(180deg, rgba(11,17,13,0) 0%, #0b110d 100%)" }}
         />
-        {/* Neon bull: rises from the bottom-left corner and charges up to the right (wide screens) */}
-        <HeroBullCharge className="pointer-events-auto absolute bottom-0 left-0 hidden aspect-square h-full lg:block" />
+        {/* Neon bull: runs once on the right when the page opens, then fades away (wide screens) */}
+        <HeroBullCharge className="absolute bottom-0 left-0 hidden aspect-square h-full lg:block" />
         <div className="gutter-x pointer-events-none relative z-[1] mx-auto max-w-[1280px] pb-20 pt-16 sm:pt-20">
           <div className="pointer-events-auto max-w-[580px]">
             <HeroSignals />

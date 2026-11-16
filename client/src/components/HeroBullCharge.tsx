@@ -1,13 +1,11 @@
 import { useEffect, useRef } from "react";
 
-// Hero animation on the Giới thiệu page: a neon bull rises out of the dark in the
-// bottom-left corner of the hero and charges up and across to the right side.
-// The clip (the owner's own GIF, smoothed to 30 fps) starts with the bull in its
-// own bottom-left corner; while it plays, the whole clip travels from the left
-// edge of the hero to the right, so the bull crosses the hero. It plays once and
-// holds the last frame on the right; hovering the bull plays it again.
-// Black in the clip is dropped with mix-blend "screen" so it sits on the dark hero.
-// Reduced motion: the final frame is shown on the right, no movement.
+// Hero animation on the Giới thiệu page: a neon bull rises out of the dark on the
+// right of the hero, leaps a short way up and to the right, then fades away —
+// it plays once when the page opens and leaves nothing behind.
+// The clip is the owner's own GIF, smoothed to 30 fps. Black in the clip is
+// dropped with mix-blend "screen" so it sits on the dark hero.
+// Reduced motion: nothing is shown.
 
 // Soft edges on all four sides (wider on top and right) so the clip has no visible box.
 const MASK =
@@ -26,7 +24,6 @@ export default function HeroBullCharge({ className = "" }: { className?: string 
     return Math.max(0, parent.clientWidth - b.offsetWidth - 24);
   };
 
-  // Ease-in-out like the bull: slow start, fast charge, soft landing.
   // The bull only moves while it actually leaps in the clip (about 50%–88% of
   // it): before that it rises out of the dark in place, so it never skates.
   // It covers a short diagonal — up and to the right — and lands softly.
@@ -60,13 +57,10 @@ export default function HeroBullCharge({ className = "" }: { className?: string 
     const v = vid.current;
     if (!b || !v) return;
     cancelAnimationFrame(raf.current);
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      if (v.readyState >= 1) v.currentTime = v.duration || 0;
-      b.style.transform = pose(1);
-      return;
-    }
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     v.currentTime = 0;
     b.style.transform = pose(0);
+    b.style.opacity = "1";
     v.play()
       .then(() => {
         raf.current = requestAnimationFrame(follow);
@@ -81,15 +75,8 @@ export default function HeroBullCharge({ className = "" }: { className?: string 
     // Wait until the whole clip can play without stopping.
     if (v.readyState >= 4) start();
     else v.addEventListener("canplaythrough", start, { once: true });
-    // Keep the resting position on the right when the window is resized.
-    const onResize = () => {
-      if (!v.ended && !v.paused) return;
-      follow();
-    };
-    window.addEventListener("resize", onResize);
     return () => {
       v.removeEventListener("canplaythrough", start);
-      window.removeEventListener("resize", onResize);
       cancelAnimationFrame(raf.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -105,12 +92,19 @@ export default function HeroBullCharge({ className = "" }: { className?: string 
         muted
         playsInline
         preload="auto"
-        onMouseEnter={() => {
-          if (vid.current?.ended) run();
+        // Once the run is over, fade the bull out and leave the hero clean.
+        onEnded={(e) => {
+          e.currentTarget.style.opacity = "0";
         }}
-        onEnded={() => follow()}
-        className={`pointer-events-auto mix-blend-screen will-change-transform ${className}`}
-        style={{ WebkitMaskImage: MASK, maskImage: MASK, WebkitMaskComposite: "source-in", maskComposite: "intersect" }}
+        className={`pointer-events-none mix-blend-screen will-change-transform ${className}`}
+        style={{
+          opacity: 0,
+          transition: "opacity 0.9s ease",
+          WebkitMaskImage: MASK,
+          maskImage: MASK,
+          WebkitMaskComposite: "source-in",
+          maskComposite: "intersect",
+        }}
       >
         <source src="/hero/bull-charge.webm" type="video/webm" />
         <source src="/hero/bull-charge.mp4" type="video/mp4" />
