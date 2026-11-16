@@ -1,8 +1,8 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Clock, RefreshCw, Star, Search } from "lucide-react";
 import { usePolling } from "../hooks/usePolling";
-import { fetchTrendBuyResult } from "../api/client";
+import { fetchTrendBuyResult, fetchTradeJournal, type JournalClosedTrade } from "../api/client";
 import { formatPercent, formatPrice } from "../utils/format";
 import { formatSessionDate, isMarketInSession } from "../utils/sessionClose";
 import { useWatchlist } from "../hooks/useWatchlist";
@@ -50,12 +50,14 @@ function Panel({
   fill,
   badge,
   action,
+  tabs,
 }: {
   children: ReactNode;
   subtitle?: ReactNode;
   fill?: boolean;
   badge?: ReactNode;
   action?: ReactNode;
+  tabs?: ReactNode;
 }) {
   return (
     <div className={`${SHELL} ${fill ? "flex h-full flex-col" : ""}`}>
@@ -63,6 +65,7 @@ function Panel({
         <h3 className={`${TITLE} whitespace-nowrap`}>Tín hiệu lệnh</h3>
         {badge}
       </div>
+      {tabs}
       <div className="flex shrink-0 items-baseline justify-between gap-3 px-4 py-2 sm:px-5">
         <p className="min-w-0 text-sm leading-normal text-slate-500">
           {subtitle ?? "Mã đang tăng, chưa có điểm bán."}
@@ -97,6 +100,10 @@ export default function TrendSignalScanner({
   const hits = result?.items ?? null;
   const sessionDate = result?.sessionDate ?? null;
   const { addMany } = useWatchlist();
+  // "Nhật ký": trades the system closed, from the forward-only journal kept
+  // on the server (see server/src/signals/tradeJournal.ts).
+  const { data: journal } = usePolling(() => fetchTradeJournal(), [], POLL_MS);
+  const [tab, setTab] = useState<"open" | "closed">("open");
 
   // First load — the server scans ~200 symbols, so tell the user it's working
   // instead of leaving a bare spinner that reads as "broken".
@@ -165,15 +172,43 @@ export default function TrendSignalScanner({
     </>
   );
 
+  const closed: JournalClosedTrade[] = (journal?.closed ?? [])
+    .slice()
+    .sort((a, b) => b.sellDate.localeCompare(a.sellDate));
+  const wins = closed.filter((t) => t.returnPercent > 0).length;
+  const losses = closed.filter((t) => t.returnPercent < 0).length;
+  const tabClass = (on: boolean) =>
+    `-mb-px inline-flex min-h-11 items-center gap-1.5 border-b-2 text-base font-bold transition-colors duration-200 ${
+      on ? "border-brand-700 text-slate-950" : "border-transparent text-slate-500 hover:text-slate-800"
+    }`;
+  const tabs = (
+    <div role="tablist" aria-label="Danh sách lệnh" className="flex shrink-0 gap-6 border-b border-slate-200 px-4 sm:px-5">
+      <button type="button" role="tab" aria-selected={tab === "open"} onClick={() => setTab("open")} className={tabClass(tab === "open")}>
+        Đang giữ <span className="text-sm font-normal text-slate-500">{hits.length}</span>
+      </button>
+      <button type="button" role="tab" aria-selected={tab === "closed"} onClick={() => setTab("closed")} className={tabClass(tab === "closed")}>
+        Đã đóng <span className="text-sm font-normal text-slate-500">{closed.length}</span>
+      </button>
+    </div>
+  );
+  const closedSubtitle = journal ? (
+    <span>
+      Ghi thật từ {formatSince(journal.startDate)}/{journal.startDate.slice(0, 4)}: {closed.length} lệnh đã đóng · {wins} thắng · {losses} thua
+    </span>
+  ) : (
+    "Đang tải nhật ký lệnh…"
+  );
+
   return (
     <Panel
       fill={fill}
-      subtitle={subtitle}
+      tabs={tabs}
+      subtitle={tab === "open" ? subtitle : closedSubtitle}
       badge={
         <span className="whitespace-nowrap text-base font-bold text-slate-900">{hits.length} mã</span>
       }
       action={
-        hits.length > 0 ? (
+        tab === "open" && hits.length > 0 ? (
           <button
             type="button"
             onClick={() => addMany(hits.map((h) => h.symbol))}
@@ -186,7 +221,9 @@ export default function TrendSignalScanner({
         ) : undefined
       }
     >
-      {hits.length === 0 ? (
+      {tab === "closed" ? (
+        <ClosedList trades={closed} fill={fill} onSelectSymbol={onSelectSymbol} />
+      ) : hits.length === 0 ? (
         <div className="flex flex-col items-center gap-2 p-6 text-center">
           <Search className="h-6 w-6 text-brand-700" strokeWidth={1.75} aria-hidden="true" />
           <p className="text-base font-bold text-slate-900">Chưa có mã nào đang có tín hiệu mua</p>
@@ -261,5 +298,77 @@ export default function TrendSignalScanner({
         </div>
       )}
     </Panel>
+  );
+}
+
+// "Đã đóng": the journal's closed trades, newest exit first — buy date →
+// sell date, days held and the realised result, so the list doubles as a
+// trading diary. Clicking a row shows that stock on the chart.
+const CLOSED_COLS = "grid-cols-[minmax(0,1fr)_7.5rem_4.75rem]";
+
+function ClosedList({
+  trades,
+  fill,
+  onSelectSymbol,
+}: {
+  trades: JournalClosedTrade[];
+  fill: boolean;
+  onSelectSymbol?: (symbol: string) => void;
+}) {
+  if (trades.length === 0) {
+    return (
+      <div className="flex flex-col items-center gap-2 p-6 text-center">
+        <p className="text-base font-bold text-slate-900">Chưa có lệnh nào đóng</p>
+        <p className="max-w-xs text-sm leading-normal text-slate-600">
+          Khi một mã rời danh sách (xu hướng gãy), lệnh đó sẽ được ghi lại ở đây kèm ngày bán và lãi/lỗ.
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div className={`overflow-y-auto ${fill ? "min-h-0 flex-1" : "max-h-[28rem]"}`}>
+      <div className={`sticky top-0 z-20 grid gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2 text-sm font-bold text-slate-600 sm:px-5 ${CLOSED_COLS}`}>
+        <span>Mã</span>
+        <span>Mua → Bán</span>
+        <span className="text-right">Lãi/lỗ</span>
+      </div>
+      {trades.map((t) => {
+        const cls = t.returnPercent > 0 ? "up" : t.returnPercent < 0 ? "down" : "flat";
+        const title = `${t.symbol}: mua ${formatSince(t.buyDate)} giá ${formatPrice(t.buyPrice, t.currency)}, bán ${formatSince(t.sellDate)} giá ${formatPrice(t.sellPrice, t.currency)}`;
+        const cells = (
+          <>
+            <span className="flex min-w-0 items-center gap-3">
+              <span className="hidden shrink-0 sm:inline-flex">
+                <CompanyLogo symbol={t.symbol} size={32} fallback="space" />
+              </span>
+              <span className="flex min-w-0 flex-col">
+                <span className="truncate text-lg font-bold leading-tight text-slate-900">{t.symbol}</span>
+                <span className="truncate text-sm leading-tight text-slate-500">{t.exchange}</span>
+              </span>
+            </span>
+            <span className="flex flex-col text-slate-900">
+              <span className="whitespace-nowrap text-base leading-tight tabular-nums">
+                {formatSince(t.buyDate)} → {formatSince(t.sellDate)}
+              </span>
+              <span className="text-sm leading-tight text-slate-600">Giữ {t.holdingDays} ngày</span>
+            </span>
+            <span className={`justify-self-end whitespace-nowrap text-base font-bold tabular-nums ${cls}`}>
+              {formatPct(t.returnPercent)}
+            </span>
+          </>
+        );
+        const rowClass = `grid min-h-15 w-full items-center gap-2 border-b border-slate-100 px-4 py-2 text-left transition-colors duration-200 hover:bg-slate-50 sm:px-5 ${CLOSED_COLS}`;
+        const key = `${t.symbol}-${t.sellDate}`;
+        return onSelectSymbol ? (
+          <button key={key} type="button" title={title} onClick={() => onSelectSymbol(t.symbol)} className={rowClass}>
+            {cells}
+          </button>
+        ) : (
+          <Link key={key} to={`/stock/${t.symbol}`} title={title} className={rowClass}>
+            {cells}
+          </Link>
+        );
+      })}
+    </div>
   );
 }
