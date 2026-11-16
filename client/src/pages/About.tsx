@@ -147,9 +147,9 @@ const FEATURES: { icon: keyof typeof ICONS; title: string; text: string; href?: 
 
 const LINE = "border-b border-[rgba(185,203,169,0.14)] py-2.5 text-base leading-normal text-[#d5dfcc]";
 const BTN_ORANGE =
-  "inline-flex min-h-12 items-center justify-center rounded-lg bg-orange-600 px-6 text-base font-bold text-[#1b1f1a] transition-colors duration-200 hover:bg-orange-500";
+  "fx-btn inline-flex min-h-12 items-center justify-center rounded-lg bg-orange-600 px-6 text-base font-bold text-[#1b1f1a] transition-colors duration-200 hover:bg-orange-500";
 const BTN_GHOST =
-  "inline-flex min-h-12 items-center justify-center rounded-lg border border-[rgba(213,223,204,0.35)] bg-[rgba(255,255,255,0.05)] px-5 text-base font-bold text-[#fff] transition-colors duration-200 hover:bg-[rgba(255,255,255,0.1)]";
+  "fx-btn fx-btn-ghost inline-flex min-h-12 items-center justify-center rounded-lg border border-[rgba(213,223,204,0.35)] bg-[rgba(255,255,255,0.05)] px-5 text-base font-bold text-[#fff] transition-colors duration-200 hover:bg-[rgba(255,255,255,0.1)]";
 
 export default function About() {
   return (
@@ -236,9 +236,9 @@ export default function About() {
                   <p className="mt-1.5 text-base leading-normal text-[#b8c4ae]">{f.text}</p>
                 </>
               );
-              const cls = "min-w-0 flex-[1_1_220px] border-l border-[rgba(185,203,169,0.18)] px-6 pb-6 pt-6";
+              const cls = "fx-feature min-w-0 flex-[1_1_220px] border-l border-[rgba(185,203,169,0.18)] px-6 pb-6 pt-6";
               return f.href ? (
-                <a key={f.title} href={f.href} target="_blank" rel="noopener noreferrer" className={`${cls} hover:bg-[rgba(255,255,255,0.03)]`}>
+                <a key={f.title} href={f.href} target="_blank" rel="noopener noreferrer" className={cls}>
                   {body}
                 </a>
               ) : (
@@ -282,7 +282,7 @@ export default function About() {
               </p>
             </div>
 
-            <div className="min-w-0 flex-[1_1_380px] rounded-lg border border-[rgba(185,203,169,0.22)] bg-[#121a11] p-7">
+            <div className="fx-card min-w-0 flex-[1_1_380px] rounded-lg border border-[rgba(185,203,169,0.22)] bg-[#121a11] p-7">
               <div className="flex items-center gap-3.5">
                 <img src="/kafi-logo.png" alt="Logo KAFI" className="block h-11! w-11 rounded-[10px]" />
                 <h3 className="text-[1.4rem] font-bold text-[#fff]">Mở tài khoản tại KAFI</h3>
@@ -314,13 +314,13 @@ export default function About() {
             Đầu tư theo xu hướng, đặt quản trị rủi ro lên hàng đầu: đi theo con sóng lớn, sai thì cắt sớm.
           </p>
           <div className="mt-6 max-w-2xl border-t border-[rgba(185,203,169,0.14)]">
-            <div className="flex flex-wrap gap-x-6 gap-y-1 border-b border-[rgba(185,203,169,0.14)] py-3">
+            <div className="fx-row flex flex-wrap gap-x-6 gap-y-1 border-b border-[rgba(185,203,169,0.14)] py-3 pl-3 transition-colors duration-200 hover:bg-[rgba(127,214,168,0.05)]">
               <span className="flex-[0_0_200px] text-[0.95rem] text-[#8fa882]">Điện thoại, Zalo</span>
               <a href="tel:0886284212" className="flex-[1_1_200px] text-[1.0625rem] font-bold text-[#fff]">
                 0886.284.212
               </a>
             </div>
-            <div className="flex flex-wrap gap-x-6 gap-y-1 border-b border-[rgba(185,203,169,0.14)] py-3">
+            <div className="fx-row flex flex-wrap gap-x-6 gap-y-1 border-b border-[rgba(185,203,169,0.14)] py-3 pl-3 transition-colors duration-200 hover:bg-[rgba(127,214,168,0.05)]">
               <span className="flex-[0_0_200px] text-[0.95rem] text-[#8fa882]">YouTube</span>
               <a
                 href="https://www.youtube.com/@chiennguyen.taichinh"
@@ -331,7 +331,7 @@ export default function About() {
                 Chiến Nguyễn Tài Chính
               </a>
             </div>
-            <div className="flex flex-wrap gap-x-6 gap-y-1 border-b border-[rgba(185,203,169,0.14)] py-3">
+            <div className="fx-row flex flex-wrap gap-x-6 gap-y-1 border-b border-[rgba(185,203,169,0.14)] py-3 pl-3 transition-colors duration-200 hover:bg-[rgba(127,214,168,0.05)]">
               <span className="flex-[0_0_200px] text-[0.95rem] text-[#8fa882]">Facebook</span>
               <a
                 href="https://www.facebook.com/chiennguyen.taichinh/"

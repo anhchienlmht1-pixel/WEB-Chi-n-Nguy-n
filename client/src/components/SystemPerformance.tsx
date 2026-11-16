@@ -21,7 +21,7 @@ function dmy(iso: string): string {
 function Tile({ label, value, tone }: { label: string; value: string | number; tone?: "up" | "down" }) {
   const color = tone === "up" ? "up" : tone === "down" ? "down" : "text-slate-900";
   return (
-    <div className="flex-[1_1_9rem] border-l border-slate-200 px-4 py-3 first:border-l-0">
+    <div className="fx-feature flex-[1_1_9rem] border-l border-slate-200 px-4 py-3 first:border-l-0">
       <p className="text-sm text-slate-500">{label}</p>
       <p className={`mt-0.5 text-2xl font-bold leading-tight tabular-nums ${color}`}>{value}</p>
     </div>

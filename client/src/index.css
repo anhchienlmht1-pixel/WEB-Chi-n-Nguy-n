@@ -297,3 +297,47 @@ img {
 @media (prefers-reduced-motion: reduce) {
   .pb, .pb .fu, .pb .fd, .dt-rise { animation: none !important; }
 }
+
+/* ===== Hiệu ứng khi trỏ chuột (toàn web) ===== */
+/* Thẻ: nổi lên, viền sáng xanh, bóng mờ */
+.fx-card {
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease, border-color 0.25s ease,
+    background-color 0.25s ease;
+}
+.fx-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(127, 214, 168, 0.55);
+  box-shadow: 0 14px 34px -14px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(127, 214, 168, 0.18),
+    0 0 28px -6px rgba(47, 179, 154, 0.35);
+}
+/* Nút: nhích lên, toả sáng */
+.fx-btn {
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease, background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+.fx-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 22px -10px rgba(224, 123, 57, 0.75); }
+.fx-btn-ghost:hover { box-shadow: 0 10px 22px -12px rgba(127, 214, 168, 0.6); border-color: rgba(127, 214, 168, 0.7); }
+/* Ô tính năng: vạch sáng chạy trên đầu, biểu tượng phóng nhẹ */
+.fx-feature { position: relative; transition: background-color 0.25s ease; }
+.fx-feature::before {
+  content: ""; position: absolute; left: 0; right: 0; top: -1px; height: 2px;
+  background: linear-gradient(90deg, #2fb39a, #7fd6a8); transform: scaleX(0); transform-origin: left;
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.fx-feature:hover { background-color: rgba(127, 214, 168, 0.06); }
+.fx-feature:hover::before { transform: scaleX(1); }
+.fx-feature svg { transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.3s ease; }
+.fx-feature:hover svg { transform: translateY(-2px) scale(1.12); filter: drop-shadow(0 0 8px rgba(127, 214, 168, 0.6)); }
+.fx-feature:hover h3 { color: #c9f2dc; }
+/* Dòng danh sách (tín hiệu, lệnh đã đóng, liên hệ): vạch màu bên trái + nền sáng */
+.fx-row { position: relative; }
+.fx-row::before {
+  content: ""; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px; border-radius: 2px;
+  background: #7c9a6a; transform: scaleY(0); transition: transform 0.2s ease;
+}
+.fx-row:hover::before { transform: scaleY(1); }
+.theme-dark .fx-row::before { background: #7fd6a8; }
+@media (prefers-reduced-motion: reduce) {
+  .fx-card, .fx-btn, .fx-feature svg { transition: none; }
+  .fx-card:hover, .fx-btn:hover, .fx-feature:hover svg { transform: none; }
+}

@@ -280,7 +280,7 @@ export default function TrendSignalScanner({
             return (
               <div
                 key={h.symbol}
-                className="group relative flex min-h-15 items-center gap-2 border-b border-slate-100 px-3 py-2 transition-colors duration-200 hover:bg-slate-50 sm:px-5"
+                className="fx-row group relative flex min-h-15 items-center gap-2 border-b border-slate-100 px-3 py-2 transition-colors duration-200 hover:bg-slate-50 sm:px-5"
               >
                 <WatchButton symbol={h.symbol} />
                 {onSelectSymbol ? (
@@ -357,7 +357,7 @@ function ClosedList({
             </span>
           </>
         );
-        const rowClass = `grid min-h-15 w-full items-center gap-2 border-b border-slate-100 px-4 py-2 text-left transition-colors duration-200 hover:bg-slate-50 sm:px-5 ${CLOSED_COLS}`;
+        const rowClass = `fx-row grid min-h-15 w-full items-center gap-2 border-b border-slate-100 px-4 py-2 text-left transition-colors duration-200 hover:bg-slate-50 sm:px-5 ${CLOSED_COLS}`;
         const key = `${t.symbol}-${t.sellDate}`;
         return onSelectSymbol ? (
           <button key={key} type="button" title={title} onClick={() => onSelectSymbol(t.symbol)} className={rowClass}>

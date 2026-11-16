@@ -61,7 +61,7 @@ export default function Header() {
           <TrendSignalBell />
           <NavLink
             to="/huong-dan-mo-tai-khoan"
-            className="hidden min-h-11 shrink-0 items-center whitespace-nowrap rounded-md bg-orange-600 px-5 text-base font-bold text-[#1b1f1a] transition-colors duration-200 hover:bg-orange-500 sm:inline-flex"
+            className="fx-btn hidden min-h-11 shrink-0 items-center whitespace-nowrap rounded-md bg-orange-600 px-5 text-base font-bold text-[#1b1f1a] transition-colors duration-200 hover:bg-orange-500 sm:inline-flex"
           >
             Mở tài khoản
           </NavLink>
