@@ -2,8 +2,9 @@ import { Link } from "react-router-dom";
 import { usePolling } from "../hooks/usePolling";
 import { fetchHistory, fetchTrendBuyResult, fetchTradeJournal } from "../api/client";
 import { formatPrice } from "../utils/format";
+import MarketIndexCards from "./MarketIndexCards";
 
-// Opening block of the Giới thiệu page: "Hôm nay mua gì, bán gì." and one card
+// Opening block of the Giới thiệu page: today's index cards, then one card
 // with what the last closed session changed in the signal list — new buys,
 // exits, how many are held — plus the system's real track record. Data: the
 // same scan and forward-only trade journal as the signal list on the home page.
@@ -166,19 +167,12 @@ export default function HeroSignals() {
 
   return (
     <div>
-      <p className="text-[0.95rem] font-bold uppercase tracking-[0.06em] text-[#b9cba9]">Tín hiệu theo xu hướng</p>
-      <h1 className="dt-rise mt-2.5 text-[clamp(2.6rem,5.6vw,3.4rem)] font-bold leading-[1.08] tracking-[-0.015em] text-[#fff]!">
-        Hôm nay mua gì,
-        <br />
-        <span className="text-[#b9cba9]">bán gì.</span>
-      </h1>
-      <p className="mt-3.5 max-w-[560px] text-lg leading-normal text-[#d5dfcc]">
-        Mỗi phiên sau 15:00, hệ thống chốt danh sách mã vào và ra. Lệnh nào cũng ghi lại, thắng hay thua.
-      </p>
+      <p className="mb-3 text-[0.95rem] font-bold uppercase tracking-[0.06em] text-[#b9cba9]">Thị trường hôm nay</p>
+      <MarketIndexCards />
 
       <section
         aria-label="Tín hiệu phiên gần nhất"
-        className="mt-6 max-w-[600px] overflow-hidden rounded-xl border border-[rgba(213,223,204,0.18)] bg-[rgba(14,21,15,0.9)] shadow-[0_24px_60px_-30px_rgba(0,0,0,0.8)]"
+        className="mt-4 max-w-[600px] overflow-hidden rounded-xl border border-[rgba(213,223,204,0.18)] bg-[rgba(14,21,15,0.9)] shadow-[0_24px_60px_-30px_rgba(0,0,0,0.8)]"
       >
         {!scan || !session ? (
           <div aria-busy="true" className="space-y-3 p-5">
