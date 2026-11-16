@@ -6,7 +6,8 @@ import MarketIndexCards from "./MarketIndexCards";
 
 // Opening block of the Giới thiệu page: today's index cards, then one card
 // with what the last closed session changed in the signal list — new buys,
-// exits, how many are held — plus the system's real track record. Data: the
+// exits, how many are held — the whole portfolio's result (held positions at
+// the last close plus closed trades) and the system's real track record. Data: the
 // same scan and forward-only trade journal as the signal list on the home page.
 
 const POLL_MS = 5 * 60 * 1000;
@@ -165,6 +166,15 @@ export default function HeroSignals() {
   const best = n ? closedAll.reduce((a, t) => (t.returnPercent > a.returnPercent ? t : a)) : null;
   const worst = n ? closedAll.reduce((a, t) => (t.returnPercent < a.returnPercent ? t : a)) : null;
 
+  // Whole portfolio, every trade sized the same: positions still held are
+  // marked to the last close, closed ones count at their final result.
+  const openRets = holding.map((h) => h.signalReturnPercent).filter((v) => Number.isFinite(v));
+  const openAvg = openRets.length ? openRets.reduce((a, v) => a + v, 0) / openRets.length : 0;
+  const openUp = openRets.filter((v) => v > 0).length;
+  const openDown = openRets.filter((v) => v < 0).length;
+  const allRets = [...openRets, ...closedAll.map((t) => t.returnPercent)];
+  const allAvg = allRets.length ? allRets.reduce((a, v) => a + v, 0) / allRets.length : 0;
+
   return (
     <div>
       <p className="mb-3 text-[0.95rem] font-bold uppercase tracking-[0.06em] text-[#b9cba9]">Thị trường hôm nay</p>
@@ -200,6 +210,27 @@ export default function HeroSignals() {
                   <SignalRow key={r.key} r={r} />
                 ))}
               </ul>
+            )}
+            {allRets.length > 0 && (
+              <div className={`border-t ${LINE}`}>
+                <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1 px-4 pt-3 pb-2.5 sm:px-[18px]">
+                  <div>
+                    <b className="block text-sm text-[#fff]">Hiệu suất tổng danh mục</b>
+                    <span className="text-xs text-[#8fa882]">
+                      {allRets.length} lệnh ({openRets.length} đang giữ + {n} đã đóng), mỗi lệnh vốn như nhau
+                    </span>
+                  </div>
+                  <b className="text-[1.9rem] leading-none tabular-nums" style={{ color: toneHex(allAvg) }}>
+                    {pct(allAvg, 2)}
+                  </b>
+                </div>
+                <div className="grid grid-cols-2 gap-px bg-[rgba(213,223,204,0.12)] sm:grid-cols-4">
+                  <Perf label="Đang giữ" value={`${openRets.length} mã`} />
+                  <Perf label="Lãi/lỗ tạm tính TB" value={openRets.length ? pct(openAvg, 2) : "—"} color={toneHex(openAvg)} />
+                  <Perf label="Mã đang lãi" value={`${openUp} mã`} color={openUp ? UP : "#fff"} />
+                  <Perf label="Mã đang lỗ" value={`${openDown} mã`} color={openDown ? DOWN : "#fff"} />
+                </div>
+              </div>
             )}
             {journal?.startDate && (
               <div className={`border-t ${LINE}`}>
