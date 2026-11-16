@@ -1,10 +1,12 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
+import HeroBullCharge from "../components/HeroBullCharge";
 
 // Introduction page ("Giới thiệu"): the Bull Stock message, what the site does
 // for an investor, how the signal tool works, opening an account at KAFI, and
 // who is behind it. Dark moss surface throughout; the only motion is the
-// decorative price board behind the hero (and a one-time rise-in of the title).
+// decorative price board behind the hero, a one-time rise-in of the title, and a
+// neon bull charging up the chart on the right of the hero (HeroBullCharge).
 
 const SYMBOLS = [
   "ACB", "BID", "BSR", "CTG", "FPT", "GAS", "GVR", "HDB", "HPG", "LPB", "MBB", "MCH", "MSN", "MWG",
@@ -170,8 +172,15 @@ export default function About() {
           className="pointer-events-none absolute inset-x-0 bottom-0 h-48"
           style={{ background: "linear-gradient(180deg, rgba(11,17,13,0) 0%, #0b110d 100%)" }}
         />
-        <div className="gutter-x relative z-[1] mx-auto max-w-[1280px] pb-20 pt-16 sm:pt-20">
-          <div className="max-w-[560px]">
+        {/* Neon bull charging up the chart, on the right of the message (wide screens) */}
+        <div
+          className="absolute inset-y-0 right-0 hidden w-[58%] items-center justify-end lg:flex"
+          style={{ background: "radial-gradient(ellipse 46% 52% at 68% 50%, rgba(11,17,13,0.94) 55%, rgba(11,17,13,0) 100%)" }}
+        >
+          <HeroBullCharge className="pointer-events-auto h-full max-h-[760px] w-auto max-w-full object-contain" />
+        </div>
+        <div className="gutter-x pointer-events-none relative z-[1] mx-auto max-w-[1280px] pb-20 pt-16 sm:pt-20">
+          <div className="pointer-events-auto max-w-[560px]">
             <p className="mb-4 text-lg font-bold text-[#b9cba9]">Theo xu hướng, cắt lỗ có kỷ luật.</p>
             <h1 className="leading-none text-[#fff]!">
               <span className="dt-rise block pt-[0.12em] text-[clamp(4rem,11vw,7.75rem)] font-bold leading-[1.2] tracking-[-0.02em]">
