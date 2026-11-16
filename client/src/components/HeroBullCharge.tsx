@@ -11,62 +11,72 @@ import { useEffect, useRef } from "react";
 
 // Soft edges on all four sides (wider on top and right) so the clip has no visible box.
 const MASK =
-  "linear-gradient(to top, transparent 0%, #000 10%, #000 76%, transparent 100%), linear-gradient(to right, transparent 0%, #000 14%, #000 80%, transparent 100%)";
-const EASE = "cubic-bezier(0.55, 0, 0.35, 1)";
+  "linear-gradient(to top, transparent 0%, #000 10%, #000 76%, transparent 100%), linear-gradient(to right, transparent 0%, #000 14%, #000 90%, transparent 100%)";
 
 export default function HeroBullCharge({ className = "" }: { className?: string }) {
   const box = useRef<HTMLVideoElement | null>(null);
   const vid = useRef<HTMLVideoElement | null>(null);
-  const anim = useRef<Animation | null>(null);
+  const raf = useRef(0);
 
   // How far the clip travels: from the left edge to the right edge of the hero.
   const travel = () => {
     const b = box.current;
     const parent = b?.parentElement;
     if (!b || !parent) return 0;
-    return Math.max(0, parent.clientWidth - b.offsetWidth);
+    return Math.max(0, parent.clientWidth - b.offsetWidth - 24);
+  };
+
+  // Ease-in-out like the bull: slow start, fast charge, soft landing.
+  const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+
+  // The travel is driven by the clip's own clock, so the bull's position always
+  // matches the frame on screen, even if the video stalls while loading.
+  const follow = () => {
+    const b = box.current;
+    const v = vid.current;
+    if (!b || !v) return;
+    const d = Number.isFinite(v.duration) && v.duration > 0 ? v.duration : 1;
+    const p = Math.min(1, v.currentTime / d);
+    b.style.transform = `translate3d(${(travel() * ease(p)).toFixed(1)}px,0,0)`;
+    if (!v.paused && !v.ended) raf.current = requestAnimationFrame(follow);
   };
 
   const run = () => {
     const b = box.current;
     const v = vid.current;
     if (!b || !v) return;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const end = `translateX(${travel()}px)`;
-    anim.current?.cancel();
-    if (reduce) {
-      b.style.transform = end;
+    cancelAnimationFrame(raf.current);
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       if (v.readyState >= 1) v.currentTime = v.duration || 0;
+      b.style.transform = `translate3d(${travel()}px,0,0)`;
       return;
     }
-    const dur = (Number.isFinite(v.duration) && v.duration > 0 ? v.duration : 3.5) * 1000;
-    b.style.transform = "";
     v.currentTime = 0;
-    anim.current = b.animate([{ transform: "translateX(0)" }, { transform: end }], {
-      duration: dur,
-      easing: EASE,
-      fill: "forwards",
-    });
-    v.play().catch(() => {});
+    b.style.transform = "translate3d(0,0,0)";
+    v.play()
+      .then(() => {
+        raf.current = requestAnimationFrame(follow);
+      })
+      .catch(() => {});
   };
 
   useEffect(() => {
     const v = vid.current;
     if (!v) return;
     const start = () => run();
-    if (v.readyState >= 1) start();
-    else v.addEventListener("loadedmetadata", start, { once: true });
+    // Wait until the whole clip can play without stopping.
+    if (v.readyState >= 4) start();
+    else v.addEventListener("canplaythrough", start, { once: true });
     // Keep the resting position on the right when the window is resized.
     const onResize = () => {
       if (!v.ended && !v.paused) return;
-      anim.current?.cancel();
-      if (box.current) box.current.style.transform = `translateX(${travel()}px)`;
+      follow();
     };
     window.addEventListener("resize", onResize);
     return () => {
-      v.removeEventListener("loadedmetadata", start);
+      v.removeEventListener("canplaythrough", start);
       window.removeEventListener("resize", onResize);
-      anim.current?.cancel();
+      cancelAnimationFrame(raf.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -84,7 +94,8 @@ export default function HeroBullCharge({ className = "" }: { className?: string 
         onMouseEnter={() => {
           if (vid.current?.ended) run();
         }}
-        className={`pointer-events-auto mix-blend-screen ${className}`}
+        onEnded={() => follow()}
+        className={`pointer-events-auto mix-blend-screen will-change-transform ${className}`}
         style={{ WebkitMaskImage: MASK, maskImage: MASK, WebkitMaskComposite: "source-in", maskComposite: "intersect" }}
       >
         <source src="/hero/bull-charge.webm" type="video/webm" />
