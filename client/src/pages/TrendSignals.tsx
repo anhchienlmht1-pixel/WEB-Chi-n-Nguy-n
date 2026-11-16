@@ -1,14 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { fetchHistory, fetchTrendBuyResult, fetchMarketOverview } from "../api/client";
+import { fetchTrendBuyResult, fetchMarketOverview } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { useWatchlist } from "../hooks/useWatchlist";
 import TechnicalChartPanel from "../components/TechnicalChartPanel";
 import TrendSignalScanner from "../components/TrendSignalScanner";
-import TrendSystemStats from "../components/TrendSystemStats";
-import { aggregatePoints } from "../utils/aggregate";
-import { computeTradingSignals } from "../utils/signals";
-import { dropUnclosedBars } from "../utils/sessionClose";
+import SystemPerformance from "../components/SystemPerformance";
 
 const DEFAULT_SYMBOL = "VNINDEX";
 
@@ -22,7 +19,7 @@ const H2 = "text-xl font-bold leading-snug";
 
 // Homepage. No hero: the first thing on the page is the day's result — one
 // sentence of facts, then the chart and the list of stocks on a buy signal,
-// the system's closed-trade stats, who is behind it, how stocks are picked,
+// the whole system's closed-trade performance (all stocks), who is behind it, how stocks are picked,
 // and one box about opening an account. The site is intentionally minimal: its
 // whole job is showing Mua/Bán signals and getting a visitor to open an account.
 export default function TrendSignals() {
@@ -40,18 +37,6 @@ export default function TrendSignals() {
     const first = buySignalsState.data?.items[0]?.symbol;
     if (first) setChartSymbol(first);
   }, [buySignalsState.data, watchlist, chartSymbol]);
-
-  // Fetch history for signal computation
-  const historyState = usePolling(() => fetchHistory(chartSymbol, "MAX"), [chartSymbol], 30000);
-
-  // Compute trading signals
-  const signals = useMemo(() => {
-    if (!historyState.data) return [];
-    // Closed sessions only — see utils/sessionClose.ts.
-    const chartPoints = aggregatePoints(dropUnclosedBars(historyState.data.points), "D");
-    const result = computeTradingSignals(chartPoints);
-    return result.transitions;
-  }, [historyState.data]);
 
   // Session date for the (screen-reader) page heading.
   const summary = useMemo(() => {
@@ -99,7 +84,7 @@ export default function TrendSignals() {
       </div>
 
       <div className="mt-8">
-        <TrendSystemStats signals={signals} symbol={chartSymbol} />
+        <SystemPerformance />
       </div>
 
       <div className="mt-8 flex flex-wrap items-start gap-x-12 gap-y-8">
