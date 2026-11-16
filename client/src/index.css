@@ -341,3 +341,12 @@ img {
   .fx-card, .fx-btn, .fx-feature svg { transition: none; }
   .fx-card:hover, .fx-btn:hover, .fx-feature:hover svg { transform: none; }
 }
+
+/* Chấm xanh "Chốt phiên" ở khối mở đầu */
+.hero-pulse { animation: heropulse 2s ease-out infinite; }
+@keyframes heropulse {
+  0% { box-shadow: 0 0 0 0 rgba(63, 208, 122, 0.6); }
+  70% { box-shadow: 0 0 0 10px rgba(63, 208, 122, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(63, 208, 122, 0); }
+}
+@media (prefers-reduced-motion: reduce) { .hero-pulse { animation: none; } }

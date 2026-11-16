@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import HeroBullCharge from "../components/HeroBullCharge";
+import HeroSignals from "../components/HeroSignals";
 
 // Introduction page ("Giới thiệu"): the Bull Stock message, what the site does
 // for an investor, how the signal tool works, opening an account at KAFI, and
@@ -175,51 +176,24 @@ export default function About() {
         {/* Neon bull: rises from the bottom-left corner and charges up to the right (wide screens) */}
         <HeroBullCharge className="pointer-events-auto absolute bottom-0 left-0 hidden aspect-square h-full lg:block" />
         <div className="gutter-x pointer-events-none relative z-[1] mx-auto max-w-[1280px] pb-20 pt-16 sm:pt-20">
-          <div className="pointer-events-auto max-w-[560px]">
-            <p className="mb-4 text-lg font-bold text-[#b9cba9]">Theo xu hướng, cắt lỗ có kỷ luật.</p>
-            <h1 className="leading-none text-[#fff]!">
-              <span className="dt-rise block pt-[0.12em] text-[clamp(4rem,11vw,7.75rem)] font-bold leading-[1.2] tracking-[-0.02em]">
-                ĐẦU TƯ
-              </span>
-              <span className="dt-rise dt-rise-2 mt-2 flex flex-wrap items-baseline gap-x-3.5">
-                <span className="text-[1.75rem] font-normal text-[#c9d5bf]">là chuyện</span>
-                <span className="text-[clamp(2.4rem,5vw,3.25rem)] font-bold tracking-[-0.01em] text-[#fff]">CẢ ĐỜI</span>
-              </span>
-              <span className="dt-rise dt-rise-3 mt-2 flex flex-wrap items-baseline gap-x-3.5">
-                <span className="text-[1.75rem] font-normal text-[#8fa882]">không phải</span>
-                <span className="dt-out text-[clamp(2.4rem,5vw,3.25rem)] font-bold tracking-[-0.01em]">HÔM NAY</span>
-              </span>
-            </h1>
-
-            <ul className="mt-8 border-t border-[rgba(213,223,204,0.16)]">
-              {[
-                "Không yêu cổ phiếu.",
-                "Phân tích kỹ thuật, phân tích cơ bản, mọi góc nhìn đều chỉ là tham khảo.",
-                "Chỉ nhìn vào giá và khối lượng.",
-              ].map((t, i) => (
-                <li
-                  key={t}
-                  className="grid grid-cols-[30px_1fr] items-baseline border-b border-[rgba(213,223,204,0.16)] py-3.5"
-                >
-                  <span aria-hidden="true" className="mt-[11px] block h-0.5 w-3.5 bg-[#7c9a6a]" />
-                  <span className={`text-[1.0625rem] font-medium leading-snug ${i === 2 ? "text-[#fff]" : "text-[#e7ece2]"}`}>
-                    {t}
-                  </span>
-                </li>
-              ))}
-            </ul>
+          <div className="pointer-events-auto max-w-[580px]">
+            <HeroSignals />
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link to="/huong-dan-mo-tai-khoan" className={BTN_ORANGE}>
                 Mở tài khoản
               </Link>
               <Link to={{ pathname: "/", hash: "#tin-hieu" }} className={BTN_GHOST}>
-                Xem tín hiệu phiên gần nhất →
+                Xem tất cả tín hiệu →
               </Link>
             </div>
             <p className="mt-7 text-sm text-[#a9b8a0]">
               <span className="font-bold text-[#fff]">Nguyễn Anh Chiến</span> · Chuyên viên tư vấn đầu tư, Chứng khoán
               KAFI
+            </p>
+            <p className="mt-2 text-xs leading-normal text-[#8fa882]">
+              Giá đóng cửa, chưa trừ phí, thuế. Kết quả quá khứ không bảo đảm kết quả tương lai; không phải khuyến nghị mua
+              bán.
             </p>
           </div>
         </div>
