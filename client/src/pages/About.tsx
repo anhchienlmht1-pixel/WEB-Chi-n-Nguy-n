@@ -172,13 +172,8 @@ export default function About() {
           className="pointer-events-none absolute inset-x-0 bottom-0 h-48"
           style={{ background: "linear-gradient(180deg, rgba(11,17,13,0) 0%, #0b110d 100%)" }}
         />
-        {/* Neon bull charging out of the dark, on the right of the message (wide screens) */}
-        <div
-          className="absolute inset-y-0 right-0 hidden w-[58%] items-center justify-end lg:flex"
-          style={{ background: "radial-gradient(ellipse 50% 58% at 68% 48%, rgba(11,17,13,0.9) 40%, rgba(11,17,13,0) 100%)" }}
-        >
-          <HeroBullCharge className="pointer-events-auto h-full max-h-[760px] w-auto max-w-full object-contain" />
-        </div>
+        {/* Neon bull: rises from the bottom-left corner and charges up to the right (wide screens) */}
+        <HeroBullCharge className="pointer-events-auto absolute bottom-0 left-0 hidden aspect-square h-full lg:block" />
         <div className="gutter-x pointer-events-none relative z-[1] mx-auto max-w-[1280px] pb-20 pt-16 sm:pt-20">
           <div className="pointer-events-auto max-w-[560px]">
             <p className="mb-4 text-lg font-bold text-[#b9cba9]">Theo xu hướng, cắt lỗ có kỷ luật.</p>
