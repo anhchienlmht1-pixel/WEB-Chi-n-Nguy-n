@@ -1,11 +1,11 @@
 import { useEffect, useRef } from "react";
 
-// Hero animation on the Giới thiệu page: a neon bull rises out of the dark on the
-// right of the hero, leaps a short way up and to the right, then fades away —
-// it plays once when the page opens and leaves nothing behind.
+// Hero animation on the Giới thiệu page (shown when VN-Index is up): a neon bull
+// rises out of the dark on the right of the hero, leaps a short way up and to
+// the right, and stays on its last frame.
 // The clip is the owner's own GIF, smoothed to 30 fps. Black in the clip is
 // dropped with mix-blend "screen" so it sits on the dark hero.
-// Reduced motion: nothing is shown.
+// Reduced motion: only the last frame is shown, in its resting place.
 
 // Soft edges on all four sides (wider on top and right) so the clip has no visible box.
 const MASK =
@@ -57,7 +57,12 @@ export default function HeroBullCharge({ className = "" }: { className?: string 
     const v = vid.current;
     if (!b || !v) return;
     cancelAnimationFrame(raf.current);
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      v.currentTime = Math.max(0, (v.duration || 0) - 0.05);
+      b.style.transform = pose(1);
+      b.style.opacity = "1";
+      return;
+    }
     v.currentTime = 0;
     b.style.transform = pose(0);
     b.style.opacity = "1";
@@ -92,10 +97,6 @@ export default function HeroBullCharge({ className = "" }: { className?: string 
         muted
         playsInline
         preload="auto"
-        // Once the run is over, fade the bull out and leave the hero clean.
-        onEnded={(e) => {
-          e.currentTarget.style.opacity = "0";
-        }}
         className={`pointer-events-none mix-blend-screen will-change-transform ${className}`}
         style={{
           opacity: 0,

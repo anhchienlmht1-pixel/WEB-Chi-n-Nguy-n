@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import HeroBullCharge from "../components/HeroBullCharge";
+import HeroMarketBeast from "../components/HeroMarketBeast";
 import HeroSignals from "../components/HeroSignals";
 
 // Introduction page ("Giới thiệu"): the Bull Stock message, what the site does
@@ -173,8 +173,8 @@ export default function About() {
           className="pointer-events-none absolute inset-x-0 bottom-0 h-48"
           style={{ background: "linear-gradient(180deg, rgba(11,17,13,0) 0%, #0b110d 100%)" }}
         />
-        {/* Neon bull: runs once on the right when the page opens, then fades away (wide screens) */}
-        <HeroBullCharge className="absolute bottom-0 left-0 hidden aspect-square h-full lg:block" />
+        {/* Market animal on the right (wide screens): bull when VN-Index is up, bear when it is down */}
+        <HeroMarketBeast />
         <div className="gutter-x pointer-events-none relative z-[1] mx-auto max-w-[1280px] pb-20 pt-16 sm:pt-20">
           <div className="pointer-events-auto max-w-[580px]">
             <HeroSignals />

@@ -104,7 +104,7 @@ function Stat({ n, label, color = "#fff" }: { n: number; label: string; color?: 
 
 function Perf({ label, value, color = "#fff" }: { label: string; value: string; color?: string }) {
   return (
-    <div className={`basis-1/2 border-l px-4 py-3 odd:border-l-0 sm:basis-0 sm:flex-1 sm:odd:border-l sm:first:border-l-0 sm:px-[18px] ${LINE}`}>
+    <div className="bg-[rgb(17,25,18)] px-4 py-3 sm:px-[18px]">
       <span className="block text-xs text-[#8fa882]">{label}</span>
       <b className="mt-0.5 block text-[1.05rem] tabular-nums" style={{ color }}>
         {value}
@@ -160,6 +160,9 @@ export default function HeroSignals() {
   const wins = closedAll.filter((t) => t.returnPercent > 0);
   const losses = closedAll.filter((t) => t.returnPercent < 0);
   const avg = (xs: typeof closedAll) => (xs.length ? xs.reduce((a, t) => a + t.returnPercent, 0) / xs.length : 0);
+  const avgHold = n ? closedAll.reduce((a, t) => a + t.holdingDays, 0) / n : 0;
+  const best = n ? closedAll.reduce((a, t) => (t.returnPercent > a.returnPercent ? t : a)) : null;
+  const worst = n ? closedAll.reduce((a, t) => (t.returnPercent < a.returnPercent ? t : a)) : null;
 
   return (
     <div>
@@ -205,18 +208,34 @@ export default function HeroSignals() {
               </ul>
             )}
             {journal?.startDate && (
-              <div className={`flex flex-wrap border-t bg-[rgba(255,255,255,0.02)] ${LINE}`}>
+              <div className={`border-t ${LINE}`}>
+                <p className="flex flex-wrap items-baseline justify-between gap-x-3 px-4 pt-3 pb-2 sm:px-[18px]">
+                  <b className="text-sm text-[#fff]">Hiệu suất hệ thống</b>
+                  <span className="text-xs text-[#8fa882]">
+                    tất cả lệnh đã đóng, ghi thật từ {dmy(journal.startDate)}
+                  </span>
+                </p>
                 {n === 0 ? (
-                  <p className="px-4 py-3 text-sm text-[#a9b8a0] sm:px-[18px]">
-                    Nhật ký lệnh thật bắt đầu từ {dmy(journal.startDate)}, chưa có lệnh nào đóng.
-                  </p>
+                  <p className="px-4 pb-3 text-sm text-[#a9b8a0] sm:px-[18px]">Chưa có lệnh nào đóng.</p>
                 ) : (
-                  <>
-                    <Perf label={`Lệnh thật từ ${dm(journal.startDate)}`} value={`${n} lệnh`} />
-                    <Perf label="Tỷ lệ thắng" value={pct((wins.length / n) * 100, 0, false)} />
+                  <div className="grid grid-cols-2 gap-px bg-[rgba(213,223,204,0.12)] sm:grid-cols-4">
+                    <Perf label="Lệnh đã đóng" value={`${n} lệnh`} />
+                    <Perf label="Tỷ lệ thắng" value={`${pct((wins.length / n) * 100, 0, false)} (${wins.length}/${n})`} />
+                    <Perf label="Lãi/lỗ TB mỗi lệnh" value={pct(avg(closedAll), 2)} color={toneHex(avg(closedAll))} />
+                    <Perf label="Giữ trung bình" value={`${Math.round(avgHold)} ngày`} />
                     <Perf label="Thắng trung bình" value={wins.length ? pct(avg(wins)) : "—"} color={UP} />
                     <Perf label="Thua trung bình" value={losses.length ? pct(avg(losses)) : "—"} color={DOWN} />
-                  </>
+                    <Perf
+                      label="Lãi nhất"
+                      value={best && best.returnPercent > 0 ? `${best.symbol} ${pct(best.returnPercent)}` : "—"}
+                      color={UP}
+                    />
+                    <Perf
+                      label="Lỗ nhất"
+                      value={worst && worst.returnPercent < 0 ? `${worst.symbol} ${pct(worst.returnPercent)}` : "—"}
+                      color={DOWN}
+                    />
+                  </div>
                 )}
               </div>
             )}
