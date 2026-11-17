@@ -258,10 +258,62 @@ async function fetchHistoryBars(symbol: string, range: HistoryRange): Promise<Hi
   return points;
 }
 
+// Index quotes from the index history endpoint. KBS's price board (/stock/iss)
+// is a stock board and doesn't answer for index codes, which left VN-Index
+// without a quote (the hero cards and the bull/bear on Giới thiệu stayed
+// empty). The /index/{code}/data_* endpoints do serve indices — the VN-Index
+// chart already uses them — so the level comes from the latest 15-minute bar
+// of today's session and the reference from the previous session's daily
+// close. Dates are compared in Vietnam time (UTC+7).
+const vnDate = (iso: string) => new Date(new Date(iso).getTime() + 7 * 3600 * 1000).toISOString().slice(0, 10);
+
+async function indexQuoteFromHistory(symbol: string): Promise<Quote | null> {
+  const [intraday, daily] = await Promise.all([
+    fetchHistoryBars(symbol, "1D").catch(() => [] as HistoryPoint[]),
+    fetchHistoryBars(symbol, "1M").catch(() => [] as HistoryPoint[]),
+  ]);
+  if (intraday.length === 0 && daily.length === 0) return null;
+  const lastIntra = intraday[intraday.length - 1];
+  const lastDaily = daily[daily.length - 1];
+  // The newest session we have any bar for.
+  const day = [lastIntra, lastDaily]
+    .filter(Boolean)
+    .map((p) => vnDate(p!.time))
+    .sort()
+    .pop()!;
+  const todayBars = intraday.filter((p) => vnDate(p.time) === day);
+  const todayDaily = daily.filter((p) => vnDate(p.time) === day).pop();
+  const prev = daily.filter((p) => vnDate(p.time) < day).pop();
+  const price = todayBars.length ? todayBars[todayBars.length - 1].close : todayDaily?.close;
+  if (!price || price <= 0) return null;
+  const prevClose = prev?.close && prev.close > 0 ? prev.close : price;
+  const change = price - prevClose;
+  const seed = findIndexSeed(symbol);
+  return {
+    symbol: symbol.toUpperCase(),
+    name: seed?.name ?? symbol.toUpperCase(),
+    exchange: "Chỉ số",
+    currency: "điểm",
+    price,
+    change,
+    changePercent: prevClose ? (change / prevClose) * 100 : 0,
+    open: todayBars[0]?.open ?? todayDaily?.open ?? prevClose,
+    high: todayBars.length ? Math.max(...todayBars.map((p) => p.high)) : (todayDaily?.high ?? price),
+    low: todayBars.length ? Math.min(...todayBars.map((p) => p.low)) : (todayDaily?.low ?? price),
+    prevClose,
+    volume: todayDaily?.volume ?? todayBars.reduce((a, p) => a + (p.volume || 0), 0),
+    updatedAt: new Date().toISOString(),
+  };
+}
+
 export const kbsMarketProvider: StockProvider = {
   id: "kbs",
 
   async getQuote(symbol: string): Promise<Quote> {
+    if (findIndexSeed(symbol)?.kind === "index") {
+      const q = await indexQuoteFromHistory(symbol).catch(() => null);
+      if (q) return q;
+    }
     const items = await fetchPriceBoard([symbol]);
     const quote = items.length > 0 ? quoteFromBoardItem(items[0]) : null;
     if (!quote) {
