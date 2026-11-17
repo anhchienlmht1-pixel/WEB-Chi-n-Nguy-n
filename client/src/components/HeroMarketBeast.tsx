@@ -8,25 +8,25 @@ import HeroBearCharge from "./HeroBearCharge";
 // (down) → the bear. VN-Index is re-read every 30 seconds; when the market
 // flips colour the other animal plays its run and then stays on its last frame.
 // A flat reading (exactly 0) keeps whichever animal is showing, so the page
-// doesn't flicker on a tie. Nothing is drawn until VN-Index is known.
+// doesn't flicker on a tie. Nothing is drawn until VN-Index is known — if it
+// can't be read, no animal is shown rather than a guess.
 
 const POLL_MS = 30 * 1000;
 type Kind = "bull" | "bear";
 
 export default function HeroMarketBeast() {
-  const { data: q, error } = usePolling(() => fetchQuote("VNINDEX"), [], POLL_MS);
+  const { data: q } = usePolling(() => fetchQuote("VNINDEX"), [], POLL_MS);
   const [kind, setKind] = useState<Kind | null>(null);
 
   useEffect(() => {
-    if (q) {
-      const ch = q.change ?? 0;
-      if (ch > 0) setKind("bull");
-      else if (ch < 0) setKind("bear");
-      else setKind((k) => k ?? "bull");
-    } else if (error) {
-      setKind((k) => k ?? "bull");
-    }
-  }, [q, error]);
+    if (!q) return;
+    // Colour = today's level against the reference (yesterday's close); fall
+    // back to the change fields only when the reference is missing.
+    const ch = q.prevClose > 0 && q.price > 0 ? q.price - q.prevClose : (q.change ?? q.changePercent ?? 0);
+    if (ch > 0) setKind("bull");
+    else if (ch < 0) setKind("bear");
+    else setKind((k) => k ?? "bull");
+  }, [q]);
 
   if (!kind) return null;
 
