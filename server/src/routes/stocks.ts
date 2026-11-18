@@ -1,4 +1,5 @@
 import { Router, Request, Response, NextFunction } from "express";
+import { isSsiIndex, ssiConfigured, ssiIndexQuote, ssiStatus } from "../providers/ssiFastConnect.js";
 import NodeCache from "node-cache";
 import { getProvider } from "../providers/index.js";
 import { HistoryRange, Quote } from "../providers/types.js";
@@ -111,6 +112,22 @@ router.get(
   })
 );
 
+// Is SSI FastConnect set up and answering? (No keys are ever returned.)
+router.get(
+  "/ssi/status",
+  asyncHandler(async (_req, res) => {
+    const configured = ssiConfigured();
+    const probe = configured ? await ssiIndexQuote("VNINDEX") : null;
+    res.set("Cache-Control", "no-store");
+    res.json({
+      configured,
+      working: Boolean(probe),
+      sample: probe ? { symbol: probe.symbol, price: probe.price, change: probe.change, advances: probe.advances, declines: probe.declines, value: probe.value } : null,
+      ...ssiStatus,
+    });
+  })
+);
+
 router.get(
   "/quote/:symbol",
   asyncHandler(async (req, res) => {
@@ -120,6 +137,20 @@ router.get(
     // stay pinned to that source instead of independently re-resolving the
     // fallback chain, which could otherwise land on a different provider.
     const preferSource = (req.query.preferSource as string) || undefined;
+    // Indices come from SSI FastConnect when it's set up (level, value, market
+    // breadth, VN100); otherwise — or if SSI fails — the usual chain below.
+    if (isSsiIndex(symbol) && ssiConfigured() && !preferSource) {
+      const q = await cached(`ssi-index:${symbol}`, 10, async () => {
+        const v = await ssiIndexQuote(symbol);
+        if (!v) throw new Error("ssi: no data");
+        return v;
+      }).catch(() => null);
+      if (q) {
+        edgeCache(res, 10, 10);
+        res.json({ ...q, source: "ssi" });
+        return;
+      }
+    }
     const { quote, source } =
       quoteFromOverview(symbol, preferSource) ??
       (await cached(`quote:${symbol}:${preferSource ?? ""}`, 20, () => getQuoteWithFallback(symbol, preferSource)));

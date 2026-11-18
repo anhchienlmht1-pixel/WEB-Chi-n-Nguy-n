@@ -26,6 +26,13 @@ export interface Quote {
    * caller pin a related request (e.g. history for the same symbol) to the
    * same source instead of independently re-resolving the fallback chain. */
   source?: string;
+  /** Index only (SSI): matched value in VND and market breadth for the session. */
+  value?: number;
+  advances?: number;
+  noChanges?: number;
+  declines?: number;
+  ceilings?: number;
+  floors?: number;
 }
 
 export interface HistoryPoint {

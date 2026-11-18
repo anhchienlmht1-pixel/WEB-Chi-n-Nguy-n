@@ -1,19 +1,21 @@
 import { usePolling } from "../hooks/usePolling";
 import { fetchHistory, fetchQuote } from "../api/client";
 
-// Three index cards for the top of the Giới thiệu hero (VN-Index, VN30,
-// HNX-Index): the session's 15-minute line against the reference price (green
-// above, red below), the level, the change and the volume.
+// Three index cards for the top of the Giới thiệu hero (VN-Index, VN100, VN30):
+// the session's 15-minute line against the reference price (green above, red
+// below), the level, the change, the matched value (or volume) and — when the
+// server reads SSI FastConnect — the number of stocks up / unchanged / down.
 
 const UP = "#3fd07a";
 const DOWN = "#ff5c5c";
 const FLAT = "#e0b24a";
 const POLL_MS = 60 * 1000;
 
-const INDICES = [
+// VN100 only comes from SSI FastConnect; without it the card falls back to HNX-Index.
+const INDICES: { symbol: string; label: string; fallback?: { symbol: string; label: string } }[] = [
   { symbol: "VNINDEX", label: "VN-Index" },
+  { symbol: "VN100", label: "VN100", fallback: { symbol: "HNXINDEX", label: "HNX-Index" } },
   { symbol: "VN30", label: "VN30" },
-  { symbol: "HNXINDEX", label: "HNX-Index" },
 ];
 
 const num = (n: number, d = 2) => n.toLocaleString("vi-VN", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -61,8 +63,17 @@ function Intraday({ symbol, refPrice }: { symbol: string; refPrice: number }) {
   );
 }
 
-function IndexCard({ symbol, label }: { symbol: string; label: string }) {
-  const { data: q } = usePolling(() => fetchQuote(symbol), [symbol], POLL_MS);
+function IndexCard({
+  symbol,
+  label,
+  fallback,
+}: {
+  symbol: string;
+  label: string;
+  fallback?: { symbol: string; label: string };
+}) {
+  const { data: q, error } = usePolling(() => fetchQuote(symbol), [symbol], POLL_MS);
+  if (error && !q && fallback) return <IndexCard {...fallback} />;
   const ch = q?.change ?? 0;
   const color = ch > 0 ? UP : ch < 0 ? DOWN : FLAT;
   const arrow = ch > 0 ? "▲" : ch < 0 ? "▼" : "■";
@@ -80,7 +91,9 @@ function IndexCard({ symbol, label }: { symbol: string; label: string }) {
         )}
       </div>
       <div className="mt-0.5 flex items-baseline justify-between gap-2 text-xs">
-        <span className="truncate text-[#8fa882]">{q ? vol(q.volume) : ""}</span>
+        <span className="truncate text-[#8fa882]">
+          {q ? (q.value ? `${num(q.value / 1e9, 0)} tỷ` : vol(q.volume)) : ""}
+        </span>
         {q && (
           <span className="shrink-0 tabular-nums" style={{ color }}>
             {arrow} {num(Math.abs(ch))} ({ch < 0 ? "−" : ch > 0 ? "+" : ""}
@@ -88,6 +101,13 @@ function IndexCard({ symbol, label }: { symbol: string; label: string }) {
           </span>
         )}
       </div>
+      {q && q.advances != null && q.declines != null && (
+        <div className="mt-1 flex justify-end gap-2.5 text-xs tabular-nums">
+          <span style={{ color: UP }}>▲{q.advances}</span>
+          <span style={{ color: FLAT }}>■{q.noChanges ?? 0}</span>
+          <span style={{ color: DOWN }}>▼{q.declines}</span>
+        </div>
+      )}
     </div>
   );
 }

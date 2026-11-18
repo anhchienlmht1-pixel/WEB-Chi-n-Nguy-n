@@ -22,6 +22,13 @@ export interface Quote {
   foreignRoom?: number;
   /** foreignRoom as a % of total shares outstanding. */
   foreignRoomPercent?: number;
+  /** Index only (SSI): matched value in VND and market breadth for the session. */
+  value?: number;
+  advances?: number;
+  noChanges?: number;
+  declines?: number;
+  ceilings?: number;
+  floors?: number;
 }
 
 export interface HistoryPoint {
