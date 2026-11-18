@@ -4,7 +4,8 @@ import { fetchWithTimeout } from "./http.js";
 // SSI FastConnect Data (official SSI market-data API).
 // Docs: https://guide.ssi.com.vn/ssi-products/fastconnect-data
 //
-// Turned on only when both SSI_CONSUMER_ID and SSI_CONSUMER_SECRET are set in
+// Turned on when SSI_API_KEY + SSI_API_SECRET (v3) or SSI_CONSUMER_ID +
+// SSI_CONSUMER_SECRET (older v2) are set in
 // the environment (Vercel → Settings → Environment Variables). Without them
 // every function here returns null and the site keeps using KBS as before.
 //
@@ -16,12 +17,80 @@ import { fetchWithTimeout } from "./http.js";
 
 const BASE = process.env.SSI_FC_DATA_URL || "https://fc-data.ssi.com.vn/api/v2/Market";
 
-export function ssiConfigured(): boolean {
+// FastConnect v3 (SSI Developer Portal): only API Key + API Secret are needed
+// for market data, and no OTP. Takes priority over the older v2 keys below.
+function v3Configured(): boolean {
+  return Boolean(process.env.SSI_API_KEY && process.env.SSI_API_SECRET);
+}
+function v2Configured(): boolean {
   return Boolean(process.env.SSI_CONSUMER_ID && process.env.SSI_CONSUMER_SECRET);
+}
+export function ssiConfigured(): boolean {
+  return v3Configured() || v2Configured();
 }
 
 // Last outcome, for the /api/ssi/status check (never includes the keys).
-export const ssiStatus: { lastOk?: string; lastError?: string; lastErrorAt?: string } = {};
+export const ssiStatus: { api?: "v3" | "v2"; lastOk?: string; lastError?: string; lastErrorAt?: string } = {};
+
+// --- v3: official SDK, market data only (never Trading / Stream: those place orders or need OTP) ---
+let v3Data: Promise<any> | null = null;
+async function v3Client(): Promise<any> {
+  if (!v3Data) {
+    v3Data = (async () => {
+      const { Auth, Data } = await import("@ssi.developer/ssi-sdk");
+      const auth = new Auth({
+        apiKey: process.env.SSI_API_KEY!,
+        apiSecret: process.env.SSI_API_SECRET!,
+        ...(process.env.SSI_CLIENT_ID ? { clientId: process.env.SSI_CLIENT_ID } : {}),
+        timeoutMs: 8000,
+        maxRetries: 1,
+      });
+      await auth.authenticate(); // market data: no OTP
+      return { auth, data: new Data(auth) };
+    })().catch((e) => {
+      v3Data = null;
+      throw e;
+    });
+  }
+  return v3Data;
+}
+
+async function v3IndexQuote(symbol: string): Promise<Quote | null> {
+  const c = await v3Client();
+  // Refresh / re-login when the token has run out.
+  try {
+    if (c.auth.tokenManager?.isTokenExpired?.()) await c.auth.ensureAuthenticated().catch(() => c.auth.authenticate());
+  } catch {
+    v3Data = null;
+    return v3IndexQuote(symbol);
+  }
+  const s = await c.data.marketData.getIndexSummary(symbol.toUpperCase());
+  const price = Number(s?.indexValue);
+  if (!s || !(price > 0)) return null;
+  const change = Number(s.indexChange) || 0;
+  const prevClose = price - change;
+  return {
+    symbol: symbol.toUpperCase(),
+    name: symbol.toUpperCase(),
+    exchange: "Chỉ số",
+    currency: "điểm",
+    price,
+    change,
+    changePercent: Number.isFinite(Number(s.indexChangePercent)) ? Number(s.indexChangePercent) : prevClose ? (change / prevClose) * 100 : 0,
+    open: prevClose,
+    high: price,
+    low: price,
+    prevClose,
+    volume: Number(s.totalMatch) || Number(s.totalTrade) || 0,
+    value: Number(s.totalMatchValue) || Number(s.totalTradeValue) || undefined,
+    advances: s.totalAdvanceStock ?? undefined,
+    noChanges: s.totalSteadyStock ?? undefined,
+    declines: s.totalDeclineStock ?? undefined,
+    ceilings: s.totalCeilingStock ?? undefined,
+    floors: s.totalFloorStock ?? undefined,
+    updatedAt: new Date().toISOString(),
+  };
+}
 
 let token: { value: string; until: number } | null = null;
 
@@ -105,6 +174,20 @@ export async function ssiIndexQuote(symbol: string): Promise<Quote | null> {
   if (!ssiConfigured()) return null;
   const id = SSI_INDEX_ID[symbol.toUpperCase()];
   if (!id) return null;
+  if (v3Configured()) {
+    ssiStatus.api = "v3";
+    try {
+      const q = await v3IndexQuote(symbol);
+      if (q) ssiStatus.lastOk = new Date().toISOString();
+      return q;
+    } catch (err) {
+      ssiStatus.lastError = err instanceof Error ? err.message : String(err);
+      ssiStatus.lastErrorAt = new Date().toISOString();
+      console.error(`[ssi v3] ${symbol}: ${ssiStatus.lastError}`);
+      return null;
+    }
+  }
+  ssiStatus.api = "v2";
   try {
     // A week back so a Monday morning or a holiday still finds the last session.
     const rows = await get("DailyIndex", {
