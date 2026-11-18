@@ -119,7 +119,7 @@ export async function ssiIndexQuote(symbol: string): Promise<Quote | null> {
     const price = numField(row, "IndexValue");
     if (!row || !price) return null;
     const change = numField(row, "Change") ?? 0;
-    const prevClose = price - change;
+    const prevClose = numField(row, "PriorIndexValue") ?? price - change;
     ssiStatus.lastOk = new Date().toISOString();
     return {
       symbol: symbol.toUpperCase(),
@@ -133,8 +133,8 @@ export async function ssiIndexQuote(symbol: string): Promise<Quote | null> {
       high: price,
       low: price,
       prevClose,
-      volume: numField(row, "TotalVol", "TotalMatchVol") ?? 0,
-      value: numField(row, "TotalVal", "TotalMatchVal"),
+      volume: numField(row, "TotalVol", "TotalMatchVol", "TotalQtty") ?? 0,
+      value: numField(row, "TotalVal", "TotalMatchVal", "TotalValue"),
       advances: numField(row, "Advances"),
       noChanges: numField(row, "NoChanges"),
       declines: numField(row, "Declines"),
