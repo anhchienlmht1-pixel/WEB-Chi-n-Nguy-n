@@ -157,13 +157,38 @@ function OverviewTab({ group }: { group: GroupFilter }) {
           </span>
           Tốt hơn
         </span>
-        <span>
-          {mode === "Theo TB ngành"
-            ? "Màu = cao/thấp so với trung bình 16 ngân hàng (đậm = chênh nhiều) · ▲▼ = tốt lên / xấu đi so với cùng kỳ"
-            : "Màu = tốt lên / xấu đi so với cùng kỳ năm trước (đậm = thay đổi nhiều)"}
-        </span>
-        <span>ROA, ROE theo quý · LDR không tô màu · rê chuột vào ô để xem chi tiết</span>
       </div>
+      {(() => {
+        // Ví dụ lấy từ chính số liệu: ngân hàng có NIM cao nhất.
+        const ex = BANKS.filter((b) => b.v.nim != null).reduce((a, b) => (b.v.nim! > a.v.nim! ? b : a));
+        const exUp = (ex.d.nim ?? 0) > 0;
+        return (
+          <div className="rounded-[10px] border border-[var(--ab-line)] bg-[var(--ab-card)] px-4 py-3 text-[0.85rem] leading-relaxed">
+            <b className="text-[var(--ab-strong)]">Cách đọc bảng</b>
+            <ul className="mt-1.5 grid gap-x-8 gap-y-1 md:grid-cols-2">
+              <li>
+                <b>Màu ô</b>: so với <b>trung bình 16 ngân hàng</b>. Xanh = tốt hơn mặt bằng ngành, đỏ = kém hơn, màu càng đậm thì chênh càng nhiều.
+              </li>
+              <li>
+                <b>Mũi tên trong ô</b>: so với <b>cùng kỳ năm trước</b>. <span style={{ color: "var(--heat-up)" }}>▲</span> = tốt lên,{" "}
+                <span style={{ color: "var(--heat-down)" }}>▼</span> = xấu đi.
+              </li>
+              <li>
+                <b>"Tốt" tùy chỉ số</b>: CASA, NIM, ROA, ROE, tăng trưởng tín dụng/tiền gửi càng <b>cao</b> càng tốt; CIR (chi phí), NPL (nợ xấu), COF (chi phí vốn) càng{" "}
+                <b>thấp</b> càng tốt. LDR không tô màu vì không có mức "càng cao càng tốt".
+              </li>
+              <li>
+                <b>Ví dụ</b>: {ex.bank} có NIM {vn(ex.v.nim!, 1)}%, cao nhất ngành nên ô <b>xanh đậm</b>; mũi tên <span style={{ color: exUp ? "var(--heat-up)" : "var(--heat-down)" }}>{exUp ? "▲" : "▼"}</span> cho biết NIM{" "}
+                {exUp ? "đã tăng" : "đã giảm"} {vn(Math.abs(ex.d.nim ?? 0), 2)} điểm % so với cùng kỳ.
+              </li>
+              <li className="md:col-span-2 text-[var(--ab-muted)]">
+                ROA, ROE tính riêng trong quý (chưa quy ra năm). Rê chuột vào ô để xem trung bình ngành và mức thay đổi. Nguồn: báo cáo tài chính {PERIOD}. Chỉ để tham khảo,
+                không phải khuyến nghị mua bán.
+              </li>
+            </ul>
+          </div>
+        );
+      })()}
 
       <section className="grid gap-7 rounded-[10px] border border-[var(--ab-line)] bg-[var(--ab-card)] p-5 lg:grid-cols-[1.2fr_1fr]">
         <div className="min-w-0">
