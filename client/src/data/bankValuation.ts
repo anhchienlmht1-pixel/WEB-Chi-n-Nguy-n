@@ -331,3 +331,106 @@ export const SCALE: Record<string, BankScale> = {
   "pbtYoy": 7.5
  }
 };
+
+// Lợi nhuận quý 3/2026 và cùng kỳ quý 3/2025 (tỷ đồng) — SSI, báo cáo kết quả
+// kinh doanh hợp nhất. OCB quý 3/2025: SSI không có dòng riêng, lấy cả năm 2025
+// trừ quý 1, 2, 4.
+export interface BankProfit { pbt: number; pbtPrev: number; npat: number; npatPrev: number }
+export const PROFIT: Record<string, BankProfit> = {
+ "VCB": {
+  "pbt": 11217.7,
+  "pbtPrev": 11239.1,
+  "npat": 9041.1,
+  "npatPrev": 9025.6
+ },
+ "BID": {
+  "pbt": 10578.9,
+  "pbtPrev": 7593.8,
+  "npat": 8473.2,
+  "npatPrev": 6086.9
+ },
+ "CTG": {
+  "pbt": 13688.5,
+  "pbtPrev": 10614.4,
+  "npat": 10871.3,
+  "npatPrev": 8512.5
+ },
+ "TCB": {
+  "pbt": 10375.4,
+  "pbtPrev": 8250.0,
+  "npat": 8337.3,
+  "npatPrev": 6613.5
+ },
+ "VPB": {
+  "pbt": 11030.9,
+  "pbtPrev": 9166.3,
+  "npat": 8862.9,
+  "npatPrev": 7363.7
+ },
+ "MBB": {
+  "pbt": 10330.1,
+  "pbtPrev": 7249.9,
+  "npat": 8251.9,
+  "npatPrev": 5800.4
+ },
+ "ACB": {
+  "pbt": 5879.4,
+  "pbtPrev": 5381.8,
+  "npat": 4698.8,
+  "npatPrev": 4280.6
+ },
+ "HDB": {
+  "pbt": 5176.5,
+  "pbtPrev": 4734.5,
+  "npat": 4065.7,
+  "npatPrev": 3798.8
+ },
+ "STB": {
+  "pbt": 1757.3,
+  "pbtPrev": 3656.9,
+  "npat": 1346.7,
+  "npatPrev": 2901.3
+ },
+ "SHB": {
+  "pbt": 5165.8,
+  "pbtPrev": 3288.2,
+  "npat": 4118.9,
+  "npatPrev": 2606.7
+ },
+ "LPB": {
+  "pbt": 4447.8,
+  "pbtPrev": 3448.0,
+  "npat": 3561.5,
+  "npatPrev": 2762.0
+ },
+ "VIB": {
+  "pbt": 2405.8,
+  "pbtPrev": 2030.0,
+  "npat": 1924.9,
+  "npatPrev": 1624.5
+ },
+ "TPB": {
+  "pbt": 2980.6,
+  "pbtPrev": 1901.9,
+  "npat": 2351.2,
+  "npatPrev": 1520.6
+ },
+ "EIB": {
+  "pbt": 185.8,
+  "pbtPrev": 560.1,
+  "npat": 144.0,
+  "npatPrev": 444.7
+ },
+ "MSB": {
+  "pbt": 2017.1,
+  "pbtPrev": 1587.3,
+  "npat": 1649.2,
+  "npatPrev": 1274.2
+ },
+ "OCB": {
+  "pbt": 1652.8,
+  "pbtPrev": 1538.1,
+  "npat": 1313.9,
+  "npatPrev": 1227.9
+ }
+};

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { SCALE, type BankScale } from "../data/bankValuation";
+import { PROFIT, SCALE, type BankScale } from "../data/bankValuation";
 import { BANKS } from "../data/bankSector";
 import BankBarChart from "./BankBarChart";
 import { Seg, Tile, banksIn, groupOf, heat, stats, vn, type GroupFilter } from "./bankUi";
@@ -8,7 +8,8 @@ import { Seg, Tile, banksIn, groupOf, heat, stats, vn, type GroupFilter } from "
 // Quy mô & lợi nhuận Q3/2026: tài sản, cho vay, tiền gửi, vốn, thu nhập và lợi nhuận
 // trước thuế trong quý (tỷ đồng), thị phần tổng tài sản trong nhóm đang xem.
 
-type Key = keyof BankScale;
+type Key = keyof BankScale | "npat";
+type Row = { bank: string; npat: number } & BankScale;
 const COLS: { key: Key; label: string; title: string }[] = [
   { key: "tts", label: "Tổng tài sản", title: "Tổng tài sản cuối Q3/2026" },
   { key: "loan", label: "Cho vay KH", title: "Dư nợ cho vay khách hàng" },
@@ -17,8 +18,10 @@ const COLS: { key: Key; label: string; title: string }[] = [
   { key: "cap", label: "Vốn điều lệ", title: "Vốn điều lệ" },
   { key: "toi", label: "Thu nhập HĐ quý", title: "Tổng thu nhập hoạt động trong Q3/2026" },
   { key: "pbt", label: "LNTT quý", title: "Lợi nhuận trước thuế trong Q3/2026" },
+  { key: "npat", label: "LNST quý", title: "Lợi nhuận sau thuế trong Q3/2026 (SSI)" },
 ];
 const SORTS = ["Tổng tài sản", "Cho vay KH", "Tiền gửi KH", "LNTT quý", "Tăng trưởng LNTT", "Tăng trưởng TD & HĐ"] as const;
+// "LNTT quý" / "Tăng trưởng LNTT" show the combined profit chart (bars = profit, dots = growth).
 type Sort = (typeof SORTS)[number];
 // Tăng trưởng tín dụng / huy động từ đầu năm (%), từ bank.xlsm Q3/2026.
 const GROWTH: Record<string, { credit: number; deposit: number }> = Object.fromEntries(
@@ -38,11 +41,21 @@ const short = (ty: number) => vn(ty / 1000, ty >= 100000 ? 0 : 1);
 
 export default function BankScaleTab({ group }: { group: GroupFilter }) {
   const [sort, setSort] = useState<Sort>("Tổng tài sản");
+  const [tax, setTax] = useState<"Trước thuế" | "Sau thuế">("Trước thuế");
+  const profitMode = sort === "LNTT quý" || sort === "Tăng trưởng LNTT";
+  // Lợi nhuận quý 3/2026 và tăng trưởng so với Q3/2025, trước hoặc sau thuế (SSI).
+  const prof = (b: string) => {
+    const p = PROFIT[b];
+    if (!p) return null;
+    const cur = tax === "Trước thuế" ? p.pbt : p.npat;
+    const prev = tax === "Trước thuế" ? p.pbtPrev : p.npatPrev;
+    return { cur, yoy: prev ? (cur / prev - 1) * 100 : 0 };
+  };
   const growthMode = sort === "Tăng trưởng TD & HĐ";
   const sk: Key = growthMode ? "loan" : SORT_KEY[sort];
   const banks = banksIn(group);
-  const sortVal = (r: { bank: string } & BankScale) => (growthMode ? GROWTH[r.bank]?.credit ?? 0 : r[sk]);
-  const rows = banks.map((b) => ({ bank: b, ...SCALE[b] })).sort((a, b) => sortVal(b) - sortVal(a));
+  const sortVal = (r: Row) => (growthMode ? GROWTH[r.bank]?.credit ?? 0 : r[sk]);
+  const rows: Row[] = banks.map((b) => ({ bank: b, ...SCALE[b], npat: PROFIT[b]?.npat ?? 0 })).sort((a, b) => sortVal(b) - sortVal(a));
   const total = (k: Key) => rows.reduce((a, r) => a + r[k], 0);
   const ttsAll = total("tts");
   const maxSort = Math.max(...rows.map((r) => Math.abs(sortVal(r))), 1);
@@ -74,15 +87,23 @@ export default function BankScaleTab({ group }: { group: GroupFilter }) {
           label1="Tăng trưởng tín dụng"
           label2="Tăng trưởng huy động"
         />
-      ) : sk === "pbtYoy" ? (
+      ) : profitMode ? (
         <BankBarChart
-          title="Tăng trưởng lợi nhuận trước thuế"
-          subtitle="Q3/2026 so với Q3/2025"
-          items={rows.map((r) => ({ bank: r.bank, v: r.pbtYoy }))}
-          fmt={(n) => `${n > 0 ? "+" : ""}${vn(n, 1)}%`}
-          axisFmt={(n) => `${vn(n, 0)}%`}
-          label1="LNTT so với cùng kỳ"
-          signColor
+          title={`Lợi nhuận ${tax === "Trước thuế" ? "trước" : "sau"} thuế và tăng trưởng`}
+          subtitle={`Q3/2026 · cột: nghìn tỷ đồng · chấm: % so với Q3/2025 · sắp theo ${sort === "LNTT quý" ? "lợi nhuận" : "tăng trưởng"}`}
+          items={[...rows]
+            .map((r) => ({ bank: r.bank, p: prof(r.bank) }))
+            .filter((x) => x.p)
+            .sort((a, b) => (sort === "LNTT quý" ? b.p!.cur - a.p!.cur : b.p!.yoy - a.p!.yoy))
+            .map((x) => ({ bank: x.bank, v: x.p!.cur / 1000, v2: x.p!.yoy }))}
+          fmt={(n) => `${vn(n, 2)} nghìn tỷ`}
+          axisFmt={(n) => vn(n, Number.isInteger(n) ? 0 : 1)}
+          label1={`LN${tax === "Trước thuế" ? "TT" : "ST"} quý 3`}
+          label2="Tăng trưởng so với cùng kỳ"
+          v2Kind="dot"
+          fmt2={(n) => `${n > 0 ? "+" : ""}${vn(n, 1)}%`}
+          axisFmt2={(n) => `${vn(n, 0)}%`}
+          controls={<Seg items={["Trước thuế", "Sau thuế"] as const} value={tax} onChange={setTax} label="Lợi nhuận trước hay sau thuế" />}
         />
       ) : (
         <BankBarChart
