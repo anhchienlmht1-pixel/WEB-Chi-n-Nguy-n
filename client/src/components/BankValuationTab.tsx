@@ -174,10 +174,10 @@ function Scatter({ rows, roeMin, pbAvg, watch, sel, onSel }: ScatterProps) {
     </svg>
     {cur && (
       <div
-        className="pointer-events-none absolute z-10 w-[230px] rounded-lg border border-[var(--ab-line-strong)] bg-[var(--ab-bg2)] p-3 text-[0.82rem] shadow-lg"
+        className="pointer-events-none absolute z-10 w-[230px] max-h-[248px] overflow-hidden rounded-lg border border-[var(--ab-line-strong)] bg-[var(--ab-bg2)] p-3 text-[0.82rem] shadow-lg"
         style={{
           left: `clamp(0px, calc(${(sx(cur.roe) / W) * 100}% ${sx(cur.roe) > W * 0.6 ? "- 242px" : "+ 12px"}), calc(100% - 230px))`,
-          top: `clamp(0px, calc(${(sy(cur.pb) / H) * 100}% - 60px), calc(100% - 200px))`,
+          top: `clamp(0px, calc(${(sy(cur.pb) / H) * 100}% - 60px), calc(100% - 252px))`,
         }}
       >
         <p className="flex items-baseline justify-between">
@@ -350,8 +350,8 @@ export default function BankValuationTab({ group }: { group: GroupFilter }) {
               Đường xu hướng
             </span>
           </div>
-          <div className="overflow-x-auto">
-            <div className="min-w-[540px]">
+          <div className="overflow-x-auto sm:overflow-visible">
+            <div className="min-w-[540px] sm:min-w-0">
               <Scatter rows={rows} roeMin={roeMin} pbAvg={pbAvgAll} watch={watchSet} sel={sel} onSel={setSel} />
             </div>
           </div>
