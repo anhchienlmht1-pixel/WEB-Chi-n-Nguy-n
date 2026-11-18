@@ -154,7 +154,7 @@ function Scatter({ rows, roeMin, pbAvg, watch, sel, onSel }: ScatterProps) {
             }}
           >
             <circle cx={sx(p.roe)} cy={sy(p.pb)} r="14" fill="transparent" />
-            {watch.has(p.bank) && <circle cx={sx(p.roe)} cy={sy(p.pb)} r="10" fill="none" strokeWidth="2" style={{ stroke: "var(--heat-up)" }} />}
+            {watch.has(p.bank) && <circle cx={sx(p.roe)} cy={sy(p.pb)} r="8.5" fill="none" strokeWidth="1" style={{ stroke: "var(--heat-up)" }} opacity="0.85" />}
             <circle
               cx={sx(p.roe)}
               cy={sy(p.pb)}
