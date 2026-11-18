@@ -374,11 +374,19 @@ img {
   --ab-card: rgba(255, 255, 255, 0.94);
   --ab-cell: #ffffff;
   --ab-up: #138a4a;
+  --heat-up: #16a34a;
+  --heat-down: #e03131;
+  --heat-ink: #1f2a1e;
+  --heat-ink-strong: #0a140c;
   --ab-down: #d23a3a;
   --ab-pb-line: rgba(0, 0, 0, 0.05);
   --ab-pb-key: rgba(0, 0, 0, 0.03);
 }
 .theme-dark {
+  --heat-up: #2fbf6a;
+  --heat-down: #f03e3e;
+  --heat-ink: #e3ece0;
+  --heat-ink-strong: #ffffff;
   --ab-strong: #ffffff;
   --ab-text: #d5dfcc;
   --ab-text2: #b8c4ae;

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import type React from "react";
 import { Link } from "react-router-dom";
 import { BANKS, PERIOD, type BankGroup, type MetricKey } from "../data/bankSector";
 
@@ -30,6 +31,32 @@ const METRICS: Metric[] = [
 ];
 const RANK_KEYS: MetricKey[] = ["nim", "roe", "npl", "casa", "ldr", "credit", "cof"];
 const GROUPS: ("Tất cả" | BankGroup)[] = ["Tất cả", "SOBs", "NHTM lớn", "NHTM vừa"];
+
+// Mean / standard deviation of a metric across all 16 banks (level) and of its
+// year-on-year change, for the heat-map intensity.
+function stats(xs: number[]) {
+  const m = xs.reduce((a, b) => a + b, 0) / (xs.length || 1);
+  const sd = Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / (xs.length || 1)) || 1;
+  return { m, sd };
+}
+type Mode = "Theo TB ngành" | "Theo cùng kỳ";
+const MODES: Mode[] = ["Theo TB ngành", "Theo cùng kỳ"];
+// |z| → mix strength (4 steps) so strong outliers stand out.
+const STEPS = [0, 18, 32, 48, 66];
+function step(z: number) {
+  const a = Math.abs(z);
+  return a < 0.25 ? 0 : a < 0.75 ? 1 : a < 1.25 ? 2 : a < 1.75 ? 3 : 4;
+}
+function heat(signed: number, z: number): React.CSSProperties | undefined {
+  const k = step(z);
+  if (!k || !signed) return undefined;
+  const c = signed > 0 ? "var(--heat-up)" : "var(--heat-down)";
+  return {
+    background: `color-mix(in srgb, ${c} ${STEPS[k]}%, transparent)`,
+    color: k >= 3 ? "var(--heat-ink-strong)" : "var(--heat-ink)",
+    fontWeight: k >= 3 ? 700 : 500,
+  };
+}
 
 const vn = (x: number, d = 2) => x.toLocaleString("vi-VN", { minimumFractionDigits: d, maximumFractionDigits: d });
 const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
@@ -67,6 +94,16 @@ function Seg<T extends string>({ items, value, onChange, label }: { items: reado
 export default function BankSector() {
   const [group, setGroup] = useState<(typeof GROUPS)[number]>("Tất cả");
   const [rankKey, setRankKey] = useState<MetricKey>("nim");
+  const [mode, setMode] = useState<Mode>("Theo TB ngành");
+  const st = useMemo(() => {
+    const out = {} as Record<MetricKey, { lv: { m: number; sd: number }; ch: { m: number; sd: number } }>;
+    for (const m of METRICS) {
+      const lv = BANKS.flatMap((b) => (b.v[m.key] ? [b.v[m.key]!] : []));
+      const ch = BANKS.flatMap((b) => (b.d[m.key] != null ? [b.d[m.key]!] : []));
+      out[m.key] = { lv: stats(lv), ch: { m: 0, sd: stats(ch).sd } };
+    }
+    return out;
+  }, []);
   const rows = useMemo(() => (group === "Tất cả" ? BANKS : BANKS.filter((b) => b.group === group)), [group]);
 
   const vals = (k: MetricKey) => rows.flatMap((r) => (r.v[k] != null && r.v[k] !== 0 ? [{ bank: r.bank, v: r.v[k]! }] : []));
@@ -91,6 +128,7 @@ export default function BankSector() {
           <h1 className="text-[clamp(1.6rem,3vw,2rem)] font-bold leading-tight text-[var(--ab-strong)]">Ngành ngân hàng · {PERIOD}</h1>
           <p className="mt-1 text-[var(--ab-muted)]">16 ngân hàng niêm yết · số liệu báo cáo tài chính quý</p>
         </div>
+        <Seg items={MODES} value={mode} onChange={setMode} label="Cách tô màu" />
         <Seg items={GROUPS} value={group} onChange={setGroup} label="Nhóm ngân hàng" />
       </div>
 
@@ -132,17 +170,35 @@ export default function BankSector() {
                   {METRICS.map((m) => {
                     const v = r.v[m.key];
                     const d = r.d[m.key] ?? 0;
-                    const s = m.dir * d;
-                    const tone = s > 0 ? "var(--ab-up)" : s < 0 ? "var(--ab-down)" : "";
                     const dd = `${d > 0 ? "+" : d < 0 ? "−" : ""}${vn(Math.abs(d))}`;
+                    let style: React.CSSProperties | undefined;
+                    if (v != null && v !== 0) {
+                      if (mode === "Theo TB ngành") {
+                        const z = (v - st[m.key].lv.m) / st[m.key].lv.sd;
+                        style = heat(m.dir * z, z);
+                      } else {
+                        const z = d / st[m.key].ch.sd;
+                        style = heat(m.dir * d, z);
+                      }
+                    }
+                    const arrow = m.dir * d > 0 ? "▲" : m.dir * d < 0 ? "▼" : "";
                     return (
                       <td
                         key={m.key}
-                        title={`So với cùng kỳ: ${dd} điểm %`}
+                        title={`TB ngành: ${vn(st[m.key].lv.m)}% · so với cùng kỳ: ${dd} điểm %`}
                         className="px-2 py-1.5 text-center tabular-nums"
-                        style={tone ? { color: tone, background: `color-mix(in srgb, ${tone} 13%, transparent)` } : undefined}
+                        style={style}
                       >
                         {v == null ? "—" : `${vn(v, 1)}%`}
+                        {mode === "Theo TB ngành" && arrow && (
+                          <span
+                            aria-hidden="true"
+                            className="ml-1 text-[0.6rem] opacity-80"
+                            style={{ color: m.dir * d > 0 ? "var(--heat-up)" : "var(--heat-down)" }}
+                          >
+                            {arrow}
+                          </span>
+                        )}
                       </td>
                     );
                   })}
@@ -152,17 +208,27 @@ export default function BankSector() {
           </tbody>
         </table>
       </section>
-      <p className="-mt-1 flex flex-wrap gap-x-5 gap-y-1 text-[0.8rem] text-[var(--ab-muted)]">
-        <span>
-          <i className="mr-1.5 inline-block h-2.5 w-2.5 align-[-1px]" style={{ background: "color-mix(in srgb, var(--ab-up) 25%, transparent)", border: "1px solid var(--ab-up)" }} />
-          Tốt lên so với cùng kỳ
+      <div className="-mt-1 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[0.8rem] text-[var(--ab-muted)]">
+        <span className="flex items-center gap-2">
+          Kém hơn
+          <span className="flex overflow-hidden rounded-sm border border-[var(--ab-line)]" aria-hidden="true">
+            {[4, 3, 2, 1].map((k) => (
+              <i key={`d${k}`} className="block h-3 w-5" style={{ background: `color-mix(in srgb, var(--heat-down) ${STEPS[k]}%, transparent)` }} />
+            ))}
+            <i className="block h-3 w-5" />
+            {[1, 2, 3, 4].map((k) => (
+              <i key={`u${k}`} className="block h-3 w-5" style={{ background: `color-mix(in srgb, var(--heat-up) ${STEPS[k]}%, transparent)` }} />
+            ))}
+          </span>
+          Tốt hơn
         </span>
         <span>
-          <i className="mr-1.5 inline-block h-2.5 w-2.5 align-[-1px]" style={{ background: "color-mix(in srgb, var(--ab-down) 25%, transparent)", border: "1px solid var(--ab-down)" }} />
-          Xấu đi so với cùng kỳ
+          {mode === "Theo TB ngành"
+            ? "Màu = cao/thấp so với trung bình 16 ngân hàng (đậm = chênh nhiều) · ▲▼ = tốt lên / xấu đi so với cùng kỳ"
+            : "Màu = tốt lên / xấu đi so với cùng kỳ năm trước (đậm = thay đổi nhiều)"}
         </span>
-        <span>ROA, ROE theo quý · rê chuột vào ô để xem mức thay đổi · bấm tên ngân hàng để mở trang mã</span>
-      </p>
+        <span>ROA, ROE theo quý · LDR không tô màu · rê chuột vào ô để xem chi tiết</span>
+      </div>
 
       <section className="grid gap-7 rounded-[10px] border border-[var(--ab-line)] bg-[var(--ab-card)] p-5 lg:grid-cols-[1.2fr_1fr]">
         <div className="min-w-0">
@@ -200,8 +266,8 @@ export default function BankSector() {
                       style={{
                         width: `calc(${(x.v / rankMax) * 100}% - 3.5rem)`,
                         minWidth: 2,
-                        background: rm.dir === 0 ? "var(--ab-accent)" : better ? "var(--ab-up)" : "var(--ab-muted)",
-                        opacity: rm.dir === 0 || better ? 0.85 : 0.5,
+                        background: rm.dir === 0 ? "var(--ab-accent)" : better ? "var(--heat-up)" : "var(--heat-down)",
+                        opacity: 0.85,
                       }}
                     />
                     <span className="tabular-nums text-[var(--ab-text)]">{vn(x.v)}%</span>
@@ -218,7 +284,7 @@ export default function BankSector() {
           <h3 className="font-bold text-[var(--ab-strong)]">Đọc nhanh</h3>
           <ul className="mt-1.5 list-disc pl-5 leading-relaxed">
             <li>
-              Cột xanh: {rm.dir === -1 ? "thấp hơn" : "cao hơn"} trung bình (tốt hơn). Cột mờ: kém hơn trung bình.
+              Cột xanh: {rm.dir === -1 ? "thấp hơn" : "cao hơn"} trung bình (tốt hơn). Cột đỏ: kém hơn trung bình.
             </li>
             <li>Lọc theo nhóm ở góc trên để so trong cùng nhóm.</li>
             <li>Bấm tên ngân hàng để mở trang chi tiết mã.</li>
