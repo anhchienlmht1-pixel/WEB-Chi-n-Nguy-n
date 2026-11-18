@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { SCALE, type BankScale } from "../data/bankValuation";
+import { BANKS } from "../data/bankSector";
+import BankBarChart from "./BankBarChart";
 import { Seg, Tile, banksIn, groupOf, heat, stats, vn, type GroupFilter } from "./bankUi";
 
 // Quy mô & lợi nhuận Q3/2026: tài sản, cho vay, tiền gửi, vốn, thu nhập và lợi nhuận
@@ -16,9 +18,13 @@ const COLS: { key: Key; label: string; title: string }[] = [
   { key: "toi", label: "Thu nhập HĐ quý", title: "Tổng thu nhập hoạt động trong Q3/2026" },
   { key: "pbt", label: "LNTT quý", title: "Lợi nhuận trước thuế trong Q3/2026" },
 ];
-const SORTS = ["Tổng tài sản", "Cho vay KH", "Tiền gửi KH", "LNTT quý", "Tăng trưởng LNTT"] as const;
+const SORTS = ["Tổng tài sản", "Cho vay KH", "Tiền gửi KH", "LNTT quý", "Tăng trưởng LNTT", "Tăng trưởng TD & HĐ"] as const;
 type Sort = (typeof SORTS)[number];
-const SORT_KEY: Record<Sort, Key> = {
+// Tăng trưởng tín dụng / huy động từ đầu năm (%), từ bank.xlsm Q3/2026.
+const GROWTH: Record<string, { credit: number; deposit: number }> = Object.fromEntries(
+  BANKS.map((b) => [b.bank, { credit: b.v.credit ?? 0, deposit: b.v.deposit ?? 0 }]),
+);
+const SORT_KEY: Record<Exclude<Sort, "Tăng trưởng TD & HĐ">, Key> = {
   "Tổng tài sản": "tts",
   "Cho vay KH": "loan",
   "Tiền gửi KH": "dep",
@@ -32,12 +38,14 @@ const short = (ty: number) => vn(ty / 1000, ty >= 100000 ? 0 : 1);
 
 export default function BankScaleTab({ group }: { group: GroupFilter }) {
   const [sort, setSort] = useState<Sort>("Tổng tài sản");
-  const sk = SORT_KEY[sort];
+  const growthMode = sort === "Tăng trưởng TD & HĐ";
+  const sk: Key = growthMode ? "loan" : SORT_KEY[sort];
   const banks = banksIn(group);
-  const rows = banks.map((b) => ({ bank: b, ...SCALE[b] })).sort((a, b) => b[sk] - a[sk]);
+  const sortVal = (r: { bank: string } & BankScale) => (growthMode ? GROWTH[r.bank]?.credit ?? 0 : r[sk]);
+  const rows = banks.map((b) => ({ bank: b, ...SCALE[b] })).sort((a, b) => sortVal(b) - sortVal(a));
   const total = (k: Key) => rows.reduce((a, r) => a + r[k], 0);
   const ttsAll = total("tts");
-  const maxSort = Math.max(...rows.map((r) => Math.abs(r[sk])), 1);
+  const maxSort = Math.max(...rows.map((r) => Math.abs(sortVal(r))), 1);
   const yoy = stats(Object.values(SCALE).map((r) => r.pbtYoy));
   const pbtTotal = total("pbt");
   const top = rows.reduce((a, r) => (r.pbt > a.pbt ? r : a), rows[0]);
@@ -56,12 +64,43 @@ export default function BankScaleTab({ group }: { group: GroupFilter }) {
         Sắp xếp theo <Seg items={SORTS} value={sort} onChange={setSort} label="Sắp xếp theo" />
       </div>
 
+      {growthMode ? (
+        <BankBarChart
+          title="Tăng trưởng tín dụng và huy động"
+          subtitle="Từ đầu năm đến cuối Q3/2026 · sắp theo tăng trưởng tín dụng"
+          items={rows.map((r) => ({ bank: r.bank, v: GROWTH[r.bank]?.credit ?? 0, v2: GROWTH[r.bank]?.deposit ?? 0 }))}
+          fmt={(n) => `${vn(n, 1)}%`}
+          axisFmt={(n) => `${vn(n, 0)}%`}
+          label1="Tăng trưởng tín dụng"
+          label2="Tăng trưởng huy động"
+        />
+      ) : sk === "pbtYoy" ? (
+        <BankBarChart
+          title="Tăng trưởng lợi nhuận trước thuế"
+          subtitle="Q3/2026 so với Q3/2025"
+          items={rows.map((r) => ({ bank: r.bank, v: r.pbtYoy }))}
+          fmt={(n) => `${n > 0 ? "+" : ""}${vn(n, 1)}%`}
+          axisFmt={(n) => `${vn(n, 0)}%`}
+          label1="LNTT so với cùng kỳ"
+          signColor
+        />
+      ) : (
+        <BankBarChart
+          title={COLS.find((c) => c.key === sk)?.title ?? sort}
+          subtitle={`Q3/2026 · nghìn tỷ đồng · ${rows.length} ngân hàng`}
+          items={rows.map((r) => ({ bank: r.bank, v: r[sk] / 1000 }))}
+          fmt={(n) => `${vn(n, n >= 100 ? 0 : 1)} nghìn tỷ`}
+          axisFmt={(n) => vn(n, n >= 100 || n === 0 ? 0 : 1)}
+          label1={sort}
+        />
+      )}
+
       <section className="overflow-x-auto rounded-[10px] border border-[var(--ab-line)] bg-[var(--ab-card)]">
         <table className="w-full min-w-[1080px] border-collapse text-[0.92rem]">
           <thead>
             <tr className="bg-[var(--ab-accent)] text-[var(--ab-bg)]">
               <th className="px-3 py-2.5 text-left font-bold">Ngân hàng</th>
-              <th className="px-2 py-2.5 text-left font-bold">{sort}</th>
+              <th className="px-2 py-2.5 text-left font-bold">{growthMode ? "Tăng trưởng tín dụng YTD" : sort}</th>
               {COLS.map((c) => (
                 <th key={c.key} title={c.title} className="px-2 py-2.5 text-right font-bold leading-tight">
                   {c.label}
@@ -72,9 +111,9 @@ export default function BankScaleTab({ group }: { group: GroupFilter }) {
           </thead>
           <tbody>
             {rows.map((r) => {
-              const v = r[sk];
+              const v = growthMode ? GROWTH[r.bank]?.credit ?? 0 : r[sk];
               const z = (r.pbtYoy - yoy.m) / yoy.sd;
-              const isYoy = sk === "pbtYoy";
+              const isYoy = sk === "pbtYoy" || growthMode;
               return (
                 <tr key={r.bank} className="border-t border-[var(--ab-line)]">
                   <td className="px-3 py-1.5 whitespace-nowrap">
@@ -95,7 +134,7 @@ export default function BankScaleTab({ group }: { group: GroupFilter }) {
                         }}
                       />
                       <span className="text-xs tabular-nums text-[var(--ab-muted)]">
-                        {isYoy ? `${v > 0 ? "+" : ""}${vn(v, 0)}%` : `${vn((v / total(sk)) * 100, 1)}%`}
+                        {isYoy ? `${v > 0 ? "+" : ""}${vn(v, growthMode ? 1 : 0)}%` : `${vn((v / total(sk)) * 100, 1)}%`}
                       </span>
                     </div>
                   </td>
