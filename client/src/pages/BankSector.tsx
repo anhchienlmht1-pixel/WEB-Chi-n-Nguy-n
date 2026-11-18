@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import type React from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { GROUPS, MODES, STEPS, Seg, Tile, heat, mean, stats, vn, type GroupFilter, type Mode } from "../components/bankUi";
+import { GROUPS, STEPS, Seg, Tile, heat, mean, stats, vn, type GroupFilter, type Mode } from "../components/bankUi";
 import BankValuationTab from "../components/BankValuationTab";
 import BankScaleTab from "../components/BankScaleTab";
 import { BANKS, PERIOD, type BankGroup, type MetricKey } from "../data/bankSector";
@@ -36,7 +36,8 @@ const RANK_KEYS: MetricKey[] = ["nim", "roe", "npl", "casa", "ldr", "credit", "c
 
 function OverviewTab({ group }: { group: GroupFilter }) {
   const [rankKey, setRankKey] = useState<MetricKey>("nim");
-  const [mode, setMode] = useState<Mode>("Theo TB ngành");
+  // Colour = level vs the 16-bank average; ▲▼ in each cell = better / worse than a year ago.
+  const mode = "Theo TB ngành" as Mode;
   const st = useMemo(() => {
     const out = {} as Record<MetricKey, { lv: { m: number; sd: number }; ch: { m: number; sd: number } }>;
     for (const m of METRICS) {
@@ -65,10 +66,6 @@ function OverviewTab({ group }: { group: GroupFilter }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-end gap-3">
-        <Seg items={MODES} value={mode} onChange={setMode} label="Cách tô màu" />
-      </div>
-
       <section aria-label="Trung bình ngành" className="flex flex-wrap rounded-[10px] border border-[var(--ab-line)] bg-[var(--ab-card)]">
         <Tile label="NIM trung bình" value={`${vn(avg("nim"))}%`} sub={best("nim")} />
         <Tile label="ROE trung bình (quý)" value={`${vn(avg("roe"), 1)}%`} sub={best("roe")} />
