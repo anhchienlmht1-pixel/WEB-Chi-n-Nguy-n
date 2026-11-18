@@ -361,7 +361,7 @@ export default function BankValuationTab({ group }: { group: GroupFilter }) {
               <li>Rê chuột hoặc bấm vào chấm để xem số liệu của ngân hàng.</li>
               <li>Ngân hàng sinh lời tốt hơn (ROE cao) thường được thị trường trả P/B cao hơn.</li>
               <li>Nằm dưới đường xu hướng: P/B thấp hơn mức thường thấy ở cùng mức ROE. Nằm trên: cao hơn.</li>
-              <li>Vùng xanh nhạt: ROE trên trung bình ngành và P/B dưới trung bình ngành. Chấm có vòng xanh: nằm trong danh sách theo dõi.</li>
+              <li className="font-bold" style={{ color: "var(--heat-up)" }}>Vùng xanh nhạt: ROE trên trung bình ngành và P/B dưới trung bình ngành. Chấm có vòng xanh: nằm trong danh sách theo dõi.</li>
               <li>P/B = giá / giá trị sổ sách mỗi cổ phiếu. P/E = giá / lợi nhuận mỗi cổ phiếu 4 quý gần nhất.</li>
             </ul>
           </details>
