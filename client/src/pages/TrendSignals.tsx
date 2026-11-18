@@ -52,7 +52,7 @@ export default function TrendSignals() {
   }, [buySignalsState.data]);
 
   return (
-    <div className="theme-dark">
+    <div>
     <section id="tin-hieu" className="gutter-x mx-auto max-w-[1600px] scroll-mt-20 pb-12 pt-5">
       {/* Minimal: no page title or summary sentence — the chart and the list
           speak for themselves. The heading stays for screen readers. */}

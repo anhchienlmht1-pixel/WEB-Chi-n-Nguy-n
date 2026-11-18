@@ -1,30 +1,47 @@
 import { useCallback, useSyncExternalStore } from "react";
 
-const STORAGE_KEY = "stockdash.theme";
+// Light / dark for the whole site, chosen with the sun/moon button in the
+// header and remembered in this browser. Dark is the default (the Bull Stock
+// moss-dark look). Dark puts .theme-dark on <html>: the neutral and brand
+// colour scales flip inside it (see index.css), so pages written for the light
+// page read correctly on dark without per-component variants. The header and
+// the Giới thiệu landing are dark in both modes by design.
+//
+// The old Tailwind "dark" class (html.dark) is not used: it would flip the
+// colours a second time on top of .theme-dark.
+
+const STORAGE_KEY = "bullstock.theme";
 
 export type Theme = "light" | "dark";
 
-// Module-level store so every consumer (charts) sees the
-// same theme and re-renders together. The redesigned site is light-only
-// (white background): a "dark" value saved by an earlier version is ignored
-// and cleared, and the header no longer offers a toggle.
-let theme: Theme = "light";
-try {
-  localStorage.removeItem(STORAGE_KEY);
-} catch {
-  /* storage unavailable — nothing to clear */
+function readSaved(): Theme {
+  try {
+    const v = localStorage.getItem(STORAGE_KEY);
+    return v === "light" ? "light" : "dark";
+  } catch {
+    return "dark";
+  }
 }
+
+let theme: Theme = readSaved();
 const listeners = new Set<() => void>();
 
 function applyToDocument() {
-  document.documentElement.classList.toggle("dark", theme === "dark");
+  const root = document.documentElement;
+  root.classList.toggle("theme-dark", theme === "dark");
+  root.classList.remove("dark");
+  root.style.colorScheme = theme;
 }
 
 applyToDocument();
 
 function setTheme(next: Theme) {
   theme = next;
-  localStorage.setItem(STORAGE_KEY, next);
+  try {
+    localStorage.setItem(STORAGE_KEY, next);
+  } catch {
+    /* storage unavailable — the choice lasts for this visit only */
+  }
   applyToDocument();
   listeners.forEach((listener) => listener());
 }

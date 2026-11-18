@@ -15,7 +15,7 @@ export default function AccountOpeningGuide() {
       </div>
 
       {/* Video */}
-      <div className="aspect-video overflow-hidden rounded-md border border-slate-200 bg-slate-950">
+      <div className="aspect-video overflow-hidden rounded-md border border-slate-200 bg-[#0b0f14]">
         <iframe
           width="100%"
           height="100%"
