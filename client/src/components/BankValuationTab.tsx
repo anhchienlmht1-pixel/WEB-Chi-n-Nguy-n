@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { usePolling } from "../hooks/usePolling";
 import { fetchQuote } from "../api/client";
 import { VALUATION } from "../data/bankValuation";
-import { Seg, Tile, banksIn, groupOf, heat, mean, stats, vn, type GroupFilter } from "./bankUi";
+import { Tile, banksIn, groupOf, heat, mean, stats, vn, type GroupFilter } from "./bankUi";
 import type { Quote } from "../types";
 
 // Định giá: P/B, P/E theo giá đang khớp (giá / giá trị sổ sách, giá / EPS 4 quý),
@@ -113,7 +113,7 @@ function Scatter({ rows, roeMin, pbAvg, watch, sel, onSel }: ScatterProps) {
       <line x1={zx} x2={zx} y1={P.t} y2={H - P.b} strokeDasharray="3 3" style={{ stroke: "var(--heat-up)" }} opacity="0.7" />
       <line x1={P.l} x2={W - P.r} y1={zy} y2={zy} strokeDasharray="3 3" style={{ stroke: "var(--heat-up)" }} opacity="0.7" />
       <text x={W - P.r - 4} y={H - P.b - 6} textAnchor="end" fontSize="11" style={{ fill: "var(--heat-up)" }}>
-        ROE ≥ {roeMin}% · P/B dưới TB ngành ({vn(pbAvg)})
+        ROE trên TB ngành ({vn(roeMin, 1)}%) · P/B dưới TB ngành ({vn(pbAvg)})
       </text>
       {yt.map((v) => (
         <g key={`y${v}`}>
@@ -213,11 +213,7 @@ function Scatter({ rows, roeMin, pbAvg, watch, sel, onSel }: ScatterProps) {
   );
 }
 
-const ROE_OPTS = ["12%", "15%", "18%"] as const;
-type RoeOpt = (typeof ROE_OPTS)[number];
-
 export default function BankValuationTab({ group }: { group: GroupFilter }) {
-  const [roeMin, setRoeMin] = useState(15);
   const [sel, setSel] = useState<string | null>(null);
   const { data: quotes } = usePolling(
     async () => {
@@ -262,7 +258,9 @@ export default function BankValuationTab({ group }: { group: GroupFilter }) {
   const histStat = stats(all.map((r) => r.vsHist));
   const below = rows.filter((r) => r.vsHist < 0).length;
   const pbAvgAll = mean(all.map((r) => r.pb));
-  const watch = rows.filter((r) => r.roe >= roeMin && r.pb < pbAvgAll).sort((a, b) => a.pb / a.roe - b.pb / b.roe);
+  // Watch list: ROE above the 16-bank average and P/B below the 16-bank average.
+  const roeMin = mean(all.map((r) => r.roe));
+  const watch = rows.filter((r) => r.roe > roeMin && r.pb < pbAvgAll).sort((a, b) => a.pb / a.roe - b.pb / b.roe);
   const watchSet = new Set(watch.map((r) => r.bank));
 
   const cell = (style: React.CSSProperties | undefined) => ({ className: "px-2 py-1.5 text-center tabular-nums", style });
@@ -363,7 +361,7 @@ export default function BankValuationTab({ group }: { group: GroupFilter }) {
               <li>Rê chuột hoặc bấm vào chấm để xem số liệu của ngân hàng.</li>
               <li>Ngân hàng sinh lời tốt hơn (ROE cao) thường được thị trường trả P/B cao hơn.</li>
               <li>Nằm dưới đường xu hướng: P/B thấp hơn mức thường thấy ở cùng mức ROE. Nằm trên: cao hơn.</li>
-              <li>Vùng xanh nhạt: ROE đạt ngưỡng và P/B dưới trung bình ngành. Chấm có vòng xanh: nằm trong danh sách theo dõi.</li>
+              <li>Vùng xanh nhạt: ROE trên trung bình ngành và P/B dưới trung bình ngành. Chấm có vòng xanh: nằm trong danh sách theo dõi.</li>
               <li>P/B = giá / giá trị sổ sách mỗi cổ phiếu. P/E = giá / lợi nhuận mỗi cổ phiếu 4 quý gần nhất.</li>
             </ul>
           </details>
@@ -371,14 +369,21 @@ export default function BankValuationTab({ group }: { group: GroupFilter }) {
         <aside aria-label="Danh sách theo dõi" className="flex flex-col border-[var(--ab-line)] lg:border-l lg:pl-6">
           <h3 className="text-lg font-bold text-[var(--ab-strong)]">Danh sách theo dõi</h3>
           <p className="mt-1 text-[0.85rem] text-[var(--ab-muted)]">
-            Ngân hàng có ROE 4 quý từ ngưỡng trở lên <b>và</b> P/B thấp hơn trung bình 16 ngân hàng ({vn(pbAvgAll)}).
+            Ngân hàng có ROE 4 quý <b>cao hơn</b> trung bình ngành <b>và</b> P/B <b>thấp hơn</b> trung bình ngành (tính trên 16 ngân hàng).
           </p>
-          <div className="mt-3 flex items-center gap-2 text-[0.82rem] text-[var(--ab-muted)]">
-            ROE tối thiểu <Seg items={ROE_OPTS} value={`${roeMin}%` as RoeOpt} onChange={(v) => setRoeMin(parseInt(v, 10))} label="Ngưỡng ROE" />
+          <div className="mt-3 grid grid-cols-2 gap-2 text-[0.82rem]">
+            <div className="rounded-lg border border-[var(--ab-line)] px-3 py-2">
+              <span className="text-[var(--ab-muted)]">ROE TB ngành</span>
+              <b className="block text-lg tabular-nums text-[var(--ab-strong)]">{vn(roeMin, 1)}%</b>
+            </div>
+            <div className="rounded-lg border border-[var(--ab-line)] px-3 py-2">
+              <span className="text-[var(--ab-muted)]">P/B TB ngành</span>
+              <b className="block text-lg tabular-nums text-[var(--ab-strong)]">{vn(pbAvgAll)}</b>
+            </div>
           </div>
           {watch.length === 0 ? (
             <p className="mt-4 rounded-lg border border-dashed border-[var(--ab-line-strong)] p-4 text-[0.88rem]">
-              Chưa có ngân hàng nào đạt cả hai điều kiện{group !== "Tất cả" ? ` trong nhóm ${group}` : ""}. Thử hạ ngưỡng ROE.
+              Chưa có ngân hàng nào đạt cả hai điều kiện{group !== "Tất cả" ? ` trong nhóm ${group}` : ""}. 
             </p>
           ) : (
             <ul className="mt-3 flex flex-col gap-1.5">
@@ -397,7 +402,7 @@ export default function BankValuationTab({ group }: { group: GroupFilter }) {
                         {r.bank}
                       </Link>
                       <span className="text-[0.82rem] tabular-nums">
-                        ROE <b>{vn(r.roe, 1)}%</b> · P/B <b>{vn(r.pb)}</b>
+                        ROE <b>{vn(r.roe, 1)}%</b> <span style={{ color: "var(--heat-up)" }}>(+{vn(r.roe - roeMin, 1)})</span> · P/B <b>{vn(r.pb)}</b>
                       </span>
                       <span className="text-right text-xs tabular-nums" style={{ color: "var(--heat-up)" }}>
                         −{vn(Math.abs((r.pb / pbAvgAll - 1) * 100), 0)}% so ngành
@@ -413,10 +418,10 @@ export default function BankValuationTab({ group }: { group: GroupFilter }) {
           )}
           <div className="mt-4 rounded-lg bg-[var(--ab-hover)] p-3 text-[0.82rem] leading-relaxed">
             <b className="text-[var(--ab-strong)]">ROE bao nhiêu là ổn?</b> Với ngân hàng Việt Nam, mốc hay dùng là khoảng 15%: cao hơn chi phí vốn chủ sở hữu
-            ước tính (khoảng 12–14%), tức ngân hàng tạo thêm giá trị cho cổ đông. ROE trung bình 16 ngân hàng hiện là {vn(mean(all.map((r) => r.roe)), 1)}%.
+            ước tính (khoảng 12–14%), tức ngân hàng tạo thêm giá trị cho cổ đông. ROE trung bình 16 ngân hàng hiện là {vn(roeMin, 1)}%, nên mốc lọc theo trung bình ngành cũng nằm quanh mức này.
           </div>
           <p className="mt-3 text-xs text-[var(--ab-muted)]">
-            Danh sách lọc tự động theo hai tiêu chí trên, cập nhật theo giá mỗi phút; P/B thấp có thể do rủi ro riêng (nợ xấu, tăng vốn…). Đây không phải khuyến
+            Danh sách lọc tự động theo hai tiêu chí trên (trung bình tính lại theo giá), cập nhật theo giá mỗi phút; P/B thấp có thể do rủi ro riêng (nợ xấu, tăng vốn…). Đây không phải khuyến
             nghị mua bán. Nguồn: SSI, báo cáo tài chính đến Q3/2026.
           </p>
         </aside>
