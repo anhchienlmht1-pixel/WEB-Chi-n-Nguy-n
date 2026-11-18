@@ -97,7 +97,7 @@ export default function HeroBullCharge({ className = "" }: { className?: string 
         muted
         playsInline
         preload="auto"
-        className={`pointer-events-none mix-blend-screen will-change-transform ${className}`}
+        className={`hero-beast pointer-events-none mix-blend-screen will-change-transform ${className}`}
         style={{
           opacity: 0,
           transition: "opacity 0.9s ease",

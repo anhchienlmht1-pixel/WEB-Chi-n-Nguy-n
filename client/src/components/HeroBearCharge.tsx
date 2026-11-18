@@ -36,7 +36,7 @@ export default function HeroBearCharge({ className = "" }: { className?: string 
       muted
       playsInline
       preload="auto"
-      className={`pointer-events-none mix-blend-screen ${className}`}
+      className={`hero-beast pointer-events-none mix-blend-screen ${className}`}
       style={{
         opacity: 0,
         transition: "opacity 0.6s ease",

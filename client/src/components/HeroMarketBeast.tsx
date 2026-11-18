@@ -48,18 +48,18 @@ export default function HeroMarketBeast() {
       {q && (
         <p
           aria-live="polite"
-          className="absolute top-6 right-6 z-[2] hidden items-center gap-2 rounded-full border border-[rgba(213,223,204,0.18)] bg-[rgba(11,17,13,0.8)] px-3.5 py-1.5 text-[0.8rem] text-[#d5dfcc] lg:flex"
+          className="absolute top-6 right-6 z-[2] hidden items-center gap-2 rounded-full border border-[var(--ab-line)] bg-[var(--ab-card)] px-3.5 py-1.5 text-[0.8rem] text-[var(--ab-text)] lg:flex"
         >
           <span
             aria-hidden="true"
             className="hero-pulse inline-block h-2 w-2 rounded-full"
-            style={{ background: up ? "#3fd07a" : "#ff5c5c" }}
+            style={{ background: up ? "var(--ab-up)" : "var(--ab-down)" }}
           />
-          VN-Index <b className="tabular-nums text-[#fff]">{level}</b>
-          <b className="tabular-nums" style={{ color: up ? "#3fd07a" : "#ff5c5c" }}>
+          VN-Index <b className="tabular-nums text-[var(--ab-strong)]">{level}</b>
+          <b className="tabular-nums" style={{ color: up ? "var(--ab-up)" : "var(--ab-down)" }}>
             {up ? "▲" : "▼"} {pct}%
           </b>
-          <span className="text-[#8fa882]">· {up ? "thị trường xanh" : "thị trường đỏ"}</span>
+          <span className="text-[var(--ab-muted)]">· {up ? "thị trường xanh" : "thị trường đỏ"}</span>
         </p>
       )}
     </>

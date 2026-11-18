@@ -6,8 +6,8 @@ import { fetchHistory, fetchQuote } from "../api/client";
 // below), the level, the change, the matched value (or volume) and — when the
 // server reads SSI FastConnect — the number of stocks up / unchanged / down.
 
-const UP = "#3fd07a";
-const DOWN = "#ff5c5c";
+const UP = "var(--ab-up)";
+const DOWN = "var(--ab-down)";
 const FLAT = "#e0b24a";
 const POLL_MS = 60 * 1000;
 
@@ -54,10 +54,10 @@ function Intraday({ symbol, refPrice }: { symbol: string; refPrice: number }) {
           <rect x="0" y={yr} width={W} height={H - yr} />
         </clipPath>
       </defs>
-      <path d={area} fill={UP} opacity="0.22" clipPath={`url(#${id}-up)`} />
-      <path d={area} fill={DOWN} opacity="0.22" clipPath={`url(#${id}-dn)`} />
-      <polyline points={line} fill="none" stroke={UP} strokeWidth="1.4" clipPath={`url(#${id}-up)`} vectorEffect="non-scaling-stroke" />
-      <polyline points={line} fill="none" stroke={DOWN} strokeWidth="1.4" clipPath={`url(#${id}-dn)`} vectorEffect="non-scaling-stroke" />
+      <path d={area} style={{ fill: UP }} opacity="0.22" clipPath={`url(#${id}-up)`} />
+      <path d={area} style={{ fill: DOWN }} opacity="0.22" clipPath={`url(#${id}-dn)`} />
+      <polyline points={line} fill="none" style={{ stroke: UP }} strokeWidth="1.4" clipPath={`url(#${id}-up)`} vectorEffect="non-scaling-stroke" />
+      <polyline points={line} fill="none" style={{ stroke: DOWN }} strokeWidth="1.4" clipPath={`url(#${id}-dn)`} vectorEffect="non-scaling-stroke" />
       <line x1="0" x2={W} y1={yr} y2={yr} stroke={FLAT} strokeWidth="1" strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />
     </svg>
   );
@@ -78,20 +78,20 @@ function IndexCard({
   const color = ch > 0 ? UP : ch < 0 ? DOWN : FLAT;
   const arrow = ch > 0 ? "▲" : ch < 0 ? "▼" : "■";
   return (
-    <div className="min-w-[11.5rem] shrink-0 snap-start rounded-lg border sm:min-w-0 sm:shrink border-[rgba(213,223,204,0.14)] bg-[rgba(14,21,15,0.85)] px-3 pt-2.5 pb-2.5">
+    <div className="min-w-[11.5rem] shrink-0 snap-start rounded-lg border sm:min-w-0 sm:shrink border-[var(--ab-line)] bg-[var(--ab-card)] px-3 pt-2.5 pb-2.5">
       <Intraday symbol={symbol} refPrice={q?.prevClose ?? 0} />
       <div className="mt-2 flex items-baseline justify-between gap-2">
-        <b className="text-[0.95rem] text-[#fff]">{label}</b>
+        <b className="text-[0.95rem] text-[var(--ab-strong)]">{label}</b>
         {q ? (
           <b className="text-[0.95rem] tabular-nums" style={{ color }}>
             {num(q.price)}
           </b>
         ) : (
-          <span className="h-4 w-16 animate-pulse rounded bg-[rgba(255,255,255,0.06)]" />
+          <span className="h-4 w-16 animate-pulse rounded bg-[var(--ab-skel)]" />
         )}
       </div>
       <div className="mt-0.5 flex items-baseline justify-between gap-2 text-xs">
-        <span className="truncate text-[#8fa882]">
+        <span className="truncate text-[var(--ab-muted)]">
           {q ? (q.value ? `${num(q.value / 1e9, 0)} tỷ` : vol(q.volume)) : ""}
         </span>
         {q && (

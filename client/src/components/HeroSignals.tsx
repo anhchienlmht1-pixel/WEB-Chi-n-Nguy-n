@@ -11,10 +11,10 @@ import MarketIndexCards from "./MarketIndexCards";
 // same scan and forward-only trade journal as the signal list on the home page.
 
 const POLL_MS = 5 * 60 * 1000;
-const LINE = "border-[rgba(213,223,204,0.14)]";
+const LINE = "border-[var(--ab-line)]";
 const WEEKDAY = ["Chủ nhật", "thứ Hai", "thứ Ba", "thứ Tư", "thứ Năm", "thứ Sáu", "thứ Bảy"];
-const UP = "#3fd07a";
-const DOWN = "#ff5c5c";
+const UP = "var(--ab-up)";
+const DOWN = "var(--ab-down)";
 
 const day = (iso: string) => iso.slice(0, 10);
 function dmy(iso: string): string {
@@ -34,7 +34,7 @@ function pct(n: number, digits = 1, sign = true): string {
   const s = Math.abs(n).toLocaleString("vi-VN", { minimumFractionDigits: digits, maximumFractionDigits: digits });
   return `${n < 0 ? "−" : sign && n > 0 ? "+" : ""}${s}%`;
 }
-const toneHex = (n: number) => (n > 0 ? UP : n < 0 ? DOWN : "#d5dfcc");
+const toneHex = (n: number) => (n > 0 ? UP : n < 0 ? DOWN : "var(--ab-text)");
 
 // Small closing-price line for the last month; nothing is drawn until it loads.
 function Spark({ symbol, color }: { symbol: string; color: string }) {
@@ -48,7 +48,7 @@ function Spark({ symbol, color }: { symbol: string; color: string }) {
     .join(" ");
   return (
     <svg width="80" height="24" viewBox="0 0 80 24" aria-hidden="true" className="block">
-      <polyline points={xy} fill="none" stroke={color} strokeWidth="1.6" strokeLinejoin="round" />
+      <polyline points={xy} fill="none" style={{ stroke: color }} strokeWidth="1.6" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -65,22 +65,22 @@ type Row = {
 function SignalRow({ r }: { r: Row }) {
   const badge =
     r.kind === "MUA"
-      ? "bg-[rgba(63,208,122,0.14)] text-[#3fd07a]"
+      ? "bg-[rgba(63,208,122,0.14)] text-[var(--ab-up)]"
       : r.kind === "BÁN"
-        ? "bg-[rgba(255,92,92,0.13)] text-[#ff5c5c]"
-        : "bg-[rgba(185,203,169,0.12)] text-[#b9cba9]";
+        ? "bg-[rgba(255,92,92,0.13)] text-[var(--ab-down)]"
+        : "bg-[var(--ab-line)] text-[var(--ab-accent)]";
   return (
     <li className={`border-t ${LINE}`}>
       <Link
         to={`/stock/${r.symbol}`}
-        className="fx-row grid min-h-14 grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-3.5 px-4 py-2.5 transition-colors duration-200 hover:bg-[rgba(127,214,168,0.06)] sm:grid-cols-[3rem_minmax(0,1fr)_5rem_5rem] sm:px-[18px]"
+        className="fx-row grid min-h-14 grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-3.5 px-4 py-2.5 transition-colors duration-200 hover:bg-[var(--ab-hover)] sm:grid-cols-[3rem_minmax(0,1fr)_5rem_5rem] sm:px-[18px]"
       >
         <span className={`inline-flex h-6 items-center justify-center rounded text-[11px] font-bold tracking-[0.04em] ${badge}`}>
           {r.kind}
         </span>
         <span className="min-w-0">
-          <b className="block text-lg leading-tight text-[#fff]">{r.symbol}</b>
-          <span className="block truncate text-[0.8rem] text-[#8fa882]">{r.note}</span>
+          <b className="block text-lg leading-tight text-[var(--ab-strong)]">{r.symbol}</b>
+          <span className="block truncate text-[0.8rem] text-[var(--ab-muted)]">{r.note}</span>
         </span>
         <span className="hidden sm:block">
           <Spark symbol={r.symbol} color={r.color} />
@@ -93,21 +93,21 @@ function SignalRow({ r }: { r: Row }) {
   );
 }
 
-function Stat({ n, label, color = "#fff" }: { n: number; label: string; color?: string }) {
+function Stat({ n, label, color = "var(--ab-strong)" }: { n: number; label: string; color?: string }) {
   return (
     <div className={`flex-1 border-l px-4 py-3.5 first:border-l-0 sm:px-[18px] ${LINE}`}>
       <b className="block text-[1.9rem] leading-none tabular-nums" style={{ color }}>
         {n}
       </b>
-      <span className="mt-1.5 block text-[0.8rem] text-[#8fa882]">{label}</span>
+      <span className="mt-1.5 block text-[0.8rem] text-[var(--ab-muted)]">{label}</span>
     </div>
   );
 }
 
-function Perf({ label, value, color = "#fff" }: { label: string; value: string; color?: string }) {
+function Perf({ label, value, color = "var(--ab-strong)" }: { label: string; value: string; color?: string }) {
   return (
-    <div className="bg-[rgb(17,25,18)] px-4 py-3 sm:px-[18px]">
-      <span className="block text-xs text-[#8fa882]">{label}</span>
+    <div className="bg-[var(--ab-cell)] px-4 py-3 sm:px-[18px]">
+      <span className="block text-xs text-[var(--ab-muted)]">{label}</span>
       <b className="mt-0.5 block text-[1.05rem] tabular-nums" style={{ color }}>
         {value}
       </b>
@@ -177,30 +177,30 @@ export default function HeroSignals() {
 
   return (
     <div>
-      <p className="mb-3 text-[0.95rem] font-bold uppercase tracking-[0.06em] text-[#b9cba9]">Thị trường hôm nay</p>
+      <p className="mb-3 text-[0.95rem] font-bold uppercase tracking-[0.06em] text-[var(--ab-accent)]">Thị trường hôm nay</p>
       <MarketIndexCards />
 
       <section
         aria-label="Tín hiệu phiên gần nhất"
-        className="mt-4 max-w-[600px] overflow-hidden rounded-xl border border-[rgba(213,223,204,0.18)] bg-[rgba(14,21,15,0.9)] shadow-[0_24px_60px_-30px_rgba(0,0,0,0.8)]"
+        className="mt-4 max-w-[600px] overflow-hidden rounded-xl border border-[var(--ab-line)] bg-[var(--ab-card)] shadow-[0_24px_60px_-30px_rgba(0,0,0,0.8)]"
       >
         {!scan || !session ? (
           <div aria-busy="true" className="space-y-3 p-5">
-            <div className="h-4 w-48 animate-pulse rounded bg-[rgba(255,255,255,0.06)]" />
-            <div className="h-10 w-full animate-pulse rounded bg-[rgba(255,255,255,0.06)]" />
-            <div className="h-10 w-full animate-pulse rounded bg-[rgba(255,255,255,0.06)]" />
+            <div className="h-4 w-48 animate-pulse rounded bg-[var(--ab-skel)]" />
+            <div className="h-10 w-full animate-pulse rounded bg-[var(--ab-skel)]" />
+            <div className="h-10 w-full animate-pulse rounded bg-[var(--ab-skel)]" />
           </div>
         ) : (
           <>
             <header className={`flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b px-4 py-3 sm:px-[18px] ${LINE}`}>
-              <span className="flex items-center gap-2 text-sm font-bold text-[#fff]">
+              <span className="flex items-center gap-2 text-sm font-bold text-[var(--ab-strong)]">
                 <span aria-hidden="true" className="hero-pulse inline-block h-2 w-2 rounded-full bg-[#3fd07a]" />
                 Chốt phiên {weekday(session)} {dmy(session)}
               </span>
-              <span className="text-[0.8rem] text-[#8fa882]">Phiên tới: cập nhật sau 15:00</span>
+              <span className="text-[0.8rem] text-[var(--ab-muted)]">Phiên tới: cập nhật sau 15:00</span>
             </header>
             <div className="flex">
-              <Stat n={buys.length} label="Mã mua mới" color={buys.length ? UP : "#fff"} />
+              <Stat n={buys.length} label="Mã mua mới" color={buys.length ? UP : "var(--ab-strong)"} />
               <Stat n={exits.length} label="Mã thoát lệnh" />
               <Stat n={holding.length} label="Đang giữ" />
             </div>
@@ -215,8 +215,8 @@ export default function HeroSignals() {
               <div className={`border-t ${LINE}`}>
                 <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1 px-4 pt-3 pb-2.5 sm:px-[18px]">
                   <div>
-                    <b className="block text-sm text-[#fff]">Hiệu suất tổng danh mục</b>
-                    <span className="text-xs text-[#8fa882]">
+                    <b className="block text-sm text-[var(--ab-strong)]">Hiệu suất tổng danh mục</b>
+                    <span className="text-xs text-[var(--ab-muted)]">
                       {allRets.length} lệnh ({openRets.length} đang giữ + {n} đã đóng), mỗi lệnh vốn như nhau
                     </span>
                   </div>
@@ -224,26 +224,26 @@ export default function HeroSignals() {
                     {pct(allAvg, 2)}
                   </b>
                 </div>
-                <div className="grid grid-cols-2 gap-px bg-[rgba(213,223,204,0.12)] sm:grid-cols-4">
+                <div className="grid grid-cols-2 gap-px bg-[var(--ab-line)] sm:grid-cols-4">
                   <Perf label="Đang giữ" value={`${openRets.length} mã`} />
                   <Perf label="Lãi/lỗ tạm tính TB" value={openRets.length ? pct(openAvg, 2) : "—"} color={toneHex(openAvg)} />
-                  <Perf label="Mã đang lãi" value={`${openUp} mã`} color={openUp ? UP : "#fff"} />
-                  <Perf label="Mã đang lỗ" value={`${openDown} mã`} color={openDown ? DOWN : "#fff"} />
+                  <Perf label="Mã đang lãi" value={`${openUp} mã`} color={openUp ? UP : "var(--ab-strong)"} />
+                  <Perf label="Mã đang lỗ" value={`${openDown} mã`} color={openDown ? DOWN : "var(--ab-strong)"} />
                 </div>
               </div>
             )}
             {journal?.startDate && (
               <div className={`border-t ${LINE}`}>
                 <p className="flex flex-wrap items-baseline justify-between gap-x-3 px-4 pt-3 pb-2 sm:px-[18px]">
-                  <b className="text-sm text-[#fff]">Hiệu suất hệ thống</b>
-                  <span className="text-xs text-[#8fa882]">
+                  <b className="text-sm text-[var(--ab-strong)]">Hiệu suất hệ thống</b>
+                  <span className="text-xs text-[var(--ab-muted)]">
                     tất cả lệnh đã đóng, ghi thật từ {dmy(journal.startDate)}
                   </span>
                 </p>
                 {n === 0 ? (
-                  <p className="px-4 pb-3 text-sm text-[#a9b8a0] sm:px-[18px]">Chưa có lệnh nào đóng.</p>
+                  <p className="px-4 pb-3 text-sm text-[var(--ab-text2)] sm:px-[18px]">Chưa có lệnh nào đóng.</p>
                 ) : (
-                  <div className="grid grid-cols-2 gap-px bg-[rgba(213,223,204,0.12)] sm:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-px bg-[var(--ab-line)] sm:grid-cols-4">
                     <Perf label="Lệnh đã đóng" value={`${n} lệnh`} />
                     <Perf label="Tỷ lệ thắng" value={`${pct((wins.length / n) * 100, 0, false)} (${wins.length}/${n})`} />
                     <Perf label="Lãi/lỗ TB mỗi lệnh" value={pct(avg(closedAll), 2)} color={toneHex(avg(closedAll))} />

@@ -125,7 +125,7 @@ function Icon({ name }: { name: keyof typeof ICONS }) {
       height="28"
       viewBox="0 0 24 24"
       fill="none"
-      stroke="#b9cba9"
+      style={{ stroke: "var(--ab-accent)" }}
       strokeWidth="1.7"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -148,30 +148,30 @@ const FEATURES: { icon: keyof typeof ICONS; title: string; text: string; href?: 
   },
 ];
 
-const LINE = "border-b border-[rgba(185,203,169,0.14)] py-2.5 text-base leading-normal text-[#d5dfcc]";
+const LINE = "border-b border-[var(--ab-line)] py-2.5 text-base leading-normal text-[var(--ab-text)]";
 const BTN_ORANGE =
   "fx-btn inline-flex min-h-12 items-center justify-center rounded-lg bg-orange-600 px-6 text-base font-bold text-[#1b1f1a] transition-colors duration-200 hover:bg-orange-500";
 const BTN_GHOST =
-  "fx-btn fx-btn-ghost inline-flex min-h-12 items-center justify-center rounded-lg border border-[rgba(213,223,204,0.35)] bg-[rgba(255,255,255,0.05)] px-5 text-base font-bold text-[#fff] transition-colors duration-200 hover:bg-[rgba(255,255,255,0.1)]";
+  "fx-btn fx-btn-ghost inline-flex min-h-12 items-center justify-center rounded-lg border border-[var(--ab-line-strong)] bg-[var(--ab-ghost)] px-5 text-base font-bold text-[var(--ab-strong)] transition-colors duration-200 hover:bg-[var(--ab-ghost-hover)]";
 
 export default function About() {
   return (
-    <div className="theme-dark text-[#d5dfcc]">
+    <div className="text-[var(--ab-text)]">
       {/* 1. Message — over the scrolling price board */}
-      <section className="relative overflow-hidden bg-[#0b110d]">
+      <section className="relative overflow-hidden bg-[var(--ab-bg)]">
         <PriceBoard />
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              "linear-gradient(90deg, rgba(11,17,13,0.96) 0%, rgba(11,17,13,0.88) 40%, rgba(11,17,13,0.55) 100%)",
+              "linear-gradient(90deg, rgba(var(--ab-bg-rgb),0.96) 0%, rgba(var(--ab-bg-rgb),0.88) 40%, rgba(var(--ab-bg-rgb),0.55) 100%)",
           }}
         />
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-0 bottom-0 h-48"
-          style={{ background: "linear-gradient(180deg, rgba(11,17,13,0) 0%, #0b110d 100%)" }}
+          style={{ background: "linear-gradient(180deg, rgba(var(--ab-bg-rgb),0) 0%, var(--ab-bg) 100%)" }}
         />
         {/* Market animal on the right (wide screens): bull when VN-Index is up, bear when it is down */}
         <HeroMarketBeast />
@@ -187,11 +187,11 @@ export default function About() {
                 Xem tất cả tín hiệu →
               </Link>
             </div>
-            <p className="mt-7 text-sm text-[#a9b8a0]">
-              <span className="font-bold text-[#fff]">Nguyễn Anh Chiến</span> · Chuyên viên tư vấn đầu tư, Chứng khoán
+            <p className="mt-7 text-sm text-[var(--ab-text2)]">
+              <span className="font-bold text-[var(--ab-strong)]">Nguyễn Anh Chiến</span> · Chuyên viên tư vấn đầu tư, Chứng khoán
               KAFI
             </p>
-            <p className="mt-2 text-xs leading-normal text-[#8fa882]">
+            <p className="mt-2 text-xs leading-normal text-[var(--ab-muted)]">
               Giá đóng cửa, chưa trừ phí, thuế. Kết quả quá khứ không bảo đảm kết quả tương lai; không phải khuyến nghị mua
               bán.
             </p>
@@ -200,21 +200,21 @@ export default function About() {
       </section>
 
       {/* 2. What Bull Stock does + how the tool works + opening an account */}
-      <section className="bg-[#0b110d]">
+      <section className="bg-[var(--ab-bg)]">
         <div className="gutter-x mx-auto max-w-[1280px] pb-20 pt-6">
           <h2 className="text-[2.1rem] font-bold uppercase leading-tight tracking-[0.01em]">
             Bull Stock giúp gì cho nhà đầu tư
           </h2>
-          <div className="mt-7 flex flex-wrap border-y border-[rgba(185,203,169,0.18)]">
+          <div className="mt-7 flex flex-wrap border-y border-[var(--ab-line)]">
             {FEATURES.map((f) => {
               const body = (
                 <>
                   <Icon name={f.icon} />
-                  <h3 className="mt-3.5 text-xl font-bold text-[#fff]">{f.title}</h3>
-                  <p className="mt-1.5 text-base leading-normal text-[#b8c4ae]">{f.text}</p>
+                  <h3 className="mt-3.5 text-xl font-bold text-[var(--ab-strong)]">{f.title}</h3>
+                  <p className="mt-1.5 text-base leading-normal text-[var(--ab-text2)]">{f.text}</p>
                 </>
               );
-              const cls = "fx-feature min-w-0 flex-[1_1_220px] border-l border-[rgba(185,203,169,0.18)] px-6 pb-6 pt-6";
+              const cls = "fx-feature min-w-0 flex-[1_1_220px] border-l border-[var(--ab-line)] px-6 pb-6 pt-6";
               return f.href ? (
                 <a key={f.title} href={f.href} target="_blank" rel="noopener noreferrer" className={cls}>
                   {body}
@@ -229,43 +229,43 @@ export default function About() {
 
           <div className="mt-14 flex flex-wrap items-start gap-x-16 gap-y-10">
             <div className="min-w-0 flex-[1_1_440px]">
-              <h3 className="text-[1.6rem] font-bold text-[#fff]">Công cụ tín hiệu lệnh hoạt động thế nào</h3>
-              <p className="mt-2.5 text-[1.0625rem] leading-relaxed text-[#d5dfcc]">
+              <h3 className="text-[1.6rem] font-bold text-[var(--ab-strong)]">Công cụ tín hiệu lệnh hoạt động thế nào</h3>
+              <p className="mt-2.5 text-[1.0625rem] leading-relaxed text-[var(--ab-text)]">
                 Mỗi ngày sau 15:00, hệ thống tự lọc ra những mã đang đi lên rõ ràng. Anh chị không cần ngồi dò hàng trăm
                 mã.
               </p>
-              <ul className="mt-4 border-t border-[rgba(185,203,169,0.14)]">
+              <ul className="mt-4 border-t border-[var(--ab-line)]">
                 <li className={LINE}>
-                  <b className="text-[#fff]">Chỉ chọn mã đang lên đều,</b> không chọn mã chỉ nhích lên một hôm.
+                  <b className="text-[var(--ab-strong)]">Chỉ chọn mã đang lên đều,</b> không chọn mã chỉ nhích lên một hôm.
                 </li>
                 <li className={LINE}>
-                  <b className="text-[#fff]">Chỉ chọn khi đà đủ mạnh,</b> bỏ qua mã đi ngang lình xình.
+                  <b className="text-[var(--ab-strong)]">Chỉ chọn khi đà đủ mạnh,</b> bỏ qua mã đi ngang lình xình.
                 </li>
                 <li className={LINE}>
-                  <b className="text-[#fff]">Xu hướng gãy thì mã tự rời danh sách,</b> nhắc anh chị cân nhắc thoát, không
+                  <b className="text-[var(--ab-strong)]">Xu hướng gãy thì mã tự rời danh sách,</b> nhắc anh chị cân nhắc thoát, không
                   ôm hàng.
                 </li>
               </ul>
-              <p className="mt-3.5 text-sm leading-normal text-[#8fa882]">
+              <p className="mt-3.5 text-sm leading-normal text-[var(--ab-muted)]">
                 Dựa trên đường trung bình giá, độ mạnh xu hướng và Supertrend, tính trên giá đóng cửa. Chỉ để tham khảo,
                 quyết định mua bán là của nhà đầu tư.
               </p>
               <p className="mt-4">
                 <Link
                   to={{ pathname: "/", hash: "#tin-hieu" }}
-                  className="inline-flex min-h-11 items-center border-b border-[#7c9a6a] text-[1.0625rem] font-bold text-[#fff]"
+                  className="inline-flex min-h-11 items-center border-b border-[#7c9a6a] text-[1.0625rem] font-bold text-[var(--ab-strong)]"
                 >
                   Xem tín hiệu phiên gần nhất
                 </Link>
               </p>
             </div>
 
-            <div className="fx-card min-w-0 flex-[1_1_380px] rounded-lg border border-[rgba(185,203,169,0.22)] bg-[#121a11] p-7">
+            <div className="fx-card min-w-0 flex-[1_1_380px] rounded-lg border border-[var(--ab-line)] bg-[var(--ab-bg2)] p-7">
               <div className="flex items-center gap-3.5">
                 <img src="/kafi-logo.png" alt="Logo KAFI" className="block h-11! w-11 rounded-[10px]" />
-                <h3 className="text-[1.4rem] font-bold text-[#fff]">Mở tài khoản tại KAFI</h3>
+                <h3 className="text-[1.4rem] font-bold text-[var(--ab-strong)]">Mở tài khoản tại KAFI</h3>
               </div>
-              <ul className="mt-4 border-t border-[rgba(185,203,169,0.14)]">
+              <ul className="mt-4 border-t border-[var(--ab-line)]">
                 <li className={LINE}>Mở miễn phí trên điện thoại, qua app KAFI X.</li>
                 <li className={LINE}>Không phí duy trì tài khoản.</li>
                 <li className={LINE}>Vướng bước nào thì nhắn Zalo cho anh Chiến.</li>
@@ -284,38 +284,38 @@ export default function About() {
       </section>
 
       {/* 3. Who is behind it */}
-      <section className="border-t border-[rgba(185,203,169,0.12)] bg-[#121a11]">
+      <section className="border-t border-[var(--ab-line)] bg-[var(--ab-bg2)]">
         <div className="gutter-x mx-auto max-w-[1280px] py-16">
           <h2 className="text-[2.1rem] font-bold">Nguyễn Anh Chiến</h2>
-          <p className="mt-1.5 text-lg text-[#b9cba9]">Chuyên viên tư vấn đầu tư, CTCP Chứng khoán KAFI</p>
-          <p className="mt-4 max-w-2xl text-[1.0625rem] leading-relaxed text-[#d5dfcc]">
+          <p className="mt-1.5 text-lg text-[var(--ab-accent)]">Chuyên viên tư vấn đầu tư, CTCP Chứng khoán KAFI</p>
+          <p className="mt-4 max-w-2xl text-[1.0625rem] leading-relaxed text-[var(--ab-text)]">
             Đầu tư theo xu hướng, đặt quản trị rủi ro lên hàng đầu: đi theo con sóng lớn, sai thì cắt sớm.
           </p>
-          <div className="mt-6 max-w-2xl border-t border-[rgba(185,203,169,0.14)]">
-            <div className="fx-row flex flex-wrap gap-x-6 gap-y-1 border-b border-[rgba(185,203,169,0.14)] py-3 pl-3 transition-colors duration-200 hover:bg-[rgba(127,214,168,0.05)]">
-              <span className="flex-[0_0_200px] text-[0.95rem] text-[#8fa882]">Điện thoại, Zalo</span>
-              <a href="tel:0886284212" className="flex-[1_1_200px] text-[1.0625rem] font-bold text-[#fff]">
+          <div className="mt-6 max-w-2xl border-t border-[var(--ab-line)]">
+            <div className="fx-row flex flex-wrap gap-x-6 gap-y-1 border-b border-[var(--ab-line)] py-3 pl-3 transition-colors duration-200 hover:bg-[var(--ab-hover)]">
+              <span className="flex-[0_0_200px] text-[0.95rem] text-[var(--ab-muted)]">Điện thoại, Zalo</span>
+              <a href="tel:0886284212" className="flex-[1_1_200px] text-[1.0625rem] font-bold text-[var(--ab-strong)]">
                 0886.284.212
               </a>
             </div>
-            <div className="fx-row flex flex-wrap gap-x-6 gap-y-1 border-b border-[rgba(185,203,169,0.14)] py-3 pl-3 transition-colors duration-200 hover:bg-[rgba(127,214,168,0.05)]">
-              <span className="flex-[0_0_200px] text-[0.95rem] text-[#8fa882]">YouTube</span>
+            <div className="fx-row flex flex-wrap gap-x-6 gap-y-1 border-b border-[var(--ab-line)] py-3 pl-3 transition-colors duration-200 hover:bg-[var(--ab-hover)]">
+              <span className="flex-[0_0_200px] text-[0.95rem] text-[var(--ab-muted)]">YouTube</span>
               <a
                 href="https://www.youtube.com/@chiennguyen.taichinh"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-[1_1_200px] text-base text-[#d5dfcc] hover:text-[#fff] hover:underline"
+                className="flex-[1_1_200px] text-base text-[var(--ab-text)] hover:text-[var(--ab-strong)] hover:underline"
               >
                 Chiến Nguyễn Tài Chính
               </a>
             </div>
-            <div className="fx-row flex flex-wrap gap-x-6 gap-y-1 border-b border-[rgba(185,203,169,0.14)] py-3 pl-3 transition-colors duration-200 hover:bg-[rgba(127,214,168,0.05)]">
-              <span className="flex-[0_0_200px] text-[0.95rem] text-[#8fa882]">Facebook</span>
+            <div className="fx-row flex flex-wrap gap-x-6 gap-y-1 border-b border-[var(--ab-line)] py-3 pl-3 transition-colors duration-200 hover:bg-[var(--ab-hover)]">
+              <span className="flex-[0_0_200px] text-[0.95rem] text-[var(--ab-muted)]">Facebook</span>
               <a
                 href="https://www.facebook.com/chiennguyen.taichinh/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-[1_1_200px] text-base text-[#d5dfcc] hover:text-[#fff] hover:underline"
+                className="flex-[1_1_200px] text-base text-[var(--ab-text)] hover:text-[var(--ab-strong)] hover:underline"
               >
                 chiennguyen.taichinh
               </a>

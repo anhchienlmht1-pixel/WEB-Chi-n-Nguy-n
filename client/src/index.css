@@ -281,8 +281,8 @@ img {
 /* Landing page: a decorative price board scrolling behind the hero. */
 .pb-wrap { position: absolute; inset: -20px -40px; opacity: 0.55; overflow: hidden; pointer-events: none; }
 .pb { border-collapse: collapse; width: 100%; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 13px; font-variant-numeric: tabular-nums; animation: pbscroll 40s linear infinite; }
-.pb td { padding: 7px 12px; text-align: right; white-space: nowrap; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
-.pb td.k { background: rgba(255, 255, 255, 0.04); }
+.pb td { padding: 7px 12px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--ab-pb-line); }
+.pb td.k { background: var(--ab-pb-key); }
 .pb .u { color: #3fd07a; } .pb .d { color: #ff5c5c; } .pb .r { color: #e6c34a; } .pb .c { color: #d27bff; } .pb .f { color: #4fc3f7; }
 .pb .fu { animation: flashu 4s ease-out infinite; }
 .pb .fd { animation: flashd 4s ease-out infinite; }
@@ -350,3 +350,60 @@ img {
   100% { box-shadow: 0 0 0 0 rgba(63, 208, 122, 0); }
 }
 @media (prefers-reduced-motion: reduce) { .hero-pulse { animation: none; } }
+
+/* ---------------------------------------------------------------------------
+   Giới thiệu page palette — light by default, dark under .theme-dark (the
+   sun/moon toggle). Components on that page use these instead of fixed hex
+   colours so the whole page follows the toggle.
+--------------------------------------------------------------------------- */
+:root {
+  --ab-strong: #0f1a12;
+  --ab-text: #2b3a2a;
+  --ab-text2: #485846;
+  --ab-muted: #5f7058;
+  --ab-accent: #3e503c;
+  --ab-line: rgba(62, 80, 60, 0.16);
+  --ab-line-strong: rgba(62, 80, 60, 0.35);
+  --ab-hover: rgba(62, 80, 60, 0.06);
+  --ab-ghost: rgba(62, 80, 60, 0.04);
+  --ab-ghost-hover: rgba(62, 80, 60, 0.09);
+  --ab-skel: rgba(0, 0, 0, 0.06);
+  --ab-bg: #f6f8f3;
+  --ab-bg2: #ffffff;
+  --ab-bg-rgb: 246, 248, 243;
+  --ab-card: rgba(255, 255, 255, 0.94);
+  --ab-cell: #ffffff;
+  --ab-up: #138a4a;
+  --ab-down: #d23a3a;
+  --ab-pb-line: rgba(0, 0, 0, 0.05);
+  --ab-pb-key: rgba(0, 0, 0, 0.03);
+}
+.theme-dark {
+  --ab-strong: #ffffff;
+  --ab-text: #d5dfcc;
+  --ab-text2: #b8c4ae;
+  --ab-muted: #8fa882;
+  --ab-accent: #b9cba9;
+  --ab-line: rgba(185, 203, 169, 0.16);
+  --ab-line-strong: rgba(213, 223, 204, 0.35);
+  --ab-hover: rgba(127, 214, 168, 0.06);
+  --ab-ghost: rgba(255, 255, 255, 0.05);
+  --ab-ghost-hover: rgba(255, 255, 255, 0.1);
+  --ab-skel: rgba(255, 255, 255, 0.06);
+  --ab-bg: #0b110d;
+  --ab-bg2: #121a11;
+  --ab-bg-rgb: 11, 17, 13;
+  --ab-card: rgba(14, 21, 15, 0.88);
+  --ab-cell: rgb(17, 25, 18);
+  --ab-up: #3fd07a;
+  --ab-down: #ff5c5c;
+  --ab-pb-line: rgba(255, 255, 255, 0.05);
+  --ab-pb-key: rgba(255, 255, 255, 0.04);
+}
+/* Neon bull/bear clips are drawn on black for "screen" blending. On the light
+   page they're inverted (black → white, colours turned back with hue-rotate)
+   and multiplied, so they read as dark line art on the light background. */
+:root:not(.theme-dark) .hero-beast {
+  filter: invert(1) hue-rotate(180deg) saturate(1.3);
+  mix-blend-mode: multiply !important;
+}
