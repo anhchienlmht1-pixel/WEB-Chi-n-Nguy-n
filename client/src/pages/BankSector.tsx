@@ -4,9 +4,6 @@ import { Link, useSearchParams } from "react-router-dom";
 import { GROUPS, MODES, STEPS, Seg, Tile, heat, mean, stats, vn, type GroupFilter, type Mode } from "../components/bankUi";
 import BankValuationTab from "../components/BankValuationTab";
 import BankScaleTab from "../components/BankScaleTab";
-import BankWatchlist from "../components/BankWatchlist";
-import { useBankQuotes } from "../hooks/useBankQuotes";
-import { bankScreen } from "../lib/bankScreen";
 import { BANKS, PERIOD, type BankGroup, type MetricKey } from "../data/bankSector";
 
 // Ngành ngân hàng: 4 chỉ số trung bình ngành, bảng 16 ngân hàng (ô xanh = tốt lên
@@ -38,8 +35,6 @@ const METRICS: Metric[] = [
 const RANK_KEYS: MetricKey[] = ["nim", "roe", "npl", "casa", "ldr", "credit", "cof"];
 
 function OverviewTab({ group }: { group: GroupFilter }) {
-  const { quotes } = useBankQuotes();
-  const screen = bankScreen(quotes);
   const [rankKey, setRankKey] = useState<MetricKey>("nim");
   const [mode, setMode] = useState<Mode>("Theo TB ngành");
   const st = useMemo(() => {
@@ -81,9 +76,6 @@ function OverviewTab({ group }: { group: GroupFilter }) {
         <Tile label="Tín dụng tăng từ đầu năm" value={`${vn(avg("credit"), 1)}%`} sub={best("credit")} />
       </section>
 
-      <section aria-label="Danh sách theo dõi" className="rounded-[10px] border bg-[var(--ab-card)] p-4" style={{ borderColor: "color-mix(in srgb, var(--heat-up) 45%, transparent)" }}>
-        <BankWatchlist screen={screen} group={group} wide />
-      </section>
 
       <section className="overflow-x-auto rounded-[10px] border border-[var(--ab-line)] bg-[var(--ab-card)]">
         <table className="w-full min-w-[1080px] border-collapse text-[0.92rem]">
