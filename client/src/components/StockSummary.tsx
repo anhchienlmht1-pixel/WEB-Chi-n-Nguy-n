@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import Flash from "./Flash";
+import AnimatedNumber from "./AnimatedNumber";
 import { usePolling } from "../hooks/usePolling";
 import { fetchCompanyProfile, fetchFinancials } from "../api/client";
 import type { Quote } from "../types";
@@ -238,7 +240,11 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
       {/* Price + valuation */}
       <div className="order-2 border-t border-slate-200 lg:order-3 lg:border-l lg:border-t-0 dark:border-slate-800">
         <div className="border-b border-slate-100 px-4 py-4 text-center dark:border-slate-800/70">
-          <div className={`text-5xl font-bold leading-tight tabular-nums ${tone}`}>{fmt(quote.price)}</div>
+          <div className={`text-5xl font-bold leading-tight tabular-nums ${tone}`}>
+            <Flash value={quote.price}>
+              <AnimatedNumber value={quote.price} format={fmt} />
+            </Flash>
+          </div>
           <div className={`mt-1 text-base font-bold tabular-nums ${tone}`}>
             {arrow} {fmt(Math.abs(quote.change))} ({Math.abs(quote.changePercent).toFixed(2)}%)
           </div>

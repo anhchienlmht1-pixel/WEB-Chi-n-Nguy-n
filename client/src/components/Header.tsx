@@ -3,6 +3,7 @@ import ThemeToggle from "./ThemeToggle";
 import SearchBox from "./SearchBox";
 import StockHeaderInfo from "./StockHeaderInfo";
 import TrendSignalBell from "./TrendSignalBell";
+import TickerTape from "./TickerTape";
 
 const NAV_BASE =
   "inline-flex min-h-11 items-center whitespace-nowrap border-b-2 text-base font-bold transition-colors duration-200";
@@ -16,7 +17,8 @@ export default function Header() {
   const { pathname } = useLocation();
   const onGuide = pathname.startsWith("/huong-dan-mo-tai-khoan");
   const onAbout = pathname.startsWith("/gioi-thieu");
-  const onSignals = !onGuide && !onAbout;
+  const onBank = pathname.startsWith("/nganh-ngan-hang");
+  const onSignals = !onGuide && !onAbout && !onBank;
 
   return (
     <header className="theme-dark sticky top-0 z-30 border-b border-[#4f6349] bg-[#3e503c]!">
@@ -72,6 +74,7 @@ export default function Header() {
           </NavLink>
         </div>
       </div>
+      <TickerTape />
     </header>
   );
 }

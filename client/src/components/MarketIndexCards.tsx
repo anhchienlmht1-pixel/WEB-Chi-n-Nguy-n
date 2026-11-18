@@ -1,5 +1,9 @@
 import { usePolling } from "../hooks/usePolling";
 import { fetchHistory, fetchQuote } from "../api/client";
+import { useLivePoll } from "../hooks/useMarketClock";
+import AnimatedNumber from "./AnimatedNumber";
+import Flash from "./Flash";
+import UpdatedAgo from "./UpdatedAgo";
 
 // Three index cards for the top of the Giới thiệu hero (VN-Index, VN100, VN30):
 // the session's 15-minute line against the reference price (green above, red
@@ -9,7 +13,7 @@ import { fetchHistory, fetchQuote } from "../api/client";
 const UP = "var(--ab-up)";
 const DOWN = "var(--ab-down)";
 const FLAT = "#e0b24a";
-const POLL_MS = 60 * 1000;
+const LIVE_MS = 15 * 1000;
 
 // VN100 only comes from SSI FastConnect; without it the card falls back to HNX-Index.
 const INDICES: { symbol: string; label: string; fallback?: { symbol: string; label: string } }[] = [
@@ -27,7 +31,7 @@ function vol(n: number): string {
 }
 
 function Intraday({ symbol, refPrice }: { symbol: string; refPrice: number }) {
-  const { data } = usePolling(() => fetchHistory(symbol, "1D"), [symbol], POLL_MS);
+  const { data } = usePolling(() => fetchHistory(symbol, "1D"), [symbol], useLivePoll(60 * 1000));
   const all = data?.points ?? [];
   // The 1D range returns the last few sessions of 15-minute bars: keep the latest day.
   const lastDay = all.length ? all[all.length - 1].time.slice(0, 10) : "";
@@ -72,7 +76,7 @@ function IndexCard({
   label: string;
   fallback?: { symbol: string; label: string };
 }) {
-  const { data: q, error } = usePolling(() => fetchQuote(symbol), [symbol], POLL_MS);
+  const { data: q, error } = usePolling(() => fetchQuote(symbol), [symbol], useLivePoll(LIVE_MS));
   if (error && !q && fallback) return <IndexCard {...fallback} />;
   const ch = q?.change ?? 0;
   const color = ch > 0 ? UP : ch < 0 ? DOWN : FLAT;
@@ -83,9 +87,11 @@ function IndexCard({
       <div className="mt-2 flex items-baseline justify-between gap-2">
         <b className="text-[0.95rem] text-[var(--ab-strong)]">{label}</b>
         {q ? (
-          <b className="text-[0.95rem] tabular-nums" style={{ color }}>
-            {num(q.price)}
-          </b>
+          <Flash value={q.price}>
+            <b className="text-[0.95rem] tabular-nums" style={{ color }}>
+              <AnimatedNumber value={q.price} format={(n) => num(n)} />
+            </b>
+          </Flash>
         ) : (
           <span className="h-4 w-16 animate-pulse rounded bg-[var(--ab-skel)]" />
         )}
@@ -113,7 +119,9 @@ function IndexCard({
 }
 
 export default function MarketIndexCards() {
+  const { updatedAt } = usePolling(() => fetchQuote("VNINDEX"), [], useLivePoll(LIVE_MS));
   return (
+    <div className="flex max-w-[600px] flex-col gap-1.5">
     <section
       aria-label="Chỉ số thị trường"
       className="-mx-1 flex max-w-[600px] snap-x gap-2.5 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0"
@@ -122,5 +130,7 @@ export default function MarketIndexCards() {
         <IndexCard key={i.symbol} {...i} />
       ))}
     </section>
+    <UpdatedAgo at={updatedAt} className="self-end" />
+    </div>
   );
 }

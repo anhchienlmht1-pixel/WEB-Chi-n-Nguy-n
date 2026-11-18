@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 interface PollingState<T> {
   data: T | null;
+  /** Time (ms) of the last successful fetch, for "cập nhật x giây trước". */
+  updatedAt: number | null;
   error: string | null;
   loading: boolean;
   /** Manually re-run the fetcher (e.g. a "Thử lại" button on error). */
@@ -15,6 +17,7 @@ export function usePolling<T>(
 ): PollingState<T> {
   const [state, setState] = useState<Omit<PollingState<T>, "refetch">>({
     data: null,
+    updatedAt: null,
     error: null,
     loading: true,
   });
@@ -35,16 +38,22 @@ export function usePolling<T>(
     let cancelled = false;
     const inputsChanged = depsKeyRef.current !== depsKey;
     depsKeyRef.current = depsKey;
-    setState((s) => ({ data: inputsChanged ? null : s.data, error: null, loading: true }));
+    setState((s) => ({
+      data: inputsChanged ? null : s.data,
+      updatedAt: inputsChanged ? null : s.updatedAt,
+      error: null,
+      loading: true,
+    }));
 
     async function load() {
       try {
         const data = await fetcherRef.current();
-        if (!cancelled) setState({ data, error: null, loading: false });
+        if (!cancelled) setState({ data, updatedAt: Date.now(), error: null, loading: false });
       } catch (err) {
         if (!cancelled) {
           setState((s) => ({
             data: s.data,
+            updatedAt: s.updatedAt,
             error: err instanceof Error ? err.message : "Failed to load data",
             loading: false,
           }));
@@ -59,7 +68,7 @@ export function usePolling<T>(
       if (id) clearInterval(id);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [...deps, reloadTick]);
+  }, [...deps, reloadTick, intervalMs]);
 
   return { ...state, refetch };
 }

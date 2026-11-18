@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { usePolling } from "../hooks/usePolling";
 import { fetchQuote } from "../api/client";
+import { useLivePoll } from "../hooks/useMarketClock";
+import Flash from "./Flash";
 import HeroBullCharge from "./HeroBullCharge";
 import HeroBearCharge from "./HeroBearCharge";
 
@@ -11,11 +13,11 @@ import HeroBearCharge from "./HeroBearCharge";
 // doesn't flicker on a tie. Nothing is drawn until VN-Index is known — if it
 // can't be read, no animal is shown rather than a guess.
 
-const POLL_MS = 30 * 1000;
+const POLL_MS = 15 * 1000;
 type Kind = "bull" | "bear";
 
 export default function HeroMarketBeast() {
-  const { data: q } = usePolling(() => fetchQuote("VNINDEX"), [], POLL_MS);
+  const { data: q } = usePolling(() => fetchQuote("VNINDEX"), [], useLivePoll(POLL_MS));
   const [kind, setKind] = useState<Kind | null>(null);
 
   useEffect(() => {
@@ -55,7 +57,10 @@ export default function HeroMarketBeast() {
             className="hero-pulse inline-block h-2 w-2 rounded-full"
             style={{ background: up ? "var(--ab-up)" : "var(--ab-down)" }}
           />
-          VN-Index <b className="tabular-nums text-[var(--ab-strong)]">{level}</b>
+          VN-Index{" "}
+          <Flash value={q.price}>
+            <b className="tabular-nums text-[var(--ab-strong)]">{level}</b>
+          </Flash>
           <b className="tabular-nums" style={{ color: up ? "var(--ab-up)" : "var(--ab-down)" }}>
             {up ? "▲" : "▼"} {pct}%
           </b>

@@ -3,6 +3,9 @@ import type React from "react";
 import { Link } from "react-router-dom";
 import { usePolling } from "../hooks/usePolling";
 import { fetchQuote } from "../api/client";
+import { useLivePoll } from "../hooks/useMarketClock";
+import Flash from "./Flash";
+import UpdatedAgo from "./UpdatedAgo";
 import { VALUATION } from "../data/bankValuation";
 import { Tile, banksIn, groupOf, heat, mean, stats, vn, type GroupFilter } from "./bankUi";
 import type { Quote } from "../types";
@@ -215,7 +218,7 @@ function Scatter({ rows, roeMin, pbAvg, watch, sel, onSel }: ScatterProps) {
 
 export default function BankValuationTab({ group }: { group: GroupFilter }) {
   const [sel, setSel] = useState<string | null>(null);
-  const { data: quotes } = usePolling(
+  const { data: quotes, updatedAt } = usePolling(
     async () => {
       const res = await Promise.allSettled(ALL.map((s) => fetchQuote(s)));
       const out: Record<string, Quote> = {};
@@ -225,7 +228,7 @@ export default function BankValuationTab({ group }: { group: GroupFilter }) {
       return out;
     },
     [],
-    60 * 1000,
+    useLivePoll(20 * 1000),
   );
   const live = quotes && Object.keys(quotes).length > 0;
 
@@ -274,6 +277,7 @@ export default function BankValuationTab({ group }: { group: GroupFilter }) {
         <Tile label="P/B dưới mức TB lịch sử" value={`${below}/${rows.length}`} sub="So với P/B cuối các quý từ 2022" />
       </section>
 
+      <UpdatedAgo at={updatedAt} className="-mb-2 self-end" />
       <section className="overflow-x-auto rounded-[10px] border border-[var(--ab-line)] bg-[var(--ab-card)]">
         <table className="w-full min-w-[980px] border-collapse text-[0.92rem]">
           <thead>
@@ -304,7 +308,7 @@ export default function BankValuationTab({ group }: { group: GroupFilter }) {
                     <span className="ml-2 text-xs text-[var(--ab-muted)]">{groupOf(r.bank)}</span>
                   </td>
                   <td className="px-2 py-1.5 text-center tabular-nums">
-                    {r.price ? vn(r.price / 1000, 2) : "—"}
+                    <Flash value={r.price}>{r.price ? vn(r.price / 1000, 2) : "—"}</Flash>
                     {r.chPct != null && (
                       <span className="ml-1.5 text-xs" style={{ color: r.chPct > 0 ? "var(--ab-up)" : r.chPct < 0 ? "var(--ab-down)" : "#e0b24a" }}>
                         {r.chPct > 0 ? "+" : ""}

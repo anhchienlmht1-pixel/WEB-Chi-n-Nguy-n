@@ -1,4 +1,5 @@
 import { useParams } from "react-router-dom";
+import { useLivePoll } from "../hooks/useMarketClock";
 import { useState } from "react";
 import { fetchQuote } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
@@ -29,7 +30,7 @@ type SidebarTabKey = (typeof SIDEBAR_TABS)[number]["key"];
 
 export default function StockDetail() {
   const { symbol = "" } = useParams();
-  const quoteState = usePolling(() => fetchQuote(symbol), [symbol], 30000);
+  const quoteState = usePolling(() => fetchQuote(symbol), [symbol], useLivePoll(15000));
   const quote = quoteState.data;
   const isIndexOrFutures = quote?.exchange === "Chỉ số" || quote?.exchange === "Phái sinh";
   const [activeTab, setActiveTab] = useState<SidebarTabKey>("tong-quan");
