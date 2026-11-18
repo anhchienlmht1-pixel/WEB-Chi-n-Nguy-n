@@ -116,7 +116,11 @@ function OverviewTab({ group }: { group: GroupFilter }) {
                         style = heat(m.dir * d, z);
                       }
                     }
-                    const arrow = m.dir * d > 0 ? "▲" : m.dir * d < 0 ? "▼" : "";
+                    // Arrow = actual direction vs a year ago (▲ up, ▼ down); its colour =
+                    // whether that move is good (green) or bad (red) for this metric —
+                    // e.g. COF ▲ in red = funding cost rose. LDR: grey (no good side).
+                    const arrow = d > 0 ? "▲" : d < 0 ? "▼" : "";
+                    const arrowColor = m.dir === 0 ? "var(--ab-muted)" : m.dir * d > 0 ? "var(--heat-up)" : "var(--heat-down)";
                     return (
                       <td
                         key={m.key}
@@ -129,7 +133,7 @@ function OverviewTab({ group }: { group: GroupFilter }) {
                           <span
                             aria-hidden="true"
                             className="ml-1 text-[0.6rem] opacity-80"
-                            style={{ color: m.dir * d > 0 ? "var(--heat-up)" : "var(--heat-down)" }}
+                            style={{ color: arrowColor }}
                           >
                             {arrow}
                           </span>
@@ -170,8 +174,9 @@ function OverviewTab({ group }: { group: GroupFilter }) {
                 <b>Màu ô</b>: so với <b>trung bình 16 ngân hàng</b>. Xanh = tốt hơn mặt bằng ngành, đỏ = kém hơn, màu càng đậm thì chênh càng nhiều.
               </li>
               <li>
-                <b>Mũi tên trong ô</b>: so với <b>cùng kỳ năm trước</b>. <span style={{ color: "var(--heat-up)" }}>▲</span> = tốt lên,{" "}
-                <span style={{ color: "var(--heat-down)" }}>▼</span> = xấu đi.
+                <b>Mũi tên trong ô</b>: so với <b>cùng kỳ năm trước</b>, ▲ = tăng, ▼ = giảm. Màu mũi tên cho biết thay đổi đó{" "}
+                <span style={{ color: "var(--heat-up)" }}>tốt (xanh)</span> hay <span style={{ color: "var(--heat-down)" }}>xấu (đỏ)</span>. Ví dụ COF{" "}
+                <span style={{ color: "var(--heat-down)" }}>▲</span> = chi phí vốn tăng (xấu), COF <span style={{ color: "var(--heat-up)" }}>▼</span> = chi phí vốn giảm (tốt).
               </li>
               <li>
                 <b>"Tốt" tùy chỉ số</b>: CASA, NIM, ROA, ROE, tăng trưởng tín dụng/tiền gửi càng <b>cao</b> càng tốt; CIR (chi phí), NPL (nợ xấu), COF (chi phí vốn) càng{" "}
