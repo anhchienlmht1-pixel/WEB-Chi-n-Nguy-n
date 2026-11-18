@@ -1,9 +1,10 @@
+import { useState } from "react";
 import type React from "react";
 import { Link } from "react-router-dom";
 import { usePolling } from "../hooks/usePolling";
 import { fetchQuote } from "../api/client";
 import { VALUATION } from "../data/bankValuation";
-import { Tile, banksIn, groupOf, heat, mean, stats, vn, type GroupFilter } from "./bankUi";
+import { Seg, Tile, banksIn, groupOf, heat, mean, stats, vn, type GroupFilter } from "./bankUi";
 import type { Quote } from "../types";
 
 // Định giá: P/B, P/E theo giá đang khớp (giá / giá trị sổ sách, giá / EPS 4 quý),
@@ -47,7 +48,16 @@ function RangeBar({ r }: { r: Row }) {
   );
 }
 
-function Scatter({ rows }: { rows: Row[] }) {
+interface ScatterProps {
+  rows: Row[];
+  roeMin: number;
+  pbAvg: number;
+  watch: Set<string>;
+  sel: string | null;
+  onSel: (b: string | null) => void;
+}
+
+function Scatter({ rows, roeMin, pbAvg, watch, sel, onSel }: ScatterProps) {
   const pts = rows.filter((r) => r.roe > 0 && r.pb > 0);
   if (pts.length < 3) return null;
   const W = 640;
@@ -92,8 +102,19 @@ function Scatter({ rows }: { rows: Row[] }) {
   });
   const xt = [0, 5, 10, 15, 20, 25, 30].filter((v) => v <= xMax);
   const yt = [0, 0.5, 1, 1.5, 2, 2.5, 3].filter((v) => v <= yMax);
+  const cur = pts.find((p) => p.bank === sel) ?? null;
+  const zx = sx(Math.min(roeMin, xMax));
+  const zy = sy(Math.min(pbAvg, yMax));
   return (
+    <div className="relative" onMouseLeave={() => onSel(null)}>
     <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label="Biểu đồ P/B theo ROE">
+      {/* Vùng lọc: ROE ≥ ngưỡng và P/B dưới TB ngành */}
+      <rect x={zx} y={zy} width={W - P.r - zx} height={H - P.b - zy} style={{ fill: "var(--heat-up)" }} opacity="0.09" />
+      <line x1={zx} x2={zx} y1={P.t} y2={H - P.b} strokeDasharray="3 3" style={{ stroke: "var(--heat-up)" }} opacity="0.7" />
+      <line x1={P.l} x2={W - P.r} y1={zy} y2={zy} strokeDasharray="3 3" style={{ stroke: "var(--heat-up)" }} opacity="0.7" />
+      <text x={W - P.r - 4} y={H - P.b - 6} textAnchor="end" fontSize="11" style={{ fill: "var(--heat-up)" }}>
+        ROE ≥ {roeMin}% · P/B dưới TB ngành ({vn(pbAvg)})
+      </text>
       {yt.map((v) => (
         <g key={`y${v}`}>
           <line x1={P.l} x2={W - P.r} y1={sy(v)} y2={sy(v)} style={{ stroke: "var(--ab-line)" }} />
@@ -116,21 +137,88 @@ function Scatter({ rows }: { rows: Row[] }) {
       {line && (
         <line {...line} strokeWidth="1.5" strokeDasharray="5 4" style={{ stroke: "#e07b39" }} />
       )}
-      {pts.map((p) => (
-        <g key={p.bank}>
-          <circle cx={sx(p.roe)} cy={sy(p.pb)} r="6" style={{ fill: GROUP_COLOR[groupOf(p.bank) ?? ""] ?? "var(--ab-accent)" }} opacity="0.9" />
-        </g>
-      ))}
+      {pts.map((p) => {
+        const on = p.bank === sel;
+        return (
+          <g
+            key={p.bank}
+            role="button"
+            tabIndex={0}
+            aria-label={`${p.bank}: P/B ${vn(p.pb)}, ROE ${vn(p.roe, 1)}%`}
+            className="cursor-pointer outline-none"
+            onMouseEnter={() => onSel(p.bank)}
+            onFocus={() => onSel(p.bank)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSel(on ? null : p.bank);
+            }}
+          >
+            <circle cx={sx(p.roe)} cy={sy(p.pb)} r="14" fill="transparent" />
+            {watch.has(p.bank) && <circle cx={sx(p.roe)} cy={sy(p.pb)} r="10" fill="none" strokeWidth="2" style={{ stroke: "var(--heat-up)" }} />}
+            <circle
+              cx={sx(p.roe)}
+              cy={sy(p.pb)}
+              r={on ? 8 : 6}
+              style={{ fill: GROUP_COLOR[groupOf(p.bank) ?? ""] ?? "var(--ab-accent)", stroke: on ? "var(--ab-strong)" : "none" }}
+              strokeWidth="2"
+              opacity="0.95"
+            />
+          </g>
+        );
+      })}
       {labels.map((l) => (
         <text key={`l${l.bank}`} x={l.x} y={l.y} textAnchor={l.a} fontSize="12" fontWeight="700" style={{ fill: "var(--ab-strong)" }}>
           {l.bank}
         </text>
       ))}
     </svg>
+    {cur && (
+      <div
+        className="pointer-events-none absolute z-10 w-[230px] rounded-lg border border-[var(--ab-line-strong)] bg-[var(--ab-bg2)] p-3 text-[0.82rem] shadow-lg"
+        style={{
+          left: `clamp(0px, calc(${(sx(cur.roe) / W) * 100}% ${sx(cur.roe) > W * 0.6 ? "- 242px" : "+ 12px"}), calc(100% - 230px))`,
+          top: `clamp(0px, calc(${(sy(cur.pb) / H) * 100}% - 60px), calc(100% - 200px))`,
+        }}
+      >
+        <p className="flex items-baseline justify-between">
+          <b className="text-base text-[var(--ab-strong)]">{cur.bank}</b>
+          <span className="text-xs text-[var(--ab-muted)]">{groupOf(cur.bank)}</span>
+        </p>
+        <dl className="mt-1.5 grid grid-cols-[1fr_auto] gap-x-3 gap-y-0.5 tabular-nums">
+          <dt className="text-[var(--ab-muted)]">Giá</dt>
+          <dd className="text-right">{cur.price ? vn(cur.price / 1000, 2) : "—"}</dd>
+          <dt className="text-[var(--ab-muted)]">P/B</dt>
+          <dd className="text-right font-bold">{vn(cur.pb)}</dd>
+          <dt className="text-[var(--ab-muted)]">P/E</dt>
+          <dd className="text-right">{cur.pe > 0 && cur.pe < 40 ? vn(cur.pe, 1) : `${vn(cur.pe, 0)}*`}</dd>
+          <dt className="text-[var(--ab-muted)]">ROE 4 quý</dt>
+          <dd className="text-right font-bold">{vn(cur.roe, 1)}%</dd>
+          <dt className="text-[var(--ab-muted)]">P/B TB từ 2022</dt>
+          <dd className="text-right">{vn(cur.avg)}</dd>
+          <dt className="text-[var(--ab-muted)]">So với TB của mình</dt>
+          <dd className="text-right" style={{ color: cur.vsHist <= 0 ? "var(--heat-up)" : "var(--heat-down)" }}>
+            {cur.vsHist > 0 ? "+" : "−"}
+            {vn(Math.abs(cur.vsHist), 0)}%
+          </dd>
+          <dt className="text-[var(--ab-muted)]">So với P/B TB ngành</dt>
+          <dd className="text-right" style={{ color: cur.pb <= pbAvg ? "var(--heat-up)" : "var(--heat-down)" }}>
+            {cur.pb > pbAvg ? "+" : "−"}
+            {vn(Math.abs((cur.pb / pbAvg - 1) * 100), 0)}%
+          </dd>
+        </dl>
+        {watch.has(cur.bank) && <p className="mt-1.5 text-xs font-bold text-[var(--heat-up)]">✓ Trong danh sách theo dõi</p>}
+      </div>
+    )}
+    </div>
   );
 }
 
+const ROE_OPTS = ["12%", "15%", "18%"] as const;
+type RoeOpt = (typeof ROE_OPTS)[number];
+
 export default function BankValuationTab({ group }: { group: GroupFilter }) {
+  const [roeMin, setRoeMin] = useState(15);
+  const [sel, setSel] = useState<string | null>(null);
   const { data: quotes } = usePolling(
     async () => {
       const res = await Promise.allSettled(ALL.map((s) => fetchQuote(s)));
@@ -173,6 +261,9 @@ export default function BankValuationTab({ group }: { group: GroupFilter }) {
   const roeStat = stats(all.map((r) => r.roe));
   const histStat = stats(all.map((r) => r.vsHist));
   const below = rows.filter((r) => r.vsHist < 0).length;
+  const pbAvgAll = mean(all.map((r) => r.pb));
+  const watch = rows.filter((r) => r.roe >= roeMin && r.pb < pbAvgAll).sort((a, b) => a.pb / a.roe - b.pb / b.roe);
+  const watchSet = new Set(watch.map((r) => r.bank));
 
   const cell = (style: React.CSSProperties | undefined) => ({ className: "px-2 py-1.5 text-center tabular-nums", style });
 
@@ -261,24 +352,74 @@ export default function BankValuationTab({ group }: { group: GroupFilter }) {
               Đường xu hướng
             </span>
           </div>
-          <div className="overflow-x-auto"><div className="min-w-[540px]"><Scatter rows={rows} /></div></div>
+          <div className="overflow-x-auto">
+            <div className="min-w-[540px]">
+              <Scatter rows={rows} roeMin={roeMin} pbAvg={pbAvgAll} watch={watchSet} sel={sel} onSel={setSel} />
+            </div>
+          </div>
+          <details className="mt-3 text-[0.88rem]">
+            <summary className="cursor-pointer font-bold text-[var(--ab-strong)]">Cách đọc biểu đồ</summary>
+            <ul className="mt-1.5 list-disc pl-5 leading-relaxed">
+              <li>Rê chuột hoặc bấm vào chấm để xem số liệu của ngân hàng.</li>
+              <li>Ngân hàng sinh lời tốt hơn (ROE cao) thường được thị trường trả P/B cao hơn.</li>
+              <li>Nằm dưới đường xu hướng: P/B thấp hơn mức thường thấy ở cùng mức ROE. Nằm trên: cao hơn.</li>
+              <li>Vùng xanh nhạt: ROE đạt ngưỡng và P/B dưới trung bình ngành. Chấm có vòng xanh: nằm trong danh sách theo dõi.</li>
+              <li>P/B = giá / giá trị sổ sách mỗi cổ phiếu. P/E = giá / lợi nhuận mỗi cổ phiếu 4 quý gần nhất.</li>
+            </ul>
+          </details>
         </div>
-        <div className="border-[var(--ab-line)] lg:border-l lg:pl-6">
-          <h3 className="font-bold text-[var(--ab-strong)]">Đọc biểu đồ</h3>
-          <ul className="mt-1.5 list-disc pl-5 leading-relaxed">
-            <li>Ngân hàng sinh lời tốt hơn (ROE cao) thường được thị trường trả P/B cao hơn.</li>
-            <li>Nằm dưới đường xu hướng: P/B thấp hơn mức thường thấy ở cùng mức ROE. Nằm trên: cao hơn.</li>
-            <li>Đường xu hướng chỉ tính các ngân hàng có ROE từ 8% trở lên.</li>
-          </ul>
-          <h3 className="mt-4 font-bold text-[var(--ab-strong)]">P/B và P/E là gì</h3>
-          <p className="mt-1.5 leading-relaxed">
-            P/B = giá cổ phiếu / giá trị sổ sách mỗi cổ phiếu. P/E = giá / lợi nhuận mỗi cổ phiếu 4 quý gần nhất. Với ngân hàng, P/B thường được dùng nhiều hơn.
+        <aside aria-label="Danh sách theo dõi" className="flex flex-col border-[var(--ab-line)] lg:border-l lg:pl-6">
+          <h3 className="text-lg font-bold text-[var(--ab-strong)]">Danh sách theo dõi</h3>
+          <p className="mt-1 text-[0.85rem] text-[var(--ab-muted)]">
+            Ngân hàng có ROE 4 quý từ ngưỡng trở lên <b>và</b> P/B thấp hơn trung bình 16 ngân hàng ({vn(pbAvgAll)}).
           </p>
-          <p className="mt-4 text-xs text-[var(--ab-muted)]">
-            Nguồn: giá trị sổ sách, EPS, ROE và P/B lịch sử từ SSI (báo cáo tài chính đến Q3/2026); giá đang khớp cập nhật mỗi phút. Chỉ để tham khảo, không
-            phải khuyến nghị mua bán.
+          <div className="mt-3 flex items-center gap-2 text-[0.82rem] text-[var(--ab-muted)]">
+            ROE tối thiểu <Seg items={ROE_OPTS} value={`${roeMin}%` as RoeOpt} onChange={(v) => setRoeMin(parseInt(v, 10))} label="Ngưỡng ROE" />
+          </div>
+          {watch.length === 0 ? (
+            <p className="mt-4 rounded-lg border border-dashed border-[var(--ab-line-strong)] p-4 text-[0.88rem]">
+              Chưa có ngân hàng nào đạt cả hai điều kiện{group !== "Tất cả" ? ` trong nhóm ${group}` : ""}. Thử hạ ngưỡng ROE.
+            </p>
+          ) : (
+            <ul className="mt-3 flex flex-col gap-1.5">
+              {watch.map((r) => {
+                const on = r.bank === sel;
+                return (
+                  <li key={r.bank}>
+                    <div
+                      onMouseEnter={() => setSel(r.bank)}
+                      onMouseLeave={() => setSel(null)}
+                      className={`grid grid-cols-[3.2rem_1fr_auto] items-center gap-x-3 rounded-lg border px-3 py-2 transition-colors ${
+                        on ? "border-[var(--heat-up)] bg-[var(--ab-hover)]" : "border-[var(--ab-line)]"
+                      }`}
+                    >
+                      <Link to={`/stock/${r.bank}`} className="font-bold text-[var(--ab-strong)] hover:underline">
+                        {r.bank}
+                      </Link>
+                      <span className="text-[0.82rem] tabular-nums">
+                        ROE <b>{vn(r.roe, 1)}%</b> · P/B <b>{vn(r.pb)}</b>
+                      </span>
+                      <span className="text-right text-xs tabular-nums" style={{ color: "var(--heat-up)" }}>
+                        −{vn(Math.abs((r.pb / pbAvgAll - 1) * 100), 0)}% so ngành
+                      </span>
+                      <span className="col-span-3 mt-0.5 text-xs text-[var(--ab-muted)]">
+                        {groupOf(r.bank)} · P/B {r.vsHist <= 0 ? "thấp" : "cao"} hơn TB của chính nó {vn(Math.abs(r.vsHist), 0)}%
+                      </span>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          <div className="mt-4 rounded-lg bg-[var(--ab-hover)] p-3 text-[0.82rem] leading-relaxed">
+            <b className="text-[var(--ab-strong)]">ROE bao nhiêu là ổn?</b> Với ngân hàng Việt Nam, mốc hay dùng là khoảng 15%: cao hơn chi phí vốn chủ sở hữu
+            ước tính (khoảng 12–14%), tức ngân hàng tạo thêm giá trị cho cổ đông. ROE trung bình 16 ngân hàng hiện là {vn(mean(all.map((r) => r.roe)), 1)}%.
+          </div>
+          <p className="mt-3 text-xs text-[var(--ab-muted)]">
+            Danh sách lọc tự động theo hai tiêu chí trên, cập nhật theo giá mỗi phút; P/B thấp có thể do rủi ro riêng (nợ xấu, tăng vốn…). Đây không phải khuyến
+            nghị mua bán. Nguồn: SSI, báo cáo tài chính đến Q3/2026.
           </p>
-        </div>
+        </aside>
       </section>
     </div>
   );
