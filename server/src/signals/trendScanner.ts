@@ -79,18 +79,27 @@ function computeSupertrendDirections(points: HistoryPoint[], period: number, mul
   return directions;
 }
 
+// Luật hệ thống (đồng bộ với biểu đồ client/src/utils/signals.ts):
+//  - MUA  (vào lệnh): SMA20 > SMA50, ADX(14) > 25, Supertrend(10,3) tăng.
+//  - BÁN  (đóng lệnh): SMA20 < SMA50 hoặc Supertrend đảo xuống.
+//  - Còn lại (vd. xu hướng còn tăng nhưng ADX ≤ 25): trung tính — đang giữ thì
+//    giữ tiếp, chưa có lệnh thì chưa vào. ADX chỉ dùng để lọc điểm vào.
+export type BarSignal = "buy" | "sell" | null;
+
+export interface SignalBar {
+  time: string;
+  close: number;
+  signal: BarSignal;
+}
+
 interface BuySeriesBar {
   time: string;
   close: number;
   isBuy: boolean;
 }
 
-// Same SMA20/SMA50/ADX(14)/Supertrend(10,3) combo as latestBuySince, but
-// returned as a full aligned per-bar series (one entry per bar once every
-// indicator has warmed up) instead of just the latest streak — exported
-// for signals/tradeJournal.ts, which only needs the very last bar's state
-// to tell whether a symbol is buying today.
-export function computeBuySeries(points: HistoryPoint[]): BuySeriesBar[] {
+/** Per-bar buy / sell / neutral state, one entry per bar once every indicator has warmed up. */
+export function computeSignalSeries(points: HistoryPoint[]): SignalBar[] {
   const closes = points.map((p) => p.close);
   const sma20 = sma({ period: 20, values: closes });
   const sma50 = sma({ period: 50, values: closes });
@@ -104,16 +113,34 @@ export function computeBuySeries(points: HistoryPoint[]): BuySeriesBar[] {
   const dirOffset = n - directions.length;
   const startOffset = Math.max(sma20Offset, sma50Offset, adxOffset, dirOffset);
 
-  const out: BuySeriesBar[] = [];
+  const out: SignalBar[] = [];
   for (let i = startOffset; i < n; i++) {
     const s20 = sma20[i - sma20Offset];
     const s50 = sma50[i - sma50Offset];
     const adxVal = adxRows[i - adxOffset]?.adx;
     const direction = directions[i - dirOffset];
     if (s20 === undefined || s50 === undefined || adxVal === undefined || direction === undefined) continue;
-    out.push({ time: points[i].time, close: points[i].close, isBuy: s20 > s50 && adxVal > 25 && direction === 1 });
+    const signal: BarSignal = s20 > s50 && adxVal > 25 && direction === 1 ? "buy" : s20 < s50 || direction === -1 ? "sell" : null;
+    out.push({ time: points[i].time, close: points[i].close, signal });
   }
   return out;
+}
+
+/** Index (in series) of the bar that opened the position still held at the end, or null if flat. */
+export function openPositionIndex(series: SignalBar[]): number | null {
+  let pos: number | null = null;
+  for (let i = 0; i < series.length; i++) {
+    const sig = series[i].signal;
+    if (pos === null && sig === "buy") pos = i;
+    else if (pos !== null && sig === "sell") pos = null;
+  }
+  return pos;
+}
+
+// Raw "all three buy conditions hold on this bar" series (kept for callers
+// that only need the entry condition).
+export function computeBuySeries(points: HistoryPoint[]): BuySeriesBar[] {
+  return computeSignalSeries(points).map((b) => ({ time: b.time, close: b.close, isBuy: b.signal === "buy" }));
 }
 
 // Calculate buy/sell signals with dates
@@ -199,57 +226,17 @@ async function checkCanSlimFundamentals(symbol: string): Promise<boolean> {
   }
 }
 
-// Walk back from the latest bar: is it currently a buy, and if so, how far
-// back does the uninterrupted buy streak go (for "tín hiệu từ ngày...").
+// Is the system holding this stock at the latest bar, and since when? The
+// position opens on the first MUA bar after being flat and is held until a
+// BÁN bar (see the rule above) — neutral bars (ADX ≤ 25 in an intact uptrend)
+// keep it open. sellDate = the bar just before the entry (end of the previous
+// flat stretch), kept for backward compatibility.
 export function latestBuySince(points: HistoryPoint[]): SignalDates | null {
   if (points.length < 51) return null;
-
-  const closes = points.map((p) => p.close);
-  const sma20 = sma({ period: 20, values: closes });
-  const sma50 = sma({ period: 50, values: closes });
-  const adxRows = adx({ high: points.map((p) => p.high), low: points.map((p) => p.low), close: closes, period: 14 });
-  const directions = computeSupertrendDirections(points, 10, 3);
-
-  const n = points.length;
-  const sma20Offset = n - sma20.length;
-  const sma50Offset = n - sma50.length;
-  const adxOffset = n - adxRows.length;
-  const dirOffset = n - directions.length;
-
-  // Find current buy signal (from end going backward)
-  let buyDate: string | null = null;
-  let buyPrice: number | null = null;
-  let sellDate: string | null = null;
-
-  for (let i = n - 1; i >= 0; i--) {
-    if (i < sma20Offset || i < sma50Offset || i < adxOffset || i < dirOffset) break;
-    const s20 = sma20[i - sma20Offset];
-    const s50 = sma50[i - sma50Offset];
-    const adxVal = adxRows[i - adxOffset]?.adx;
-    const direction = directions[i - dirOffset];
-    if (s20 === undefined || s50 === undefined || adxVal === undefined || direction === undefined) break;
-
-    const isBuy = s20 > s50 && adxVal > 25 && direction === 1;
-
-    // If at the end and not a buy signal, no current buy
-    if (i === n - 1 && !isBuy) return null;
-
-    if (!isBuy) {
-      // Streak broken — this bar is the boundary right before the current
-      // uninterrupted run started. Stop here: everything further back is a
-      // separate, non-contiguous episode and must NOT overwrite buyDate
-      // (a bug previously let it do so, reporting a far earlier buyDate
-      // whenever an older unrelated uptrend also happened to qualify).
-      sellDate = points[i].time;
-      break;
-    }
-
-    buyDate = points[i].time; // Update to earliest buy date within this streak
-    buyPrice = points[i].close; // Update alongside — price on that earliest buy date
-  }
-
-  if (!buyDate || buyPrice === null) return null;
-  return { buyDate, buyPrice, sellDate };
+  const series = computeSignalSeries(points);
+  const pos = openPositionIndex(series);
+  if (pos === null) return null;
+  return { buyDate: series[pos].time, buyPrice: series[pos].close, sellDate: pos > 0 ? series[pos - 1].time : null };
 }
 
 export interface BuySignalHit {

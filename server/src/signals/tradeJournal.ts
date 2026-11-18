@@ -1,7 +1,7 @@
 import { put, head } from "@vercel/blob";
 import { STOCK_UNIVERSE } from "../providers/universe.js";
 import { getHistoryWithFallback } from "../providers/fallback.js";
-import { computeBuySeries, dedupeSameDay } from "./trendScanner.js";
+import { computeSignalSeries, dedupeSameDay, type BarSignal } from "./trendScanner.js";
 import { barDateICT, dropUnclosedBars, lastClosedSessionDate } from "./sessionClose.js";
 
 // Real, forward-only trade log for "Lịch sử giao dịch" — unlike
@@ -34,7 +34,14 @@ export interface JournalClosedTrade extends JournalPosition {
   holdingDays: number;
 }
 
+// Bump when the trading rule changes: the next run rebuilds the whole journal
+// from JOURNAL_START_DATE under the new rule (forward-only, closed sessions).
+//  v2 (18/11/2026): exits only on SMA20 < SMA50 or Supertrend down — ADX ≤ 25
+//  alone no longer closes a position (same rule as the chart).
+const RULE_VERSION = 2;
+
 interface JournalState {
+  rule?: number;
   lastRunDate: string | null;
   open: JournalPosition[];
   closed: JournalClosedTrade[];
@@ -91,108 +98,119 @@ async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T)
   return results;
 }
 
-interface CurrentSignal {
+interface SymbolBars {
   name: string;
   exchange: string;
   currency: string;
-  isBuy: boolean;
-  price: number;
+  /** Closed sessions only, oldest first: Vietnam date, close, buy/sell/neutral. */
+  bars: { date: string; close: number; signal: BarSignal }[];
 }
 
 interface CurrentSignals {
-  signals: Map<string, CurrentSignal>;
+  symbols: Map<string, SymbolBars>;
   /** Vietnam date (YYYY-MM-DD) of the newest closed bar seen, null if none. */
   dataDate: string | null;
 }
+
+// How many recent sessions per symbol are kept for the catch-up replay — more
+// than enough to cover days on which nobody opened the site.
+const REPLAY_BARS = 90;
 
 async function scanCurrentSignals(): Promise<CurrentSignals> {
   const hits = await mapWithConcurrency(STOCK_UNIVERSE, 20, async (seed) => {
     try {
       const { points: raw } = await getHistoryWithFallback(seed.symbol, "1Y");
       // Closed sessions only — today's bar is dropped until after 15:00 ICT.
-      const series = computeBuySeries(dropUnclosedBars(dedupeSameDay(raw)));
-      const last = series[series.length - 1];
-      if (!last) return null;
+      const series = computeSignalSeries(dropUnclosedBars(dedupeSameDay(raw)));
+      if (series.length === 0) return null;
       return {
         symbol: seed.symbol,
         name: seed.name,
         exchange: seed.exchange,
         currency: seed.currency,
-        isBuy: last.isBuy,
-        price: last.close,
-        barDate: barDateICT(last.time),
+        bars: series
+          .slice(-REPLAY_BARS)
+          .flatMap((b) => {
+            const date = barDateICT(b.time);
+            return date ? [{ date, close: b.close, signal: b.signal }] : [];
+          }),
       };
     } catch {
       // A single symbol's data being unavailable for today's run must not
-      // block the rest of the scan — see the loop below, which also keeps
-      // any already-open position untouched rather than risk a false close.
+      // block the rest of the scan — its open position (if any) is kept as is.
       return null;
     }
   });
 
-  const map = new Map<string, CurrentSignal>();
+  const symbols = new Map<string, SymbolBars>();
   let dataDate: string | null = null;
   for (const h of hits) {
     if (!h) continue;
-    map.set(h.symbol, { name: h.name, exchange: h.exchange, currency: h.currency, isBuy: h.isBuy, price: h.price });
-    if (h.barDate && (!dataDate || h.barDate > dataDate)) dataDate = h.barDate;
+    symbols.set(h.symbol, { name: h.name, exchange: h.exchange, currency: h.currency, bars: h.bars });
+    const last = h.bars[h.bars.length - 1]?.date;
+    if (last && (!dataDate || last > dataDate)) dataDate = last;
   }
-  return { signals: map, dataDate };
+  return { symbols, dataDate };
 }
 
-// Brings the journal up to date with the latest CLOSED session's signals (at
-// most once per session — see the lastRunDate guard) and persists the result.
-// lastRunDate / buyDate / sellDate are all that session's Vietnam date.
+// Brings the journal up to date with every CLOSED session since the last run
+// (not just the latest one — days on which nobody opened the site are
+// replayed bar by bar, so a short MUA→BÁN cycle in between isn't lost) and
+// persists the result. Same rule as the chart: open on a MUA bar when flat,
+// close on a BÁN bar (SMA20 < SMA50 or Supertrend down); neutral bars hold.
+// buyDate / sellDate / lastRunDate are that session's Vietnam date.
 async function updateTradeJournal(): Promise<JournalState> {
-  const state = await readState();
+  const saved = await readState();
+  const rebuild = saved.rule !== RULE_VERSION;
+  const state: JournalState = rebuild ? { rule: RULE_VERSION, lastRunDate: null, open: [], closed: [] } : saved;
   const expected = lastClosedSessionDate();
-  if (expected < JOURNAL_START_DATE) return state;
-  if (state.lastRunDate !== null && state.lastRunDate >= expected) return state;
-  if (Date.now() - lastAttemptMs < RETRY_AFTER_MS) return state;
+  if (expected < JOURNAL_START_DATE) return saved;
+  if (!rebuild && state.lastRunDate !== null && state.lastRunDate >= expected) return saved;
+  if (Date.now() - lastAttemptMs < RETRY_AFTER_MS) return saved;
   lastAttemptMs = Date.now();
 
-  const { signals, dataDate } = await scanCurrentSignals();
-  if (signals.size === 0 || dataDate === null) return state; // scan failed entirely — don't touch positions on bad data
+  const { symbols, dataDate } = await scanCurrentSignals();
+  if (symbols.size === 0 || dataDate === null) return saved; // scan failed entirely — don't touch positions on bad data
   // The closed session's bar isn't published yet (provider lag) or it was a
   // holiday — nothing new to conclude; try again later.
-  if (dataDate < expected) return state;
-  const sessionDate = dataDate;
+  if (dataDate < expected) return saved;
+
+  // Sessions to replay: a rebuild covers every session since JOURNAL_START_DATE;
+  // otherwise every session after the last run.
+  const inWindow = (d: string) =>
+    rebuild ? d >= JOURNAL_START_DATE && d <= dataDate : d > (state.lastRunDate ?? dataDate) && d <= dataDate;
 
   const openBySymbol = new Map(state.open.map((p) => [p.symbol, p]));
   const nextOpen: JournalPosition[] = [];
   const newlyClosed: JournalClosedTrade[] = [];
 
-  for (const pos of state.open) {
-    const sig = signals.get(pos.symbol);
-    if (!sig || sig.isBuy) {
-      // Missing in this run (fetch failed) or still buying — keep it open.
-      nextOpen.push(pos);
-      continue;
+  // Open positions whose data is missing this run are kept untouched.
+  for (const pos of state.open) if (!symbols.has(pos.symbol)) nextOpen.push(pos);
+
+  for (const [symbol, info] of symbols) {
+    let pos: JournalPosition | null = openBySymbol.get(symbol) ?? null;
+    for (const bar of info.bars) {
+      if (!inWindow(bar.date)) continue;
+      if (pos && bar.signal === "sell") {
+        newlyClosed.push({
+          ...pos,
+          sellDate: bar.date,
+          sellPrice: bar.close,
+          returnPercent: ((bar.close - pos.buyPrice) / pos.buyPrice) * 100,
+          holdingDays: Math.round((new Date(bar.date).getTime() - new Date(pos.buyDate).getTime()) / 86_400_000),
+        });
+        pos = null;
+      } else if (!pos && bar.signal === "buy") {
+        pos = { symbol, name: info.name, exchange: info.exchange, currency: info.currency, buyDate: bar.date, buyPrice: bar.close };
+      }
     }
-    const holdingDays = Math.round((new Date(sessionDate).getTime() - new Date(pos.buyDate).getTime()) / 86_400_000);
-    newlyClosed.push({
-      ...pos,
-      sellDate: sessionDate,
-      sellPrice: sig.price,
-      returnPercent: ((sig.price - pos.buyPrice) / pos.buyPrice) * 100,
-      holdingDays,
-    });
+    if (pos) nextOpen.push(pos);
   }
 
-  for (const [symbol, sig] of signals) {
-    if (openBySymbol.has(symbol) || !sig.isBuy) continue;
-    nextOpen.push({
-      symbol,
-      name: sig.name,
-      exchange: sig.exchange,
-      currency: sig.currency,
-      buyDate: sessionDate,
-      buyPrice: sig.price,
-    });
-  }
-
+  newlyClosed.sort((a, b) => (a.sellDate < b.sellDate ? 1 : a.sellDate > b.sellDate ? -1 : 0));
   const next: JournalState = {
-    lastRunDate: sessionDate,
+    rule: RULE_VERSION,
+    lastRunDate: dataDate,
     open: nextOpen,
     closed: [...newlyClosed, ...state.closed].slice(0, MAX_CLOSED_ENTRIES),
   };

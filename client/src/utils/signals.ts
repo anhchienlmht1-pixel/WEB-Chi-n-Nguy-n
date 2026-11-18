@@ -150,7 +150,6 @@ export function computeTradingSignals(points: HistoryPoint[]): TradingSignalsRes
 
   const all: TradingSignal[] = [];
   const transitions: TradingSignal[] = [];
-  let prevType: "buy" | "sell" | null = null;
   let position: Position | null = null;
 
   for (const p of points) {
@@ -167,12 +166,15 @@ export function computeTradingSignals(points: HistoryPoint[]): TradingSignalsRes
 
     if (type) all.push({ time: t, price: type === "buy" ? p.low : p.high, type });
 
+    // Position-based (same rule as the server's trade journal): open on a buy
+    // bar when flat, add tranches while holding, close on a sell bar. Neutral
+    // bars (e.g. ADX ≤ 25 in an intact uptrend) keep the position as it is.
     if (type === "buy") {
-      if (prevType !== "buy") {
+      if (!position) {
         // Fresh entry — start a new position with tranche 1.
         position = { entryPrice: p.close, tranches: [{ price: p.close, sold: false }] };
         transitions.push({ time: t, price: p.low, type: "buy", note: `Mua 1/${TRANCHE_COUNT}` });
-      } else if (position) {
+      } else {
         // Pyramid in: add the next tranche once price clears its step.
         const nextIdx = position.tranches.length;
         if (nextIdx < TRANCHE_COUNT && p.close >= position.entryPrice * (1 + PYRAMID_STEPS_PCT[nextIdx] / 100)) {
@@ -185,7 +187,7 @@ export function computeTradingSignals(points: HistoryPoint[]): TradingSignalsRes
           });
         }
       }
-    } else if (prevType === "buy" && position) {
+    } else if (type === "sell" && position) {
       // Trend broke — exit whatever tranches are still open, profit or loss.
       const open = position.tranches.filter((tr) => !tr.sold);
       if (open.length > 0) {
@@ -199,8 +201,6 @@ export function computeTradingSignals(points: HistoryPoint[]): TradingSignalsRes
       }
       position = null;
     }
-
-    prevType = type;
   }
 
   return { all, transitions };
