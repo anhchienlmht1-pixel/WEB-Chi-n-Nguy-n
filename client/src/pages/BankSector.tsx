@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react";
 import type React from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import { GROUPS, MODES, STEPS, Seg, Tile, heat, mean, stats, vn, type GroupFilter, type Mode } from "../components/bankUi";
+import BankValuationTab from "../components/BankValuationTab";
+import BankScaleTab from "../components/BankScaleTab";
 import { BANKS, PERIOD, type BankGroup, type MetricKey } from "../data/bankSector";
 
 // Ngành ngân hàng: 4 chỉ số trung bình ngành, bảng 16 ngân hàng (ô xanh = tốt lên
@@ -30,69 +33,8 @@ const METRICS: Metric[] = [
   { key: "cof", label: "COF", short: "Chi phí vốn", dir: -1, what: "Chi phí vốn huy động bình quân. Thấp hơn là tốt." },
 ];
 const RANK_KEYS: MetricKey[] = ["nim", "roe", "npl", "casa", "ldr", "credit", "cof"];
-const GROUPS: ("Tất cả" | BankGroup)[] = ["Tất cả", "SOBs", "NHTM lớn", "NHTM vừa"];
 
-// Mean / standard deviation of a metric across all 16 banks (level) and of its
-// year-on-year change, for the heat-map intensity.
-function stats(xs: number[]) {
-  const m = xs.reduce((a, b) => a + b, 0) / (xs.length || 1);
-  const sd = Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / (xs.length || 1)) || 1;
-  return { m, sd };
-}
-type Mode = "Theo TB ngành" | "Theo cùng kỳ";
-const MODES: Mode[] = ["Theo TB ngành", "Theo cùng kỳ"];
-// |z| → mix strength (4 steps) so strong outliers stand out.
-const STEPS = [0, 18, 32, 48, 66];
-function step(z: number) {
-  const a = Math.abs(z);
-  return a < 0.25 ? 0 : a < 0.75 ? 1 : a < 1.25 ? 2 : a < 1.75 ? 3 : 4;
-}
-function heat(signed: number, z: number): React.CSSProperties | undefined {
-  const k = step(z);
-  if (!k || !signed) return undefined;
-  const c = signed > 0 ? "var(--heat-up)" : "var(--heat-down)";
-  return {
-    background: `color-mix(in srgb, ${c} ${STEPS[k]}%, transparent)`,
-    color: k >= 3 ? "var(--heat-ink-strong)" : "var(--heat-ink)",
-    fontWeight: k >= 3 ? 700 : 500,
-  };
-}
-
-const vn = (x: number, d = 2) => x.toLocaleString("vi-VN", { minimumFractionDigits: d, maximumFractionDigits: d });
-const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
-
-function Tile({ label, value, sub }: { label: string; value: string; sub: string }) {
-  return (
-    <div className="min-w-0 flex-[1_1_12rem] border-[var(--ab-line)] px-5 py-3.5 [&:not(:first-child)]:border-l">
-      <p className="text-[0.82rem] text-[var(--ab-muted)]">{label}</p>
-      <p className="mt-0.5 text-[1.75rem] font-bold tabular-nums leading-tight text-[var(--ab-strong)]">{value}</p>
-      <p className="mt-0.5 text-xs text-[var(--ab-muted)]">{sub}</p>
-    </div>
-  );
-}
-
-function Seg<T extends string>({ items, value, onChange, label }: { items: readonly T[]; value: T; onChange: (v: T) => void; label: string }) {
-  return (
-    <div role="group" aria-label={label} className="inline-flex overflow-hidden rounded-lg border border-[var(--ab-line)]">
-      {items.map((t) => (
-        <button
-          key={t}
-          type="button"
-          aria-pressed={t === value}
-          onClick={() => onChange(t)}
-          className={`px-3 py-1.5 text-[0.82rem] transition-colors ${
-            t === value ? "bg-[var(--ab-accent)] font-bold text-[var(--ab-bg)]" : "text-[var(--ab-muted)] hover:bg-[var(--ab-hover)]"
-          }`}
-        >
-          {t}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-export default function BankSector() {
-  const [group, setGroup] = useState<(typeof GROUPS)[number]>("Tất cả");
+function OverviewTab({ group }: { group: GroupFilter }) {
   const [rankKey, setRankKey] = useState<MetricKey>("nim");
   const [mode, setMode] = useState<Mode>("Theo TB ngành");
   const st = useMemo(() => {
@@ -122,14 +64,9 @@ export default function BankSector() {
   const groupsShown = GROUPS.slice(1).filter((g) => rows.some((r) => r.group === g)) as BankGroup[];
 
   return (
-    <div className="gutter-x mx-auto flex max-w-[1440px] flex-col gap-4 py-8 text-[var(--ab-text)]">
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="mr-auto">
-          <h1 className="text-[clamp(1.6rem,3vw,2rem)] font-bold leading-tight text-[var(--ab-strong)]">Ngành ngân hàng · {PERIOD}</h1>
-          <p className="mt-1 text-[var(--ab-muted)]">16 ngân hàng niêm yết · số liệu báo cáo tài chính quý</p>
-        </div>
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-end gap-3">
         <Seg items={MODES} value={mode} onChange={setMode} label="Cách tô màu" />
-        <Seg items={GROUPS} value={group} onChange={setGroup} label="Nhóm ngân hàng" />
       </div>
 
       <section aria-label="Trung bình ngành" className="flex flex-wrap rounded-[10px] border border-[var(--ab-line)] bg-[var(--ab-card)]">
@@ -294,6 +231,59 @@ export default function BankSector() {
           </p>
         </div>
       </section>
+    </div>
+  );
+}
+
+const TABS = [
+  { id: "tong-quan", label: "Chỉ số hoạt động" },
+  { id: "dinh-gia", label: "Định giá" },
+  { id: "quy-mo", label: "Quy mô & lợi nhuận" },
+] as const;
+type TabId = (typeof TABS)[number]["id"];
+
+export default function BankSector() {
+  const [params, setParams] = useSearchParams();
+  const tab: TabId = (TABS.find((t) => t.id === params.get("muc"))?.id ?? "tong-quan") as TabId;
+  const [group, setGroup] = useState<GroupFilter>("Tất cả");
+  return (
+    <div className="text-[var(--ab-text)]">
+      <nav aria-label="Mục trong Ngành ngân hàng" className="border-b border-[var(--ab-line)] bg-[var(--ab-card)]">
+        <div className="gutter-x mx-auto flex max-w-[1440px] gap-1 overflow-x-auto">
+          {TABS.map((t) => {
+            const on = t.id === tab;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                aria-current={on ? "page" : undefined}
+                onClick={() => setParams(t.id === "tong-quan" ? {} : { muc: t.id }, { replace: true })}
+                className={`shrink-0 border-b-2 px-4 py-3 text-[0.95rem] whitespace-nowrap transition-colors ${
+                  on
+                    ? "border-[#e07b39] font-bold text-[var(--ab-strong)]"
+                    : "border-transparent text-[var(--ab-muted)] hover:text-[var(--ab-strong)]"
+                }`}
+              >
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+      <div className="gutter-x mx-auto flex max-w-[1440px] flex-col gap-4 py-7">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="mr-auto">
+            <h1 className="text-[clamp(1.6rem,3vw,2rem)] font-bold leading-tight text-[var(--ab-strong)]">
+              Ngành ngân hàng · {TABS.find((t) => t.id === tab)!.label}
+            </h1>
+            <p className="mt-1 text-[var(--ab-muted)]">16 ngân hàng niêm yết · số liệu báo cáo tài chính {PERIOD}</p>
+          </div>
+          <Seg items={GROUPS} value={group} onChange={setGroup} label="Nhóm ngân hàng" />
+        </div>
+        {tab === "tong-quan" && <OverviewTab group={group} />}
+        {tab === "dinh-gia" && <BankValuationTab group={group} />}
+        {tab === "quy-mo" && <BankScaleTab group={group} />}
+      </div>
     </div>
   );
 }
