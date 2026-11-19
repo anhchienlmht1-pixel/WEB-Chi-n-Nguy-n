@@ -56,7 +56,7 @@ export function Seg<T extends string>({ items, value, onChange, label }: { items
           aria-pressed={t === value}
           onClick={() => onChange(t)}
           className={`px-3 py-1.5 text-[0.82rem] transition-colors ${
-            t === value ? "bg-[var(--ab-accent)] font-bold text-[var(--ab-bg)]" : "text-[var(--ab-muted)] hover:bg-[var(--ab-hover)]"
+            t === value ? "sm-on font-bold" : "text-[var(--ab-muted)] hover:bg-[var(--ab-hover)]"
           }`}
         >
           {t}

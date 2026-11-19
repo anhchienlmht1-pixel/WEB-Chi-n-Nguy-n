@@ -37,7 +37,7 @@ function daysHeld(buyIso: string, sessionIso: string): number {
 
 // Column template shared by the header and every row: Mã | Ngày vào | Lãi/lỗ.
 // Fixed widths for the two right-hand columns so every row lines up.
-const COLS = "grid-cols-[minmax(0,1fr)_5.5rem_5rem]";
+const COLS = "grid-cols-[minmax(0,1fr)_5.5rem_5rem] @[26rem]:grid-cols-[minmax(0,1fr)_6.25rem_5.5rem_5rem]";
 
 const SHELL = "overflow-hidden rounded-md border border-slate-200 bg-white";
 const TITLE = "text-xl font-bold leading-snug text-brand-700";
@@ -233,7 +233,7 @@ export default function TrendSignalScanner({
           </p>
         </div>
       ) : (
-        <div className={`overflow-y-auto ${fill ? "min-h-0 flex-1" : "max-h-[28rem]"}`}>
+        <div className={`@container overflow-y-auto ${fill ? "min-h-0 flex-1" : "max-h-[28rem]"}`}>
           {/* Sticky column header — shares COLS with every row below, and a
            * spacer the width of the row's star button, so the labels sit
            * exactly over their values while the list scrolls. */}
@@ -241,6 +241,7 @@ export default function TrendSignalScanner({
             <span className="w-8 shrink-0" aria-hidden="true" />
             <div className={`grid min-w-0 flex-1 gap-2 ${COLS}`}>
               <span>Mã</span>
+              <span className="hidden @[26rem]:block">Ngành</span>
               <span>Ngày vào</span>
               <span className="text-right">Lãi/lỗ</span>
             </div>
@@ -262,9 +263,12 @@ export default function TrendSignalScanner({
                   </span>
                   <span className="flex min-w-0 flex-col">
                     <span className="truncate text-lg font-bold leading-tight text-slate-900">{h.symbol}</span>
-                    <span className="truncate text-sm leading-tight text-slate-500">{h.exchange}</span>
+                    <span className="truncate text-sm leading-tight text-slate-500" title={h.name}>
+                      {h.name && h.name !== h.symbol ? h.name : h.exchange}
+                    </span>
                   </span>
                 </span>
+                <span className="hidden text-sm leading-tight text-slate-500 @[26rem]:block">{h.sector ?? "—"}</span>
                 <span className="flex flex-col text-slate-900">
                   <span className="text-base leading-tight tabular-nums">{formatSince(h.buyDate)}</span>
                   <span className="text-sm leading-tight text-slate-600">{held > 0 ? `${held} ngày` : "Mới vào"}</span>

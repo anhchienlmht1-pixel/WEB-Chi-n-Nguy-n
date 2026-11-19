@@ -77,7 +77,7 @@ function OverviewTab({ group }: { group: GroupFilter }) {
       <section className="overflow-x-auto rounded-[10px] border border-[var(--ab-line)] bg-[var(--ab-card)]">
         <table className="w-full min-w-[1080px] border-collapse text-[0.92rem]">
           <thead>
-            <tr className="bg-[var(--ab-accent)] text-[var(--ab-bg)]">
+            <tr className="sm-thead">
               <th className="w-[96px]" />
               <th className="px-2 py-2.5 font-bold">Ngân hàng</th>
               {METRICS.map((m) => (
@@ -209,7 +209,7 @@ function OverviewTab({ group }: { group: GroupFilter }) {
                   aria-pressed={on}
                   onClick={() => setRankKey(k)}
                   className={`rounded-full px-3 py-1.5 text-[0.82rem] transition-colors ${
-                    on ? "bg-[var(--ab-accent)] font-bold text-[var(--ab-bg)]" : "border border-[var(--ab-line)] text-[var(--ab-muted)] hover:bg-[var(--ab-hover)]"
+                    on ? "sm-on font-bold" : "border border-[var(--ab-line)] text-[var(--ab-muted)] hover:bg-[var(--ab-hover)]"
                   }`}
                 >
                   {m.short}

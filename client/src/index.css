@@ -103,7 +103,7 @@ html {
   /* Calibri sets small for its nominal size; 15px keeps every rem-based size on
      the site (most of the data tables are text-xs / text-sm) comfortably
      readable. */
-  font-size: 15px;
+  font-size: 14.5px;
 }
 
 /* Responsive/mobile baseline: block accidental page-level horizontal
@@ -121,9 +121,9 @@ body {
    figures so columns line up like a trading terminal.
 --------------------------------------------------------------------------- */
 @theme static {
-  --font-sans: Calibri, Carlito, "Segoe UI", system-ui, sans-serif;
-  --font-display: Calibri, Carlito, "Segoe UI", system-ui, sans-serif;
-  --font-editorial: Calibri, Carlito, "Segoe UI", system-ui, sans-serif;
+  --font-sans: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-editorial: "Source Serif 4", Georgia, "Times New Roman", serif;
 }
 
 body {
@@ -429,3 +429,138 @@ img {
   .ticker-track { animation: none; }
   .flash-up, .flash-down { animation: none; }
 }
+
+/* ===========================================================================
+   Sơn mài — hệ màu sơn mài rêu, vàng son và vỏ trứng (dark mặc định).
+   Tiêu đề: Source Serif 4. Nội dung, nút, số trong bảng: Be Vietnam Pro
+   (chữ số đều). Biểu đồ giữ nguyên màu: không đổi --ab-accent, --heat-*,
+   --ab-up, --ab-down (chỉ nền và lưới đổi theo nền trang).
+=========================================================================== */
+:root {
+  --sm-lac0: #121a11;
+  --sm-lac1: #1a2418;
+  --sm-lac2: #22301f;
+  --sm-line: #33432f;
+  --sm-line2: #2a3827;
+  --sm-egg: #efe7d4;
+  --sm-egg2: #d9cfb6;
+  --sm-egg3: #b9ab88;
+  --sm-gold: #c9a24a;
+  --sm-gold2: #e6c878;
+  --sm-ink: #1f2b1d;
+  --sm-mut: #9aa58d;
+  --sm-up: #4fd18b;
+  --sm-dn: #ff6b5e;
+}
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.005em;
+}
+h1, h2 { text-wrap: balance; }
+/* Số trong tiêu đề Source Serif vẫn thẳng hàng. */
+h1, h2, h3 { font-variant-numeric: lining-nums; }
+
+.theme-dark {
+  --paper: #121a11;
+  --ink: #d9cfb6;
+  --mid: #1a2418;
+  --quiet: #9aa58d;
+  --rule: #33432f;
+  --color-white: #1a2418;
+  --color-slate-50: #1c271b;
+  --color-slate-100: #22301f;
+  --color-slate-200: #33432f;
+  --color-slate-300: #45563f;
+  --color-slate-400: #7d8b72;
+  --color-slate-500: #9aa58d;
+  --color-slate-600: #b4b49e;
+  --color-slate-700: #c9c3aa;
+  --color-slate-800: #d9cfb6;
+  --color-slate-900: #efe7d4;
+  --color-slate-950: #f7f1e3;
+  --color-brand-50: #1f2419;
+  --color-brand-100: #2a2c1c;
+  --color-brand-300: #4a4228;
+  --color-brand-400: #7a6a3e;
+  --color-brand-500: #a8873c;
+  --color-brand-600: #c9a24a;
+  --color-brand-700: #e6c878;
+  --color-brand-800: #efe7d4;
+  --color-orange-500: #e6c878;
+  --color-orange-600: #c9a24a;
+  --color-orange-700: #a8873c;
+  --ab-strong: #efe7d4;
+  --ab-text: #d9cfb6;
+  --ab-text2: #c9c3aa;
+  --ab-muted: #9aa58d;
+  --ab-line: #33432f;
+  --ab-line-strong: #4a5a42;
+  --ab-hover: rgba(201, 162, 74, 0.07);
+  --ab-ghost: rgba(239, 231, 212, 0.04);
+  --ab-ghost-hover: rgba(239, 231, 212, 0.08);
+  --ab-skel: rgba(239, 231, 212, 0.07);
+  --ab-bg: #121a11;
+  --ab-bg2: #1a2418;
+  --ab-bg-rgb: 18, 26, 17;
+  --ab-card: rgba(26, 36, 24, 0.72);
+  --ab-cell: #1a2418;
+  --heat-ink: #efe7d4;
+  --heat-ink-strong: #fffaf0;
+  background-color: var(--paper);
+  color: var(--ink);
+}
+html.theme-dark {
+  background:
+    radial-gradient(900px 520px at 15% 0%, rgba(90, 120, 80, 0.22), transparent 70%),
+    radial-gradient(800px 600px at 100% 100%, rgba(201, 162, 74, 0.06), transparent 70%),
+    linear-gradient(170deg, #1d2a1b, #121a11 60%) fixed;
+}
+html.theme-dark body { background: transparent; }
+.theme-dark h1, .theme-dark h2 { color: var(--sm-egg); }
+.theme-dark .up { color: var(--sm-up); }
+.theme-dark .down { color: var(--sm-dn); }
+.theme-dark .flat { color: var(--sm-mut); }
+.theme-dark .text-on-accent { color: #1b1608; }
+.theme-dark :focus-visible { outline-color: var(--sm-gold2); }
+.theme-dark ::-webkit-scrollbar-thumb { background: #45563f; }
+.theme-dark .fx-row::before { background: var(--sm-gold); }
+.theme-dark .fx-card:hover {
+  border-color: rgba(201, 162, 74, 0.55);
+  box-shadow: 0 14px 34px -14px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(201, 162, 74, 0.18);
+}
+.theme-dark .fx-btn:hover { box-shadow: 0 10px 22px -10px rgba(201, 162, 74, 0.6); }
+
+/* Thẻ vỏ trứng: một thẻ mỗi trang cho thông tin quan trọng nhất. */
+.sm-egg {
+  position: relative;
+  background-color: var(--sm-egg);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cg fill='none' stroke='%23b9ab88' stroke-width='.8' opacity='.5'%3E%3Cpath d='M0 30 L24 26 L44 46 L72 38 L98 56 L132 42 L180 54'/%3E%3Cpath d='M12 0 L24 26 L20 64 L38 96 L32 132 L50 180'/%3E%3Cpath d='M72 38 L80 76 L66 108 L88 140 L82 180'/%3E%3Cpath d='M132 42 L140 88 L166 110 L158 152 L180 164'/%3E%3C/g%3E%3C/svg%3E");
+  color: var(--sm-ink);
+  border-radius: 6px;
+}
+.sm-egg h1, .sm-egg h2, .sm-egg h3 { color: var(--sm-ink); }
+.sm-egg .up { color: #1d7f45; }
+.sm-egg .down { color: #b53a2c; }
+@layer components {
+/* Nút vàng son */
+.sm-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 0 20px; border-radius: 2px; font-weight: 600;
+  border: 1px solid var(--sm-gold); color: var(--sm-gold2); background: transparent;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.sm-btn:hover { background: rgba(201, 162, 74, 0.12); }
+.sm-btn-p { background: var(--sm-gold); color: #1b1608; }
+.sm-btn-p:hover { background: var(--sm-gold2); }
+}
+.theme-dark .bg-orange-600 { color: #1b1608; }
+/* Đầu bảng và nút đang chọn: rêu ở chế độ sáng, vàng son trên nền sơn mài. */
+.sm-thead { background: #3e503c; color: #f6f8f3; }
+.sm-on { background: #3e503c; color: #f6f8f3; }
+.theme-dark .sm-thead { background: #22301f; color: var(--sm-gold2); box-shadow: inset 0 -1px 0 rgba(201, 162, 74, 0.45); }
+.theme-dark .sm-thead th { font-weight: 600; }
+.theme-dark .sm-on { background: var(--sm-gold); color: #1b1608; }
+.theme-dark { --band: #0d130c; }
+/* Bò/gấu neon nhuộm vàng son trên nền sơn mài. */
+.theme-dark .hero-beast { filter: grayscale(1) sepia(1) saturate(2.6) hue-rotate(-8deg) brightness(1.05); }

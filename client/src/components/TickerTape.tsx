@@ -28,8 +28,8 @@ function Item({ to, label, q, index }: { to: string; label: string; q: Quote; in
   const price = !index && q.price >= 1000 ? q.price / 1000 : q.price;
   return (
     <Link to={to} className="flex shrink-0 items-center gap-1.5 px-3.5 text-[0.8rem] whitespace-nowrap hover:bg-white/5">
-      <b className="text-[#e7ece2]">{label}</b>
-      <Flash value={q.price} className="tabular-nums text-[#ffffff]">
+      <b className="text-[var(--sm-egg2)]">{label}</b>
+      <Flash value={q.price} className="tabular-nums text-[var(--sm-egg)]">
         {fmt(price)}
       </Flash>
       <span className="tabular-nums" style={{ color }}>
@@ -51,10 +51,10 @@ function SessionPill() {
   const label = noTrading ? "Không có giao dịch" : s.label;
   const dot = live ? "var(--ab-up)" : s.id === "pre" || s.id === "lunch" || s.id === "pt" ? "#e0b24a" : "#8fa882";
   return (
-    <div className="flex shrink-0 items-center gap-2 border-r border-white/10 pr-3 text-[0.78rem] text-[#e7ece2]">
+    <div className="flex shrink-0 items-center gap-2 border-r border-[rgba(201,162,74,0.18)] pr-3 text-[0.78rem] text-[var(--sm-egg2)]">
       <span aria-hidden="true" className={`inline-block h-2 w-2 rounded-full ${live ? "hero-pulse" : ""}`} style={{ background: dot }} />
       <span className="font-bold whitespace-nowrap">{label}</span>
-      <span className="hidden tabular-nums text-[#b8c4ae] sm:inline">{s.clock}</span>
+      <span className="hidden tabular-nums text-[var(--sm-mut)] sm:inline">{s.clock}</span>
     </div>
   );
 }
@@ -81,7 +81,7 @@ export default function TickerTape() {
   ];
 
   return (
-    <div className="gutter-x mx-auto flex h-8 max-w-[1600px] items-center gap-3 border-t border-white/10">
+    <div className="gutter-x mx-auto flex h-8 max-w-[1600px] items-center gap-3 border-t border-[rgba(201,162,74,0.18)]">
       <SessionPill />
       <div className="ticker relative min-w-0 flex-1 overflow-hidden" aria-label="Bảng giá chạy">
         {items.length > 0 && (
@@ -92,8 +92,8 @@ export default function TickerTape() {
             </div>
           </div>
         )}
-        <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-[#3e503c] to-transparent" />
-        <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-[#3e503c] to-transparent" />
+        <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-[#121a11] to-transparent" />
+        <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-[#121a11] to-transparent" />
       </div>
     </div>
   );

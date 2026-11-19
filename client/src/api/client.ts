@@ -202,6 +202,8 @@ export interface TrendBuySignal {
   signalReturnPercent: number;
   // Close/sell date (null if still holding)
   sellDate: string | null;
+  // Ngành (server SECTOR_MAP), null khi mã chưa được phân ngành.
+  sector?: string | null;
 }
 
 export interface TrendBuyResult {

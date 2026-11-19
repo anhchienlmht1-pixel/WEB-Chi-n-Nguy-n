@@ -269,7 +269,7 @@ export default function BankValuationTab({ group }: { group: GroupFilter }) {
       <section className="overflow-x-auto rounded-[10px] border border-[var(--ab-line)] bg-[var(--ab-card)]">
         <table className="w-full min-w-[980px] border-collapse text-[0.92rem]">
           <thead>
-            <tr className="bg-[var(--ab-accent)] text-[var(--ab-bg)]">
+            <tr className="sm-thead">
               <th className="px-3 py-2.5 text-left font-bold">Ngân hàng</th>
               <th className="px-2 py-2.5 font-bold">Giá</th>
               <th className="px-2 py-2.5 font-bold" title="Giá / giá trị sổ sách mỗi cổ phiếu (Q3/2026)">P/B</th>

@@ -17,6 +17,7 @@ import { fetchVndirectLogos, fetchVndirectCompanyProfilesRaw } from "../provider
 import { fetchDomainFavicons, debugFaviconForDomain } from "../providers/domainFavicons.js";
 import { getCafefLogo, debugCafefLogo, isValidLogoSymbol } from "../providers/cafefLogos.js";
 import { COMPANY_DOMAINS } from "../data/companyDomains.js";
+import { SECTOR_MAP } from "../data/sectorMap.js";
 import { buildFundInsight } from "../signals/fundInsight.js";
 import inspectFmarketApi from "../providers/fmarketInspect.js";
 
@@ -390,7 +391,8 @@ router.get(
   "/trend-signals",
   asyncHandler(async (_req, res) => {
     const { items, sessionDate } = await loadTrendSignals();
-    res.json({ items, sessionDate });
+    // Ngành (theo SECTOR_MAP) cho cột "Ngành" trong bảng tín hiệu.
+    res.json({ items: items.map((h) => ({ ...h, sector: SECTOR_MAP[h.symbol] ?? null })), sessionDate });
   })
 );
 

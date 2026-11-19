@@ -6,11 +6,11 @@ import TrendSignalBell from "./TrendSignalBell";
 import TickerTape from "./TickerTape";
 
 const NAV_BASE =
-  "inline-flex min-h-11 items-center whitespace-nowrap border-b-2 text-base font-bold transition-colors duration-200";
-const NAV_ACTIVE = "border-[#b9cba9] text-[#fff]";
-const NAV_IDLE = "border-transparent text-[#e7ece2] hover:text-[#fff]";
+  "inline-flex min-h-11 items-center whitespace-nowrap border-b text-[0.98rem] font-medium transition-colors duration-200";
+const NAV_ACTIVE = "border-[var(--sm-gold)] text-[var(--sm-egg)]";
+const NAV_IDLE = "border-transparent text-[var(--sm-egg2)] hover:text-[var(--sm-egg)]";
 
-// Moss-green bar: Bull Stock logo, the three sections, stock search, the
+// Sơn mài bar (lacquer, gold rule): Bull Stock logo, the three sections, stock search, the
 // signal bell and — the one orange thing in the chrome — the account button.
 // It is a .theme-dark surface so the search box and bell read on the green.
 export default function Header() {
@@ -21,7 +21,7 @@ export default function Header() {
   const onSignals = !onGuide && !onAbout && !onBank;
 
   return (
-    <header className="theme-dark sticky top-0 z-30 border-b border-[#4f6349] bg-[#3e503c]!">
+    <header className="theme-dark sticky top-0 z-30 border-b border-[rgba(201,162,74,0.35)] bg-[rgba(18,26,17,0.92)]! backdrop-blur-md">
       <div className="gutter-x mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-6 gap-y-1 py-2.5">
         <NavLink to="/" aria-label="Bull Stock — Trang chủ" className="flex shrink-0 items-center">
           <picture>
@@ -68,7 +68,7 @@ export default function Header() {
           <TrendSignalBell />
           <NavLink
             to="/huong-dan-mo-tai-khoan"
-            className="fx-btn hidden min-h-11 shrink-0 items-center whitespace-nowrap rounded-md bg-orange-600 px-5 text-base font-bold text-[#1b1f1a] transition-colors duration-200 hover:bg-orange-500 sm:inline-flex"
+            className="sm-btn sm-btn-p hidden shrink-0 whitespace-nowrap text-[0.98rem] sm:inline-flex"
           >
             Mở tài khoản
           </NavLink>
