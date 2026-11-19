@@ -1,17 +1,85 @@
-import { ShieldCheck, Phone } from "lucide-react";
+import { useState } from "react";
+import { ShieldCheck, Phone, Copy, Check, ExternalLink } from "lucide-react";
 
-// Account-opening guide: the how-to video, then two cards — what you get, and
+const REF_CODE = "CHIEN005";
+const SIGNUP_URL = "https://open.kafi.vn/x";
+// Các bước theo trang đăng ký chính thức của KAFI (open.kafi.vn/x).
+const STEPS: [string, string][] = [
+  ["Tải ứng dụng Kafi X", "Tìm “Kafi X” trên App Store hoặc Google Play (hoặc quét mã QR trên trang đăng ký của KAFI), tải về và chọn đăng ký mở tài khoản."],
+  ["Nhập thông tin cá nhân", "Điền thông tin cá nhân theo các ô trong ứng dụng."],
+  ["Tạo thông tin đăng nhập", "Đặt thông tin đăng nhập để dùng cho tài khoản sau này."],
+  ["Xác thực eKYC và thông tin định danh", "Xác thực danh tính điện tử (eKYC) theo hướng dẫn trên màn hình."],
+  ["Đăng ký dịch vụ và ký hợp đồng", "Chọn dịch vụ cần dùng và ký hợp đồng để hoàn tất."],
+];
+
+function RefCode() {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(REF_CODE);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked: the code is still visible to type by hand */
+    }
+  };
+  return (
+    <div className="flex flex-col gap-3 rounded-md border border-slate-200 p-7">
+      <span className="text-base text-slate-500">Mã giới thiệu</span>
+      <b className="text-[2.4rem] leading-none tracking-[0.06em] text-slate-900 tabular-nums">{REF_CODE}</b>
+      <p className="text-base leading-relaxed text-slate-500">
+        Nhập mã này khi ứng dụng hỏi mã giới thiệu, để anh Chiến hỗ trợ trực tiếp.
+      </p>
+      <div className="mt-1 flex flex-wrap gap-3">
+        <button
+          type="button"
+          onClick={copy}
+          className="inline-flex min-h-11 items-center gap-2 rounded-md border border-slate-300 px-4 font-bold text-slate-900 transition-colors hover:bg-slate-100"
+        >
+          {copied ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
+          {copied ? "Đã sao chép" : "Sao chép mã"}
+        </button>
+        <a
+          href={SIGNUP_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex min-h-11 items-center gap-2 rounded-md bg-orange-600 px-4 font-bold text-slate-950 transition-colors hover:bg-orange-500"
+        >
+          Mở trang đăng ký Kafi X
+          <ExternalLink className="h-4 w-4" aria-hidden="true" />
+        </a>
+      </div>
+    </div>
+  );
+}
+
+// Account-opening guide: 5 steps + referral code, the how-to video, then two cards — what you get, and
 // who to ask. The Zalo button is the one orange element on the page.
 export default function AccountOpeningGuide() {
   return (
     <div className="gutter-x mx-auto flex max-w-[1040px] flex-col gap-10 py-14">
       <div className="flex flex-col gap-3">
         <h1 className="text-balance text-[clamp(1.75rem,3.2vw,2.25rem)] font-bold leading-tight">
-          Mở tài khoản chứng khoán
+          Mở tài khoản Kafi X ngay trên điện thoại
         </h1>
         <p className="max-w-xl text-lg leading-relaxed text-slate-900">
-          Xem video hướng dẫn chi tiết cách mở tài khoản giao dịch chứng khoán.
+          Làm theo 5 bước dưới đây. Nếu vướng ở bước nào, nhắn Zalo cho anh Chiến để được hướng dẫn.
         </p>
+      </div>
+
+      <div className="grid items-start gap-8 md:grid-cols-[minmax(0,1fr)_340px]">
+        <ol className="flex flex-col border-t border-slate-300">
+          {STEPS.map(([t, d], i) => (
+            <li key={t} className="grid grid-cols-[2.5rem_minmax(0,1fr)] gap-4 border-b border-slate-200 py-5">
+              <span className="text-[1.75rem] font-bold leading-none text-brand-700 tabular-nums">{i + 1}</span>
+              <div>
+                <h2 className="text-lg font-bold leading-snug">{t}</h2>
+                <p className="mt-1 text-base leading-relaxed text-slate-500">{d}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+        <RefCode />
       </div>
 
       {/* Video */}
