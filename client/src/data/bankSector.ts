@@ -1,6 +1,6 @@
 // Chỉ số 16 ngân hàng niêm yết, quý 3/2026 — tổng hợp từ báo cáo tài chính quý
 // (file tổng hợp bank.xlsm của anh Thiện). Đơn vị: %. `d` = thay đổi so với cùng
-// kỳ năm trước, tính bằng điểm %. ROA, ROE theo quý (chưa quy năm).
+// kỳ năm trước, tính bằng điểm %. ROA, ROE trong file là số riêng quý; bên dưới nhân 4 để quy ra năm.
 // Cập nhật: thay mảng BANKS và PERIOD khi có số liệu quý mới.
 
 export const PERIOD = "Q3/2026";
@@ -528,3 +528,11 @@ export const BANKS: BankRow[] = [
   }
  }
 ];
+
+// ROA, ROE quy năm: số riêng quý × 4 (cả giá trị và mức thay đổi so với cùng kỳ).
+for (const b of BANKS) {
+  for (const k of ["roa", "roe"] as const) {
+    if (b.v[k] != null) b.v[k] = b.v[k]! * 4;
+    if (b.d[k] != null) b.d[k] = b.d[k]! * 4;
+  }
+}

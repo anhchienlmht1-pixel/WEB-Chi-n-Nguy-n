@@ -25,8 +25,8 @@ const METRICS: Metric[] = [
   { key: "credit", label: "Tín dụng YTD", short: "Tín dụng YTD", dir: 1, what: "Dư nợ cho vay tăng bao nhiêu so với đầu năm." },
   { key: "deposit", label: "Tiền gửi YTD", short: "Tiền gửi YTD", dir: 1, what: "Tiền gửi khách hàng tăng bao nhiêu so với đầu năm." },
   { key: "nim", label: "NIM", short: "NIM", dir: 1, what: "Biên lãi ròng: ngân hàng lời bao nhiêu trên mỗi đồng cho vay sau khi trả lãi huy động. Cao hơn là tốt." },
-  { key: "roa", label: "ROA", short: "ROA", dir: 1, what: "Lợi nhuận trên tổng tài sản trong quý." },
-  { key: "roe", label: "ROE", short: "ROE", dir: 1, what: "Lợi nhuận trên vốn chủ sở hữu trong quý." },
+  { key: "roa", label: "ROA", short: "ROA", dir: 1, what: "Lợi nhuận trên tổng tài sản, quy năm (quý × 4)." },
+  { key: "roe", label: "ROE", short: "ROE", dir: 1, what: "Lợi nhuận trên vốn chủ sở hữu, quy năm (quý × 4)." },
   { key: "npl", label: "NPL", short: "Nợ xấu", dir: -1, what: "Tỷ lệ nợ xấu (nhóm 3–5) trên tổng dư nợ. Thấp hơn là an toàn hơn." },
   { key: "ldr", label: "LDR", short: "LDR", dir: 0, what: "Cho vay trên tiền gửi. Quá cao là căng thanh khoản, quá thấp là chưa dùng hết vốn." },
   { key: "yoea", label: "YOEA", short: "Lợi suất TS", dir: 1, what: "Lợi suất bình quân trên tài sản sinh lãi." },
@@ -68,7 +68,7 @@ function OverviewTab({ group }: { group: GroupFilter }) {
     <div className="flex flex-col gap-4">
       <section aria-label="Trung bình ngành" className="flex flex-wrap rounded-[10px] border border-[var(--ab-line)] bg-[var(--ab-card)]">
         <Tile label="NIM trung bình" value={`${vn(avg("nim"))}%`} sub={best("nim")} />
-        <Tile label="ROE trung bình (quý)" value={`${vn(avg("roe"), 1)}%`} sub={best("roe")} />
+        <Tile label="ROE trung bình (quy năm)" value={`${vn(avg("roe"), 1)}%`} sub={best("roe")} />
         <Tile label="Nợ xấu (NPL) trung bình" value={`${vn(avg("npl"))}%`} sub={best("npl", false)} />
         <Tile label="Tín dụng tăng từ đầu năm" value={`${vn(avg("credit"), 1)}%`} sub={best("credit")} />
       </section>
@@ -187,7 +187,7 @@ function OverviewTab({ group }: { group: GroupFilter }) {
                 {exUp ? "đã tăng" : "đã giảm"} {vn(Math.abs(ex.d.nim ?? 0), 2)} điểm % so với cùng kỳ.
               </li>
               <li className="md:col-span-2 text-[var(--ab-muted)]">
-                ROA, ROE tính riêng trong quý (chưa quy ra năm). Rê chuột vào ô để xem trung bình ngành và mức thay đổi. Nguồn: báo cáo tài chính {PERIOD}. Chỉ để tham khảo,
+                ROA, ROE quy năm: lợi nhuận riêng quý 3 nhân 4. Rê chuột vào ô để xem trung bình ngành và mức thay đổi. Nguồn: báo cáo tài chính {PERIOD}. Chỉ để tham khảo,
                 không phải khuyến nghị mua bán.
               </li>
             </ul>
