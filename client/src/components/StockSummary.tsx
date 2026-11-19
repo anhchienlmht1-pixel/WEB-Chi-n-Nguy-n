@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Link } from "react-router-dom";
 import Flash from "./Flash";
 import AnimatedNumber from "./AnimatedNumber";
 import { usePolling } from "../hooks/usePolling";
@@ -58,13 +59,13 @@ function Row({ label, value, title, loading }: { label: string; value?: ReactNod
   return (
     <div
       title={title}
-      className="flex items-baseline justify-between gap-3 border-b border-slate-100 px-4 py-2.5 text-sm last:border-b-0 dark:border-slate-800/70"
+      className="flex min-h-11 items-center justify-between gap-3 border-b border-[var(--sm-line2)] px-5 text-[0.92rem] last:border-b-0"
     >
-      <span className="shrink-0 text-slate-500 dark:text-slate-400">{label}</span>
+      <span className="shrink-0 text-[var(--sm-mut)]">{label}</span>
       {value == null || value === "" ? (
         <span className="h-4 w-24 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
       ) : (
-        <span className="min-w-0 text-right font-semibold tabular-nums text-slate-900 dark:text-slate-100">{value}</span>
+        <span className="min-w-0 text-right font-semibold tabular-nums text-[var(--sm-egg)]">{value}</span>
       )}
     </div>
   );
@@ -162,102 +163,81 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
     { label: "NN bán", value: count(quote.foreignSellVolume, "CP") },
   ].filter((r): r is { label: string; value: string } => r.value !== null);
 
+  // Bố cục Sơn mài: đường dẫn, mã lớn + tên công ty bên trái, giá lớn bên
+  // phải; bên dưới là bảng số liệu phiên, doanh nghiệp và định giá.
   return (
-    <div
-      className={`mb-8 grid overflow-hidden rounded-md border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40 ${
-        showMiddle ? "lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(0,1fr)]" : "lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]"
-      }`}
-    >
-      {/* Identity. Below lg this wrapper is display:contents, so its two parts
-          * become separate grid items and the price can slot in between them:
-          * identity -> price -> session figures -> company figures. */}
-      <div className="contents lg:order-1 lg:flex lg:flex-col">
-        <div className="order-1 flex gap-4 p-4">
-          <div className="flex h-[88px] w-[88px] shrink-0 flex-col items-center justify-center gap-1.5 rounded-md bg-brand-700 text-white">
-            <CompanyLogo symbol={symbol} size={40} fallback="none" />
-            <span
-              className={`font-bold leading-none ${symbol.length <= 4 ? "text-xl" : symbol.length <= 6 ? "text-base" : "text-xs"}`}
-            >
-              {symbol}
-            </span>
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-3xl font-bold leading-tight">{symbol}</h1>
-                  {quote.exchange && (
-                    <span className="rounded bg-brand-700 px-2 py-0.5 text-sm font-bold text-white">
-                      {quote.exchange}
-                    </span>
-                  )}
-                </div>
-                <p className="mt-0.5 text-base leading-snug text-slate-600">{quote.name}</p>
-              </div>
-              <WatchButton symbol={symbol} />
-            </div>
-            {website && (
-              <p className="mt-1.5 truncate text-sm text-slate-500 dark:text-slate-400">
-                Website:{" "}
-                <a
-                  href={websiteHref(website)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-bold text-brand-700 hover:underline"
-                >
-                  {websiteLabel(website)}
-                </a>
-              </p>
+    <div className="mb-8">
+      <nav aria-label="Đường dẫn" className="text-[0.92rem] text-[var(--sm-mut)]">
+        <Link to="/" className="hover:text-[var(--sm-egg)]">
+          Tín hiệu
+        </Link>
+        <span className="mx-2">/</span>
+        <span className="text-[var(--sm-egg2)]">{symbol}</span>
+      </nav>
+      <div className="mt-4 flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-3">
+            <CompanyLogo symbol={symbol} size={44} fallback="none" />
+            <h1 className="font-display text-[clamp(2.6rem,5vw,3.5rem)] leading-none text-[var(--sm-egg)]">{symbol}</h1>
+            {quote.exchange && (
+              <span className="rounded-[2px] border border-[var(--sm-gold)] px-2 py-0.5 text-[0.8rem] font-semibold text-[var(--sm-gold2)]">
+                {quote.exchange}
+              </span>
             )}
+            <WatchButton symbol={symbol} />
           </div>
+          {quote.name && quote.name !== symbol && <p className="mt-2 text-[1.05rem] leading-snug text-[var(--sm-egg2)]">{quote.name}</p>}
+          {website && (
+            <p className="mt-1 truncate text-sm text-[var(--sm-mut)]">
+              Website:{" "}
+              <a href={websiteHref(website)} target="_blank" rel="noopener noreferrer" className="font-semibold text-[var(--sm-gold2)] hover:underline">
+                {websiteLabel(website)}
+              </a>
+            </p>
+          )}
         </div>
-
-        {sessionRows.length > 0 && (
-          // -mb-px: the last row's bottom rule slides under the card's own edge.
-          <div className="order-3 -mb-px mt-auto grid grid-cols-1 border-t border-slate-200 sm:grid-cols-2 sm:[&>*:nth-child(odd)]:border-r dark:border-slate-800">
-            {sessionRows.map((r) => (
-              <Row key={r.label} label={r.label} value={r.value} />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Company figures */}
-      {showMiddle && (
-        <div className="order-4 border-t border-slate-200 lg:order-2 lg:border-l lg:border-t-0 dark:border-slate-800">
-          <Row label="Vốn hóa" value={marketCap} />
-          <Row
-            label="SLCP lưu hành"
-            value={count(profile?.outstandingShares, "CP")}
-            loading={profileLoading && !profile}
-          />
-          <Row label="Room NĐTNN" value={room} />
-          <Row label="BVPS" value={perShare(bvps?.value)} title="Theo báo cáo tài chính quý gần nhất" loading={cstcLoading && !cstc} />
-          <Row label="Nguồn dữ liệu" value={dataSources.join(" · ") || null} />
-        </div>
-      )}
-
-      {/* Price + valuation */}
-      <div className="order-2 border-t border-slate-200 lg:order-3 lg:border-l lg:border-t-0 dark:border-slate-800">
-        <div className="border-b border-slate-100 px-4 py-4 text-center dark:border-slate-800/70">
-          <div className={`text-5xl font-bold leading-tight tabular-nums ${tone}`}>
+        <div className="min-w-[240px] text-left sm:text-right">
+          <div className={`font-display text-[clamp(2.6rem,5vw,3.5rem)] font-bold leading-none tabular-nums ${tone}`}>
             <Flash value={quote.price}>
               <AnimatedNumber value={quote.price} format={fmt} />
             </Flash>
           </div>
-          <div className={`mt-1 text-base font-bold tabular-nums ${tone}`}>
+          <div className={`mt-2 text-base font-semibold tabular-nums ${tone}`}>
             {arrow} {fmt(Math.abs(quote.change))} ({Math.abs(quote.changePercent).toFixed(2)}%)
           </div>
           <DayRange quote={quote} fmt={fmt} />
         </div>
-        <Row label="Khối lượng khớp lệnh" value={count(quote.volume, "CP")} />
-        {!isIndexOrFutures && (
-          <>
-            <Row label="P/B" value={ratio(pb?.value, "Lần")} title="Theo báo cáo tài chính quý gần nhất" loading={cstcLoading && !cstc} />
-            <Row label="P/E" value={ratio(pe?.value, "Lần")} title="Theo báo cáo tài chính quý gần nhất" loading={cstcLoading && !cstc} />
-            <Row label="EPS" value={perShare(eps?.value)} title="Theo báo cáo tài chính quý gần nhất" loading={cstcLoading && !cstc} />
-          </>
+      </div>
+
+      <div
+        className={`mt-6 grid overflow-hidden rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] sm:grid-cols-2 ${
+          showMiddle ? "lg:grid-cols-3" : ""
+        } [&>div]:border-[var(--sm-line)] sm:[&>div+div]:border-l`}
+      >
+        <div>
+          {sessionRows.map((r) => (
+            <Row key={r.label} label={r.label} value={r.value} />
+          ))}
+        </div>
+        {showMiddle && (
+          <div className="border-t sm:border-t-0">
+            <Row label="Vốn hóa" value={marketCap} />
+            <Row label="SLCP lưu hành" value={count(profile?.outstandingShares, "CP")} loading={profileLoading && !profile} />
+            <Row label="Room NĐTNN" value={room} />
+            <Row label="Nguồn dữ liệu" value={dataSources.join(" · ") || null} />
+          </div>
         )}
+        <div className="border-t lg:border-t-0">
+          <Row label="Khối lượng khớp lệnh" value={count(quote.volume, "CP")} />
+          {!isIndexOrFutures && (
+            <>
+              <Row label="P/B" value={ratio(pb?.value, "Lần")} title="Theo báo cáo tài chính quý gần nhất" loading={cstcLoading && !cstc} />
+              <Row label="P/E" value={ratio(pe?.value, "Lần")} title="Theo báo cáo tài chính quý gần nhất" loading={cstcLoading && !cstc} />
+              <Row label="EPS" value={perShare(eps?.value)} title="Theo báo cáo tài chính quý gần nhất" loading={cstcLoading && !cstc} />
+              <Row label="BVPS" value={perShare(bvps?.value)} title="Theo báo cáo tài chính quý gần nhất" loading={cstcLoading && !cstc} />
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

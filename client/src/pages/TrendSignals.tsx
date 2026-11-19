@@ -1,93 +1,67 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { fetchTrendBuyResult, fetchMarketOverview } from "../api/client";
+import { fetchMarketOverview } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { useWatchlist } from "../hooks/useWatchlist";
 import TechnicalChartPanel from "../components/TechnicalChartPanel";
-import TrendSignalScanner from "../components/TrendSignalScanner";
-import SystemPerformance from "../components/SystemPerformance";
+import { SonMaiHero, SonMaiHoldings, SonMaiJournal, SonMaiKpis, useSignalData } from "../components/SonMaiHome";
 
 const DEFAULT_SYMBOL = "VNINDEX";
 
-// "2026-11-09" -> "09/11/2026"
-function longDate(iso: string): string {
-  const [y, m, d] = iso.slice(0, 10).split("-");
-  return y && m && d ? `${d}/${m}/${y}` : iso;
-}
+const H2 = "text-[1.75rem] leading-tight";
 
-const H2 = "text-xl font-bold leading-snug";
-
-// Homepage. No hero: the first thing on the page is the day's result — one
-// sentence of facts, then the chart and the list of stocks on a buy signal,
-// the whole system's closed-trade performance (all stocks), who is behind it, how stocks are picked,
-// and one box about opening an account. The site is intentionally minimal: its
-// whole job is showing Mua/Bán signals and getting a visitor to open an account.
+// Trang chủ, bố cục Sơn mài: mở đầu (chữ + thẻ Chốt phiên), dải hiệu suất,
+// danh mục đang giữ cạnh nhật ký đóng lệnh, biểu đồ của mã đang chọn (giữ
+// nguyên biểu đồ cũ), rồi người phụ trách, cách chọn mã và mở tài khoản.
 export default function TrendSignals() {
   const { data } = usePolling(fetchMarketOverview, [], 10000);
   const { symbols: watchlist } = useWatchlist();
   const [chartSymbol, setChartSymbol] = useState(watchlist[0] ?? DEFAULT_SYMBOL);
+  const { scan, journal } = useSignalData();
+  const chartRef = useRef<HTMLElement>(null);
 
-  // VNINDEX never carries a Mua/Bán marker, so the very first chart a
-  // visitor sees would show no signal at all — once the buy-signal scan
-  // comes back, swap the default over to the first stock actually on a
-  // live signal (but only if nobody's picked/kept their own symbol yet).
-  const buySignalsState = usePolling(() => fetchTrendBuyResult(), [], 5 * 60 * 1000);
+  // VNINDEX không có điểm Mua/Bán: khi có danh mục thì mặc định mở mã đầu tiên.
   useEffect(() => {
     if (watchlist.length > 0 || chartSymbol !== DEFAULT_SYMBOL) return;
-    const first = buySignalsState.data?.items[0]?.symbol;
+    const first = scan?.items[0]?.symbol;
     if (first) setChartSymbol(first);
-  }, [buySignalsState.data, watchlist, chartSymbol]);
+  }, [scan, watchlist, chartSymbol]);
 
-  // Session date for the (screen-reader) page heading.
-  const summary = useMemo(() => {
-    const result = buySignalsState.data;
-    if (!result) return null;
-    const items = result.items;
-    const losing = items.filter((i) => i.signalReturnPercent < 0).length;
-    const latest = items.reduce<(typeof items)[number] | null>(
-      (best, i) => (!best || i.buyDate > best.buyDate ? i : best),
-      null
-    );
-    return { total: items.length, losing, latest, sessionDate: result.sessionDate };
-  }, [buySignalsState.data]);
+  const pick = (s: string) => {
+    setChartSymbol(s);
+    chartRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   return (
-    <div>
-    <section id="tin-hieu" className="gutter-x mx-auto max-w-[1600px] scroll-mt-20 pb-12 pt-5">
-      {/* Minimal: no page title or summary sentence — the chart and the list
-          speak for themselves. The heading stays for screen readers. */}
-      <h1 className="sr-only">
-        {summary ? `Tín hiệu lệnh sau phiên ${longDate(summary.sessionDate)}` : "Tín hiệu lệnh"}
-      </h1>
+    <div id="tin-hieu" className="gutter-x mx-auto max-w-[1280px] scroll-mt-20 pb-16">
+      <SonMaiHero scan={scan} journal={journal} />
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
-        <div className="min-w-0">
-          <TechnicalChartPanel
-            symbol={chartSymbol}
-            height={480}
-            onSymbolChange={setChartSymbol}
-            preferSource={data?.quotes.find((q) => q.symbol === chartSymbol)?.source}
-            hideStats
-            hideDrawingTools
-          />
+      <div className="mt-12">
+        <SonMaiKpis journal={journal} />
+      </div>
+
+      <div className="mt-16 grid gap-x-6 gap-y-12 lg:grid-cols-12">
+        <div className="min-w-0 lg:col-span-8">
+          <SonMaiHoldings scan={scan} onPick={pick} />
         </div>
-
-        {/* From lg up the list is stretched to exactly the chart column's
-            height (absolute fill, so the list itself never makes the row
-            taller than the chart) and scrolls inside; below lg the columns
-            stack and it gets a fixed height. */}
-        <div className="relative h-[32rem] lg:h-auto">
-          <div className="h-full lg:absolute lg:inset-0">
-            <TrendSignalScanner onSelectSymbol={setChartSymbol} fill />
-          </div>
+        <div className="min-w-0 lg:col-span-4">
+          <SonMaiJournal journal={journal} />
         </div>
       </div>
 
-      <div className="mt-8">
-        <SystemPerformance />
-      </div>
+      <section ref={chartRef} aria-label="Biểu đồ" className="mt-16 scroll-mt-28">
+        <h2 className={`${H2} mb-4`}>Biểu đồ {chartSymbol}</h2>
+        <TechnicalChartPanel
+          symbol={chartSymbol}
+          height={480}
+          onSymbolChange={setChartSymbol}
+          preferSource={data?.quotes.find((q) => q.symbol === chartSymbol)?.source}
+          hideStats
+          hideDrawingTools
+        />
+      </section>
 
-      <div className="mt-8 flex flex-wrap items-start gap-x-12 gap-y-8">
+      <div className="mt-16 flex flex-wrap items-start gap-x-12 gap-y-8 border-t border-[var(--sm-line)] pt-12">
         <div className="min-w-0 flex-[1_1_22rem]">
           <h2 className={H2}>Nguyễn Anh Chiến</h2>
           <p className="mt-0.5 text-base text-slate-900">Chuyên viên tư vấn đầu tư, CTCP Chứng khoán KAFI</p>
@@ -122,7 +96,7 @@ export default function TrendSignals() {
         </div>
       </div>
 
-      <div className="mt-8 flex flex-wrap items-center justify-between gap-x-8 gap-y-4 rounded-md border border-slate-200 px-6 py-5">
+      <div className="mt-8 flex flex-wrap items-center justify-between gap-x-8 gap-y-4 rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] px-8 py-7">
         <div className="min-w-0 flex-[1_1_26rem]">
           <h2 className={H2}>Mở tài khoản chứng khoán tại KAFI</h2>
           <p className="mt-1 max-w-xl text-base text-slate-900">
@@ -132,7 +106,7 @@ export default function TrendSignals() {
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
           <Link
             to="/huong-dan-mo-tai-khoan"
-            className="inline-flex min-h-11 items-center justify-center rounded-md bg-orange-600 px-5 text-base font-bold text-[#1b1f1a] transition-colors duration-200 hover:bg-orange-500"
+            className="sm-btn sm-btn-p"
           >
             Mở tài khoản
           </Link>
@@ -146,7 +120,6 @@ export default function TrendSignals() {
           </a>
         </div>
       </div>
-    </section>
     </div>
   );
 }

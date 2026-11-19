@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
 import { Phone } from "lucide-react";
 
-const HEAD = "mb-2 text-base font-bold text-white";
+const HEAD = "mb-2 font-display text-[1.05rem] font-bold text-[#e6c878]";
 const LINK =
-  "inline-flex min-h-8 items-center text-base text-quiet-on-band transition-colors duration-200 hover:text-white hover:underline";
+  "inline-flex min-h-8 items-center text-base text-quiet-on-band transition-colors duration-200 hover:text-[#efe7d4] hover:underline";
 
 const SOCIAL = [
   { label: "Facebook", href: "https://www.facebook.com/chiennguyen.taichinh/" },
@@ -15,8 +15,8 @@ const SOCIAL = [
 // Moss-green band footer; uses the light-on-dark Bull Stock logo.
 export default function Footer() {
   return (
-    <footer id="footer" className="scroll-mt-20 border-t border-[rgba(201,162,74,0.35)] bg-band text-white">
-      <div className="gutter-x mx-auto max-w-[1600px] pb-7 pt-14">
+    <footer id="footer" className="scroll-mt-20 border-t border-[rgba(201,162,74,0.35)] bg-band text-[#efe7d4]">
+      <div className="gutter-x mx-auto max-w-[1280px] pb-7 pt-14">
         <div className="flex flex-wrap justify-between gap-x-16 gap-y-10">
           <div className="max-w-sm flex-1 basis-72">
             <img src="/logo-bullstock-dark.svg" alt="Bull Stock" className="block h-[52px]! w-auto" />
@@ -44,12 +44,12 @@ export default function Footer() {
 
             <div className="flex min-w-48 flex-col gap-1">
               <h4 className={HEAD}>Liên hệ</h4>
-              <p className="text-base font-bold leading-snug text-white">Nguyễn Anh Chiến</p>
+              <p className="text-base font-bold leading-snug text-[#efe7d4]">Nguyễn Anh Chiến</p>
               <p className="text-base leading-snug text-quiet-on-band">Chuyên viên tư vấn đầu tư</p>
               <p className="text-base leading-snug text-quiet-on-band">CTCP Chứng khoán KAFI</p>
               <a
                 href="tel:0886284212"
-                className="inline-flex min-h-10 items-center gap-2 text-base font-bold text-white hover:underline"
+                className="inline-flex min-h-10 items-center gap-2 text-base font-bold text-[#efe7d4] hover:underline"
               >
                 <Phone className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
                 0886.284.212
@@ -67,7 +67,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-wrap justify-between gap-x-8 gap-y-3 border-t border-white/25 pt-5 text-sm leading-relaxed text-quiet-on-band">
+        <div className="mt-10 flex flex-wrap justify-between gap-x-8 gap-y-3 border-t border-[rgba(201,162,74,0.25)] pt-5 text-sm leading-relaxed text-quiet-on-band">
           <p className="max-w-2xl">
             Các tín hiệu và dữ liệu được cung cấp chỉ mang tính chất minh họa, không phải lời khuyên đầu tư. Quý khách
             vui lòng tham khảo ý kiến chuyên viên trước khi quyết định đầu tư.

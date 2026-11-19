@@ -451,6 +451,7 @@ img {
   --sm-mut: #9aa58d;
   --sm-up: #4fd18b;
   --sm-dn: #ff6b5e;
+  --sm-panel: rgba(26, 36, 24, 0.72);
 }
 h1, h2, h3, .font-display {
   font-family: var(--font-display);
@@ -564,3 +565,27 @@ html.theme-dark body { background: transparent; }
 .theme-dark { --band: #0d130c; }
 /* Bò/gấu neon nhuộm vàng son trên nền sơn mài. */
 .theme-dark .hero-beast { filter: grayscale(1) sepia(1) saturate(2.6) hue-rotate(-8deg) brightness(1.05); }
+
+/* Chế độ sáng: giấy vỏ trứng, chữ sơn rêu; vùng .theme-dark (header) giữ màu tối. */
+:root:not(.theme-dark) {
+  --sm-egg: #1f2b1d;
+  --sm-egg2: #3a4a38;
+  --sm-mut: #5f6b55;
+  --sm-line: #d9cfb6;
+  --sm-line2: #e6dec9;
+  --sm-gold2: #8a6a1e;
+  --sm-up: #17804f;
+  --sm-dn: #c0392b;
+  --sm-panel: #fffdf7;
+}
+.theme-dark {
+  --sm-egg: #efe7d4;
+  --sm-egg2: #d9cfb6;
+  --sm-mut: #9aa58d;
+  --sm-line: #33432f;
+  --sm-line2: #2a3827;
+  --sm-gold2: #e6c878;
+  --sm-up: #4fd18b;
+  --sm-dn: #ff6b5e;
+  --sm-panel: rgba(26, 36, 24, 0.72);
+}

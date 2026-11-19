@@ -24,30 +24,25 @@ function RefCode() {
     }
   };
   return (
-    <div className="flex flex-col gap-3 rounded-md border border-slate-200 p-7">
-      <span className="text-base text-slate-500">Mã giới thiệu</span>
-      <b className="text-[2.4rem] leading-none tracking-[0.06em] text-slate-900 tabular-nums">{REF_CODE}</b>
-      <p className="text-base leading-relaxed text-slate-500">
+    <div className="sm-egg flex flex-col p-8">
+      <span className="text-[0.95rem] font-semibold text-[#6b5a2a]">Mã giới thiệu</span>
+      <b className="mt-2 font-display text-[3rem] leading-[1.1] tracking-[0.04em] text-[var(--sm-ink)]">{REF_CODE}</b>
+      <p className="mt-1 text-[0.95rem] leading-relaxed text-[#55604f]">
         Nhập mã này khi ứng dụng hỏi mã giới thiệu, để anh Chiến hỗ trợ trực tiếp.
       </p>
-      <div className="mt-1 flex flex-wrap gap-3">
+      <hr className="my-6 border-0 border-t border-[var(--sm-gold)]" />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <a href="https://zalo.me/0886284212" target="_blank" rel="noopener noreferrer" className="font-semibold text-[var(--sm-ink)] hover:underline">
+          Zalo 0886.284.212
+        </a>
         <button
           type="button"
           onClick={copy}
-          className="inline-flex min-h-11 items-center gap-2 rounded-md border border-slate-300 px-4 font-bold text-slate-900 transition-colors hover:bg-slate-100"
+          className="inline-flex min-h-9 items-center gap-2 rounded-[2px] border border-[#7a6a3e] px-4 text-[0.9rem] font-semibold text-[#4a3f20] transition-colors hover:bg-[rgba(122,106,62,0.1)]"
         >
           {copied ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
           {copied ? "Đã sao chép" : "Sao chép mã"}
         </button>
-        <a
-          href={SIGNUP_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex min-h-11 items-center gap-2 rounded-md bg-orange-600 px-4 font-bold text-slate-950 transition-colors hover:bg-orange-500"
-        >
-          Mở trang đăng ký Kafi X
-          <ExternalLink className="h-4 w-4" aria-hidden="true" />
-        </a>
       </div>
     </div>
   );
@@ -57,73 +52,61 @@ function RefCode() {
 // who to ask. The Zalo button is the one orange element on the page.
 export default function AccountOpeningGuide() {
   return (
-    <div className="gutter-x mx-auto flex max-w-[1040px] flex-col gap-10 py-14">
-      <div className="flex flex-col gap-3">
-        <h1 className="text-balance text-[clamp(1.75rem,3.2vw,2.25rem)] font-bold leading-tight">
-          Mở tài khoản Kafi X ngay trên điện thoại
-        </h1>
-        <p className="max-w-xl text-lg leading-relaxed text-slate-900">
-          Làm theo 5 bước dưới đây. Nếu vướng ở bước nào, nhắn Zalo cho anh Chiến để được hướng dẫn.
-        </p>
-      </div>
+    <div className="gutter-x mx-auto max-w-[1280px] pt-12 pb-20 lg:pt-16">
+      <p className="text-[0.92rem] text-[var(--sm-mut)]">Hướng dẫn</p>
+      <h1 className="mt-4 max-w-[52rem] font-display text-[clamp(2.2rem,4.4vw,3.1rem)] leading-[1.15] text-[var(--sm-egg)]">
+        Mở tài khoản Kafi X ngay trên điện thoại.
+      </h1>
+      <p className="mt-4 max-w-[40rem] text-[1.15rem] leading-relaxed text-[var(--sm-egg2)]">
+        Làm theo 5 bước dưới đây. Nếu vướng ở bước nào, nhắn Zalo cho anh Chiến để được hướng dẫn.
+      </p>
 
-      <div className="grid items-start gap-8 md:grid-cols-[minmax(0,1fr)_340px]">
-        <ol className="flex flex-col border-t border-slate-300">
-          {STEPS.map(([t, d], i) => (
-            <li key={t} className="grid grid-cols-[2.5rem_minmax(0,1fr)] gap-4 border-b border-slate-200 py-5">
-              <span className="text-[1.75rem] font-bold leading-none text-brand-700 tabular-nums">{i + 1}</span>
-              <div>
-                <h2 className="text-lg font-bold leading-snug">{t}</h2>
-                <p className="mt-1 text-base leading-relaxed text-slate-500">{d}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-        <RefCode />
-      </div>
-
-      {/* Video */}
-      <div className="aspect-video overflow-hidden rounded-md border border-slate-200 bg-[#0b0f14]">
-        <iframe
-          width="100%"
-          height="100%"
-          src="https://www.youtube.com/embed/CyUYSWOAavw"
-          title="Hướng dẫn mở tài khoản chứng khoán"
-          frameBorder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
-      </div>
-
-      <div className="flex flex-wrap items-stretch gap-6">
-        <div className="flex min-w-0 flex-[1_1_22rem] flex-col gap-3 rounded-md border border-slate-200 p-7">
-          <ShieldCheck className="h-7 w-7 text-brand-700" strokeWidth={1.75} aria-hidden="true" />
-          <h2 className="text-2xl font-bold leading-snug">Mở tài khoản miễn phí</h2>
-          <p className="text-lg leading-relaxed text-slate-900">
-            Không phí duy trì, được hỗ trợ trực tiếp bởi chuyên viên tư vấn.
-          </p>
+      <div className="mt-12 grid items-start gap-x-6 gap-y-10 lg:grid-cols-12">
+        <div className="min-w-0 lg:col-span-7">
+          <ol className="border-t border-[var(--sm-gold)]">
+            {STEPS.map(([t, d], i) => (
+              <li key={t} className="grid grid-cols-[3rem_minmax(0,1fr)] gap-x-5 border-b border-[var(--sm-line)] py-6 last:border-b-0">
+                <span className="font-display text-[2.4rem] leading-none text-[var(--sm-gold2)] tabular-nums">{i + 1}</span>
+                <div>
+                  <h2 className="text-[1.2rem] leading-snug text-[var(--sm-egg)]" style={{ fontFamily: "var(--font-sans)", fontWeight: 600 }}>
+                    {t}
+                  </h2>
+                  <p className="mt-2 text-[0.98rem] leading-relaxed text-[var(--sm-mut)]">{d}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
         </div>
 
-        <div className="flex min-w-0 flex-[1_1_22rem] flex-col gap-1.5 rounded-md border border-slate-200 p-7">
-          <h2 className="mb-1.5 text-2xl font-bold leading-snug">Cần người hỗ trợ?</h2>
-          <p className="text-lg font-bold leading-snug text-slate-900">Nguyễn Anh Chiến</p>
-          <p className="text-base leading-normal text-slate-500">Chuyên viên tư vấn đầu tư — CTCP Chứng khoán KAFI</p>
-          <a
-            href="tel:0886284212"
-            className="inline-flex min-h-11 items-center gap-2 text-lg font-bold text-brand-700 hover:underline"
-          >
-            <Phone className="h-[18px] w-[18px]" strokeWidth={1.75} aria-hidden="true" />
-            0886.284.212
+        <aside className="flex min-w-0 flex-col gap-4 lg:col-span-4 lg:col-start-9">
+          <RefCode />
+          <a href={SIGNUP_URL} target="_blank" rel="noopener noreferrer" className="sm-btn sm-btn-p w-full">
+            Mở trang đăng ký Kafi X
+            <ExternalLink className="h-4 w-4" aria-hidden="true" />
           </a>
-          <a
-            href="https://zalo.me/0886284212"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-1.5 inline-flex min-h-13 items-center justify-center self-start rounded-md bg-orange-600 px-7 text-lg font-bold text-slate-950 transition-colors duration-200 hover:bg-orange-500"
-          >
-            Tư vấn qua Zalo
-          </a>
-        </div>
+          <div className="mt-2 aspect-video overflow-hidden rounded-md border border-[var(--sm-line)] bg-[#0b0f0a]">
+            <iframe
+              width="100%"
+              height="100%"
+              src="https://www.youtube.com/embed/CyUYSWOAavw"
+              title="Hướng dẫn mở tài khoản chứng khoán"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+          <div className="flex items-start gap-3 rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-5">
+            <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[var(--sm-gold2)]" strokeWidth={1.75} aria-hidden="true" />
+            <div>
+              <p className="font-semibold text-[var(--sm-egg)]">Mở tài khoản miễn phí</p>
+              <p className="mt-1 text-[0.92rem] text-[var(--sm-mut)]">Không phí duy trì, được hỗ trợ trực tiếp bởi Nguyễn Anh Chiến, chuyên viên tư vấn đầu tư, CTCP Chứng khoán KAFI.</p>
+              <a href="tel:0886284212" className="mt-2 inline-flex min-h-10 items-center gap-2 font-semibold text-[var(--sm-gold2)] hover:underline">
+                <Phone className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
+                0886.284.212
+              </a>
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
   );

@@ -22,7 +22,7 @@ export default function Header() {
 
   return (
     <header className="theme-dark sticky top-0 z-30 border-b border-[rgba(201,162,74,0.35)] bg-[rgba(18,26,17,0.92)]! backdrop-blur-md">
-      <div className="gutter-x mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-6 gap-y-1 py-2.5">
+      <div className="gutter-x mx-auto flex max-w-[1280px] flex-wrap items-center gap-x-6 gap-y-1 py-2.5">
         <NavLink to="/" aria-label="Bull Stock — Trang chủ" className="flex shrink-0 items-center">
           <picture>
             <source media="(max-width: 639px)" srcSet="/logo-bullstock-icon-dark.svg" />
