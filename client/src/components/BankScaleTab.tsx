@@ -71,48 +71,53 @@ export default function BankScaleTab({ group }: { group: GroupFilter }) {
         <Tile label="Cho vay / tiền gửi chung" value={`${vn((total("loan") / total("dep")) * 100, 1)}%`} sub="Tổng cho vay KH / tổng tiền gửi KH" />
       </section>
 
-      {/* Tất cả biểu đồ hiện cùng lúc, mỗi biểu đồ tự sắp từ cao xuống thấp. */}
-      {(["tts", "loan", "dep"] as const).map((k) => (
+      {/* Tất cả biểu đồ hiện cùng lúc, 2 biểu đồ một hàng trên màn hình rộng;
+          mỗi biểu đồ tự sắp từ cao xuống thấp. */}
+      <div className="grid gap-4 xl:grid-cols-2">
+        {(["tts", "loan", "dep"] as const).map((k) => (
+          <BankBarChart
+            key={k}
+            title={COLS.find((c) => c.key === k)!.title}
+            subtitle={`Q3/2026 · nghìn tỷ đồng · ${rows.length} ngân hàng`}
+            items={[...rows].sort((a, b) => b[k] - a[k]).map((r) => ({ bank: r.bank, v: r[k] / 1000 }))}
+            fmt={(n) => `${vn(n, n >= 100 ? 0 : 1)} nghìn tỷ`}
+            axisFmt={(n) => vn(n, n >= 100 || n === 0 ? 0 : 1)}
+            label1={COLS.find((c) => c.key === k)!.label}
+            compact
+          />
+        ))}
         <BankBarChart
-          key={k}
-          title={COLS.find((c) => c.key === k)!.title}
-          subtitle={`Q3/2026 · nghìn tỷ đồng · ${rows.length} ngân hàng`}
-          items={[...rows].sort((a, b) => b[k] - a[k]).map((r) => ({ bank: r.bank, v: r[k] / 1000 }))}
-          fmt={(n) => `${vn(n, n >= 100 ? 0 : 1)} nghìn tỷ`}
-          axisFmt={(n) => vn(n, n >= 100 || n === 0 ? 0 : 1)}
-          label1={COLS.find((c) => c.key === k)!.label}
+          title="Tăng trưởng tín dụng và huy động"
+          subtitle="Từ đầu năm đến cuối Q3/2026 · sắp theo tăng trưởng tín dụng"
+          items={[...rows]
+            .sort((a, b) => (GROWTH[b.bank]?.credit ?? 0) - (GROWTH[a.bank]?.credit ?? 0))
+            .map((r) => ({ bank: r.bank, v: GROWTH[r.bank]?.credit ?? 0, v2: GROWTH[r.bank]?.deposit ?? 0 }))}
+          fmt={(n) => `${vn(n, 1)}%`}
+          axisFmt={(n) => `${vn(n, 0)}%`}
+          label1="Tăng trưởng tín dụng"
+          label2="Tăng trưởng huy động"
+          compact
         />
-      ))}
-
-      <BankBarChart
-        title={`Lợi nhuận ${tax === "Trước thuế" ? "trước" : "sau"} thuế và tăng trưởng`}
-        subtitle="Q3/2026 · cột: nghìn tỷ đồng · chấm: % so với Q3/2025 · sắp theo lợi nhuận"
-        items={[...rows]
-          .map((r) => ({ bank: r.bank, p: prof(r.bank) }))
-          .filter((x) => x.p)
-          .sort((a, b) => b.p!.cur - a.p!.cur)
-          .map((x) => ({ bank: x.bank, v: x.p!.cur / 1000, v2: x.p!.yoy }))}
-        fmt={(n) => `${vn(n, 2)} nghìn tỷ`}
-        axisFmt={(n) => vn(n, Number.isInteger(n) ? 0 : 1)}
-        label1={`LN${tax === "Trước thuế" ? "TT" : "ST"} quý 3`}
-        label2="Tăng trưởng so với cùng kỳ"
-        v2Kind="dot"
-        fmt2={(n) => `${n > 0 ? "+" : ""}${vn(n, 1)}%`}
-        axisFmt2={(n) => `${vn(n, 0)}%`}
-        controls={<Seg items={["Trước thuế", "Sau thuế"] as const} value={tax} onChange={setTax} label="Lợi nhuận trước hay sau thuế" />}
-      />
-
-      <BankBarChart
-        title="Tăng trưởng tín dụng và huy động"
-        subtitle="Từ đầu năm đến cuối Q3/2026 · sắp theo tăng trưởng tín dụng"
-        items={[...rows]
-          .sort((a, b) => (GROWTH[b.bank]?.credit ?? 0) - (GROWTH[a.bank]?.credit ?? 0))
-          .map((r) => ({ bank: r.bank, v: GROWTH[r.bank]?.credit ?? 0, v2: GROWTH[r.bank]?.deposit ?? 0 }))}
-        fmt={(n) => `${vn(n, 1)}%`}
-        axisFmt={(n) => `${vn(n, 0)}%`}
-        label1="Tăng trưởng tín dụng"
-        label2="Tăng trưởng huy động"
-      />
+        <div className="xl:col-span-2">
+          <BankBarChart
+            title={`Lợi nhuận ${tax === "Trước thuế" ? "trước" : "sau"} thuế và tăng trưởng`}
+            subtitle="Q3/2026 · cột: nghìn tỷ đồng · chấm: % so với Q3/2025 · sắp theo lợi nhuận"
+            items={[...rows]
+              .map((r) => ({ bank: r.bank, p: prof(r.bank) }))
+              .filter((x) => x.p)
+              .sort((a, b) => b.p!.cur - a.p!.cur)
+              .map((x) => ({ bank: x.bank, v: x.p!.cur / 1000, v2: x.p!.yoy }))}
+            fmt={(n) => `${vn(n, 2)} nghìn tỷ`}
+            axisFmt={(n) => vn(n, Number.isInteger(n) ? 0 : 1)}
+            label1={`LN${tax === "Trước thuế" ? "TT" : "ST"} quý 3`}
+            label2="Tăng trưởng so với cùng kỳ"
+            v2Kind="dot"
+            fmt2={(n) => `${n > 0 ? "+" : ""}${vn(n, 1)}%`}
+            axisFmt2={(n) => `${vn(n, 0)}%`}
+            controls={<Seg items={["Trước thuế", "Sau thuế"] as const} value={tax} onChange={setTax} label="Lợi nhuận trước hay sau thuế" />}
+          />
+        </div>
+      </div>
 
       <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-bold text-[var(--ab-strong)]">Bảng số liệu</h2>

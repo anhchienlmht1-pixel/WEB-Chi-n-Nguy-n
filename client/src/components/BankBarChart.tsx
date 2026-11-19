@@ -71,6 +71,7 @@ export default function BankBarChart({
   axisFmt2,
   signColor = false,
   controls,
+  compact = false,
 }: {
   items: BarItem[];
   title: string;
@@ -86,14 +87,16 @@ export default function BankBarChart({
   signColor?: boolean;
   /** Extra buttons shown under the title (e.g. trước thuế / sau thuế). */
   controls?: ReactNode;
+  /** Half-width layout (2 charts per row): narrower viewBox so text keeps its size. */
+  compact?: boolean;
 }) {
   const [hover, setHover] = useState<number | null>(null);
   if (items.length === 0) return null;
   const dot = v2Kind === "dot";
   const has2 = items.some((d) => d.v2 != null);
-  const W = 960;
-  const H = 300;
-  const P = { l: dot && has2 ? 52 : 12, r: 56, t: 16, b: 34 };
+  const W = compact ? 600 : 960;
+  const H = compact ? 280 : 300;
+  const P = { l: dot && has2 ? 52 : 8, r: compact ? 44 : 56, t: 16, b: 34 };
   const v1 = items.map((d) => d.v);
   const v2 = items.flatMap((d) => (d.v2 != null ? [d.v2] : []));
   // Triangles share the bars' axis; dots get their own (left) axis.
@@ -121,7 +124,7 @@ export default function BankBarChart({
         {controls && <div className="mt-2 flex justify-center">{controls}</div>}
       </div>
       <div className="relative mt-2 overflow-x-auto sm:overflow-visible" onMouseLeave={() => setHover(null)}>
-        <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full min-w-[640px] sm:min-w-0" role="img" aria-label={title}>
+        <svg viewBox={`0 0 ${W} ${H}`} className={`block h-auto w-full ${compact ? "min-w-[520px]" : "min-w-[640px]"} sm:min-w-0`} role="img" aria-label={title}>
           {grid.map((k) => (
             <g key={k}>
               <line
@@ -176,7 +179,7 @@ export default function BankBarChart({
                   x={cx(i)}
                   y={H - P.b + 18}
                   textAnchor="middle"
-                  fontSize="11.5"
+                  fontSize={compact ? 11 : 11.5}
                   fontWeight={on ? 700 : 600}
                   style={{ fill: on ? "var(--ab-strong)" : "var(--ab-text)" }}
                 >
