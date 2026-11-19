@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { fetchMarketOverview } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { useWatchlist } from "../hooks/useWatchlist";
+import PriceBoard from "../components/PriceBoardBg";
 import TechnicalChartPanel from "../components/TechnicalChartPanel";
 import { SonMaiHero, SonMaiHoldings, SonMaiJournal, SonMaiKpis, useSignalData } from "../components/SonMaiHome";
 
@@ -33,8 +34,28 @@ export default function TrendSignals() {
   };
 
   return (
-    <div id="tin-hieu" className="gutter-x mx-auto max-w-[1280px] scroll-mt-20 pb-16">
-      <SonMaiHero scan={scan} journal={journal} />
+    <div id="tin-hieu" className="scroll-mt-20">
+      {/* Mở đầu trên nền bảng điện chạy (giống trang Giới thiệu). */}
+      <section className="relative overflow-hidden">
+        <PriceBoard />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(90deg, rgba(var(--ab-bg-rgb),0.96) 0%, rgba(var(--ab-bg-rgb),0.86) 45%, rgba(var(--ab-bg-rgb),0.6) 100%)",
+          }}
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-40"
+          style={{ background: "linear-gradient(180deg, rgba(var(--ab-bg-rgb),0) 0%, rgba(var(--ab-bg-rgb),1) 100%)" }}
+        />
+        <div className="gutter-x relative z-[1] mx-auto max-w-[1280px] pb-10">
+          <SonMaiHero scan={scan} journal={journal} />
+        </div>
+      </section>
+    <div className="gutter-x mx-auto max-w-[1280px] pb-16">
 
       <div className="mt-12">
         <SonMaiKpis journal={journal} />
@@ -120,6 +141,7 @@ export default function TrendSignals() {
           </a>
         </div>
       </div>
+    </div>
     </div>
   );
 }
