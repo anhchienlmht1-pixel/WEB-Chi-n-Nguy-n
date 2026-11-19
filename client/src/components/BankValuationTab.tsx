@@ -31,21 +31,80 @@ interface Row {
   min: number;
   max: number;
   vsHist: number; // % P/B now vs own average
+  n: number; // số quý dùng để tính thấp nhất / TB / cao nhất
 }
 
+// Dải P/B lịch sử của một ngân hàng. Rê chuột (hoặc bấm trên điện thoại) để
+// hiện chú thích từng ký hiệu kèm số liệu. Chú thích dùng position: fixed để
+// không bị khung cuộn ngang của bảng cắt mất.
 function RangeBar({ r }: { r: Row }) {
+  const [tip, setTip] = useState<{ x: number; y: number; below: boolean } | null>(null);
   const lo = Math.min(r.min, r.pb);
   const hi = Math.max(r.max, r.pb);
   const span = hi - lo || 1;
   const x = (v: number) => `${((v - lo) / span) * 100}%`;
+  const good = r.vsHist <= 0;
+  const show = (el: HTMLElement) => {
+    const b = el.getBoundingClientRect();
+    const below = b.top < 240; // gần mép trên: hiện xuống dưới
+    setTip({ x: Math.max(Math.min(b.right, window.innerWidth - 8), 268), y: below ? b.bottom + 6 : b.top - 6, below });
+  };
+  const years = `${r.n} quý từ 2022 đến Q3/2026`;
   return (
-    <div className="relative mx-auto h-4 w-[150px]" title={`P/B thấp nhất ${vn(r.min)} · TB ${vn(r.avg)} · cao nhất ${vn(r.max)} · hiện tại ${vn(r.pb)}`}>
+    <div
+      className="relative mx-auto h-6 w-[150px] cursor-help"
+      tabIndex={0}
+      role="img"
+      aria-label={`${r.bank}: P/B hiện tại ${vn(r.pb)}, trung bình ${vn(r.avg)}, thấp nhất ${vn(r.min)}, cao nhất ${vn(r.max)}`}
+      onMouseEnter={(e) => show(e.currentTarget)}
+      onMouseLeave={() => setTip(null)}
+      onFocus={(e) => show(e.currentTarget)}
+      onBlur={() => setTip(null)}
+      onClick={(e) => (tip ? setTip(null) : show(e.currentTarget))}
+    >
       <span className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-[var(--ab-line-strong)]" style={{ left: x(r.min), right: `calc(100% - ${x(r.max)})` }} />
-      <span className="absolute top-0 h-4 w-px bg-[#e07b39]" style={{ left: x(r.avg) }} />
+      <span className="absolute top-1 h-4 w-px bg-[#e07b39]" style={{ left: x(r.avg) }} />
       <span
         className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[var(--ab-bg)]"
-        style={{ left: x(r.pb), background: r.vsHist <= 0 ? "var(--heat-up)" : "var(--heat-down)" }}
+        style={{ left: x(r.pb), background: good ? "var(--heat-up)" : "var(--heat-down)" }}
       />
+      {tip && (
+        <div
+          role="tooltip"
+          className={`pointer-events-none fixed z-50 w-[260px] -translate-x-full ${tip.below ? "" : "-translate-y-full"} rounded-lg border border-[var(--ab-line-strong)] bg-[var(--ab-bg2)] px-3 py-2.5 text-left text-[0.8rem] leading-snug text-[var(--ab-text)] shadow-lg`}
+          style={{ left: tip.x, top: tip.y }}
+        >
+          <b className="text-[var(--ab-strong)]">{r.bank} · dải P/B</b>
+          <ul className="mt-1.5 flex flex-col gap-1.5">
+            <li className="flex items-start gap-2">
+              <i className="mt-1 inline-block h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: good ? "var(--heat-up)" : "var(--heat-down)" }} />
+              <span>
+                <b className="tabular-nums">Chấm tròn: P/B hiện tại {vn(r.pb)}</b>
+                <br />
+                <span className="text-[var(--ab-muted)]">
+                  {good ? "Xanh" : "Đỏ"} = {good ? "thấp hơn" : "cao hơn"} mức trung bình của chính {r.bank} ({r.vsHist > 0 ? "+" : "−"}
+                  {vn(Math.abs(r.vsHist), 0)}%)
+                </span>
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <i className="mt-0.5 ml-1 inline-block h-3.5 w-px shrink-0 bg-[#e07b39]" />
+              <span className="ml-1">
+                <b className="tabular-nums">Vạch cam: P/B trung bình {vn(r.avg)}</b>
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <i className="mt-1.5 inline-block h-1.5 w-2.5 shrink-0 rounded-full bg-[var(--ab-line-strong)]" />
+              <span>
+                <b className="tabular-nums">
+                  Dải xám: thấp nhất {vn(r.min)} — cao nhất {vn(r.max)}
+                </b>
+              </span>
+            </li>
+          </ul>
+          <p className="mt-1.5 text-[0.74rem] text-[var(--ab-muted)]">Tính trên P/B cuối mỗi quý, {years}.</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -238,6 +297,7 @@ export default function BankValuationTab({ group }: { group: GroupFilter }) {
       min: v.pbMin,
       max: v.pbMax,
       vsHist: (pb / v.pbAvg - 1) * 100,
+      n: v.n,
     };
   });
   const shown = new Set(banksIn(group));
