@@ -2,8 +2,8 @@
 <html lang="vi">
   <head>
     <script>
-      // Giao diện Sơn mài chỉ có nền tối: bật .theme-dark trước lần vẽ đầu (không nháy).
-      document.documentElement.classList.add("theme-dark");
+      // Mặc định nền sáng; ai đã chọn nền tối thì bật .theme-dark trước lần vẽ đầu (không nháy).
+      try { if (localStorage.getItem("bullstock.theme") === "dark") document.documentElement.classList.add("theme-dark"); } catch (e) {}
     </script>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon-bullstock.svg" />

@@ -11,7 +11,7 @@ import { formatMarketCap, formatPrice, trendClass } from "../utils/format";
 import { BVPS_MATCH, EPS_MATCH, findLatest, PB_MATCH, PE_MATCH } from "../utils/ratios";
 import CompanyLogo from "./CompanyLogo";
 import WatchButton from "./WatchButton";
-import PriceOverviewChart from "./PriceOverviewChart";
+import TechnicalChartPanel from "./TechnicalChartPanel";
 
 // Every number here is read straight from the quote, the company profile or the
 // company's own CSTC (financial ratios) report. A row whose figure the data
@@ -199,7 +199,7 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
   );
 
   // Lịch sử giá ngày đầy đủ: dùng cho biểu đồ tổng quan và tín hiệu của hệ thống.
-  const { data: hist, loading: histLoading } = usePolling(() => fetchHistory(symbol, "MAX"), [symbol], 10 * 60 * 1000);
+  const { data: hist } = usePolling(() => fetchHistory(symbol, "MAX"), [symbol], 10 * 60 * 1000);
   const history = useMemo(() => hist?.points ?? [], [hist]);
   const signals = useMemo(
     () => (isIndexOrFutures || history.length === 0 ? [] : computeTradingSignals(dropUnclosedBars(history)).transitions),
@@ -367,7 +367,7 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
 
       <div className="mt-6 grid items-stretch gap-4 lg:grid-cols-12">
         <div className="min-w-0 lg:col-span-7">
-          <PriceOverviewChart symbol={symbol} history={history} loading={histLoading} signals={signals} prevClose={quote.prevClose} price={quote.price} fmt={fmt} />
+          <TechnicalChartPanel symbol={symbol} height={460} hideStats />
         </div>
 
         <div className="flex min-w-0 flex-col rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-4 lg:col-span-5">

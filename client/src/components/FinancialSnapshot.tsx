@@ -71,7 +71,7 @@ function ChartTooltip({
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-md border border-[rgba(201,162,74,0.45)] bg-[#1a2418] px-3 py-2 text-[0.8rem] shadow-lg">
+    <div className="rounded-md border border-[rgba(201,162,74,0.45)] bg-[var(--sm-pop)] px-3 py-2 text-[0.8rem] shadow-lg">
       <div className="font-semibold text-[var(--sm-egg)]">{label}</div>
       {payload.map((p) => (
         <div key={p.name} className="mt-0.5 flex items-center justify-between gap-4 tabular-nums">
@@ -341,7 +341,7 @@ export default function FinancialSnapshot({ symbol }: { symbol: string }) {
         <table className="w-full min-w-[720px] border-collapse text-[0.85rem]">
           <thead>
             <tr className="border-b border-[rgba(201,162,74,0.35)] text-left text-[var(--sm-gold2)]">
-              <th className="sticky left-0 whitespace-nowrap bg-[#1a2418] py-2 pr-3 pl-2 font-semibold">Quý</th>
+              <th className="sticky left-0 whitespace-nowrap bg-[var(--sm-pop)] py-2 pr-3 pl-2 font-semibold">Quý</th>
               {rows.map((r) => (
                 <th key={r.label} className="whitespace-nowrap px-2 py-2 text-right font-semibold">
                   {r.label}
@@ -351,7 +351,7 @@ export default function FinancialSnapshot({ symbol }: { symbol: string }) {
           </thead>
           <tbody className="text-[var(--sm-egg2)]">
             <tr className="border-b border-[var(--sm-line2)]">
-              <td className="sticky left-0 whitespace-nowrap bg-[#1a2418] py-2 pr-3 pl-2 font-semibold">Doanh thu (tỷ)</td>
+              <td className="sticky left-0 whitespace-nowrap bg-[var(--sm-pop)] py-2 pr-3 pl-2 font-semibold">Doanh thu (tỷ)</td>
               {rows.map((r) => (
                 <td key={r.label} className="whitespace-nowrap px-2 py-2 text-right tabular-nums">
                   {fmtBn(r.revenueBn)}
@@ -359,7 +359,7 @@ export default function FinancialSnapshot({ symbol }: { symbol: string }) {
               ))}
             </tr>
             <tr className="border-b border-[var(--sm-line2)]">
-              <td className="sticky left-0 whitespace-nowrap bg-[#1a2418] py-2 pr-3 pl-2 font-semibold">LNST (tỷ)</td>
+              <td className="sticky left-0 whitespace-nowrap bg-[var(--sm-pop)] py-2 pr-3 pl-2 font-semibold">LNST (tỷ)</td>
               {rows.map((r) => (
                 <td key={r.label} className="whitespace-nowrap px-2 py-2 text-right tabular-nums">
                   {fmtBn(r.netProfitBn)}
@@ -367,7 +367,7 @@ export default function FinancialSnapshot({ symbol }: { symbol: string }) {
               ))}
             </tr>
             <tr className="border-b border-[var(--sm-line2)]">
-              <td className="sticky left-0 whitespace-nowrap bg-[#1a2418] py-2 pr-3 pl-2 font-semibold">%YoY DT</td>
+              <td className="sticky left-0 whitespace-nowrap bg-[var(--sm-pop)] py-2 pr-3 pl-2 font-semibold">%YoY DT</td>
               {rows.map((r) => (
                 <td
                   key={r.label}
@@ -380,7 +380,7 @@ export default function FinancialSnapshot({ symbol }: { symbol: string }) {
               ))}
             </tr>
             <tr className="border-b border-[var(--sm-line2)]">
-              <td className="sticky left-0 whitespace-nowrap bg-[#1a2418] py-2 pr-3 pl-2 font-semibold">%YoY LN</td>
+              <td className="sticky left-0 whitespace-nowrap bg-[var(--sm-pop)] py-2 pr-3 pl-2 font-semibold">%YoY LN</td>
               {rows.map((r) => (
                 <td
                   key={r.label}
@@ -393,7 +393,7 @@ export default function FinancialSnapshot({ symbol }: { symbol: string }) {
               ))}
             </tr>
             <tr className="border-b border-[var(--sm-line2)]">
-              <td className="sticky left-0 whitespace-nowrap bg-[#1a2418] py-2 pr-3 pl-2 font-semibold">ROE (%)</td>
+              <td className="sticky left-0 whitespace-nowrap bg-[var(--sm-pop)] py-2 pr-3 pl-2 font-semibold">ROE (%)</td>
               {rows.map((r) => (
                 <td key={r.label} className="whitespace-nowrap px-2 py-2 text-right tabular-nums">
                   {fmtRatio(r.roe)}
@@ -401,7 +401,7 @@ export default function FinancialSnapshot({ symbol }: { symbol: string }) {
               ))}
             </tr>
             <tr className="border-b border-[var(--sm-line2)]">
-              <td className="sticky left-0 whitespace-nowrap bg-[#1a2418] py-2 pr-3 pl-2 font-semibold">Xu hướng LN</td>
+              <td className="sticky left-0 whitespace-nowrap bg-[var(--sm-pop)] py-2 pr-3 pl-2 font-semibold">Xu hướng LN</td>
               {rows.map((r, i) => {
                 const trend = profitTrend(rows, i);
                 return (
@@ -412,7 +412,7 @@ export default function FinancialSnapshot({ symbol }: { symbol: string }) {
               })}
             </tr>
             <tr className="border-b border-[var(--sm-line2)]">
-              <td className="sticky left-0 whitespace-nowrap bg-[#1a2418] py-2 pr-3 pl-2 font-semibold">P/E</td>
+              <td className="sticky left-0 whitespace-nowrap bg-[var(--sm-pop)] py-2 pr-3 pl-2 font-semibold">P/E</td>
               {rows.map((r) => (
                 <td key={r.label} className="whitespace-nowrap px-2 py-2 text-right tabular-nums">
                   {fmtRatio(r.pe)}
@@ -420,7 +420,7 @@ export default function FinancialSnapshot({ symbol }: { symbol: string }) {
               ))}
             </tr>
             <tr>
-              <td className="sticky left-0 whitespace-nowrap bg-[#1a2418] py-2 pr-3 pl-2 font-semibold">P/B</td>
+              <td className="sticky left-0 whitespace-nowrap bg-[var(--sm-pop)] py-2 pr-3 pl-2 font-semibold">P/B</td>
               {rows.map((r) => (
                 <td key={r.label} className="whitespace-nowrap px-2 py-2 text-right tabular-nums">
                   {fmtRatio(r.pb)}

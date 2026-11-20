@@ -453,6 +453,7 @@ img {
   --sm-up: #4fd18b;
   --sm-dn: #ff6b5e;
   --sm-panel: rgba(26, 36, 24, 0.72);
+  --sm-pop: #1a2418;
 }
 h1, h2, h3, .font-display {
   font-family: var(--font-display);
@@ -536,7 +537,8 @@ html.theme-dark body { background: transparent; }
 /* Thẻ vỏ trứng: một thẻ mỗi trang cho thông tin quan trọng nhất. */
 .sm-egg {
   position: relative;
-  background-color: var(--sm-egg);
+  background-color: #efe7d4;
+  border: 1px solid #d9cfb6;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cg fill='none' stroke='%23b9ab88' stroke-width='.8' opacity='.5'%3E%3Cpath d='M0 30 L24 26 L44 46 L72 38 L98 56 L132 42 L180 54'/%3E%3Cpath d='M12 0 L24 26 L20 64 L38 96 L32 132 L50 180'/%3E%3Cpath d='M72 38 L80 76 L66 108 L88 140 L82 180'/%3E%3Cpath d='M132 42 L140 88 L166 110 L158 152 L180 164'/%3E%3C/g%3E%3C/svg%3E");
   color: var(--sm-ink);
   border-radius: 6px;
@@ -578,6 +580,7 @@ html.theme-dark body { background: transparent; }
   --sm-up: #17804f;
   --sm-dn: #c0392b;
   --sm-panel: #fffdf7;
+  --sm-pop: #fffdf7;
 }
 .theme-dark {
   --sm-egg: #efe7d4;
@@ -589,4 +592,5 @@ html.theme-dark body { background: transparent; }
   --sm-up: #4fd18b;
   --sm-dn: #ff6b5e;
   --sm-panel: rgba(26, 36, 24, 0.72);
+  --sm-pop: #1a2418;
 }

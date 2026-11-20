@@ -59,7 +59,7 @@ type Fmt = (v: number) => string;
 function Tip({ active, payload, label, fmts }: { active?: boolean; payload?: { name: string; value: number; color: string; dataKey: string }[]; label?: string; fmts: Record<string, Fmt> }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-md border border-[rgba(201,162,74,0.45)] bg-[#1a2418] px-3 py-2 text-[0.8rem] shadow-lg">
+    <div className="rounded-md border border-[rgba(201,162,74,0.45)] bg-[var(--sm-pop)] px-3 py-2 text-[0.8rem] shadow-lg">
       <div className="font-semibold text-[var(--sm-egg)]">{label}</div>
       {payload
         .filter((p) => p.value != null)

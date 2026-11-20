@@ -2,6 +2,7 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import SearchBox from "./SearchBox";
 import StockHeaderInfo from "./StockHeaderInfo";
 import TrendSignalBell from "./TrendSignalBell";
+import ThemeToggle from "./ThemeToggle";
 import TickerTape from "./TickerTape";
 
 const NAV_BASE =
@@ -62,6 +63,7 @@ export default function Header() {
             <SearchBox />
           </div>
           <TrendSignalBell />
+          <ThemeToggle />
           <NavLink
             to="/huong-dan-mo-tai-khoan"
             className="sm-btn sm-btn-p hidden shrink-0 whitespace-nowrap text-[0.98rem] sm:inline-flex"
