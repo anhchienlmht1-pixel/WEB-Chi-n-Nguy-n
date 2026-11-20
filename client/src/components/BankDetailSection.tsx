@@ -12,8 +12,7 @@ import {
 } from "recharts";
 
 // Trang "Chi tiết ngân hàng" — dựng lại sheet "Chi tiết" trong file Excel ngân
-// hàng của anh Chiến: bên trái bảng chỉ số quý gần nhất (QoQ, YoY/YTD), bên phải
-// các biểu đồ theo quý. Dữ liệu: client/public/data/banks/detail/<MÃ>.json, xuất
+// hàng của anh Chiến: các biểu đồ theo quý. Dữ liệu: client/public/data/banks/detail/<MÃ>.json, xuất
 // từ file Excel bằng scripts/export_bank_detail.py (không gọi API).
 
 type Series = Record<string, (number | null)[]>;
@@ -39,76 +38,9 @@ const C = {
 
 const vn = (n: number, d = 1) => n.toLocaleString("vi-VN", { minimumFractionDigits: d, maximumFractionDigits: d });
 const pctV = (v: number, d = 1) => `${vn(v * 100, d)}%`;
-const signed = (s: string, v: number) => (v > 0 ? `+${s}` : v < 0 ? `−${s.replace("-", "")}` : s);
 const qShort = (q: string) => q.replace(/^Q(\d) 20(\d\d)$/, "Q$1/$2");
 
 const at = (arr: (number | null)[] | undefined, i: number) => (arr && i >= 0 && i < arr.length ? arr[i] : null);
-
-/* ----------------------------------------------------------- bảng chỉ số */
-
-type Row = { label: string; key: string; kind: "pct" | "amount"; ytdKey?: string; better?: "up" | "down" };
-const ROWS: Row[] = [
-  { label: "CASA (%)", key: "casa", kind: "pct", better: "up" },
-  { label: "Cho vay khách hàng", key: "loans", kind: "amount", ytdKey: "creditYtd", better: "up" },
-  { label: "Tiền gửi khách hàng", key: "deposits", kind: "amount", ytdKey: "depositYtd", better: "up" },
-  { label: "ROE 4 quý (%)", key: "roe", kind: "pct", better: "up" },
-  { label: "ROA 4 quý (%)", key: "roa", kind: "pct", better: "up" },
-  { label: "NIM (%)", key: "nim", kind: "pct", better: "up" },
-  { label: "LDR (%)", key: "ldr", kind: "pct" },
-  { label: "LLR (%)", key: "llr", kind: "pct", better: "up" },
-  { label: "CIR (%)", key: "cir", kind: "pct", better: "down" },
-  { label: "NPL (%)", key: "npl", kind: "pct", better: "down" },
-  { label: "YOEA (%)", key: "yoea", kind: "pct", better: "up" },
-  { label: "COF (%)", key: "cof", kind: "pct", better: "down" },
-];
-
-function KpiTable({ d }: { d: Detail }) {
-  const n = d.quarters.length - 1;
-  const cell = "px-2.5 py-1.5 text-right tabular-nums";
-  const tone = (v: number | null, better?: "up" | "down") =>
-    v == null || !better || v === 0 ? "text-[var(--sm-egg2)]" : (v > 0) === (better === "up") ? "up" : "down";
-  return (
-    <div className="overflow-hidden rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)]">
-      <table className="w-full border-collapse text-[0.84rem]">
-        <thead>
-          <tr className="border-b border-[rgba(201,162,74,0.45)] text-[var(--sm-gold2)]">
-            <th className="px-2.5 py-2 text-left font-semibold">Chỉ tiêu</th>
-            <th className="px-2.5 py-2 text-right font-semibold">{d.quarters[n]}</th>
-            <th className="px-2.5 py-2 text-right font-semibold">QoQ</th>
-            <th className="px-2.5 py-2 text-right font-semibold">YoY / YTD</th>
-          </tr>
-        </thead>
-        <tbody>
-          {ROWS.map((r) => {
-            const s = d.series[r.key];
-            const cur = at(s, n);
-            const prev = at(s, n - 1);
-            const yAgo = at(s, n - 4);
-            let qoq: number | null = null;
-            let yoy: number | null = null;
-            if (cur != null && prev != null) qoq = r.kind === "pct" ? cur - prev : prev ? cur / prev - 1 : null;
-            if (r.ytdKey) yoy = at(d.series[r.ytdKey], n);
-            else if (cur != null && yAgo != null) yoy = cur - yAgo;
-            return (
-              <tr key={r.key} className="border-b border-[var(--sm-line2)] last:border-b-0">
-                <td className="px-2.5 py-1.5 text-[var(--sm-egg)]">{r.label}</td>
-                <td className={`${cell} font-semibold text-[var(--sm-egg)]`}>
-                  {cur == null ? "—" : r.kind === "pct" ? pctV(cur) : vn(cur, 0)}
-                </td>
-                <td className={`${cell} ${tone(qoq, r.better)}`}>{qoq == null ? "—" : signed(pctV(Math.abs(qoq)), qoq)}</td>
-                <td className={`${cell} ${tone(yoy, r.better)}`}>{yoy == null ? "—" : signed(pctV(Math.abs(yoy)), yoy)}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-      <p className="border-t border-[var(--sm-line2)] px-3 py-2 text-[0.75rem] leading-relaxed text-[var(--sm-mut)]">
-        Tỷ lệ: QoQ, YoY là chênh lệch điểm %. Cho vay, tiền gửi (tỷ đồng): QoQ là % thay đổi so với quý trước, YTD là tăng trưởng từ
-        đầu năm.
-      </p>
-    </div>
-  );
-}
 
 /* --------------------------------------------------------------- biểu đồ */
 
@@ -166,7 +98,7 @@ export default function BankDetailSection({ symbol }: { symbol: string }) {
   }, [symbol]);
 
   if (err) return null;
-  if (!d) return <div aria-busy="true" className="h-[880px] animate-pulse rounded-md bg-[var(--ab-skel)] md:h-[520px]" />;
+  if (!d) return <div aria-busy="true" className="h-[1700px] animate-pulse rounded-md bg-[var(--ab-skel)] md:h-[900px] xl:h-[480px]" />;
 
   const s = d.series;
   const ind = d.industry;
@@ -214,12 +146,7 @@ export default function BankDetailSection({ symbol }: { symbol: string }) {
         </div>
       </div>
 
-      <div className="mt-4 grid items-start gap-3 xl:grid-cols-12">
-        <div className="xl:col-span-4">
-          <KpiTable d={d} />
-        </div>
-
-        <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:col-span-8">
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <Card title="Tăng trưởng huy động" note="Cột: nghìn tỷ đồng · đường: tăng trưởng tiền gửi từ đầu năm">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart {...common}>
@@ -282,10 +209,6 @@ export default function BankDetailSection({ symbol }: { symbol: string }) {
             </ResponsiveContainer>
           </Card>
 
-        </div>
-      </div>
-
-      <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <Card title="NIM so với trung bình ngành">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart {...common}>
