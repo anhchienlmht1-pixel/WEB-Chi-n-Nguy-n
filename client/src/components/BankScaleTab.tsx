@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { PROFIT, SCALE, type BankScale } from "../data/bankValuation";
+import { CHARTER_CAPITAL, PROFIT, SCALE, type BankScale } from "../data/bankValuation";
 import { BANKS } from "../data/bankSector";
 import BankBarChart from "./BankBarChart";
 import { Seg, Tile, banksIn, groupOf, heat, stats, vn, type GroupFilter } from "./bankUi";
@@ -15,7 +15,7 @@ const COLS: { key: Key; label: string; title: string }[] = [
   { key: "loan", label: "Cho vay KH", title: "Dư nợ cho vay khách hàng" },
   { key: "dep", label: "Tiền gửi KH", title: "Tiền gửi của khách hàng" },
   { key: "eq", label: "Vốn chủ sở hữu", title: "Vốn chủ sở hữu" },
-  { key: "cap", label: "Vốn điều lệ", title: "Vốn điều lệ" },
+  { key: "cap", label: "Vốn điều lệ (tỷ đồng)", title: "Vốn điều lệ cuối Q3/2026, tỷ đồng (bảng cân đối kế toán, SSI)" },
   { key: "toi", label: "Thu nhập HĐ quý", title: "Tổng thu nhập hoạt động trong Q3/2026" },
   { key: "pbt", label: "LNTT quý", title: "Lợi nhuận trước thuế trong Q3/2026" },
   { key: "npat", label: "LNST quý", title: "Lợi nhuận sau thuế trong Q3/2026 (SSI)" },
@@ -172,7 +172,7 @@ export default function BankScaleTab({ group }: { group: GroupFilter }) {
                   </td>
                   {COLS.map((c) => (
                     <td key={c.key} className="px-2 py-1.5 text-right tabular-nums">
-                      {short(r[c.key])}
+                      {c.key === "cap" ? vn(CHARTER_CAPITAL[r.bank] ?? r.cap, 2) : short(r[c.key])}
                     </td>
                   ))}
                   <td className="px-2 py-1.5 text-center tabular-nums" style={heat(r.pbtYoy, Math.max(Math.abs(z), Math.abs(r.pbtYoy) / 25))}>
@@ -186,7 +186,7 @@ export default function BankScaleTab({ group }: { group: GroupFilter }) {
         </table>
       </section>
       <p className="-mt-1 text-[0.8rem] leading-relaxed text-[var(--ab-muted)]">
-        Đơn vị: nghìn tỷ đồng. Cột thứ hai: tỷ trọng trong {rows.length} ngân hàng đang xem (khi sắp theo tăng trưởng thì là % LNTT tăng/giảm). Thu nhập
+        Đơn vị: nghìn tỷ đồng (riêng vốn điều lệ: tỷ đồng). Cột thứ hai: tỷ trọng trong {rows.length} ngân hàng đang xem (khi sắp theo tăng trưởng thì là % LNTT tăng/giảm). Thu nhập
         hoạt động và LNTT là số riêng quý 3/2026. Nguồn: tổng hợp báo cáo tài chính Q3/2026. Chỉ để tham khảo, không phải khuyến nghị mua bán.
       </p>
     </div>

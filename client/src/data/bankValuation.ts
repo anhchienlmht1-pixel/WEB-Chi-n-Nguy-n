@@ -434,3 +434,24 @@ export const PROFIT: Record<string, BankProfit> = {
   "npatPrev": 1227.9
  }
 };
+
+// Vốn điều lệ (vốn góp của chủ sở hữu) cuối Q3/2026, tỷ đồng, chính xác đến
+// triệu đồng. Nguồn: bảng cân đối kế toán Q3/2026 (SSI, contributed_capital).
+export const CHARTER_CAPITAL: Record<string, number> = {
+  VCB: 83556.751,
+  BID: 77782.295,
+  CTG: 77669.446,
+  TCB: 70862.404,
+  VPB: 79339.236,
+  MBB: 100687.499,
+  ACB: 58044.22,
+  HDB: 50052.763,
+  STB: 18852.157,
+  SHB: 45942.0,
+  LPB: 29872.821,
+  VIB: 34040.057,
+  TPB: 27740.469,
+  EIB: 18688.106,
+  MSB: 31200.0,
+  OCB: 30625.10126,
+};
