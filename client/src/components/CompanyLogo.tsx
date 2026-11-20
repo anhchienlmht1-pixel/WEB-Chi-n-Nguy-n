@@ -23,6 +23,8 @@ interface Props {
   symbol: string;
   size?: number;
   fallback?: LogoFallback;
+  /** Khung rộng cho logo ngang (đầu trang): cao `size`, rộng `width`, không viền. */
+  width?: number;
 }
 
 function Empty({ size, fallback }: { size: number; fallback: LogoFallback }) {
@@ -33,16 +35,18 @@ function Empty({ size, fallback }: { size: number; fallback: LogoFallback }) {
 // Decorative: the symbol is always written out right next to the logo, so the
 // image carries no alt text of its own (and a failed load shows no broken-image
 // text before it is swapped for the fallback).
-function LogoImg({ src, size, onError }: { src: string; size: number; onError: () => void }) {
+// Logo luôn đặt trên nền trắng thật (#fff), kể cả ở nền tối, để logo màu
+// không bị chìm; bản `width` (đầu trang) không viền, giữ đúng tỷ lệ ảnh.
+function LogoImg({ src, size, width, onError }: { src: string; size: number; width?: number; onError: () => void }) {
   return (
     <img
       src={src}
       alt=""
-      width={size}
+      width={width ?? size}
       height={size}
       decoding="async"
-      className="shrink-0 rounded border border-slate-200 bg-white object-contain dark:border-slate-700"
-      style={{ width: size, height: size }}
+      className={width ? "shrink-0 object-contain" : "shrink-0 rounded border border-[rgba(0,0,0,0.08)] bg-[#ffffff] object-contain p-[2px]"}
+      style={{ width: width ?? size, height: size }}
       onError={onError}
     />
   );
@@ -50,30 +54,30 @@ function LogoImg({ src, size, onError }: { src: string; size: number; onError: (
 
 // Step 2 — its own component so the logo map is only requested once CafeF has
 // come up empty.
-function MapLogo({ symbol, size, fallback, onFail }: Required<Props> & { onFail: () => void }) {
+function MapLogo({ symbol, size, width, fallback, onFail }: Required<Omit<Props, "width">> & { width?: number; onFail: () => void }) {
   const logoMap = useCompanyLogoMap();
   const url = logoMap?.[symbol]?.logoUrl ?? null;
   if (!url) return <Empty size={size} fallback={fallback} />;
-  return <LogoImg src={url} size={size} onError={onFail} />;
+  return <LogoImg src={url} size={size} width={width} onError={onFail} />;
 }
 
-function Logo({ symbol, size, fallback }: Required<Props>) {
+function Logo({ symbol, size, width, fallback }: Required<Omit<Props, "width">> & { width?: number }) {
   const [stage, setStage] = useState<"cafef" | "map" | "none">("cafef");
 
   if (stage === "cafef") {
     return (
-      <LogoImg src={`/api/company-logos/img/${encodeURIComponent(symbol)}`} size={size} onError={() => setStage("map")} />
+      <LogoImg src={`/api/company-logos/img/${encodeURIComponent(symbol)}`} size={size} width={width} onError={() => setStage("map")} />
     );
   }
   if (stage === "map") {
-    return <MapLogo symbol={symbol} size={size} fallback={fallback} onFail={() => setStage("none")} />;
+    return <MapLogo symbol={symbol} size={size} width={width} fallback={fallback} onFail={() => setStage("none")} />;
   }
   return <Empty size={size} fallback={fallback} />;
 }
 
-export default function CompanyLogo({ symbol, size = 26, fallback = "space" }: Props) {
+export default function CompanyLogo({ symbol, size = 26, fallback = "space", width }: Props) {
   const upper = symbol.toUpperCase();
   // key: a different symbol starts over from step 1 instead of inheriting the
   // previous symbol's failure state.
-  return <Logo key={upper} symbol={upper} size={size} fallback={fallback} />;
+  return <Logo key={upper} symbol={upper} size={size} width={width} fallback={fallback} />;
 }

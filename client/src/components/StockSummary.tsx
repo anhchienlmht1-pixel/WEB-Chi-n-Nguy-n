@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import Flash from "./Flash";
 import AnimatedNumber from "./AnimatedNumber";
 import { usePolling } from "../hooks/usePolling";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { fetchCompanyProfile, fetchFinancials, fetchHistory } from "../api/client";
 import { computeTradingSignals, latestConditions, type TradingSignal } from "../utils/signals";
 import { dropUnclosedBars } from "../utils/sessionClose";
@@ -167,6 +167,21 @@ function SignalCard({
   );
 }
 
+// Đoạn giới thiệu ngắn dưới tên công ty: vạch vàng bên trái, 2 dòng, "Xem thêm".
+function AboutLine({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-3 max-w-[80ch] border-l-2 border-[var(--sm-gold)] pl-3">
+      <p className={`text-[0.9rem] leading-relaxed text-[var(--sm-egg2)] ${open ? "" : "line-clamp-2"}`}>{text}</p>
+      {text.length > 180 && (
+        <button type="button" onClick={() => setOpen((v) => !v)} className="text-[0.82rem] font-semibold text-[var(--sm-gold2)] hover:underline">
+          {open ? "Thu gọn" : "Xem thêm"}
+        </button>
+      )}
+    </div>
+  );
+}
+
 // Header card of the stock page: identity on the left, company figures in the
 // middle, live price and valuation on the right.
 export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote; isIndexOrFutures: boolean }) {
@@ -294,8 +309,13 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
       </nav>
 
       <header className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-4">
-        <div className="grid h-20 w-20 shrink-0 place-items-center rounded-full border border-[var(--sm-line)] bg-[#efe7d4] sm:h-24 sm:w-24">
-          <CompanyLogo symbol={symbol} size={56} fallback="none" />
+        <div className="grid h-16 w-28 shrink-0 place-items-center self-start rounded-md bg-[#ffffff] px-2 sm:h-28 sm:w-48 sm:px-3">
+          <span className="sm:hidden">
+            <CompanyLogo symbol={symbol} size={44} width={96} fallback="none" />
+          </span>
+          <span className="hidden sm:block">
+            <CompanyLogo symbol={symbol} size={72} width={156} fallback="none" />
+          </span>
         </div>
         <div className="min-w-0 flex-1">
           {quote.name && quote.name !== symbol && <p className="truncate text-[1.1rem] text-[var(--sm-egg2)]">{quote.name}</p>}
@@ -326,6 +346,7 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
               {updated.toLocaleDateString("vi-VN")} {updated.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
             </span>
           </div>
+          {profile?.businessModel && <AboutLine text={profile.businessModel} />}
           {(quote.sector || website) && (
             <p className="mt-2 text-[0.92rem] text-[var(--sm-mut)]">
               {quote.sector && (

@@ -10,7 +10,6 @@ import { isBankSymbol } from "../utils/bankData";
 import SecuritiesFundamentals from "../components/SecuritiesFundamentals";
 import SecuritiesDetailView from "../components/SecuritiesDetailView";
 import { isSecuritiesSymbol } from "../utils/securitiesData";
-import CompanyProfileCard from "../components/CompanyProfileCard";
 import StockOutlookPanel from "../components/StockOutlookPanel";
 import SystemAssessment from "../components/SystemAssessment";
 import AdvisorContactBar from "../components/AdvisorContactBar";
@@ -19,7 +18,6 @@ import BankDetailSection, { DETAIL_BANKS } from "../components/BankDetailSection
 import StockSummary from "../components/StockSummary";
 
 const SIDEBAR_TABS = [
-  { key: "tong-quan", label: "Tổng quan" },
   { key: "tin-hieu", label: "Tín hiệu" },
   { key: "ctck-kn", label: "CTCK KN" },
   { key: "tin-tuc", label: "Tin tức" },
@@ -31,7 +29,7 @@ export default function StockDetail() {
   const quoteState = usePolling(() => fetchQuote(symbol), [symbol], useLivePoll(15000));
   const quote = quoteState.data;
   const isIndexOrFutures = quote?.exchange === "Chỉ số" || quote?.exchange === "Phái sinh";
-  const [activeTab, setActiveTab] = useState<SidebarTabKey>("tong-quan");
+  const [activeTab, setActiveTab] = useState<SidebarTabKey>("tin-hieu");
 
   if (quoteState.error && !quote) {
     return (
@@ -83,9 +81,6 @@ export default function StockDetail() {
           </div>
 
           <div className="mt-4">
-            {activeTab === "tong-quan" && (
-              <CompanyProfileCard symbol={quote.symbol} fallbackName={quote.name} />
-            )}
             {activeTab === "tin-hieu" && <SystemAssessment symbol={quote.symbol} />}
             {activeTab === "ctck-kn" && <StockOutlookPanel symbol={quote.symbol} />}
             {activeTab === "tin-tuc" && <NewsFeed symbol={quote.symbol} />}
