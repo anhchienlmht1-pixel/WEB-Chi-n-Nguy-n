@@ -72,6 +72,7 @@ export default function BankBarChart({
   signColor = false,
   controls,
   compact = false,
+  colorOf,
 }: {
   items: BarItem[];
   title: string;
@@ -89,6 +90,8 @@ export default function BankBarChart({
   controls?: ReactNode;
   /** Half-width layout (2 charts per row): narrower viewBox so text keeps its size. */
   compact?: boolean;
+  /** Màu riêng cho cột của từng ngân hàng (màu thương hiệu). */
+  colorOf?: (bank: string) => string | undefined;
 }) {
   const [hover, setHover] = useState<number | null>(null);
   if (items.length === 0) return null;
@@ -112,8 +115,10 @@ export default function BankBarChart({
   const grid = Array.from({ length: n + 1 }, (_, i) => ax1.up - i); // in steps, top → bottom
   const cur = hover != null ? items[hover] : null;
   const f2 = fmt2 ?? fmt;
-  const barColor = (v: number, on: boolean) =>
-    signColor ? (v >= 0 ? "var(--heat-up)" : "var(--heat-down)") : on ? "var(--ab-strong)" : "var(--ab-accent)";
+  const barColor = (v: number, on: boolean, bank?: string) =>
+    (bank && colorOf?.(bank)) ||
+    (signColor ? (v >= 0 ? "var(--heat-up)" : "var(--heat-down)") : on ? "var(--ab-strong)" : "var(--ab-accent)");
+  const triColor = colorOf ? "var(--ab-strong)" : "#e07b39";
   const dotColor = (v: number) => (v >= 0 ? "var(--heat-up)" : "var(--heat-down)");
 
   return (
@@ -166,14 +171,14 @@ export default function BankBarChart({
                   width={bw}
                   height={Math.max(1, Math.abs(yv - zeroY))}
                   rx="2"
-                  style={{ fill: barColor(d.v, on) }}
-                  opacity={hover == null || on ? 0.9 : 0.55}
+                  style={{ fill: barColor(d.v, on, d.bank) }}
+                  opacity={hover == null || on ? (colorOf ? 0.95 : 0.9) : colorOf ? 0.35 : 0.55}
                 />
                 {d.v2 != null &&
                   (dot ? (
                     <circle cx={cx(i)} cy={y2(d.v2)} r={on ? 6.5 : 5} style={{ fill: dotColor(d.v2), stroke: "var(--ab-card)" }} strokeWidth="1.5" />
                   ) : (
-                    <path d={`M${cx(i)},${y(d.v2) - 6} l6,10 h-12 z`} style={{ fill: "#e07b39", stroke: "var(--ab-card)" }} strokeWidth="1" />
+                    <path d={`M${cx(i)},${y(d.v2) - 6} l6,10 h-12 z`} style={{ fill: triColor, stroke: "var(--ab-bg)" }} strokeWidth="1.5" />
                   ))}
                 <text
                   x={cx(i)}
@@ -199,7 +204,7 @@ export default function BankBarChart({
             <b className="text-[var(--ab-strong)]">{cur.bank}</b>
             <p className="mt-1 flex items-center justify-between gap-3 tabular-nums">
               <span className="flex items-center gap-1.5 text-[var(--ab-muted)]">
-                <i className="inline-block h-2 w-2 rounded-sm" style={{ background: barColor(cur.v, false) }} />
+                <i className="inline-block h-2 w-2 rounded-sm" style={{ background: barColor(cur.v, false, cur.bank) }} />
                 {label1}
               </span>
               <b>{fmt(cur.v)}</b>
@@ -210,7 +215,7 @@ export default function BankBarChart({
                   <i
                     className={`inline-block h-2 w-2 ${dot ? "rounded-full" : ""}`}
                     style={{
-                      background: dot ? dotColor(cur.v2) : "#e07b39",
+                      background: dot ? dotColor(cur.v2) : triColor,
                       clipPath: dot ? undefined : "polygon(50% 0, 100% 100%, 0 100%)",
                     }}
                   />
@@ -224,8 +229,13 @@ export default function BankBarChart({
       </div>
       <div className="mt-1 flex flex-wrap justify-center gap-x-5 gap-y-1 text-[0.8rem] text-[var(--ab-muted)]">
         <span className="flex items-center gap-1.5">
-          <i className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: signColor ? "var(--heat-up)" : "var(--ab-accent)" }} />
+          {colorOf ? (
+            <i className="inline-block h-2.5 w-4 rounded-sm" style={{ background: "linear-gradient(90deg,#00703C 0 25%,#0067AC 25% 50%,#E31837 50% 75%,#F7941D 75%)" }} />
+          ) : (
+            <i className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: signColor ? "var(--heat-up)" : "var(--ab-accent)" }} />
+          )}
           {label1}
+          {colorOf ? " (màu theo thương hiệu ngân hàng)" : ""}
           {ax2 ? " (trục phải)" : ""}
         </span>
         {label2 && (
@@ -236,7 +246,7 @@ export default function BankBarChart({
                 <i className="-ml-1 inline-block h-2.5 w-2.5 rounded-full" style={{ background: "var(--heat-down)" }} />
               </>
             ) : (
-              <i className="inline-block h-2.5 w-2.5" style={{ background: "#e07b39", clipPath: "polygon(50% 0, 100% 100%, 0 100%)" }} />
+              <i className="inline-block h-2.5 w-2.5" style={{ background: triColor, clipPath: "polygon(50% 0, 100% 100%, 0 100%)" }} />
             )}
             {label2}
             {ax2 ? " (trục trái)" : ""}
