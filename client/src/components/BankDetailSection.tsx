@@ -98,42 +98,67 @@ export default function BankDetailSection({ symbol }: { symbol: string }) {
   }, [symbol]);
 
   if (err) return null;
-  if (!d) return <div aria-busy="true" className="h-[1700px] animate-pulse rounded-md bg-[var(--ab-skel)] md:h-[900px] xl:h-[480px]" />;
+  if (!d) return <div aria-busy="true" className="h-[3400px] animate-pulse rounded-md bg-[var(--ab-skel)] md:h-[1800px] xl:h-[1100px]" />;
 
   const s = d.series;
   const ind = d.industry;
-  const rows = d.quarters.map((q, i) => ({
-    q: qShort(q),
-    deposits: at(s.deposits, i),
-    interbank: at(s.interbank, i),
-    papers: at(s.papers, i),
-    depositYtd: at(s.depositYtd, i),
-    loans: at(s.loans, i),
-    creditYtd: at(s.creditYtd, i),
-    retail: at(s.loanRetail, i),
-    corp: at(s.loanCorp, i),
-    other: at(s.loanOther, i),
-    short: at(s.loanShort, i),
-    mid: at(s.loanMid, i),
-    long: at(s.loanLong, i),
-    nim: at(s.nim, i),
-    nimInd: at(ind.nim, i),
-    casa: at(s.casa, i),
-    casaInd: at(ind.casa, i),
-    npl: at(s.npl, i),
-    nplInd: at(ind.npl, i),
-    g2: at(s.g2, i),
-    pbt: at(s.pbt, i),
-    toi: at(s.toi, i),
-    roe: at(s.roe, i),
-    roeInd: at(ind.roe, i),
-  }));
+  const keys = ["deposits", "interbank", "papers", "depositYtd", "loans", "creditYtd", "loanRetail", "loanCorp", "loanOther", "loanShort", "loanMid", "loanLong",
+    "secRealEstate", "secTrade", "secManufacturing", "secConstruction", "secPersonal", "secOther", "nim", "casa", "cof", "cir", "roe", "roa", "npl", "g2", "llr", "ldr",
+    "yoea", "pbt", "pat", "toi", "nii", "nonii"];
+  const rows = d.quarters.map((q, i) => {
+    const r: Record<string, number | string | null> = { q: qShort(q) };
+    for (const k of keys) {
+      r[k] = at(s[k], i);
+      r[`${k}Ind`] = at(ind[k], i);
+    }
+    const loans = at(s.loans, i);
+    const dep = at(s.deposits, i);
+    r.gap = loans != null && dep != null ? loans - dep : null;
+    const nii = at(s.nii, i);
+    const non = at(s.nonii, i);
+    r.niiShare = nii != null && non != null && nii + non !== 0 ? nii / (nii + non) : null;
+    r.nonShare = nii != null && non != null && nii + non !== 0 ? non / (nii + non) : null;
+    return r;
+  });
   const pct = (v: number) => pctV(v);
+  const pct2 = (v: number) => pctV(v, 2);
   const amt = (v: number) => `${vn(v, 0)} tỷ`;
   const common = { data: rows, margin: { top: 4, right: 2, bottom: 0, left: -6 } };
   const xAxis = <XAxis dataKey="q" tick={axisTick} tickLine={false} axisLine={{ stroke: C.grid }} interval="preserveStartEnd" minTickGap={14} />;
   const grid = <CartesianGrid vertical={false} stroke={C.grid} />;
   const cursor = { fill: "rgba(201,162,74,0.06)" };
+  const lineCursor = { stroke: "rgba(201,162,74,0.35)" };
+  const yPct = (w = 40, d1 = 0) => (
+    <YAxis tick={axisTick} tickLine={false} axisLine={false} width={w} tickFormatter={(v) => `${vn(v * 100, d1)}%`} domain={["auto", "auto"]} />
+  );
+  const legend = <Legend wrapperStyle={legendStyle} iconSize={9} />;
+
+  // Chỉ số của ngân hàng (vàng) so với trung bình ngành (vỏ trứng, nét đứt).
+  const vsInd = (title: string, k: string, digits = 1) => (
+    <Card title={`${title} so với ngành`}>
+      <ResponsiveContainer width="100%" height="100%">
+        <ComposedChart {...common}>
+          {grid}
+          {xAxis}
+          {yPct(44, digits)}
+          <Tooltip cursor={lineCursor} content={<Tip fmts={{ [k]: digits > 1 ? pct2 : pct, [`${k}Ind`]: digits > 1 ? pct2 : pct }} />} />
+          {legend}
+          <Line dataKey={k} name={symbol} stroke={C.gold} strokeWidth={2.25} dot={false} connectNulls />
+          <Line dataKey={`${k}Ind`} name="TB ngành" stroke={C.egg} strokeWidth={1.5} strokeDasharray="5 4" dot={false} connectNulls />
+        </ComposedChart>
+      </ResponsiveContainer>
+    </Card>
+  );
+  const mixRows = (ks: string[]) => rows.filter((r) => ks.reduce((a, k) => a + ((r[k] as number) ?? 0), 0) > 0);
+  const group = (title: string, children: ReactNode) => (
+    <div className="mt-5">
+      <h4 className="mb-2 flex items-center gap-2 text-[0.95rem] font-semibold text-[var(--sm-gold2)]">
+        <span className="h-3 w-[3px] rounded-full bg-[var(--sm-gold)]" aria-hidden="true" />
+        {title}
+      </h4>
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">{children}</div>
+    </div>
+  );
 
   return (
     <section aria-label="Chi tiết ngân hàng" className="mt-2">
@@ -146,7 +171,9 @@ export default function BankDetailSection({ symbol }: { symbol: string }) {
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      {group(
+        "Tổng quan tăng trưởng",
+        <>
           <Card title="Tăng trưởng huy động" note="Cột: nghìn tỷ đồng · đường: tăng trưởng tiền gửi từ đầu năm">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart {...common}>
@@ -155,7 +182,7 @@ export default function BankDetailSection({ symbol }: { symbol: string }) {
                 <YAxis yAxisId="a" tick={axisTick} tickLine={false} axisLine={false} width={40} tickFormatter={thousands} />
                 <YAxis yAxisId="p" orientation="right" tick={axisTick} tickLine={false} axisLine={false} width={40} tickFormatter={pctAxis} />
                 <Tooltip cursor={cursor} content={<Tip fmts={{ deposits: amt, interbank: amt, papers: amt, depositYtd: pct }} />} />
-                <Legend wrapperStyle={legendStyle} iconSize={9} />
+                {legend}
                 <Bar yAxisId="a" dataKey="deposits" name="Tiền gửi KH" stackId="h" fill={C.moss} />
                 <Bar yAxisId="a" dataKey="interbank" name="Tiền gửi TCTD khác" stackId="h" fill={C.mossDark} />
                 <Bar yAxisId="a" dataKey="papers" name="Giấy tờ có giá" stackId="h" fill={C.egg} fillOpacity={0.7} radius={[2, 2, 0, 0]} />
@@ -163,7 +190,6 @@ export default function BankDetailSection({ symbol }: { symbol: string }) {
               </ComposedChart>
             </ResponsiveContainer>
           </Card>
-
           <Card title="Tăng trưởng tín dụng" note="Cột: dư nợ cho vay khách hàng (nghìn tỷ) · đường: tăng trưởng từ đầu năm">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart {...common}>
@@ -172,102 +198,178 @@ export default function BankDetailSection({ symbol }: { symbol: string }) {
                 <YAxis yAxisId="a" tick={axisTick} tickLine={false} axisLine={false} width={40} tickFormatter={thousands} />
                 <YAxis yAxisId="p" orientation="right" tick={axisTick} tickLine={false} axisLine={false} width={40} tickFormatter={pctAxis} />
                 <Tooltip cursor={cursor} content={<Tip fmts={{ loans: amt, creditYtd: pct }} />} />
-                <Legend wrapperStyle={legendStyle} iconSize={9} />
+                {legend}
                 <Bar yAxisId="a" dataKey="loans" name="Cho vay KH" fill={C.moss} radius={[2, 2, 0, 0]} />
                 <Line yAxisId="p" dataKey="creditYtd" name="Tăng trưởng YTD" stroke={C.gold} strokeWidth={2} dot={false} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </Card>
-
-          <Card title="Tỷ trọng cho vay theo nhóm khách hàng" note="Chỉ các quý ngân hàng công bố cơ cấu (thường là quý 2 và quý 4)">
+          <Card title="Tăng trưởng tín dụng và huy động (YTD)">
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart {...common} data={rows.filter((r) => (r.retail ?? 0) + (r.corp ?? 0) > 0)} stackOffset="expand">
+              <ComposedChart {...common}>
                 {grid}
                 {xAxis}
-                <YAxis tick={axisTick} tickLine={false} axisLine={false} width={40} tickFormatter={pctAxis} />
-                <Tooltip cursor={cursor} content={<Tip fmts={{ retail: pct, corp: pct, other: pct }} />} />
-                <Legend wrapperStyle={legendStyle} iconSize={9} />
-                <Bar dataKey="retail" name="Cá nhân" stackId="m" fill={C.gold} />
-                <Bar dataKey="corp" name="Doanh nghiệp" stackId="m" fill={C.moss} />
-                <Bar dataKey="other" name="Khác" stackId="m" fill={C.egg} fillOpacity={0.6} />
+                {yPct()}
+                <Tooltip cursor={lineCursor} content={<Tip fmts={{ creditYtd: pct, depositYtd: pct }} />} />
+                {legend}
+                <Line dataKey="creditYtd" name="Tín dụng" stroke={C.gold} strokeWidth={2.25} dot={false} connectNulls />
+                <Line dataKey="depositYtd" name="Tiền gửi" stroke={C.egg} strokeWidth={1.75} dot={false} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </Card>
+          <Card title="Chênh lệch cho vay và tiền gửi KH" note="Cho vay khách hàng trừ tiền gửi khách hàng, tỷ đồng">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart {...common}>
+                {grid}
+                {xAxis}
+                <YAxis tick={axisTick} tickLine={false} axisLine={false} width={40} tickFormatter={thousands} />
+                <Tooltip cursor={cursor} content={<Tip fmts={{ gap: amt }} />} />
+                {legend}
+                <Bar dataKey="gap" name="Cho vay − tiền gửi (nghìn tỷ)" fill={C.moss} radius={[2, 2, 0, 0]} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </Card>
+        </>
+      )}
 
-          <Card title="Kỳ hạn cho vay">
+      {group(
+        "Cơ cấu cho vay",
+        <>
+          <Card title="Theo nhóm khách hàng" note="Chỉ các quý ngân hàng công bố cơ cấu">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart {...common} data={mixRows(["loanRetail", "loanCorp"])} stackOffset="expand">
+                {grid}
+                {xAxis}
+                <YAxis tick={axisTick} tickLine={false} axisLine={false} width={40} tickFormatter={pctAxis} />
+                <Tooltip cursor={cursor} content={<Tip fmts={{ loanRetail: pct, loanCorp: pct, loanOther: pct }} />} />
+                {legend}
+                <Bar dataKey="loanRetail" name="Cá nhân" stackId="m" fill={C.gold} />
+                <Bar dataKey="loanCorp" name="Doanh nghiệp" stackId="m" fill={C.moss} />
+                <Bar dataKey="loanOther" name="Khác" stackId="m" fill={C.egg} fillOpacity={0.6} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </Card>
+          <Card title="Theo kỳ hạn">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart {...common} data={mixRows(["loanShort", "loanMid", "loanLong"])} stackOffset="expand">
+                {grid}
+                {xAxis}
+                <YAxis tick={axisTick} tickLine={false} axisLine={false} width={40} tickFormatter={pctAxis} />
+                <Tooltip cursor={cursor} content={<Tip fmts={{ loanShort: pct, loanMid: pct, loanLong: pct }} />} />
+                {legend}
+                <Bar dataKey="loanShort" name="Ngắn hạn" stackId="t" fill={C.egg} fillOpacity={0.7} />
+                <Bar dataKey="loanMid" name="Trung hạn" stackId="t" fill={C.moss} />
+                <Bar dataKey="loanLong" name="Dài hạn" stackId="t" fill={C.gold} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </Card>
+          <Card title="Theo ngành kinh tế">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart {...common} data={mixRows(["secRealEstate", "secTrade", "secManufacturing", "secPersonal", "secOther"])} stackOffset="expand">
+                {grid}
+                {xAxis}
+                <YAxis tick={axisTick} tickLine={false} axisLine={false} width={40} tickFormatter={pctAxis} />
+                <Tooltip cursor={cursor} content={<Tip fmts={{ secRealEstate: pct, secTrade: pct, secManufacturing: pct, secConstruction: pct, secPersonal: pct, secOther: pct }} />} />
+                {legend}
+                <Bar dataKey="secRealEstate" name="BĐS" stackId="s" fill={C.gold} />
+                <Bar dataKey="secTrade" name="Thương mại" stackId="s" fill={C.moss} />
+                <Bar dataKey="secManufacturing" name="Sản xuất" stackId="s" fill={C.mossDark} />
+                <Bar dataKey="secConstruction" name="Xây dựng" stackId="s" fill={C.sky} />
+                <Bar dataKey="secPersonal" name="Cá nhân" stackId="s" fill={C.rose} />
+                <Bar dataKey="secOther" name="Khác" stackId="s" fill={C.egg} fillOpacity={0.5} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </Card>
+          <Card title="Lợi suất tài sản sinh lãi (YOEA)">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart {...common}>
+                {grid}
+                {xAxis}
+                {yPct(44, 1)}
+                <Tooltip cursor={lineCursor} content={<Tip fmts={{ yoea: pct, yoeaInd: pct, cof: pct }} />} />
+                {legend}
+                <Line dataKey="yoea" name={`YOEA ${symbol}`} stroke={C.gold} strokeWidth={2.25} dot={false} connectNulls />
+                <Line dataKey="cof" name={`COF ${symbol}`} stroke={C.rose} strokeWidth={1.75} dot={false} connectNulls />
+                <Line dataKey="yoeaInd" name="YOEA ngành" stroke={C.egg} strokeWidth={1.5} strokeDasharray="5 4" dot={false} connectNulls />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </Card>
+        </>
+      )}
+
+      {group(
+        "Nhóm chỉ số hiệu quả so với ngành",
+        <>
+          <Card title="Thu nhập hoạt động" note="Tỷ đồng theo quý">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart {...common}>
+                {grid}
+                {xAxis}
+                <YAxis tick={axisTick} tickLine={false} axisLine={false} width={40} tickFormatter={thousands} />
+                <Tooltip cursor={cursor} content={<Tip fmts={{ nii: amt, nonii: amt, pbt: amt }} />} />
+                {legend}
+                <Bar dataKey="nii" name="Thu nhập lãi thuần" stackId="i" fill={C.moss} />
+                <Bar dataKey="nonii" name="Ngoài lãi" stackId="i" fill={C.egg} fillOpacity={0.7} radius={[2, 2, 0, 0]} />
+                <Line dataKey="pbt" name="LNTT" stroke={C.gold} strokeWidth={2} dot={false} connectNulls />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </Card>
+          <Card title="Cơ cấu thu nhập hoạt động">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart {...common} stackOffset="expand">
                 {grid}
                 {xAxis}
                 <YAxis tick={axisTick} tickLine={false} axisLine={false} width={40} tickFormatter={pctAxis} />
-                <Tooltip cursor={cursor} content={<Tip fmts={{ short: pct, mid: pct, long: pct }} />} />
-                <Legend wrapperStyle={legendStyle} iconSize={9} />
-                <Bar dataKey="short" name="Ngắn hạn" stackId="t" fill={C.egg} fillOpacity={0.7} />
-                <Bar dataKey="mid" name="Trung hạn" stackId="t" fill={C.moss} />
-                <Bar dataKey="long" name="Dài hạn" stackId="t" fill={C.mossDark} />
+                <Tooltip cursor={cursor} content={<Tip fmts={{ niiShare: pct, nonShare: pct }} />} />
+                {legend}
+                <Bar dataKey="niiShare" name="Lãi thuần" stackId="c" fill={C.moss} />
+                <Bar dataKey="nonShare" name="Ngoài lãi" stackId="c" fill={C.gold} />
               </ComposedChart>
             </ResponsiveContainer>
           </Card>
+          {vsInd("ROE 4 quý", "roe")}
+          {vsInd("NIM", "nim")}
+          {vsInd("CASA", "casa")}
+          {vsInd("COF", "cof")}
+          {vsInd("CIR", "cir")}
+          {vsInd("ROA 4 quý", "roa", 2)}
+        </>
+      )}
 
-          <Card title="NIM so với trung bình ngành">
+      {group(
+        "Chất lượng tài sản, thanh khoản & cân đối",
+        <>
+          <Card title="Nợ xấu và nợ nhóm 2">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart {...common}>
                 {grid}
                 {xAxis}
-                <YAxis tick={axisTick} tickLine={false} axisLine={false} width={44} tickFormatter={(v) => `${vn(v * 100, 1)}%`} domain={["auto", "auto"]} />
-                <Tooltip cursor={{ stroke: "rgba(201,162,74,0.35)" }} content={<Tip fmts={{ nim: pct, nimInd: pct }} />} />
-                <Legend wrapperStyle={legendStyle} iconSize={9} />
-                <Line dataKey="nim" name={symbol} stroke={C.gold} strokeWidth={2.25} dot={false} connectNulls />
-                <Line dataKey="nimInd" name="TB ngành" stroke={C.egg} strokeWidth={1.5} strokeDasharray="5 4" dot={false} connectNulls />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </Card>
-
-          <Card title="CASA so với trung bình ngành">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart {...common}>
-                {grid}
-                {xAxis}
-                <YAxis tick={axisTick} tickLine={false} axisLine={false} width={40} tickFormatter={pctAxis} domain={["auto", "auto"]} />
-                <Tooltip cursor={{ stroke: "rgba(201,162,74,0.35)" }} content={<Tip fmts={{ casa: pct, casaInd: pct }} />} />
-                <Legend wrapperStyle={legendStyle} iconSize={9} />
-                <Line dataKey="casa" name={symbol} stroke={C.gold} strokeWidth={2.25} dot={false} connectNulls />
-                <Line dataKey="casaInd" name="TB ngành" stroke={C.egg} strokeWidth={1.5} strokeDasharray="5 4" dot={false} connectNulls />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </Card>
-
-          <Card title="Chất lượng tài sản">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart {...common}>
-                {grid}
-                {xAxis}
-                <YAxis tick={axisTick} tickLine={false} axisLine={false} width={44} tickFormatter={(v) => `${vn(v * 100, 1)}%`} />
-                <Tooltip cursor={cursor} content={<Tip fmts={{ g2: pct, npl: pct, nplInd: pct }} />} />
-                <Legend wrapperStyle={legendStyle} iconSize={9} />
+                {yPct(44, 1)}
+                <Tooltip cursor={cursor} content={<Tip fmts={{ g2: pct2, npl: pct2, nplInd: pct2 }} />} />
+                {legend}
                 <Bar dataKey="g2" name="Nợ nhóm 2" fill={C.egg} fillOpacity={0.35} radius={[2, 2, 0, 0]} />
                 <Line dataKey="npl" name={`NPL ${symbol}`} stroke={C.rose} strokeWidth={2.25} dot={false} connectNulls />
-                <Line dataKey="nplInd" name="NPL TB ngành" stroke={C.egg} strokeWidth={1.5} strokeDasharray="5 4" dot={false} connectNulls />
+                <Line dataKey="nplInd" name="NPL ngành" stroke={C.egg} strokeWidth={1.5} strokeDasharray="5 4" dot={false} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </Card>
-
-          <Card title="Thu nhập và lợi nhuận theo quý" note="Tỷ đồng · ROE 4 quý gần nhất trên trục phải">
+          {vsInd("Bao phủ nợ xấu (LLR)", "llr")}
+          {vsInd("Cho vay / tiền gửi (LDR)", "ldr")}
+          <Card title="Lợi nhuận sau thuế" note="Tỷ đồng theo quý">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart {...common}>
                 {grid}
                 {xAxis}
-                <YAxis yAxisId="a" tick={axisTick} tickLine={false} axisLine={false} width={40} tickFormatter={thousands} />
-                <YAxis yAxisId="p" orientation="right" tick={axisTick} tickLine={false} axisLine={false} width={40} tickFormatter={pctAxis} />
-                <Tooltip cursor={cursor} content={<Tip fmts={{ toi: amt, pbt: amt, roe: pct }} />} />
-                <Legend wrapperStyle={legendStyle} iconSize={9} />
-                <Bar yAxisId="a" dataKey="toi" name="Tổng thu nhập HĐ" fill={C.moss} radius={[2, 2, 0, 0]} />
-                <Bar yAxisId="a" dataKey="pbt" name="LNTT" fill={C.gold} radius={[2, 2, 0, 0]} />
-                <Line yAxisId="p" dataKey="roe" name="ROE 4 quý" stroke={C.egg} strokeWidth={1.75} dot={false} connectNulls />
+                <YAxis tick={axisTick} tickLine={false} axisLine={false} width={40} tickFormatter={thousands} />
+                <Tooltip cursor={cursor} content={<Tip fmts={{ pat: amt, patInd: amt }} />} />
+                {legend}
+                <Bar dataKey="pat" name={`LNST ${symbol}`} fill={C.gold} radius={[2, 2, 0, 0]} />
+                <Line dataKey="patInd" name="TB ngành" stroke={C.egg} strokeWidth={1.5} strokeDasharray="5 4" dot={false} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </Card>
-      </div>
+        </>
+      )}
     </section>
   );
 }
