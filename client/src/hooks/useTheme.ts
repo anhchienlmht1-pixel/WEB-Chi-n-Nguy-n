@@ -14,13 +14,10 @@ const STORAGE_KEY = "bullstock.theme";
 
 export type Theme = "light" | "dark";
 
+// Sơn mài is a dark-only design: the light theme is retired, so a saved
+// "light" choice from before is ignored.
 function readSaved(): Theme {
-  try {
-    const v = localStorage.getItem(STORAGE_KEY);
-    return v === "light" ? "light" : "dark";
-  } catch {
-    return "dark";
-  }
+  return "dark";
 }
 
 let theme: Theme = readSaved();

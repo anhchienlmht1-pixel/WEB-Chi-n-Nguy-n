@@ -1,5 +1,4 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
-import ThemeToggle from "./ThemeToggle";
 import SearchBox from "./SearchBox";
 import StockHeaderInfo from "./StockHeaderInfo";
 import TrendSignalBell from "./TrendSignalBell";
@@ -62,7 +61,6 @@ export default function Header() {
           <div className="min-w-0 flex-1 sm:w-44 sm:flex-none lg:w-56">
             <SearchBox />
           </div>
-          <ThemeToggle />
           <TrendSignalBell />
           <NavLink
             to="/huong-dan-mo-tai-khoan"

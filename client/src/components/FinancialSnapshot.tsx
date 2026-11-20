@@ -1,5 +1,7 @@
 import { useMemo } from "react";
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
@@ -17,10 +19,14 @@ import { fetchFinancials } from "../api/client";
 import { buildQuarterlySeries, average, last, type QuarterRow } from "../utils/financialSeries";
 import { formatPercent } from "../utils/format";
 
-const REVENUE_COLOR = "#93c5fd";
-const PROFIT_COLOR = "#6b9080";
-const PE_COLOR = "#3b82f6";
-const PB_COLOR = "#6b9080";
+// Bảng màu Sơn mài: vàng son cho chỉ tiêu chính (lợi nhuận, ROE, P/E), vỏ trứng
+// cho chỉ tiêu đi kèm (doanh thu, P/B). Lưới chỉ kẻ ngang, rất mờ.
+const REVENUE_COLOR = "#cbbf9f";
+const PROFIT_COLOR = "#d9b155";
+const PE_COLOR = "#d9b155";
+const PB_COLOR = "#cbbf9f";
+const GRID = "rgba(239,231,212,0.07)";
+const AXIS = "#8f9a84";
 const WINDOW = 12;
 
 function fmtBn(v: number | null): string {
@@ -36,8 +42,21 @@ function fmtRatio(v: number | null): string {
 }
 
 function axisTick() {
-  return { fontSize: 10, fill: "currentColor" } as const;
+  return { fontSize: 11, fill: AXIS } as const;
 }
+
+// "Q3 2026" hoặc "Q3/2026" -> "Q3/26" cho trục ngang gọn.
+const shortQ = (l: string) => String(l).replace(/^(Q\d)[\s/]+20(\d\d)$/, "$1/$2");
+const xAxisProps = {
+  dataKey: "label",
+  tick: axisTick(),
+  tickFormatter: shortQ,
+  tickLine: false,
+  axisLine: { stroke: GRID },
+  interval: "preserveStartEnd" as const,
+  minTickGap: 18,
+};
+const yAxisProps = { tick: axisTick(), tickLine: false, axisLine: false };
 
 function ChartTooltip({
   active,
@@ -52,11 +71,15 @@ function ChartTooltip({
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded border border-slate-200 bg-white px-3 py-2 text-xs shadow-sm dark:border-slate-700 dark:bg-slate-900">
-      <div className="font-semibold text-slate-900 dark:text-slate-100">{label}</div>
+    <div className="rounded-md border border-[rgba(201,162,74,0.45)] bg-[#1a2418] px-3 py-2 text-[0.8rem] shadow-lg">
+      <div className="font-semibold text-[var(--sm-egg)]">{label}</div>
       {payload.map((p) => (
-        <div key={p.name} style={{ color: p.color }}>
-          {p.name}: {fmt(p.value)}
+        <div key={p.name} className="mt-0.5 flex items-center justify-between gap-4 tabular-nums">
+          <span className="flex items-center gap-1.5 text-[var(--sm-mut)]">
+            <i className="inline-block h-2 w-2 rounded-full" style={{ background: p.color }} />
+            {p.name}
+          </span>
+          <b className="text-[var(--sm-egg)]">{fmt(p.value)}</b>
         </div>
       ))}
     </div>
@@ -79,25 +102,27 @@ function ChartCard({
   caption: string;
 }) {
   return (
-    <div className="rounded-md border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/40">
-      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-        <h4 className="text-xs font-semibold text-slate-800 dark:text-slate-200">{title}</h4>
+    <div className="flex flex-col rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <h4 className="font-display text-[1.08rem] font-bold text-[var(--sm-egg)]">{title}</h4>
         {latestLabel && (
-          <span className="text-[11px] text-slate-400 dark:text-slate-500">
-            {latestLabel} <span className="font-semibold text-slate-600 dark:text-slate-300">{latestBadge}</span>
+          <span className="text-[0.78rem] text-[var(--sm-mut)]">
+            {latestLabel} <span className="font-semibold text-[var(--sm-egg2)]">{latestBadge}</span>
           </span>
         )}
       </div>
-      <div className="mt-1 flex flex-wrap gap-3 text-[10px] text-slate-500 dark:text-slate-400">
+      <div className="mt-2 flex flex-wrap gap-4 text-[0.78rem] text-[var(--sm-mut)]">
         {legend.map((l) => (
-          <span key={l.label} className="flex items-center gap-1">
-            <span className="inline-block h-2 w-2 rounded-sm" style={{ backgroundColor: l.color }} />
+          <span key={l.label} className="flex items-center gap-1.5">
+            <span className="inline-block h-[3px] w-3.5 rounded-full" style={{ backgroundColor: l.color }} />
             {l.label}
           </span>
         ))}
       </div>
-      <div className="mt-2 h-40">{children}</div>
-      {caption && <p className="mt-2 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">{caption}</p>}
+      <div className="mt-3 h-52">{children}</div>
+      {caption && (
+        <p className="mt-3 border-t border-[var(--sm-line2)] pt-3 text-[0.8rem] leading-relaxed text-[var(--sm-egg2)]">{caption}</p>
+      )}
     </div>
   );
 }
@@ -151,8 +176,8 @@ function profitTrend(rows: QuarterRow[], i: number): { label: string; className:
   const cur = rows[i].yoyProfitPct;
   const prev = rows[i - 1].yoyProfitPct;
   if (cur == null || prev == null) return null;
-  if (cur > prev) return { label: "Tăng tốc ▲", className: "text-green-600 dark:text-green-400" };
-  if (cur < prev) return { label: "Giảm tốc ▼", className: "text-red-600 dark:text-red-400" };
+  if (cur > prev) return { label: "Tăng tốc ▲", className: "up" };
+  if (cur < prev) return { label: "Giảm tốc ▼", className: "down" };
   return { label: "Đi ngang", className: "text-slate-500 dark:text-slate-400" };
 }
 
@@ -181,11 +206,11 @@ export default function FinancialSnapshot({ symbol }: { symbol: string }) {
 
   if (loading && !data) {
     return (
-      <div className="rounded-md border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
-        <div className="h-6 w-64 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
+      <div className="mt-2">
+        <div className="h-7 w-72 animate-pulse rounded bg-[var(--ab-skel)]" />
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-48 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
+            <div key={i} className="h-72 animate-pulse rounded-md bg-[var(--ab-skel)]" />
           ))}
         </div>
       </div>
@@ -198,22 +223,33 @@ export default function FinancialSnapshot({ symbol }: { symbol: string }) {
   const latest = last(rows)!;
 
   return (
-    <div className="rounded-md border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
-          <LineChartIcon className="h-4 w-4 text-slate-400" strokeWidth={1.75} />
-          Tài chính — {WINDOW} quý gần nhất
-        </h3>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          {latest.pe != null && <>P/E hiện tại: {fmtRatio(latest.pe)}</>}
-          {latest.pb != null && <> · P/B hiện tại: {fmtRatio(latest.pb)}</>}
-          {latest.roe != null && <> · ROE hiện tại: {fmtRatio(latest.roe)}%</>}
-        </p>
+    <section className="mt-2">
+      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[rgba(201,162,74,0.35)] pb-4">
+        <div>
+          <h3 className="flex items-center gap-2 font-display text-[1.6rem] leading-tight text-[var(--sm-egg)]">
+            <LineChartIcon className="h-5 w-5 text-[var(--sm-gold2)]" strokeWidth={1.75} aria-hidden="true" />
+            Tài chính {WINDOW} quý gần nhất
+          </h3>
+          <p className="mt-1 text-[0.85rem] text-[var(--sm-mut)]">Từ báo cáo tài chính hợp nhất theo quý · kỳ mới nhất {latest.label}</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {[
+            ["P/E", latest.pe != null ? `${fmtRatio(latest.pe)} lần` : null],
+            ["P/B", latest.pb != null ? `${fmtRatio(latest.pb)} lần` : null],
+            ["ROE", latest.roe != null ? `${fmtRatio(latest.roe)}%` : null],
+          ]
+            .filter(([, v]) => v)
+            .map(([k, v]) => (
+              <span key={k} className="rounded-[2px] border border-[var(--sm-line)] bg-[var(--sm-panel)] px-3 py-1.5 text-[0.85rem]">
+                <span className="text-[var(--sm-mut)]">{k}</span> <b className="tabular-nums text-[var(--sm-egg)]">{v}</b>
+              </span>
+            ))}
+        </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <ChartCard
-          title="Tăng trưởng YoY — Doanh thu & Lợi nhuận"
+          title="Tăng trưởng so với cùng kỳ"
           legend={[
             { label: "%YoY Doanh thu", color: REVENUE_COLOR },
             { label: "%YoY Lợi nhuận", color: PROFIT_COLOR },
@@ -222,19 +258,19 @@ export default function FinancialSnapshot({ symbol }: { symbol: string }) {
         >
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={rows} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-slate-100 dark:stroke-slate-800" />
-              <XAxis dataKey="label" tick={axisTick()} className="text-slate-500 dark:text-slate-400" hide />
-              <YAxis tick={axisTick()} className="text-slate-500 dark:text-slate-400" width={40} tickFormatter={(v) => `${v}%`} />
-              <ReferenceLine y={0} stroke="currentColor" strokeOpacity={0.3} />
-              <Tooltip content={<ChartTooltip fmt={(v) => `${v.toFixed(1)}%`} />} />
-              <Line type="monotone" dataKey="yoyRevenuePct" name="%YoY Doanh thu" stroke={REVENUE_COLOR} strokeWidth={2} dot={false} connectNulls />
-              <Line type="monotone" dataKey="yoyProfitPct" name="%YoY Lợi nhuận" stroke={PROFIT_COLOR} strokeWidth={2} dot={false} connectNulls />
+              <CartesianGrid vertical={false} stroke={GRID} />
+              <XAxis {...xAxisProps} />
+              <YAxis {...yAxisProps} width={44} tickFormatter={(v) => `${v}%`} />
+              <ReferenceLine y={0} stroke="rgba(239,231,212,0.25)" />
+              <Tooltip cursor={{ stroke: "rgba(201,162,74,0.35)", fill: "rgba(201,162,74,0.06)" }} content={<ChartTooltip fmt={(v) => `${v.toFixed(1)}%`} />} />
+              <Line type="monotone" dataKey="yoyRevenuePct" name="%YoY Doanh thu" stroke={REVENUE_COLOR} strokeWidth={1.75} strokeDasharray="5 4" dot={false} activeDot={{ r: 4 }} connectNulls />
+              <Line type="monotone" dataKey="yoyProfitPct" name="%YoY Lợi nhuận" stroke={PROFIT_COLOR} strokeWidth={2.25} dot={{ r: 2.5, fill: PROFIT_COLOR, strokeWidth: 0 }} activeDot={{ r: 5 }} connectNulls />
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
 
         <ChartCard
-          title="Quy mô — Doanh thu & LNST (tỷ đồng)"
+          title="Doanh thu và lợi nhuận sau thuế (tỷ đồng)"
           legend={[
             { label: "Doanh thu", color: REVENUE_COLOR },
             { label: "LNST", color: PROFIT_COLOR },
@@ -242,139 +278,151 @@ export default function FinancialSnapshot({ symbol }: { symbol: string }) {
           caption={scaleCaption(rows)}
         >
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={rows} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
-              <XAxis dataKey="label" tick={axisTick()} className="text-slate-500 dark:text-slate-400" hide />
-              <YAxis tick={axisTick()} className="text-slate-500 dark:text-slate-400" width={40} />
-              <Tooltip content={<ChartTooltip fmt={(v) => `${fmtBn(v)} tỷ`} />} />
-              <Bar dataKey="revenueBn" name="Doanh thu" fill={REVENUE_COLOR} radius={[2, 2, 0, 0]} />
-              <Bar dataKey="netProfitBn" name="LNST" fill={PROFIT_COLOR} radius={[2, 2, 0, 0]} />
+            <BarChart data={rows} margin={{ top: 4, right: 4, bottom: 0, left: 4 }} barGap={2} barCategoryGap="22%">
+              <CartesianGrid vertical={false} stroke={GRID} />
+              <XAxis {...xAxisProps} />
+              <YAxis {...yAxisProps} width={52} tickFormatter={(v) => fmtBn(v)} />
+              <Tooltip cursor={{ stroke: "rgba(201,162,74,0.35)", fill: "rgba(201,162,74,0.06)" }} content={<ChartTooltip fmt={(v) => `${fmtBn(v)} tỷ`} />} />
+              <Bar dataKey="revenueBn" name="Doanh thu" fill={REVENUE_COLOR} fillOpacity={0.45} radius={[3, 3, 0, 0]} />
+              <Bar dataKey="netProfitBn" name="LNST" fill={PROFIT_COLOR} radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
 
         <ChartCard title="ROE theo quý (%)" legend={[{ label: "ROE", color: PROFIT_COLOR }]} caption={roeCaption(rows)}>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={rows} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-slate-100 dark:stroke-slate-800" />
-              <XAxis dataKey="label" tick={axisTick()} className="text-slate-500 dark:text-slate-400" hide />
-              <YAxis tick={axisTick()} className="text-slate-500 dark:text-slate-400" width={40} tickFormatter={(v) => `${v}%`} />
+            <AreaChart data={rows} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
+              <defs>
+                <linearGradient id={`roe-${symbol}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={PROFIT_COLOR} stopOpacity={0.35} />
+                  <stop offset="100%" stopColor={PROFIT_COLOR} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid vertical={false} stroke={GRID} />
+              <XAxis {...xAxisProps} />
+              <YAxis {...yAxisProps} width={44} tickFormatter={(v) => `${v}%`} />
               {average(rows.map((r) => r.roe)) != null && (
-                <ReferenceLine y={average(rows.map((r) => r.roe))!} stroke={PROFIT_COLOR} strokeDasharray="4 4" strokeOpacity={0.5} />
+                <ReferenceLine
+                  y={average(rows.map((r) => r.roe))!}
+                  stroke="rgba(239,231,212,0.45)"
+                  strokeDasharray="4 4"
+                  label={{ value: "TB", position: "insideTopLeft", fill: AXIS, fontSize: 10 }}
+                />
               )}
-              <Tooltip content={<ChartTooltip fmt={(v) => `${v.toFixed(1)}%`} />} />
-              <Line type="monotone" dataKey="roe" name="ROE" stroke={PROFIT_COLOR} strokeWidth={2} dot={false} connectNulls />
-            </LineChart>
+              <Tooltip cursor={{ stroke: "rgba(201,162,74,0.35)" }} content={<ChartTooltip fmt={(v) => `${v.toFixed(1)}%`} />} />
+              <Area type="monotone" dataKey="roe" name="ROE" stroke={PROFIT_COLOR} strokeWidth={2.25} fill={`url(#roe-${symbol})`} dot={false} activeDot={{ r: 5 }} connectNulls />
+            </AreaChart>
           </ResponsiveContainer>
         </ChartCard>
 
         <ChartCard
-          title="Định giá — P/E & P/B (lần)"
+          title="Định giá P/E và P/B (lần)"
           legend={[
-            { label: "P/E", color: PE_COLOR },
-            { label: "P/B", color: PB_COLOR },
+            { label: "P/E (trục trái)", color: PE_COLOR },
+            { label: "P/B (trục phải)", color: PB_COLOR },
           ]}
           caption={valuationCaption(rows)}
         >
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={rows} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-slate-100 dark:stroke-slate-800" />
-              <XAxis dataKey="label" tick={axisTick()} className="text-slate-500 dark:text-slate-400" hide />
-              <YAxis yAxisId="pe" tick={axisTick()} className="text-slate-500 dark:text-slate-400" width={32} />
-              <YAxis yAxisId="pb" orientation="right" tick={axisTick()} className="text-slate-500 dark:text-slate-400" width={32} />
-              <Tooltip content={<ChartTooltip fmt={(v) => v.toFixed(2)} />} />
-              <Line yAxisId="pe" type="monotone" dataKey="pe" name="P/E" stroke={PE_COLOR} strokeWidth={2} dot={false} connectNulls />
-              <Line yAxisId="pb" type="monotone" dataKey="pb" name="P/B" stroke={PB_COLOR} strokeWidth={2} dot={false} connectNulls />
+              <CartesianGrid vertical={false} stroke={GRID} />
+              <XAxis {...xAxisProps} />
+              <YAxis yAxisId="pe" {...yAxisProps} width={36} />
+              <YAxis yAxisId="pb" orientation="right" {...yAxisProps} width={36} />
+              <Tooltip cursor={{ stroke: "rgba(201,162,74,0.35)", fill: "rgba(201,162,74,0.06)" }} content={<ChartTooltip fmt={(v) => v.toFixed(2)} />} />
+              <Line yAxisId="pe" type="monotone" dataKey="pe" name="P/E (trục trái)" stroke={PE_COLOR} strokeWidth={2.25} dot={false} activeDot={{ r: 5 }} connectNulls />
+              <Line yAxisId="pb" type="monotone" dataKey="pb" name="P/B (trục phải)" stroke={PB_COLOR} strokeWidth={1.75} strokeDasharray="5 4" dot={false} activeDot={{ r: 4 }} connectNulls />
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
       </div>
 
-      <div className="mt-4 overflow-x-auto">
-        <table className="w-full min-w-[720px] border-collapse text-xs">
+      <div className="mt-5 overflow-x-auto rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-2">
+        <table className="w-full min-w-[720px] border-collapse text-[0.85rem]">
           <thead>
-            <tr className="border-b border-slate-200 text-left text-slate-500 dark:border-slate-800 dark:text-slate-400">
-              <th className="sticky left-0 bg-white py-1.5 pr-3 font-medium dark:bg-slate-900/40">Quý</th>
+            <tr className="border-b border-[rgba(201,162,74,0.35)] text-left text-[var(--sm-gold2)]">
+              <th className="sticky left-0 whitespace-nowrap bg-[#1a2418] py-2 pr-3 pl-2 font-semibold">Quý</th>
               {rows.map((r) => (
-                <th key={r.label} className="whitespace-nowrap px-2 py-1.5 text-right font-medium">
+                <th key={r.label} className="whitespace-nowrap px-2 py-2 text-right font-semibold">
                   {r.label}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="text-slate-700 dark:text-slate-300">
-            <tr className="border-b border-slate-100 dark:border-slate-900">
-              <td className="sticky left-0 bg-white py-1.5 pr-3 font-medium dark:bg-slate-900/40">Doanh thu (tỷ)</td>
+          <tbody className="text-[var(--sm-egg2)]">
+            <tr className="border-b border-[var(--sm-line2)]">
+              <td className="sticky left-0 whitespace-nowrap bg-[#1a2418] py-2 pr-3 pl-2 font-semibold">Doanh thu (tỷ)</td>
               {rows.map((r) => (
-                <td key={r.label} className="whitespace-nowrap px-2 py-1.5 text-right tabular-nums">
+                <td key={r.label} className="whitespace-nowrap px-2 py-2 text-right tabular-nums">
                   {fmtBn(r.revenueBn)}
                 </td>
               ))}
             </tr>
-            <tr className="border-b border-slate-100 dark:border-slate-900">
-              <td className="sticky left-0 bg-white py-1.5 pr-3 font-medium dark:bg-slate-900/40">LNST (tỷ)</td>
+            <tr className="border-b border-[var(--sm-line2)]">
+              <td className="sticky left-0 whitespace-nowrap bg-[#1a2418] py-2 pr-3 pl-2 font-semibold">LNST (tỷ)</td>
               {rows.map((r) => (
-                <td key={r.label} className="whitespace-nowrap px-2 py-1.5 text-right tabular-nums">
+                <td key={r.label} className="whitespace-nowrap px-2 py-2 text-right tabular-nums">
                   {fmtBn(r.netProfitBn)}
                 </td>
               ))}
             </tr>
-            <tr className="border-b border-slate-100 dark:border-slate-900">
-              <td className="sticky left-0 bg-white py-1.5 pr-3 font-medium dark:bg-slate-900/40">%YoY DT</td>
+            <tr className="border-b border-[var(--sm-line2)]">
+              <td className="sticky left-0 whitespace-nowrap bg-[#1a2418] py-2 pr-3 pl-2 font-semibold">%YoY DT</td>
               {rows.map((r) => (
                 <td
                   key={r.label}
-                  className={`whitespace-nowrap px-2 py-1.5 text-right tabular-nums ${
-                    r.yoyRevenuePct == null ? "" : r.yoyRevenuePct >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                  className={`whitespace-nowrap px-2 py-2 text-right tabular-nums ${
+                    r.yoyRevenuePct == null ? "" : r.yoyRevenuePct >= 0 ? "up" : "down"
                   }`}
                 >
                   {fmtPct(r.yoyRevenuePct)}
                 </td>
               ))}
             </tr>
-            <tr className="border-b border-slate-100 dark:border-slate-900">
-              <td className="sticky left-0 bg-white py-1.5 pr-3 font-medium dark:bg-slate-900/40">%YoY LN</td>
+            <tr className="border-b border-[var(--sm-line2)]">
+              <td className="sticky left-0 whitespace-nowrap bg-[#1a2418] py-2 pr-3 pl-2 font-semibold">%YoY LN</td>
               {rows.map((r) => (
                 <td
                   key={r.label}
-                  className={`whitespace-nowrap px-2 py-1.5 text-right tabular-nums ${
-                    r.yoyProfitPct == null ? "" : r.yoyProfitPct >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                  className={`whitespace-nowrap px-2 py-2 text-right tabular-nums ${
+                    r.yoyProfitPct == null ? "" : r.yoyProfitPct >= 0 ? "up" : "down"
                   }`}
                 >
                   {fmtPct(r.yoyProfitPct)}
                 </td>
               ))}
             </tr>
-            <tr className="border-b border-slate-100 dark:border-slate-900">
-              <td className="sticky left-0 bg-white py-1.5 pr-3 font-medium dark:bg-slate-900/40">ROE (%)</td>
+            <tr className="border-b border-[var(--sm-line2)]">
+              <td className="sticky left-0 whitespace-nowrap bg-[#1a2418] py-2 pr-3 pl-2 font-semibold">ROE (%)</td>
               {rows.map((r) => (
-                <td key={r.label} className="whitespace-nowrap px-2 py-1.5 text-right tabular-nums">
+                <td key={r.label} className="whitespace-nowrap px-2 py-2 text-right tabular-nums">
                   {fmtRatio(r.roe)}
                 </td>
               ))}
             </tr>
-            <tr className="border-b border-slate-100 dark:border-slate-900">
-              <td className="sticky left-0 bg-white py-1.5 pr-3 font-medium dark:bg-slate-900/40">Xu hướng LN</td>
+            <tr className="border-b border-[var(--sm-line2)]">
+              <td className="sticky left-0 whitespace-nowrap bg-[#1a2418] py-2 pr-3 pl-2 font-semibold">Xu hướng LN</td>
               {rows.map((r, i) => {
                 const trend = profitTrend(rows, i);
                 return (
-                  <td key={r.label} className={`whitespace-nowrap px-2 py-1.5 text-right ${trend?.className ?? "text-slate-400"}`}>
+                  <td key={r.label} className={`whitespace-nowrap px-2 py-2 text-right ${trend?.className ?? "text-slate-400"}`}>
                     {trend?.label ?? "—"}
                   </td>
                 );
               })}
             </tr>
-            <tr className="border-b border-slate-100 dark:border-slate-900">
-              <td className="sticky left-0 bg-white py-1.5 pr-3 font-medium dark:bg-slate-900/40">P/E</td>
+            <tr className="border-b border-[var(--sm-line2)]">
+              <td className="sticky left-0 whitespace-nowrap bg-[#1a2418] py-2 pr-3 pl-2 font-semibold">P/E</td>
               {rows.map((r) => (
-                <td key={r.label} className="whitespace-nowrap px-2 py-1.5 text-right tabular-nums">
+                <td key={r.label} className="whitespace-nowrap px-2 py-2 text-right tabular-nums">
                   {fmtRatio(r.pe)}
                 </td>
               ))}
             </tr>
             <tr>
-              <td className="sticky left-0 bg-white py-1.5 pr-3 font-medium dark:bg-slate-900/40">P/B</td>
+              <td className="sticky left-0 whitespace-nowrap bg-[#1a2418] py-2 pr-3 pl-2 font-semibold">P/B</td>
               {rows.map((r) => (
-                <td key={r.label} className="whitespace-nowrap px-2 py-1.5 text-right tabular-nums">
+                <td key={r.label} className="whitespace-nowrap px-2 py-2 text-right tabular-nums">
                   {fmtRatio(r.pb)}
                 </td>
               ))}
@@ -383,10 +431,10 @@ export default function FinancialSnapshot({ symbol }: { symbol: string }) {
         </table>
       </div>
 
-      <p className="mt-3 text-[10px] text-slate-400 dark:text-slate-500">
+      <p className="mt-3 text-[0.78rem] leading-relaxed text-[var(--sm-mut)]">
         Số liệu tổng hợp từ báo cáo tài chính hợp nhất theo quý — %YoY so với cùng kỳ năm trước, đường ngang trên chart
         ROE là mức trung bình {WINDOW} quý. Chỉ mang tính tham khảo, không phải khuyến nghị đầu tư.
       </p>
-    </div>
+    </section>
   );
 }

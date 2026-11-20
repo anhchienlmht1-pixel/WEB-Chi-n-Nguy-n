@@ -2,17 +2,13 @@
 <html lang="vi">
   <head>
     <script>
-      // Apply the saved light/dark choice before the first paint (no flash); see src/hooks/useTheme.ts.
-      try {
-        if (localStorage.getItem("bullstock.theme") !== "light") document.documentElement.classList.add("theme-dark");
-      } catch (e) {
-        document.documentElement.classList.add("theme-dark");
-      }
+      // Giao diện Sơn mài chỉ có nền tối: bật .theme-dark trước lần vẽ đầu (không nháy).
+      document.documentElement.classList.add("theme-dark");
     </script>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon-bullstock.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-bullstock.png" />
-    <meta name="theme-color" content="#ffffff" />
+    <meta name="theme-color" content="#121a11" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
