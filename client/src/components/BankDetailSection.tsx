@@ -64,18 +64,18 @@ const ROWS: Row[] = [
 
 function KpiTable({ d }: { d: Detail }) {
   const n = d.quarters.length - 1;
-  const cell = "px-3 py-2 text-right tabular-nums";
+  const cell = "px-2.5 py-1.5 text-right tabular-nums";
   const tone = (v: number | null, better?: "up" | "down") =>
     v == null || !better || v === 0 ? "text-[var(--sm-egg2)]" : (v > 0) === (better === "up") ? "up" : "down";
   return (
     <div className="overflow-hidden rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)]">
-      <table className="w-full border-collapse text-[0.88rem]">
+      <table className="w-full border-collapse text-[0.84rem]">
         <thead>
           <tr className="border-b border-[rgba(201,162,74,0.45)] text-[var(--sm-gold2)]">
-            <th className="px-3 py-2.5 text-left font-semibold">Chỉ tiêu</th>
-            <th className="px-3 py-2.5 text-right font-semibold">{d.quarters[n]}</th>
-            <th className="px-3 py-2.5 text-right font-semibold">QoQ</th>
-            <th className="px-3 py-2.5 text-right font-semibold">YoY / YTD</th>
+            <th className="px-2.5 py-2 text-left font-semibold">Chỉ tiêu</th>
+            <th className="px-2.5 py-2 text-right font-semibold">{d.quarters[n]}</th>
+            <th className="px-2.5 py-2 text-right font-semibold">QoQ</th>
+            <th className="px-2.5 py-2 text-right font-semibold">YoY / YTD</th>
           </tr>
         </thead>
         <tbody>
@@ -91,7 +91,7 @@ function KpiTable({ d }: { d: Detail }) {
             else if (cur != null && yAgo != null) yoy = cur - yAgo;
             return (
               <tr key={r.key} className="border-b border-[var(--sm-line2)] last:border-b-0">
-                <td className="px-3 py-2 text-[var(--sm-egg)]">{r.label}</td>
+                <td className="px-2.5 py-1.5 text-[var(--sm-egg)]">{r.label}</td>
                 <td className={`${cell} font-semibold text-[var(--sm-egg)]`}>
                   {cur == null ? "—" : r.kind === "pct" ? pctV(cur) : vn(cur, 0)}
                 </td>
@@ -114,10 +114,11 @@ function KpiTable({ d }: { d: Detail }) {
 
 function Card({ title, children, note }: { title: string; children: ReactNode; note?: string }) {
   return (
-    <div className="flex min-w-0 flex-col rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-4">
-      <h4 className="font-display text-[1.05rem] font-bold text-[var(--sm-egg)]">{title}</h4>
-      <div className="mt-3 h-64">{children}</div>
-      {note && <p className="mt-2 text-[0.75rem] text-[var(--sm-mut)]">{note}</p>}
+    <div className="flex min-w-0 flex-col rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] px-3 pt-2.5 pb-2" title={note}>
+      <h4 className="text-[0.88rem] font-semibold text-[var(--sm-egg)]" style={{ fontFamily: "var(--font-sans)" }}>
+        {title}
+      </h4>
+      <div className="mt-1 h-44">{children}</div>
     </div>
   );
 }
@@ -143,8 +144,8 @@ function Tip({ active, payload, label, fmts }: { active?: boolean; payload?: { n
   );
 }
 
-const axisTick = { fontSize: 11, fill: C.axis };
-const legendStyle = { fontSize: 12, color: C.axis, paddingTop: 6 };
+const axisTick = { fontSize: 10, fill: C.axis };
+const legendStyle = { fontSize: 11, color: C.axis, paddingTop: 2, lineHeight: "14px" };
 const thousands = (v: number) => vn(v / 1000, 0);
 const pctAxis = (v: number) => `${vn(v * 100, 0)}%`;
 
@@ -165,7 +166,7 @@ export default function BankDetailSection({ symbol }: { symbol: string }) {
   }, [symbol]);
 
   if (err) return null;
-  if (!d) return <div aria-busy="true" className="h-[600px] animate-pulse rounded-md bg-[var(--ab-skel)]" />;
+  if (!d) return <div aria-busy="true" className="h-[880px] animate-pulse rounded-md bg-[var(--ab-skel)] md:h-[520px]" />;
 
   const s = d.series;
   const ind = d.industry;
@@ -197,28 +198,28 @@ export default function BankDetailSection({ symbol }: { symbol: string }) {
   }));
   const pct = (v: number) => pctV(v);
   const amt = (v: number) => `${vn(v, 0)} tỷ`;
-  const common = { data: rows, margin: { top: 6, right: 6, bottom: 0, left: 0 } };
+  const common = { data: rows, margin: { top: 4, right: 2, bottom: 0, left: -6 } };
   const xAxis = <XAxis dataKey="q" tick={axisTick} tickLine={false} axisLine={{ stroke: C.grid }} interval="preserveStartEnd" minTickGap={14} />;
   const grid = <CartesianGrid vertical={false} stroke={C.grid} />;
   const cursor = { fill: "rgba(201,162,74,0.06)" };
 
   return (
     <section aria-label="Chi tiết ngân hàng" className="mt-2">
-      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[rgba(201,162,74,0.35)] pb-4">
+      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[rgba(201,162,74,0.35)] pb-3">
         <div>
-          <h3 className="font-display text-[1.6rem] leading-tight text-[var(--sm-egg)]">Chi tiết ngân hàng {symbol}</h3>
+          <h3 className="font-display text-[1.35rem] leading-tight text-[var(--sm-egg)]">Chi tiết ngân hàng {symbol}</h3>
           <p className="mt-1 text-[0.85rem] text-[var(--sm-mut)]">
             Theo quý, {d.quarters[0]} – {d.quarters[d.quarters.length - 1]} · nguồn: tổng hợp báo cáo tài chính (file phân tích ngành ngân hàng)
           </p>
         </div>
       </div>
 
-      <div className="mt-5 grid items-start gap-4 xl:grid-cols-12">
-        <div className="xl:sticky xl:top-28 xl:col-span-4">
+      <div className="mt-4 grid items-start gap-3 xl:grid-cols-12">
+        <div className="xl:col-span-4">
           <KpiTable d={d} />
         </div>
 
-        <div className="grid min-w-0 gap-4 md:grid-cols-2 xl:col-span-8">
+        <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:col-span-8">
           <Card title="Tăng trưởng huy động" note="Cột: nghìn tỷ đồng · đường: tăng trưởng tiền gửi từ đầu năm">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart {...common}>
@@ -253,7 +254,7 @@ export default function BankDetailSection({ symbol }: { symbol: string }) {
 
           <Card title="Tỷ trọng cho vay theo nhóm khách hàng" note="Chỉ các quý ngân hàng công bố cơ cấu (thường là quý 2 và quý 4)">
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart {...common} data={rows.filter((r) => r.retail != null || r.corp != null)} stackOffset="expand">
+              <ComposedChart {...common} data={rows.filter((r) => (r.retail ?? 0) + (r.corp ?? 0) > 0)} stackOffset="expand">
                 {grid}
                 {xAxis}
                 <YAxis tick={axisTick} tickLine={false} axisLine={false} width={40} tickFormatter={pctAxis} />
@@ -281,6 +282,10 @@ export default function BankDetailSection({ symbol }: { symbol: string }) {
             </ResponsiveContainer>
           </Card>
 
+        </div>
+      </div>
+
+      <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <Card title="NIM so với trung bình ngành">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart {...common}>
@@ -339,7 +344,6 @@ export default function BankDetailSection({ symbol }: { symbol: string }) {
               </ComposedChart>
             </ResponsiveContainer>
           </Card>
-        </div>
       </div>
     </section>
   );
