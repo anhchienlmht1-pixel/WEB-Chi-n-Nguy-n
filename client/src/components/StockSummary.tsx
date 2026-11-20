@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import Flash from "./Flash";
 import AnimatedNumber from "./AnimatedNumber";
@@ -9,6 +8,7 @@ import { formatMarketCap, formatPrice, trendClass } from "../utils/format";
 import { BVPS_MATCH, EPS_MATCH, findLatest, PB_MATCH, PE_MATCH } from "../utils/ratios";
 import CompanyLogo from "./CompanyLogo";
 import WatchButton from "./WatchButton";
+import PriceOverviewChart from "./PriceOverviewChart";
 
 // Every number here is read straight from the quote, the company profile or the
 // company's own CSTC (financial ratios) report. A row whose figure the data
@@ -52,55 +52,28 @@ function websiteLabel(raw: string): string {
   return raw.replace(/^https?:\/\//i, "").replace(/^www\./i, "").replace(/\/+$/, "");
 }
 
-// One "label ........ value" line. No value -> no row; `loading` shows a
-// placeholder bar instead so the card doesn't jump when the slower sources land.
-function Row({ label, value, title, loading }: { label: string; value?: ReactNode | null; title?: string; loading?: boolean }) {
-  if (!loading && (value == null || value === "")) return null;
-  return (
-    <div
-      title={title}
-      className="flex min-h-11 items-center justify-between gap-3 border-b border-[var(--sm-line2)] px-5 text-[0.92rem] last:border-b-0"
-    >
-      <span className="shrink-0 text-[var(--sm-mut)]">{label}</span>
-      {value == null || value === "" ? (
-        <span className="h-4 w-24 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
-      ) : (
-        <span className="min-w-0 text-right font-semibold tabular-nums text-[var(--sm-egg)]">{value}</span>
-      )}
-    </div>
-  );
+// Giá trần/sàn theo biên độ của sàn (HOSE ±7%, HNX ±10%, UPCoM ±15%), làm tròn
+// theo bước giá: trần làm tròn xuống, sàn làm tròn lên. Chỉ tính khi giá tính
+// bằng đồng (VND) và có giá tham chiếu.
+function limits(ref: number, exchange: string): { ceil: number; floor: number } | null {
+  const ex = exchange.toUpperCase();
+  const band = ex.includes("HOSE") || ex.includes("HSX") ? 0.07 : ex.includes("HNX") ? 0.1 : ex.includes("UPCOM") ? 0.15 : null;
+  if (band == null || !(ref > 0)) return null;
+  const tick = (v: number) => (ex.includes("HOSE") || ex.includes("HSX") ? (v < 10000 ? 10 : v < 50000 ? 50 : 100) : 100);
+  const c = ref * (1 + band);
+  const f = ref * (1 - band);
+  return { ceil: Math.floor(c / tick(c)) * tick(c), floor: Math.ceil(f / tick(f)) * tick(f) };
 }
 
-// Where the price sits between the session's low and high.
-function DayRange({ quote, fmt }: { quote: Quote; fmt: (n: number) => string }) {
-  const { low, high, price } = quote;
-  if (!(high > 0) || !(low > 0) || high < low) return null;
-  const pct = high === low ? 50 : Math.min(100, Math.max(0, ((price - low) / (high - low)) * 100));
+// Ô giá kiểu bảng điện: nhãn nhỏ, số màu theo quy ước (tham chiếu vàng, trần tím,
+// sàn xanh lơ, cao hơn tham chiếu xanh lá, thấp hơn đỏ).
+function BoardCell({ label, value, color }: { label: string; value: string | null; color: string }) {
   return (
-    <div className="mt-4 grid grid-cols-[auto_minmax(0,1fr)_auto] items-end gap-3 text-xs">
-      <div>
-        <div className="text-slate-500 dark:text-slate-400">Giá thấp nhất</div>
-        <div className="mt-0.5 text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-100">
-          {fmt(low)}
-        </div>
-      </div>
-      <div
-        className="relative mb-2 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700"
-        role="img"
-        aria-label={`Giá hiện tại nằm ở ${Math.round(pct)}% khoảng thấp nhất–cao nhất của phiên`}
-      >
-        <div className="h-full rounded-full bg-brand-500" style={{ width: `${pct}%` }} />
-        <span
-          className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-brand-600 shadow dark:border-slate-900"
-          style={{ left: `${pct}%` }}
-        />
-      </div>
-      <div className="text-right">
-        <div className="text-slate-500 dark:text-slate-400">Giá cao nhất</div>
-        <div className="mt-0.5 text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-100">
-          {fmt(high)}
-        </div>
-      </div>
+    <div className="flex min-w-0 flex-col items-center px-1 py-2.5">
+      <span className="text-[0.78rem] text-[var(--sm-mut)]">{label}</span>
+      <b className="mt-0.5 text-[0.98rem] tabular-nums" style={{ color }}>
+        {value ?? "—"}
+      </b>
     </div>
   );
 }
@@ -154,17 +127,38 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
         : formatMarketCap(quote.marketCap, quote.currency)
       : null;
   const room = count(quote.foreignRoom, "CP");
-  const showMiddle = !isIndexOrFutures;
 
-  const sessionRows = [
-    { label: "Giá mở cửa", value: quote.open > 0 ? fmt(quote.open) : null },
-    { label: "Giá tham chiếu", value: quote.prevClose > 0 ? fmt(quote.prevClose) : null },
-    { label: "NN mua", value: count(quote.foreignBuyVolume, "CP") },
-    { label: "NN bán", value: count(quote.foreignSellVolume, "CP") },
-  ].filter((r): r is { label: string; value: string } => r.value !== null);
+  // Bố cục tổng quan: đầu trang (logo, tên, mã, giá, ngành), bên trái biểu đồ
+  // giá + % thay đổi theo khung thời gian, bên phải bảng số liệu phiên và định
+  // giá. Màu số theo quy ước bảng điện Việt Nam.
+  const ref = quote.prevClose;
+  const lim = !isIndexOrFutures && quote.currency === "VND" ? limits(ref, quote.exchange || "") : null;
+  const REF = "#e6c34a";
+  const CEIL = "#d27bff";
+  const FLOOR = "#4fc3f7";
+  const vsRef = (v: number) => (!(ref > 0) || v === ref ? REF : v > ref ? "var(--sm-up)" : "var(--sm-dn)");
+  const priceColor = lim && quote.price >= lim.ceil ? CEIL : lim && quote.price <= lim.floor ? FLOOR : vsRef(quote.price);
+  const pctTxt = `${quote.changePercent > 0 ? "+" : quote.changePercent < 0 ? "−" : ""}${Math.abs(quote.changePercent).toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
+  const updated = new Date(quote.updatedAt);
+  const stat = (label: string, value: string | null) => (
+    <div className="min-w-0">
+      <span className="block text-[0.8rem] text-[var(--sm-mut)]">{label}</span>
+      <b className="mt-0.5 block truncate font-display text-[1.35rem] leading-tight tabular-nums text-[var(--sm-egg)]">{value ?? "—"}</b>
+    </div>
+  );
+  const kv: [string, string | null, boolean?][] = isIndexOrFutures
+    ? [["Nguồn dữ liệu", dataSources.join(" · ") || null]]
+    : [
+        ["NN mua", count(quote.foreignBuyVolume, "")],
+        ["NN bán", count(quote.foreignSellVolume, "")],
+        ["KL lưu hành", count(profile?.outstandingShares, ""), profileLoading && !profile],
+        ["Room NN còn lại", room],
+        ["P/E (lần)", ratio(pe?.value, ""), cstcLoading && !cstc],
+        ["P/B (lần)", ratio(pb?.value, ""), cstcLoading && !cstc],
+        ["EPS (đồng)", perShare(eps?.value)?.replace(" Đồng/CP", "") ?? null, cstcLoading && !cstc],
+        ["BVPS (đồng)", perShare(bvps?.value)?.replace(" Đồng/CP", "") ?? null, cstcLoading && !cstc],
+      ];
 
-  // Bố cục Sơn mài: đường dẫn, mã lớn + tên công ty bên trái, giá lớn bên
-  // phải; bên dưới là bảng số liệu phiên, doanh nghiệp và định giá.
   return (
     <div className="mb-8">
       <nav aria-label="Đường dẫn" className="text-[0.92rem] text-[var(--sm-mut)]">
@@ -174,68 +168,95 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
         <span className="mx-2">/</span>
         <span className="text-[var(--sm-egg2)]">{symbol}</span>
       </nav>
-      <div className="mt-4 flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-3">
-            <CompanyLogo symbol={symbol} size={44} fallback="none" />
-            <h1 className="font-display text-[clamp(2.6rem,5vw,3.5rem)] leading-none text-[var(--sm-egg)]">{symbol}</h1>
-            {quote.exchange && (
-              <span className="rounded-[2px] border border-[var(--sm-gold)] px-2 py-0.5 text-[0.8rem] font-semibold text-[var(--sm-gold2)]">
-                {quote.exchange}
-              </span>
-            )}
+
+      <header className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-4">
+        <div className="grid h-20 w-20 shrink-0 place-items-center rounded-full border border-[var(--sm-line)] bg-[#efe7d4] sm:h-24 sm:w-24">
+          <CompanyLogo symbol={symbol} size={56} fallback="none" />
+        </div>
+        <div className="min-w-0 flex-1">
+          {quote.name && quote.name !== symbol && <p className="truncate text-[1.1rem] text-[var(--sm-egg2)]">{quote.name}</p>}
+          <div className="mt-1 flex flex-wrap items-center gap-3">
+            <h1 className="rounded-[3px] border border-[rgba(201,162,74,0.55)] px-3 py-0.5 font-display text-[1.7rem] leading-tight text-[var(--sm-egg)]">
+              {symbol}
+            </h1>
+            {quote.exchange && <span className="text-[1.05rem] font-semibold text-[var(--sm-egg2)]">{quote.exchange}</span>}
             <WatchButton symbol={symbol} />
           </div>
-          {quote.name && quote.name !== symbol && <p className="mt-2 text-[1.05rem] leading-snug text-[var(--sm-egg2)]">{quote.name}</p>}
-          {website && (
-            <p className="mt-1 truncate text-sm text-[var(--sm-mut)]">
-              Website:{" "}
-              <a href={websiteHref(website)} target="_blank" rel="noopener noreferrer" className="font-semibold text-[var(--sm-gold2)] hover:underline">
-                {websiteLabel(website)}
-              </a>
+          <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span className="font-display text-[clamp(2.2rem,4.5vw,3rem)] font-bold leading-none tabular-nums" style={{ color: priceColor }}>
+              <Flash value={quote.price}>
+                <AnimatedNumber value={quote.price} format={fmt} />
+              </Flash>
+            </span>
+            <span className={`text-[1.15rem] font-semibold tabular-nums ${tone}`}>
+              {arrow} {quote.change > 0 ? "+" : quote.change < 0 ? "−" : ""}
+              {fmt(Math.abs(quote.change))}
+            </span>
+            <span
+              className={`rounded-[3px] px-2 py-0.5 text-[1.05rem] font-semibold tabular-nums ${tone}`}
+              style={{ background: quote.change > 0 ? "rgba(79,209,139,0.14)" : quote.change < 0 ? "rgba(255,107,94,0.14)" : "rgba(239,231,212,0.08)" }}
+            >
+              {pctTxt}
+            </span>
+            <span className="text-[0.88rem] text-[var(--sm-mut)]">
+              {updated.toLocaleDateString("vi-VN")} {updated.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
+            </span>
+          </div>
+          {(quote.sector || website) && (
+            <p className="mt-2 text-[0.92rem] text-[var(--sm-mut)]">
+              {quote.sector && (
+                <>
+                  Ngành: <span className="text-[var(--sm-egg2)]">{quote.sector}</span>
+                </>
+              )}
+              {quote.sector && website && <span className="mx-2">·</span>}
+              {website && (
+                <a href={websiteHref(website)} target="_blank" rel="noopener noreferrer" className="text-[var(--sm-gold2)] hover:underline">
+                  {websiteLabel(website)}
+                </a>
+              )}
             </p>
           )}
         </div>
-        <div className="min-w-[240px] text-left sm:text-right">
-          <div className={`font-display text-[clamp(2.6rem,5vw,3.5rem)] font-bold leading-none tabular-nums ${tone}`}>
-            <Flash value={quote.price}>
-              <AnimatedNumber value={quote.price} format={fmt} />
-            </Flash>
-          </div>
-          <div className={`mt-2 text-base font-semibold tabular-nums ${tone}`}>
-            {arrow} {fmt(Math.abs(quote.change))} ({Math.abs(quote.changePercent).toFixed(2)}%)
-          </div>
-          <DayRange quote={quote} fmt={fmt} />
-        </div>
-      </div>
+      </header>
 
-      <div
-        className={`mt-6 grid overflow-hidden rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] sm:grid-cols-2 ${
-          showMiddle ? "lg:grid-cols-3" : ""
-        } [&>div]:border-[var(--sm-line)] sm:[&>div+div]:border-l`}
-      >
-        <div>
-          {sessionRows.map((r) => (
-            <Row key={r.label} label={r.label} value={r.value} />
-          ))}
+      <div className="mt-6 grid items-stretch gap-4 lg:grid-cols-12">
+        <div className="min-w-0 lg:col-span-7">
+          <PriceOverviewChart symbol={symbol} prevClose={quote.prevClose} price={quote.price} fmt={fmt} />
         </div>
-        {showMiddle && (
-          <div className="border-t sm:border-t-0">
-            <Row label="Vốn hóa" value={marketCap} />
-            <Row label="SLCP lưu hành" value={count(profile?.outstandingShares, "CP")} loading={profileLoading && !profile} />
-            <Row label="Room NĐTNN" value={room} />
-            <Row label="Nguồn dữ liệu" value={dataSources.join(" · ") || null} />
+
+        <div className="flex min-w-0 flex-col rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-4 lg:col-span-5">
+          <div className="grid grid-cols-2 gap-4 border-b border-[var(--sm-line2)] pb-4">
+            {stat("Khối lượng", count(quote.volume, ""))}
+            {isIndexOrFutures
+              ? stat("Giá trị", quote.value ? `${Math.round(quote.value / 1e9).toLocaleString("vi-VN")} tỷ` : null)
+              : stat("Vốn hóa", marketCap ? marketCap.replace(" Tỷ", " tỷ") : null)}
           </div>
-        )}
-        <div className="border-t lg:border-t-0">
-          <Row label="Khối lượng khớp lệnh" value={count(quote.volume, "CP")} />
-          {!isIndexOrFutures && (
-            <>
-              <Row label="P/B" value={ratio(pb?.value, "Lần")} title="Theo báo cáo tài chính quý gần nhất" loading={cstcLoading && !cstc} />
-              <Row label="P/E" value={ratio(pe?.value, "Lần")} title="Theo báo cáo tài chính quý gần nhất" loading={cstcLoading && !cstc} />
-              <Row label="EPS" value={perShare(eps?.value)} title="Theo báo cáo tài chính quý gần nhất" loading={cstcLoading && !cstc} />
-              <Row label="BVPS" value={perShare(bvps?.value)} title="Theo báo cáo tài chính quý gần nhất" loading={cstcLoading && !cstc} />
-            </>
+
+          <div className={`mt-3 grid rounded-[3px] border border-[var(--sm-line2)] bg-[rgba(0,0,0,0.12)] ${lim ? "grid-cols-3 sm:grid-cols-6" : "grid-cols-4"}`}>
+            <BoardCell label="T.chiếu" value={ref > 0 ? fmt(ref) : null} color={REF} />
+            <BoardCell label="Mở cửa" value={quote.open > 0 ? fmt(quote.open) : null} color={vsRef(quote.open)} />
+            {lim && <BoardCell label="Trần" value={fmt(lim.ceil)} color={CEIL} />}
+            {lim && <BoardCell label="Sàn" value={fmt(lim.floor)} color={FLOOR} />}
+            <BoardCell label="Cao" value={quote.high > 0 ? fmt(quote.high) : null} color={vsRef(quote.high)} />
+            <BoardCell label="Thấp" value={quote.low > 0 ? fmt(quote.low) : null} color={vsRef(quote.low)} />
+          </div>
+
+          <dl className="mt-3 grid grid-cols-1 gap-x-6 sm:grid-cols-2">
+            {kv
+              .filter(([, v, l]) => v != null || l)
+              .map(([label, v, l]) => (
+                <div key={label} className="flex min-h-10 items-center justify-between gap-3 border-b border-[var(--sm-line2)]">
+                  <dt className="text-[0.88rem] text-[var(--sm-mut)]">{label}</dt>
+                  <dd className="text-right text-[0.95rem] font-semibold tabular-nums text-[var(--sm-egg)]">
+                    {v ?? <span className="inline-block h-4 w-16 animate-pulse rounded bg-[var(--ab-skel)]" />}
+                  </dd>
+                </div>
+              ))}
+          </dl>
+
+          {!isIndexOrFutures && dataSources.length > 0 && (
+            <p className="mt-auto pt-3 text-[0.75rem] text-[var(--sm-mut)]">Nguồn: {dataSources.join(" · ")}. P/E, P/B, EPS, BVPS theo báo cáo quý gần nhất.</p>
           )}
         </div>
       </div>

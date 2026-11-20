@@ -33,6 +33,8 @@ export interface Quote {
   declines?: number;
   ceilings?: number;
   floors?: number;
+  /** Ngành (server SECTOR_MAP), null khi mã chưa được phân ngành. */
+  sector?: string | null;
 }
 
 export interface HistoryPoint {

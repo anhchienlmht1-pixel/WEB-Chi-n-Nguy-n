@@ -156,7 +156,7 @@ router.get(
       quoteFromOverview(symbol, preferSource) ??
       (await cached(`quote:${symbol}:${preferSource ?? ""}`, 20, () => getQuoteWithFallback(symbol, preferSource)));
     edgeCache(res, 10, 10);
-    res.json({ ...quote, source });
+    res.json({ ...quote, source, sector: SECTOR_MAP[symbol] ?? null });
   })
 );
 
