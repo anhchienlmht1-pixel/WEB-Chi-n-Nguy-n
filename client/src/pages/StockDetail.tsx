@@ -4,7 +4,6 @@ import { useState } from "react";
 import { fetchQuote } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import SeasonalityHeatmap from "../components/SeasonalityHeatmap";
-import NewsFeed from "../components/NewsFeed";
 import BankFundamentals from "../components/BankFundamentals";
 import { isBankSymbol } from "../utils/bankData";
 import SecuritiesFundamentals from "../components/SecuritiesFundamentals";
@@ -20,7 +19,6 @@ import StockSummary from "../components/StockSummary";
 const SIDEBAR_TABS = [
   { key: "tin-hieu", label: "Tín hiệu" },
   { key: "ctck-kn", label: "CTCK KN" },
-  { key: "tin-tuc", label: "Tin tức" },
 ] as const;
 type SidebarTabKey = (typeof SIDEBAR_TABS)[number]["key"];
 
@@ -83,7 +81,6 @@ export default function StockDetail() {
           <div className="mt-4">
             {activeTab === "tin-hieu" && <SystemAssessment symbol={quote.symbol} />}
             {activeTab === "ctck-kn" && <StockOutlookPanel symbol={quote.symbol} />}
-            {activeTab === "tin-tuc" && <NewsFeed symbol={quote.symbol} />}
           </div>
         </section>
       )}
