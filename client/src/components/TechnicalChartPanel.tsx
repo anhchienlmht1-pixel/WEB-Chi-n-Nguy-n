@@ -24,6 +24,7 @@ export default function TechnicalChartPanel({
   onSymbolChange,
   hideStats = false,
   hideDrawingTools = false,
+  fill = false,
 }: {
   symbol: string;
   height?: number;
@@ -42,12 +43,23 @@ export default function TechnicalChartPanel({
   /** Leaves out the drawing tools column (trend line, level, box, text) — the
    * minimal homepage chart. */
   hideDrawingTools?: boolean;
+  /** Stretch to the height of the grid cell it sits in (from lg up); below lg it uses `height`. */
+  fill?: boolean;
 }) {
   const [resolution, setResolution] = useState<ChartResolution>("D");
   const [chartType, setChartType] = useState<ChartType>("candlestick");
   const [drawingTool, setDrawingTool] = useState<DrawingTool>(null);
   const [searchInput, setSearchInput] = useState("");
   const chartRef = useRef<PriceChartHandle>(null);
+  // Fill mode only from lg up, where the chart sits beside the info panel.
+  const [wide, setWide] = useState(() => typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches);
+  useEffect(() => {
+    if (!fill) return;
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const on = () => setWide(mq.matches);
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, [fill]);
   const chartWrapperRef = useRef<HTMLDivElement>(null);
 
   // Clear search input when symbol changes (data loaded)
@@ -140,7 +152,7 @@ export default function TechnicalChartPanel({
       ref={chartWrapperRef}
       onKeyDown={handleChartKeyDown}
       tabIndex={0}
-      className="overflow-hidden rounded-md border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40 focus:outline-none relative"
+      className={`relative overflow-hidden rounded-md border border-slate-200 bg-white focus:outline-none dark:border-slate-800 dark:bg-slate-900/40 ${fill ? "flex h-full flex-col" : ""}`}
     >
       {searchInput && (
         <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 bg-slate-600 text-white px-6 py-3 rounded-md shadow-lg font-bold text-lg">
@@ -159,13 +171,14 @@ export default function TechnicalChartPanel({
         onFullscreen={toggleFullscreen}
       />
 
-      <div className="flex flex-col">
+      <div className={`flex flex-col ${fill ? "min-h-0 flex-1" : ""}`}>
         <div className="flex flex-1">
           {!hideDrawingTools && (
             <DrawingToolbar tool={drawingTool} onSelect={setDrawingTool} onClear={() => chartRef.current?.clearDrawings()} />
           )}
-          <div className="min-w-0 flex-1 p-2">
+          <div className="relative min-w-0 flex-1 p-2" style={fill && wide ? { minHeight: height } : undefined}>
             {chartPoints.length > 0 ? (
+              <div className={fill && wide ? "absolute inset-2" : undefined}>
               <PriceChart
                 ref={chartRef}
                 points={chartPoints}
@@ -175,7 +188,9 @@ export default function TechnicalChartPanel({
                 drawingTool={drawingTool}
                 onDrawingComplete={() => setDrawingTool(null)}
                 height={height}
+                fill={fill && wide}
               />
+              </div>
             ) : (
               <div className="flex items-center justify-center text-slate-400 dark:text-slate-500" style={{ height }}>
                 {historyState.loading

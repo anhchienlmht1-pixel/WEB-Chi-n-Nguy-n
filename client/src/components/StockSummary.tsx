@@ -367,7 +367,7 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
 
       <div className="mt-6 grid items-stretch gap-4 lg:grid-cols-12">
         <div className="min-w-0 lg:col-span-7">
-          <TechnicalChartPanel symbol={symbol} height={460} hideStats />
+          <TechnicalChartPanel symbol={symbol} height={400} hideStats fill />
         </div>
 
         <div className="flex min-w-0 flex-col rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-4 lg:col-span-5">

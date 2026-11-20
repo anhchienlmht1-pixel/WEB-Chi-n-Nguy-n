@@ -43,6 +43,8 @@ interface Props {
   drawingTool: DrawingTool;
   onDrawingComplete: () => void;
   height?: number;
+  /** Stretch to the parent's height (the parent must have one) instead of a fixed height. */
+  fill?: boolean;
 }
 
 const UP = "#22c55e";
@@ -61,7 +63,7 @@ type Drawing =
   | { kind: "hline"; price: number; priceLine: ReturnType<MainSeries["createPriceLine"]> };
 
 const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
-  { points, activeIndicators, signals = [], chartType, drawingTool, onDrawingComplete, height = 420 },
+  { points, activeIndicators, signals = [], chartType, drawingTool, onDrawingComplete, height = 420, fill = false },
   ref
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -114,8 +116,10 @@ const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
         horzLines: { color: dark ? "#1b261b" : "#e2e8f0" },
       },
       rightPriceScale: { borderColor: dark ? "#2a3828" : "#e2e8f0" },
-      timeScale: { borderColor: dark ? "#2a3828" : "#e2e8f0" },
-      height,
+      // Keep the same bars in view when the box widens/narrows, so the
+      // candles always reach the right edge instead of leaving a gap.
+      timeScale: { borderColor: dark ? "#2a3828" : "#e2e8f0", lockVisibleTimeRangeOnResize: true },
+      height: fill ? containerRef.current.clientHeight || height : height,
       width: containerRef.current.clientWidth,
     });
     chartRef.current = chart;
@@ -397,8 +401,9 @@ const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
     });
 
     const resizeObserver = new ResizeObserver((entries) => {
-      const width = entries[0]?.contentRect.width;
-      if (width) chart.applyOptions({ width });
+      const rect = entries[0]?.contentRect;
+      if (!rect?.width) return;
+      chart.applyOptions(fill && rect.height ? { width: rect.width, height: rect.height } : { width: rect.width });
     });
     resizeObserver.observe(containerRef.current);
 
@@ -410,15 +415,15 @@ const PriceChart = forwardRef<PriceChartHandle, Props>(function PriceChart(
       mainSeriesRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [points, theme, indicatorsKey, signalsKey, chartType, height]);
+  }, [points, theme, indicatorsKey, signalsKey, chartType, height, fill]);
 
   return (
-    <div className="relative w-full">
+    <div className={`relative w-full ${fill ? "h-full" : ""}`}>
       <div
         ref={legendRef}
         className="pointer-events-none absolute left-2 top-2 z-10 flex flex-col gap-0.5 rounded bg-white/70 px-2 py-1.5 backdrop-blur-sm"
       />
-      <div ref={containerRef} className="w-full" />
+      <div ref={containerRef} className={`w-full ${fill ? "h-full" : ""}`} />
     </div>
   );
 });
