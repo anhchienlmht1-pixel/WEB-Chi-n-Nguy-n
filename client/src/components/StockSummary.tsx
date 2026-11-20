@@ -168,7 +168,7 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
   return (
     <div className="mb-8">
       <nav aria-label="Đường dẫn" className="text-[0.92rem] text-[var(--sm-mut)]">
-        <Link to="/" className="hover:text-[var(--sm-egg)]">
+        <Link to="/tin-hieu" className="hover:text-[var(--sm-egg)]">
           Tín hiệu
         </Link>
         <span className="mx-2">/</span>

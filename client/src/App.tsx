@@ -15,12 +15,13 @@ function App() {
       <Header />
       <main className="flex-1">
         <Routes>
-          <Route path="/" element={<TrendSignals />} />
+          <Route path="/" element={<About />} />
+          <Route path="/tin-hieu" element={<TrendSignals />} />
           <Route path="/stock/:symbol" element={<StockDetail />} />
           <Route path="/huong-dan-mo-tai-khoan" element={<AccountOpeningGuide />} />
           <Route path="/nganh-ngan-hang" element={<BankSector />} />
           <Route path="/gioi-thieu" element={<About />} />
-          <Route path="*" element={<TrendSignals />} />
+          <Route path="*" element={<About />} />
         </Routes>
       </main>
       <Footer />

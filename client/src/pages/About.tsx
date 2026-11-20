@@ -104,7 +104,7 @@ export default function About() {
               <Link to="/huong-dan-mo-tai-khoan" className={BTN_ORANGE}>
                 Mở tài khoản
               </Link>
-              <Link to={{ pathname: "/", hash: "#tin-hieu" }} className={BTN_GHOST}>
+              <Link to={{ pathname: "/tin-hieu" }} className={BTN_GHOST}>
                 Xem tất cả tín hiệu →
               </Link>
             </div>
@@ -173,7 +173,7 @@ export default function About() {
               </p>
               <p className="mt-4">
                 <Link
-                  to={{ pathname: "/", hash: "#tin-hieu" }}
+                  to={{ pathname: "/tin-hieu" }}
                   className="inline-flex min-h-11 items-center border-b border-[#7c9a6a] text-[1.0625rem] font-bold text-[var(--ab-strong)]"
                 >
                   Xem tín hiệu phiên gần nhất

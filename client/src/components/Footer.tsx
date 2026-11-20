@@ -28,13 +28,13 @@ export default function Footer() {
           <div className="flex flex-wrap gap-x-16 gap-y-8">
             <div className="flex min-w-36 flex-col gap-1">
               <h4 className={HEAD}>Khám phá</h4>
-              <Link to={{ pathname: "/", hash: "#tin-hieu" }} className={LINK}>
+              <Link to={{ pathname: "/tin-hieu" }} className={LINK}>
                 Tín hiệu lệnh
               </Link>
               <Link to="/nganh-ngan-hang" className={LINK}>
                 Ngành ngân hàng
               </Link>
-              <Link to="/gioi-thieu" className={LINK}>
+              <Link to="/" className={LINK}>
                 Giới thiệu
               </Link>
               <Link to="/huong-dan-mo-tai-khoan" className={LINK}>

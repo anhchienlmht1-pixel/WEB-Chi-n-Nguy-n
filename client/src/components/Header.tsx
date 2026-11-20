@@ -15,10 +15,8 @@ const NAV_IDLE = "border-transparent text-[var(--sm-egg2)] hover:text-[var(--sm-
 // It is a .theme-dark surface so the search box and bell read on the green.
 export default function Header() {
   const { pathname } = useLocation();
-  const onGuide = pathname.startsWith("/huong-dan-mo-tai-khoan");
-  const onAbout = pathname.startsWith("/gioi-thieu");
-  const onBank = pathname.startsWith("/nganh-ngan-hang");
-  const onSignals = !onGuide && !onAbout && !onBank;
+  const onAbout = pathname === "/" || pathname.startsWith("/gioi-thieu");
+  const onSignals = pathname.startsWith("/tin-hieu");
 
   return (
     <header className="theme-dark sticky top-0 z-30 border-b border-[rgba(201,162,74,0.35)] bg-[rgba(18,26,17,0.92)]! backdrop-blur-md">
@@ -36,8 +34,11 @@ export default function Header() {
         </NavLink>
 
         <nav aria-label="Điều hướng chính" className="order-last flex w-full items-center gap-6 md:order-none md:w-auto">
+          <Link to="/" aria-current={onAbout ? "page" : undefined} className={`${NAV_BASE} ${onAbout ? NAV_ACTIVE : NAV_IDLE}`}>
+            Giới thiệu
+          </Link>
           <Link
-            to={{ pathname: "/", hash: "#tin-hieu" }}
+            to="/tin-hieu"
             aria-current={onSignals ? "page" : undefined}
             className={`${NAV_BASE} ${onSignals ? NAV_ACTIVE : NAV_IDLE}`}
           >
@@ -45,9 +46,6 @@ export default function Header() {
           </Link>
           <NavLink to="/nganh-ngan-hang" className={({ isActive }) => `${NAV_BASE} ${isActive ? NAV_ACTIVE : NAV_IDLE}`}>
             Ngành ngân hàng
-          </NavLink>
-          <NavLink to="/gioi-thieu" className={({ isActive }) => `${NAV_BASE} ${isActive ? NAV_ACTIVE : NAV_IDLE}`}>
-            Giới thiệu
           </NavLink>
           <NavLink
             to="/huong-dan-mo-tai-khoan"

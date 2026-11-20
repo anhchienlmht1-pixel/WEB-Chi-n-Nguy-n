@@ -365,7 +365,7 @@ export function SonMaiInsights({ quotes, scan, journal }: { quotes?: Quote[]; sc
           foot="16 ngân hàng: chỉ số, định giá, quy mô"
         />
         <InsightCard
-          to="/#nhat-ky"
+          to="/tin-hieu#nhat-ky"
           label="Tín hiệu xu hướng & nhật ký lệnh"
           value={t.length ? `${num((wins / t.length) * 100)}% lệnh thắng` : "—"}
           sub={t.length ? `${wins}/${t.length} lệnh đã đóng · ${scan ? `${scan.items.length} mã đang giữ` : ""}` : "Đang tải…"}
