@@ -11,10 +11,8 @@ import SecuritiesFundamentals from "../components/SecuritiesFundamentals";
 import SecuritiesDetailView from "../components/SecuritiesDetailView";
 import { isSecuritiesSymbol } from "../utils/securitiesData";
 import CompanyProfileCard from "../components/CompanyProfileCard";
-import ForeignFlowPanel from "../components/ForeignFlowPanel";
 import StockOutlookPanel from "../components/StockOutlookPanel";
 import SystemAssessment from "../components/SystemAssessment";
-import PositionTracker from "../components/PositionTracker";
 import AdvisorContactBar from "../components/AdvisorContactBar";
 import FinancialSnapshot from "../components/FinancialSnapshot";
 import StockSummary from "../components/StockSummary";
@@ -85,11 +83,7 @@ export default function StockDetail() {
 
           <div className="mt-4">
             {activeTab === "tong-quan" && (
-              <div className="grid items-start gap-4 lg:grid-cols-3">
-                <PositionTracker symbol={quote.symbol} currency={quote.currency} />
-                <CompanyProfileCard symbol={quote.symbol} fallbackName={quote.name} />
-                <ForeignFlowPanel quote={quote} />
-              </div>
+              <CompanyProfileCard symbol={quote.symbol} fallbackName={quote.name} />
             )}
             {activeTab === "tin-hieu" && <SystemAssessment symbol={quote.symbol} />}
             {activeTab === "ctck-kn" && <StockOutlookPanel symbol={quote.symbol} />}

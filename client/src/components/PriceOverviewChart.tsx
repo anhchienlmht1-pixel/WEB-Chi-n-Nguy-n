@@ -107,7 +107,7 @@ export default function PriceOverviewChart({
 
   return (
     <div className="flex h-full flex-col rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-4">
-      <div className="relative h-[300px]">
+      <div className="relative h-[300px] lg:h-auto lg:min-h-[300px] lg:flex-1">
         {loading && points.length === 0 ? (
           <div className="h-full animate-pulse rounded bg-[var(--ab-skel)]" />
         ) : (

@@ -282,6 +282,12 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
     : [
         ["NN mua", count(quote.foreignBuyVolume, "")],
         ["NN bán", count(quote.foreignSellVolume, "")],
+        [
+          "NN mua − bán ròng",
+          quote.foreignBuyVolume != null && quote.foreignSellVolume != null
+            ? `${quote.foreignBuyVolume - quote.foreignSellVolume > 0 ? "+" : quote.foreignBuyVolume - quote.foreignSellVolume < 0 ? "−" : ""}${Math.abs(Math.round(quote.foreignBuyVolume - quote.foreignSellVolume)).toLocaleString("vi-VN")}`
+            : null,
+        ],
         ["KL lưu hành", count(profile?.outstandingShares, ""), profileLoading && !profile],
         ["Room NN còn lại", room],
         ["P/E (lần)", ratio(pe?.value, ""), cstcLoading && !cstc],
@@ -380,7 +386,11 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
               .map(([label, v]) => (
                 <div key={label} className="flex min-h-10 items-center justify-between gap-3 border-b border-[var(--sm-line2)]">
                   <dt className="text-[0.88rem] text-[var(--sm-mut)]">{label}</dt>
-                  <dd className="text-right text-[0.95rem] font-semibold tabular-nums text-[var(--sm-egg)]">
+                  <dd
+                    className={`text-right text-[0.95rem] font-semibold tabular-nums ${
+                      label.startsWith("NN mua − bán") && v ? (v.startsWith("+") ? "up" : v.startsWith("−") ? "down" : "text-[var(--sm-egg)]") : "text-[var(--sm-egg)]"
+                    }`}
+                  >
                     {v ?? <span className="inline-block h-4 w-16 animate-pulse rounded bg-[var(--ab-skel)]" />}
                   </dd>
                 </div>
