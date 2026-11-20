@@ -37,22 +37,24 @@ export default function TrendSignals() {
     <div id="tin-hieu" className="scroll-mt-20">
       {/* Mở đầu trên nền bảng điện chạy (giống trang Giới thiệu). */}
       <section className="relative overflow-hidden">
-        <PriceBoard />
+        <PriceBoard bright />
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              "linear-gradient(90deg, rgba(var(--ab-bg-rgb),0.96) 0%, rgba(var(--ab-bg-rgb),0.86) 45%, rgba(var(--ab-bg-rgb),0.6) 100%)",
+              "linear-gradient(90deg, rgba(var(--ab-bg-rgb),0.94) 0%, rgba(var(--ab-bg-rgb),0.8) 38%, rgba(var(--ab-bg-rgb),0.25) 62%, rgba(var(--ab-bg-rgb),0.05) 100%)",
           }}
         />
+        {/* Màn hẹp: chữ phủ hết chiều ngang nên che thêm để dễ đọc. */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[rgba(var(--ab-bg-rgb),0.62)] lg:hidden" />
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-0 bottom-0 h-40"
           style={{ background: "linear-gradient(180deg, rgba(var(--ab-bg-rgb),0) 0%, rgba(var(--ab-bg-rgb),1) 100%)" }}
         />
         <div className="gutter-x relative z-[1] mx-auto max-w-[1280px] pb-10">
-          <SonMaiHero scan={scan} journal={journal} />
+          <SonMaiHero />
         </div>
       </section>
     <div className="gutter-x mx-auto max-w-[1280px] pb-16">

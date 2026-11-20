@@ -280,6 +280,7 @@ img {
 
 /* Landing page: a decorative price board scrolling behind the hero. */
 .pb-wrap { position: absolute; inset: -20px -40px; opacity: 0.55; overflow: hidden; pointer-events: none; }
+.pb-wrap.pb-bright { opacity: 0.95; }
 .pb { border-collapse: collapse; width: 100%; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 13px; font-variant-numeric: tabular-nums; animation: pbscroll 40s linear infinite; }
 .pb td { padding: 7px 12px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--ab-pb-line); }
 .pb td.k { background: var(--ab-pb-key); }

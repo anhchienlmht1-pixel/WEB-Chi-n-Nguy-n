@@ -12,13 +12,11 @@ import {
 } from "../api/client";
 import { formatPrice } from "../utils/format";
 
-// Trang chủ theo bố cục Sơn mài: mở đầu chữ 7 cột + thẻ vỏ trứng "Chốt phiên"
-// 4 cột, dải 4 chỉ số hiệu suất, rồi Danh mục đang giữ (8 cột) cạnh Nhật ký
+// Trang chủ theo bố cục Sơn mài: mở đầu chữ 7 cột trên nền bảng điện, dải 4 chỉ số hiệu suất, rồi Danh mục đang giữ (8 cột) cạnh Nhật ký
 // đóng lệnh (4 cột). Số liệu: cùng bộ quét tín hiệu và nhật ký lệnh thật trên
 // server như trước, không thêm nguồn mới.
 
 const POLL_MS = 5 * 60 * 1000;
-const WEEKDAY = ["Chủ nhật", "thứ Hai", "thứ Ba", "thứ Tư", "thứ Năm", "thứ Sáu", "thứ Bảy"];
 
 const day = (iso: string) => iso.slice(0, 10);
 export function dm(iso: string): string {
@@ -28,11 +26,6 @@ export function dm(iso: string): string {
 export function dmy(iso: string): string {
   const [y, m, d] = day(iso).split("-");
   return d && m && y ? `${d}/${m}/${y}` : iso;
-}
-function weekday(iso: string): string {
-  const [y, m, d] = day(iso).split("-").map(Number);
-  if (!y || !m || !d) return "";
-  return WEEKDAY[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
 }
 export function pct(n: number, digits = 1): string {
   const s = Math.abs(n).toLocaleString("vi-VN", { minimumFractionDigits: digits, maximumFractionDigits: digits });
@@ -64,9 +57,9 @@ function Spark({ symbol, up }: { symbol: string; up: boolean }) {
 
 /* ---------------------------------------------------------------- Mở đầu */
 
-export function SonMaiHero({ scan, journal }: { scan?: TrendBuyResult | null; journal?: TradeJournal | null }) {
+export function SonMaiHero() {
   return (
-    <section className="grid gap-x-6 gap-y-10 pt-10 pb-4 lg:grid-cols-12 lg:pt-20">
+    <section className="grid gap-x-6 gap-y-10 pt-14 pb-10 lg:grid-cols-12 lg:pt-24 lg:pb-16">
       <div className="lg:col-span-7">
         <h1 className="text-[clamp(2.4rem,5.2vw,4.1rem)] leading-[1.1] text-[var(--sm-egg)]">
           Kỷ luật theo xu hướng, giữ đến khi xu hướng gãy.
@@ -85,61 +78,7 @@ export function SonMaiHero({ scan, journal }: { scan?: TrendBuyResult | null; jo
           </a>
         </div>
       </div>
-      <div className="lg:col-span-4 lg:col-start-9">
-        <SessionCard scan={scan} journal={journal} />
-      </div>
     </section>
-  );
-}
-
-function SessionCard({ scan, journal }: { scan?: TrendBuyResult | null; journal?: TradeJournal | null }) {
-  const session = scan?.sessionDate ?? "";
-  if (!scan || !session) {
-    return <div aria-busy="true" className="sm-egg h-[300px] animate-pulse opacity-60" />;
-  }
-  const holding = scan.items;
-  const buys = holding.filter((h) => day(h.buyDate) === session);
-  const exits = (journal?.closed ?? []).filter((t) => day(t.sellDate) === session);
-  let rows: { key: string; symbol: string; label: string; value: string; cls: string }[] = [
-    ...buys.map((h) => ({ key: "b" + h.symbol, symbol: h.symbol, label: "Mua mới", value: formatPrice(h.buyPrice, h.currency), cls: "up" })),
-    ...exits.map((t) => ({ key: "s" + t.symbol, symbol: t.symbol, label: "Đóng lệnh", value: pct(t.returnPercent), cls: tone(t.returnPercent) })),
-  ];
-  if (rows.length === 0) {
-    rows = [...holding]
-      .sort((a, b) => b.signalReturnPercent - a.signalReturnPercent)
-      .slice(0, 3)
-      .map((h) => ({ key: "h" + h.symbol, symbol: h.symbol, label: "Đang giữ", value: pct(h.signalReturnPercent), cls: tone(h.signalReturnPercent) }));
-  }
-  return (
-    <div className="sm-egg p-8">
-      <p className="text-[0.95rem] font-semibold text-[#6b5a2a]">
-        Chốt phiên {weekday(session)}, {dm(session)}
-      </p>
-      <div className="mt-4 grid grid-cols-3 gap-4">
-        {[
-          [buys.length, "Mua mới"],
-          [exits.length, "Đóng lệnh"],
-          [holding.length, "Đang giữ"],
-        ].map(([v, l]) => (
-          <div key={l}>
-            <b className="block font-display text-[2.6rem] leading-[1.1] text-[var(--sm-ink)]">{v}</b>
-            <span className="mt-1 block text-[0.9rem] text-[#55604f]">{l}</span>
-          </div>
-        ))}
-      </div>
-      <hr className="my-6 border-0 border-t border-[var(--sm-gold)]" />
-      <ul className="grid gap-3 text-[1rem]">
-        {rows.slice(0, 4).map((r) => (
-          <li key={r.key} className="flex items-baseline justify-between gap-3">
-            <Link to={`/stock/${r.symbol}`} className="hover:underline">
-              <b>{r.symbol}</b>
-              <span className="ml-2 text-[#55604f]">{r.label}</span>
-            </Link>
-            <span className={`tabular-nums ${r.cls}`}>{r.value}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
   );
 }
 

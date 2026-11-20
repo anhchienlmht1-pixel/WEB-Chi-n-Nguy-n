@@ -53,10 +53,10 @@ function buildBoard(): Cell[][] {
 
 const BOARD = buildBoard();
 
-export default function PriceBoard() {
+export default function PriceBoard({ bright = false }: { bright?: boolean }) {
   const rows = [...BOARD, ...BOARD];
   return (
-    <div aria-hidden="true" className="pb-wrap">
+    <div aria-hidden="true" className={`pb-wrap${bright ? " pb-bright" : ""}`}>
       <table className="pb">
         <tbody>
           {rows.map((row, i) => (
