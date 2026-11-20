@@ -235,6 +235,12 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
         : formatMarketCap(quote.marketCap, quote.currency)
       : null;
   const room = count(quote.foreignRoom, "CP");
+  // Sở hữu NN hiện tại, room còn lại (% số CP niêm yết) và trần sở hữu NN đang mở
+  // = đang sở hữu + room còn lại (cùng mẫu số là số CP niêm yết).
+  const p2 = (v: number) => `${v.toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
+  const ownPct = quote.foreignOwnershipPercent;
+  const roomPct = quote.foreignRoomPercent;
+  const capPct = ownPct != null && roomPct != null ? ownPct + roomPct : null;
 
   // Bố cục tổng quan: đầu trang (logo, tên, mã, giá, ngành), bên trái biểu đồ
   // giá + % thay đổi theo khung thời gian, bên phải bảng số liệu phiên và định
@@ -267,6 +273,9 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
         ],
         ["KL lưu hành", count(profile?.outstandingShares, ""), profileLoading && !profile],
         ["Room NN còn lại", room],
+        ["NN đang sở hữu", ownPct != null ? p2(ownPct) : null],
+        ["Room còn lại (%)", roomPct != null ? p2(roomPct) : null],
+        ["Room tối đa NN", capPct != null ? `${p2(Math.round(capPct * 100) / 100)} · NN đã dùng ${p2(((ownPct ?? 0) / capPct) * 100)} room` : null],
         ["P/E (lần)", ratio(pe?.value, ""), cstcLoading && !cstc],
         ["P/B (lần)", ratio(pb?.value, ""), cstcLoading && !cstc],
         ["EPS (đồng)", perShare(eps?.value)?.replace(" Đồng/CP", "") ?? null, cstcLoading && !cstc],
@@ -361,7 +370,7 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
             {kv
               .filter(([, v, l]) => v != null || l)
               .map(([label, v]) => (
-                <div key={label} className={`flex min-h-10 items-center justify-between gap-3 border-b border-[var(--sm-line2)] ${label.startsWith("NN mua − bán") ? "sm:col-span-2" : ""}`}>
+                <div key={label} className={`flex min-h-10 items-center justify-between gap-3 border-b border-[var(--sm-line2)] ${label.startsWith("NN mua − bán") || label === "Room tối đa NN" ? "sm:col-span-2" : ""}`}>
                   <dt className="text-[0.88rem] text-[var(--sm-mut)]">{label}</dt>
                   <dd
                     className={`text-right text-[0.95rem] font-semibold tabular-nums ${
