@@ -263,19 +263,20 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
   const kv: [string, string | null, boolean?][] = isIndexOrFutures
     ? [["Nguồn dữ liệu", dataSources.join(" · ") || null]]
     : [
+        // Xếp theo cặp cố định (trái | phải) để bảng luôn thẳng hàng.
         ["NN mua", count(quote.foreignBuyVolume, "")],
         ["NN bán", count(quote.foreignSellVolume, "")],
         [
-          "NN mua − bán ròng",
+          "NN ròng",
           quote.foreignBuyVolume != null && quote.foreignSellVolume != null
             ? `${quote.foreignBuyVolume - quote.foreignSellVolume > 0 ? "+" : quote.foreignBuyVolume - quote.foreignSellVolume < 0 ? "−" : ""}${Math.abs(Math.round(quote.foreignBuyVolume - quote.foreignSellVolume)).toLocaleString("vi-VN")}`
             : null,
         ],
-        ["KL lưu hành", count(profile?.outstandingShares, ""), profileLoading && !profile],
-        ["Room NN còn lại", room],
         ["NN đang sở hữu", ownPct != null ? p2(ownPct) : null],
+        ["Room còn lại (CP)", room ? room.replace(" CP", "") : null],
         ["Room còn lại (%)", roomPct != null ? p2(roomPct) : null],
-        ["Room tối đa NN", capPct != null ? `${p2(Math.round(capPct * 100) / 100)} · NN đã dùng ${p2(((ownPct ?? 0) / capPct) * 100)} room` : null],
+        ["Room tối đa NN", capPct != null ? p2(Math.round(capPct * 100) / 100) : null],
+        ["KL lưu hành", count(profile?.outstandingShares, ""), profileLoading && !profile],
         ["P/E (lần)", ratio(pe?.value, ""), cstcLoading && !cstc],
         ["P/B (lần)", ratio(pb?.value, ""), cstcLoading && !cstc],
         ["EPS (đồng)", perShare(eps?.value)?.replace(" Đồng/CP", "") ?? null, cstcLoading && !cstc],
@@ -367,17 +368,15 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
           </div>
 
           <dl className="mt-3 grid grid-cols-1 gap-x-6 sm:grid-cols-2">
-            {kv
-              .filter(([, v, l]) => v != null || l)
-              .map(([label, v]) => (
-                <div key={label} className={`flex min-h-10 items-center justify-between gap-3 border-b border-[var(--sm-line2)] ${label.startsWith("NN mua − bán") || label === "Room tối đa NN" ? "sm:col-span-2" : ""}`}>
+            {kv.map(([label, v, l]) => (
+                <div key={label} className="flex min-h-10 items-center justify-between gap-3 border-b border-[var(--sm-line2)]">
                   <dt className="text-[0.88rem] text-[var(--sm-mut)]">{label}</dt>
                   <dd
                     className={`text-right text-[0.95rem] font-semibold tabular-nums ${
-                      label.startsWith("NN mua − bán") && v ? (v.startsWith("+") ? "up" : v.startsWith("−") ? "down" : "text-[var(--sm-egg)]") : "text-[var(--sm-egg)]"
+                      label === "NN ròng" && v ? (v.startsWith("+") ? "up" : v.startsWith("−") ? "down" : "text-[var(--sm-egg)]") : "text-[var(--sm-egg)]"
                     }`}
                   >
-                    {v ?? <span className="inline-block h-4 w-16 animate-pulse rounded bg-[var(--ab-skel)]" />}
+                    {v ?? (l ? <span className="inline-block h-4 w-16 animate-pulse rounded bg-[var(--ab-skel)]" /> : <span className="text-[var(--sm-mut)]">—</span>)}
                   </dd>
                 </div>
               ))}
