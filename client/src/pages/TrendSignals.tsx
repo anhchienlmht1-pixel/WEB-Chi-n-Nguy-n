@@ -5,7 +5,7 @@ import { usePolling } from "../hooks/usePolling";
 import { useWatchlist } from "../hooks/useWatchlist";
 import PriceBoard from "../components/PriceBoardBg";
 import TechnicalChartPanel from "../components/TechnicalChartPanel";
-import { SonMaiHero, SonMaiHoldings, SonMaiJournal, SonMaiKpis, useSignalData } from "../components/SonMaiHome";
+import { SonMaiHero, SonMaiHoldings, SonMaiInsights, SonMaiJournal, SonMaiKpis, useSignalData } from "../components/SonMaiHome";
 
 const DEFAULT_SYMBOL = "VNINDEX";
 
@@ -35,6 +35,9 @@ export default function TrendSignals() {
 
   return (
     <div id="tin-hieu" className="scroll-mt-20">
+      <div className="gutter-x mx-auto max-w-[1280px]">
+        <SonMaiInsights quotes={data?.quotes} scan={scan} journal={journal} />
+      </div>
       {/* Mở đầu trên nền bảng điện chạy (giống trang Giới thiệu). */}
       <section className="relative overflow-hidden">
         <PriceBoard bright />

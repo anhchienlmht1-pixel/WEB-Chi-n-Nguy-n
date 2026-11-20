@@ -11,6 +11,9 @@ import {
   type TrendBuySignal,
 } from "../api/client";
 import { formatPrice } from "../utils/format";
+import type { Quote } from "../types";
+import { BANKS } from "../data/bankSector";
+import { PROFIT } from "../data/bankValuation";
 
 // Trang chủ theo bố cục Sơn mài: mở đầu chữ 7 cột trên nền bảng điện, dải 4 chỉ số hiệu suất, rồi Danh mục đang giữ (8 cột) cạnh Nhật ký
 // đóng lệnh (4 cột). Số liệu: cùng bộ quét tín hiệu và nhật ký lệnh thật trên
@@ -275,5 +278,95 @@ export function SonMaiJournal({ journal }: { journal?: TradeJournal | null }) {
       </div>
       <p className="mt-3 text-[0.82rem] text-[var(--sm-mut)]">Đóng lệnh khi SMA20 cắt xuống SMA50 hoặc Supertrend đảo chiều. Lãi/lỗ tính trên giá đóng cửa, chưa trừ phí và thuế.</p>
     </div>
+  );
+}
+
+/* ------------------------------------------------------------- Insight đầu trang */
+
+const sma = (xs: number[], n: number) => (xs.length >= n ? xs.slice(-n).reduce((a, v) => a + v, 0) / n : NaN);
+
+function InsightCard({ to, label, value, cls, sub, foot }: { to: string; label: string; value: string; cls?: string; sub: string; foot: string }) {
+  return (
+    <Link
+      to={to}
+      className="group flex min-w-0 flex-col rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-3.5 transition-colors sm:p-5 hover:border-[rgba(201,162,74,0.55)]"
+    >
+      <span className="text-[0.78rem] text-[var(--sm-mut)] sm:text-[0.85rem]">{label}</span>
+      <b className={`mt-1.5 font-display text-[1.2rem] leading-[1.15] sm:mt-2 sm:text-[1.75rem] ${cls || "text-[var(--sm-egg)]"}`}>{value}</b>
+      <span className="mt-1.5 text-[0.78rem] leading-snug text-[var(--sm-egg2)] sm:mt-2 sm:text-[0.88rem]">{sub}</span>
+      <span className="mt-auto hidden pt-3 text-[0.78rem] text-[var(--sm-mut)] group-hover:text-[var(--sm-gold2)] sm:block">{foot}</span>
+    </Link>
+  );
+}
+
+// Dải "Insight hôm nay": xu hướng VN-Index (SMA20/50 từ giá đóng cửa), độ rộng
+// thị trường (số mã tăng/giảm của chỉ số), báo cáo tài chính ngân hàng Q3/2026
+// và hiệu suất hệ thống tín hiệu. Chỉ mô tả trạng thái, không dự báo.
+export function SonMaiInsights({ quotes, scan, journal }: { quotes?: Quote[]; scan?: TrendBuyResult | null; journal?: TradeJournal | null }) {
+  const { data: hist } = usePolling(() => fetchHistory("VNINDEX", "6M"), [], POLL_MS);
+  const closes = (hist?.points ?? []).map((p) => p.close).filter((v) => Number.isFinite(v));
+  const last = closes[closes.length - 1];
+  const s20 = sma(closes, 20);
+  const s50 = sma(closes, 50);
+  let trend = "—";
+  let trendCls = "";
+  let trendSub = "Đang tải dữ liệu giá…";
+  if (Number.isFinite(last) && Number.isFinite(s50)) {
+    const above20 = last > s20;
+    const above50 = last > s50;
+    trend = above20 && above50 && s20 > s50 ? "Xu hướng tăng" : !above20 && !above50 && s20 < s50 ? "Xu hướng giảm" : "Đi ngang";
+    trendCls = trend === "Xu hướng tăng" ? "up" : trend === "Xu hướng giảm" ? "down" : "";
+    trendSub = `${num(last, 2)} điểm · ${above20 ? "trên" : "dưới"} SMA20 (${num(s20, 0)}), ${above50 ? "trên" : "dưới"} SMA50 (${num(s50, 0)})`;
+  }
+
+  const vni = quotes?.find((q) => q.symbol === "VNINDEX");
+  const adv = vni?.advances;
+  const dec = vni?.declines;
+  const flat = vni?.noChanges ?? 0;
+  const breadth = adv != null && dec != null ? `${adv} tăng · ${dec} giảm` : "—";
+  const breadthCls = adv != null && dec != null ? (adv > dec ? "up" : adv < dec ? "down" : "") : "";
+
+  const pbt = BANKS.map((b) => PROFIT[b.bank]).filter(Boolean);
+  const pbtNow = pbt.reduce((a, p) => a + p!.pbt, 0);
+  const pbtPrev = pbt.reduce((a, p) => a + p!.pbtPrev, 0);
+  const pbtYoy = pbtPrev ? (pbtNow / pbtPrev - 1) * 100 : 0;
+  const upBanks = pbt.filter((p) => p!.pbt > p!.pbtPrev).length;
+  const roes = BANKS.map((b) => b.v.roe).filter((v): v is number => v != null);
+  const roeAvg = roes.length ? roes.reduce((a, v) => a + v, 0) / roes.length : 0;
+
+  const t = journal?.closed ?? [];
+  const wins = t.filter((x) => x.returnPercent > 0).length;
+
+  return (
+    <section aria-label="Insight hôm nay" className="pt-8">
+      <h2 className="text-[1.35rem] leading-tight">Insight hôm nay</h2>
+      <div className="mt-4 grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
+        <InsightCard to="/stock/VNINDEX" label="Xu hướng VN-Index" value={trend} cls={trendCls} sub={trendSub} foot="Theo đường trung bình 20 và 50 phiên" />
+        <InsightCard
+          to="/stock/VNINDEX"
+          label="Độ rộng thị trường (VN-Index)"
+          value={breadth}
+          cls={breadthCls}
+          sub={adv != null ? `${flat} mã đứng giá · ${scan ? `${scan.items.length} mã đang có tín hiệu giữ` : ""}` : "Đang tải…"}
+          foot="Cập nhật trong phiên"
+        />
+        <InsightCard
+          to="/nganh-ngan-hang"
+          label="BCTC ngân hàng Q3/2026"
+          value={`LNTT ${pct(pbtYoy)}`}
+          cls={tone(pbtYoy)}
+          sub={`${num(pbtNow / 1000, 1)} nghìn tỷ · ${upBanks}/${pbt.length} ngân hàng tăng lợi nhuận · ROE TB ${num(roeAvg, 1)}%`}
+          foot="So với Q3/2025 · xem ngành ngân hàng"
+        />
+        <InsightCard
+          to="/#nhat-ky"
+          label="Hiệu suất tín hiệu"
+          value={t.length ? `${num((wins / t.length) * 100)}% lệnh thắng` : "—"}
+          sub={t.length ? `${wins}/${t.length} lệnh đã đóng · ${scan ? `${scan.items.length} mã đang giữ` : ""}` : "Đang tải…"}
+          foot={journal ? `Từ ${dmy(journal.startDate)}` : ""}
+        />
+      </div>
+      <p className="mt-3 text-[0.78rem] text-[var(--sm-mut)]">Số liệu mô tả trạng thái hiện tại, không phải dự báo hay khuyến nghị mua bán.</p>
+    </section>
   );
 }
