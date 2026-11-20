@@ -238,9 +238,12 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
   // Sở hữu NN hiện tại, room còn lại (% số CP niêm yết) và trần sở hữu NN đang mở
   // = đang sở hữu + room còn lại (cùng mẫu số là số CP niêm yết).
   const p2 = (v: number) => `${v.toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
-  const ownPct = quote.foreignOwnershipPercent;
-  const roomPct = quote.foreignRoomPercent;
-  const capPct = ownPct != null && roomPct != null ? ownPct + roomPct : null;
+  // KBS: FO/LS là TRẦN sở hữu NN được phép (vd ngân hàng tròn 30,00%), FR/LS là
+  // room còn lại -> NN đang sở hữu = trần − room còn lại.
+  const capPct = quote.foreignOwnershipPercent ?? null;
+  const roomPct = quote.foreignRoomPercent ?? null;
+  const ownPct = capPct != null && roomPct != null ? Math.max(0, capPct - roomPct) : null;
+  const usedPct = capPct && ownPct != null ? (ownPct / capPct) * 100 : null;
 
   // Bố cục tổng quan: đầu trang (logo, tên, mã, giá, ngành), bên trái biểu đồ
   // giá + % thay đổi theo khung thời gian, bên phải bảng số liệu phiên và định
@@ -260,27 +263,26 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
       <b className="mt-0.5 block truncate font-display text-[1.35rem] leading-tight tabular-nums text-[var(--sm-egg)]">{value ?? "—"}</b>
     </div>
   );
+  // Khối ngoại: 4 hàng × 2 cột, đặt riêng một khung để dễ phân biệt.
+  const net = quote.foreignBuyVolume != null && quote.foreignSellVolume != null ? quote.foreignBuyVolume - quote.foreignSellVolume : null;
+  const foreign: [string, string | null, string?][] = [
+    ["Mua", count(quote.foreignBuyVolume, "")],
+    ["Bán", count(quote.foreignSellVolume, "")],
+    ["Mua − bán ròng", net == null ? null : `${net > 0 ? "+" : net < 0 ? "−" : ""}${Math.abs(Math.round(net)).toLocaleString("vi-VN")}`, net == null ? undefined : net > 0 ? "up" : net < 0 ? "down" : undefined],
+    ["Đang sở hữu", ownPct != null ? p2(ownPct) : null],
+    ["Room tối đa", capPct != null ? p2(capPct) : null],
+    ["Room còn lại", roomPct != null ? p2(roomPct) : null],
+    ["Room còn lại (CP)", room ? room.replace(" CP", "") : null],
+    ["Đã dùng room", usedPct != null ? p2(usedPct) : null],
+  ];
   const kv: [string, string | null, boolean?][] = isIndexOrFutures
     ? [["Nguồn dữ liệu", dataSources.join(" · ") || null]]
     : [
-        // Xếp theo cặp cố định (trái | phải) để bảng luôn thẳng hàng.
-        ["NN mua", count(quote.foreignBuyVolume, "")],
-        ["NN bán", count(quote.foreignSellVolume, "")],
-        [
-          "NN ròng",
-          quote.foreignBuyVolume != null && quote.foreignSellVolume != null
-            ? `${quote.foreignBuyVolume - quote.foreignSellVolume > 0 ? "+" : quote.foreignBuyVolume - quote.foreignSellVolume < 0 ? "−" : ""}${Math.abs(Math.round(quote.foreignBuyVolume - quote.foreignSellVolume)).toLocaleString("vi-VN")}`
-            : null,
-        ],
-        ["NN đang sở hữu", ownPct != null ? p2(ownPct) : null],
-        ["Room còn lại (CP)", room ? room.replace(" CP", "") : null],
-        ["Room còn lại (%)", roomPct != null ? p2(roomPct) : null],
-        ["Room tối đa NN", capPct != null ? p2(Math.round(capPct * 100) / 100) : null],
-        ["KL lưu hành", count(profile?.outstandingShares, ""), profileLoading && !profile],
         ["P/E (lần)", ratio(pe?.value, ""), cstcLoading && !cstc],
         ["P/B (lần)", ratio(pb?.value, ""), cstcLoading && !cstc],
         ["EPS (đồng)", perShare(eps?.value)?.replace(" Đồng/CP", "") ?? null, cstcLoading && !cstc],
         ["BVPS (đồng)", perShare(bvps?.value)?.replace(" Đồng/CP", "") ?? null, cstcLoading && !cstc],
+        ["KL lưu hành", count(profile?.outstandingShares, ""), profileLoading && !profile],
       ];
 
   return (
@@ -367,19 +369,37 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
             <BoardCell label="Thấp" value={quote.low > 0 ? fmt(quote.low) : null} color={vsRef(quote.low)} />
           </div>
 
-          <dl className="mt-3 grid grid-cols-1 gap-x-6 sm:grid-cols-2">
+          {!isIndexOrFutures && (
+            <div className="mt-3 rounded-[3px] border border-[rgba(127,179,200,0.28)] bg-[rgba(127,179,200,0.05)] px-3 pt-2 pb-1">
+              <p className="flex items-center gap-2 text-[0.8rem] font-semibold text-[#9cc9da]">
+                <span className="h-2.5 w-[3px] rounded-full bg-[#7fb3c8]" aria-hidden="true" />
+                Khối ngoại
+              </p>
+              <dl className="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
+                {foreign.map(([label, v, cls]) => (
+                  <div key={label} className="flex min-h-9 items-center justify-between gap-3 border-b border-[var(--sm-line2)] last:border-b-0 sm:[&:nth-last-child(2)]:border-b-0">
+                    <dt className="text-[0.86rem] text-[var(--sm-mut)]">{label}</dt>
+                    <dd className={`text-right text-[0.93rem] font-semibold tabular-nums ${cls ?? "text-[var(--sm-egg)]"}`}>
+                      {v ?? <span className="text-[var(--sm-mut)]">—</span>}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          )}
+
+          <dl className="mt-2 grid grid-cols-1 gap-x-6 sm:grid-cols-2">
             {kv.map(([label, v, l]) => (
-                <div key={label} className="flex min-h-10 items-center justify-between gap-3 border-b border-[var(--sm-line2)]">
-                  <dt className="text-[0.88rem] text-[var(--sm-mut)]">{label}</dt>
-                  <dd
-                    className={`text-right text-[0.95rem] font-semibold tabular-nums ${
-                      label === "NN ròng" && v ? (v.startsWith("+") ? "up" : v.startsWith("−") ? "down" : "text-[var(--sm-egg)]") : "text-[var(--sm-egg)]"
-                    }`}
-                  >
-                    {v ?? (l ? <span className="inline-block h-4 w-16 animate-pulse rounded bg-[var(--ab-skel)]" /> : <span className="text-[var(--sm-mut)]">—</span>)}
-                  </dd>
-                </div>
-              ))}
+              <div
+                key={label}
+                className={`flex min-h-10 items-center justify-between gap-3 border-b border-[var(--sm-line2)] ${label === "KL lưu hành" ? "sm:col-span-2" : ""}`}
+              >
+                <dt className="text-[0.88rem] text-[var(--sm-mut)]">{label}</dt>
+                <dd className="text-right text-[0.95rem] font-semibold tabular-nums text-[var(--sm-egg)]">
+                  {v ?? (l ? <span className="inline-block h-4 w-16 animate-pulse rounded bg-[var(--ab-skel)]" /> : <span className="text-[var(--sm-mut)]">—</span>)}
+                </dd>
+              </div>
+            ))}
           </dl>
 
           {!isIndexOrFutures && dataSources.length > 0 && (
