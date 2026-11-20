@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { usePolling } from "../hooks/usePolling";
 import { COMPANY_PROFILES } from "../data/companyProfiles";
 import { fetchBankData, isBankSymbol } from "../utils/bankData";
@@ -104,107 +104,52 @@ export default function CompanyProfileCard({ symbol, fallbackName }: { symbol: s
   const headquarters = profile?.headquarters ?? liveProfile?.address ?? null;
   const website = profile?.website ?? liveProfile?.website ?? null;
   const description = profile?.description ?? liveProfile?.businessModel ?? null;
-  const hasLeadership = (liveProfile?.officers.length ?? 0) > 0 || liveProfile?.ceoName;
-  const hasShareholders = (liveProfile?.shareholders.length ?? 0) > 0;
+  const [more, setMore] = useState(false);
+  const name = profile?.fullName ?? displayName ?? fallbackName ?? upper;
+  void figures;
+  void period;
 
-  if (!profile && figures.length === 0 && !liveProfile) return null;
+  if (!profile && !liveProfile && !displayName) return null;
 
+  // Bản gọn: logo, tên công ty, một dòng thông tin, đoạn giới thiệu có vạch
+  // vàng bên trái (rút gọn 3 dòng, bấm "Xem thêm" để mở hết).
   return (
-    <div className="overflow-hidden rounded-md border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40">
-      <div className="flex flex-wrap items-start justify-between gap-4 p-4">
-        <div className="flex min-w-0 items-start gap-3">
-          <CompanyLogo symbol={upper} size={44} fallback="none" />
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                {profile?.fullName ?? displayName ?? fallbackName ?? upper}
-              </h3>
-              {profile?.sector && (
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                  {profile.sector}
-                </span>
-              )}
-            </div>
-            <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
-              {founded && <span>Thành lập {founded}</span>}
-              {headquarters && <span>Trụ sở: {headquarters}</span>}
-              {liveProfile?.ceoName && (
-                <span>
-                  {liveProfile.ceoPosition ?? "CEO"}: {liveProfile.ceoName}
-                </span>
-              )}
-              {website && (
-                <a
-                  href={website.startsWith("http") ? website : `https://${website}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-slate-600 hover:underline dark:text-slate-300"
-                >
-                  {website}
-                </a>
-              )}
-            </div>
-            {description && (
-              <p className="mt-2 max-w-3xl text-sm text-slate-600 dark:text-slate-300">{description}</p>
+    <div className="flex flex-col gap-5 rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-5 sm:flex-row sm:items-start">
+      <div className="grid h-24 w-full shrink-0 place-items-center rounded-md bg-[#efe7d4] sm:w-40">
+        <CompanyLogo symbol={upper} size={64} fallback="none" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <h3 className="font-display text-[1.5rem] leading-tight text-[var(--sm-gold2)]">{name}</h3>
+        <p className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[0.85rem] text-[var(--sm-mut)]">
+          {founded && <span>Thành lập {founded}</span>}
+          {headquarters && <span>· {headquarters}</span>}
+          {website && (
+            <a
+              href={website.startsWith("http") ? website : `https://${website}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[var(--sm-gold2)] hover:underline"
+            >
+              · {website.replace(/^https?:\/\//, "")}
+            </a>
+          )}
+        </p>
+        {description && (
+          <div className="mt-3 border-l-2 border-[var(--sm-gold)] pl-4">
+            <p className={`max-w-[75ch] text-[0.95rem] leading-relaxed text-[var(--sm-egg2)] ${more ? "" : "line-clamp-3"}`}>{description}</p>
+            {description.length > 260 && (
+              <button type="button" onClick={() => setMore((v) => !v)} className="mt-1 text-[0.85rem] font-semibold text-[var(--sm-gold2)] hover:underline">
+                {more ? "Thu gọn" : "Xem thêm"}
+              </button>
             )}
           </div>
-        </div>
+        )}
+        {liveProfile && (
+          <p className="mt-3 text-[0.72rem] text-[var(--sm-mut)]">
+            Nguồn hồ sơ: {liveProfile.source === "VCI" ? "Vietcap (VCI)" : "KB Securities (KBS)"}
+          </p>
+        )}
       </div>
-
-      {figures.length > 0 && (
-        <div className="grid grid-cols-2 gap-px border-t border-slate-200 bg-slate-200 dark:border-slate-800 dark:bg-slate-800 sm:grid-cols-4">
-          {figures.map((f) => (
-            <div key={f.label} className="bg-white p-3 dark:bg-slate-900">
-              <div className="text-xs text-slate-500 dark:text-slate-400">{f.label}</div>
-              <div className="mt-0.5 font-semibold tabular-nums text-slate-900 dark:text-slate-100">{f.value}</div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {(hasLeadership || hasShareholders) && (
-        <div className="grid grid-cols-1 gap-px border-t border-slate-200 bg-slate-200 dark:border-slate-800 dark:bg-slate-800 sm:grid-cols-2">
-          {hasLeadership && (
-            <div className="bg-white p-3 dark:bg-slate-900">
-              <div className="mb-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">Ban lãnh đạo</div>
-              <ul className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
-                {liveProfile!.officers.slice(0, 5).map((o, i) => (
-                  <li key={i} className="flex justify-between gap-2">
-                    <span className="truncate">{o.position ?? "—"}</span>
-                    <span className="shrink-0 font-medium text-slate-900 dark:text-slate-100">{o.name ?? "—"}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {hasShareholders && (
-            <div className="bg-white p-3 dark:bg-slate-900">
-              <div className="mb-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">Cổ đông lớn</div>
-              <ul className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
-                {liveProfile!.shareholders.slice(0, 5).map((s, i) => (
-                  <li key={i} className="flex justify-between gap-2">
-                    <span className="truncate">{s.name ?? "—"}</span>
-                    <span className="shrink-0 font-medium tabular-nums text-slate-900 dark:text-slate-100">
-                      {s.ownershipPercent != null ? `${s.ownershipPercent.toLocaleString("vi-VN")}%` : "—"}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      )}
-
-      {(period || liveProfile) && (
-        <div className="border-t border-slate-200 px-4 py-2 text-[11px] text-slate-400 dark:border-slate-800 dark:text-slate-500">
-          {period && `Số liệu tại kỳ ${period} — nguồn: dữ liệu tự tổng hợp (Excel).`}
-          {period && liveProfile && " "}
-          {liveProfile &&
-            `Thông tin hồ sơ công ty — nguồn: ${
-              liveProfile.source === "VCI" ? "Vietcap (VCI)" : "KB Securities (KBS)"
-            }.`}
-        </div>
-      )}
     </div>
   );
 }
