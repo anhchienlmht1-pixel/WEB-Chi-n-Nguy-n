@@ -243,7 +243,6 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
   const capPct = quote.foreignOwnershipPercent ?? null;
   const roomPct = quote.foreignRoomPercent ?? null;
   const ownPct = capPct != null && roomPct != null ? Math.max(0, capPct - roomPct) : null;
-  const usedPct = capPct && ownPct != null ? (ownPct / capPct) * 100 : null;
 
   // Bố cục tổng quan: đầu trang (logo, tên, mã, giá, ngành), bên trái biểu đồ
   // giá + % thay đổi theo khung thời gian, bên phải bảng số liệu phiên và định
@@ -269,11 +268,10 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
     ["Mua", count(quote.foreignBuyVolume, "")],
     ["Bán", count(quote.foreignSellVolume, "")],
     ["Mua − bán ròng", net == null ? null : `${net > 0 ? "+" : net < 0 ? "−" : ""}${Math.abs(Math.round(net)).toLocaleString("vi-VN")}`, net == null ? undefined : net > 0 ? "up" : net < 0 ? "down" : undefined],
-    ["Đang sở hữu", ownPct != null ? p2(ownPct) : null],
     ["Room tối đa", capPct != null ? p2(capPct) : null],
-    ["Room còn lại", roomPct != null ? p2(roomPct) : null],
+    ["Đang sở hữu", ownPct != null ? p2(ownPct) : null],
     ["Room còn lại (CP)", room ? room.replace(" CP", "") : null],
-    ["Đã dùng room", usedPct != null ? p2(usedPct) : null],
+    ["Room còn lại (%)", roomPct != null ? p2(roomPct) : null],
   ];
   const kv: [string, string | null, boolean?][] = isIndexOrFutures
     ? [["Nguồn dữ liệu", dataSources.join(" · ") || null]]
@@ -377,7 +375,10 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
               </p>
               <dl className="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
                 {foreign.map(([label, v, cls]) => (
-                  <div key={label} className="flex min-h-9 items-center justify-between gap-3 border-b border-[var(--sm-line2)] last:border-b-0 sm:[&:nth-last-child(2)]:border-b-0">
+                  <div
+                    key={label}
+                    className={`flex min-h-9 items-center justify-between gap-3 border-b border-[var(--sm-line2)] last:border-b-0 sm:[&:nth-last-child(2)]:border-b-0 ${label === "Mua − bán ròng" ? "sm:col-span-2" : ""}`}
+                  >
                     <dt className="text-[0.86rem] text-[var(--sm-mut)]">{label}</dt>
                     <dd className={`text-right text-[0.93rem] font-semibold tabular-nums ${cls ?? "text-[var(--sm-egg)]"}`}>
                       {v ?? <span className="text-[var(--sm-mut)]">—</span>}
