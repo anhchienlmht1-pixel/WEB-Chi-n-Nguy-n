@@ -85,8 +85,7 @@ const ddmm = (sec: number) =>
   new Date(sec * 1000).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Asia/Ho_Chi_Minh" });
 
 // Thẻ "Tín hiệu hiện tại": trạng thái của hệ thống ở phiên đã đóng gần nhất,
-// giá/ngày mua và lãi/lỗ nếu đang giữ, 3 điều kiện ✓/✗ và tóm tắt các lệnh đã
-// đóng của mã. Tính từ chính lịch sử giá, chốt sau 15:00 (không thời gian thực).
+// giá/ngày mua và lãi/lỗ nếu đang giữ, và tóm tắt các lệnh đã đóng của mã. Tính từ chính lịch sử giá, chốt sau 15:00 (không thời gian thực).
 function SignalCard({
   signals,
   cond,
@@ -131,12 +130,6 @@ function SignalCard({
   const avg = closes.length ? closes.reduce((a, v) => a + v, 0) / closes.length : null;
   const pctS = (v: number) => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v).toLocaleString("vi-VN", { maximumFractionDigits: 1 })}%`;
 
-  const checks: [string, boolean, string][] = [
-    ["SMA20 trên SMA50", cond.sma20 > cond.sma50, `${fmt(cond.sma20 * scale)} / ${fmt(cond.sma50 * scale)}`],
-    ["ADX trên 25", cond.adx > 25, cond.adx.toLocaleString("vi-VN", { maximumFractionDigits: 1 })],
-    ["Supertrend hướng lên", cond.supertrendUp, cond.supertrendUp ? "Lên" : "Xuống"],
-  ];
-
   return (
     <div className="mb-4 border-b border-[var(--sm-line2)] pb-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -154,22 +147,6 @@ function SignalCard({
           </span>
         )}
       </div>
-      <ul className="mt-3 grid gap-1.5">
-        {checks.map(([label, ok, val]) => (
-          <li key={label} className="flex items-center justify-between gap-3 text-[0.9rem]">
-            <span className="flex items-center gap-2">
-              <b className={`grid h-5 w-5 place-items-center rounded-full text-[0.75rem] ${ok ? "bg-[rgba(79,209,139,0.18)] text-[var(--sm-up)]" : "bg-[rgba(255,107,94,0.16)] text-[var(--sm-dn)]"}`}>
-                {ok ? "✓" : "✗"}
-              </b>
-              <span className="text-[var(--sm-egg2)]">{label}</span>
-            </span>
-            <span className="tabular-nums text-[var(--sm-mut)]">{val}</span>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-2 text-[0.75rem] leading-relaxed text-[var(--sm-mut)]">
-        Đủ 3 ✓ là mua; SMA20 xuống dưới SMA50 hoặc Supertrend đảo xuống là đóng lệnh.
-      </p>
       {closes.length > 0 && (
         <div className="mt-3 grid grid-cols-3 gap-2 rounded-[3px] border border-[var(--sm-line2)] p-2 text-center">
           <div>
@@ -384,7 +361,7 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
             {kv
               .filter(([, v, l]) => v != null || l)
               .map(([label, v]) => (
-                <div key={label} className="flex min-h-10 items-center justify-between gap-3 border-b border-[var(--sm-line2)]">
+                <div key={label} className={`flex min-h-10 items-center justify-between gap-3 border-b border-[var(--sm-line2)] ${label.startsWith("NN mua − bán") ? "sm:col-span-2" : ""}`}>
                   <dt className="text-[0.88rem] text-[var(--sm-mut)]">{label}</dt>
                   <dd
                     className={`text-right text-[0.95rem] font-semibold tabular-nums ${
