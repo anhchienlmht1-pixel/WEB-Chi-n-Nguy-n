@@ -150,12 +150,19 @@ export default function BankDetailSection({ symbol }: { symbol: string }) {
     </Card>
   );
   const mixRows = (ks: string[]) => rows.filter((r) => ks.reduce((a, k) => a + ((r[k] as number) ?? 0), 0) > 0);
-  const group = (title: string, children: ReactNode) => (
-    <div className="mt-5">
-      <h4 className="mb-2 flex items-center gap-2 text-[0.95rem] font-semibold text-[var(--sm-gold2)]">
-        <span className="h-3 w-[3px] rounded-full bg-[var(--sm-gold)]" aria-hidden="true" />
-        {title}
-      </h4>
+  // Tiêu đề nhóm, bên cạnh là ghi chú "Cách đọc" ngắn cho người mới.
+  const group = (title: string, guide: string, children: ReactNode) => (
+    <div className="mt-6">
+      <div className="mb-2.5 flex flex-col gap-1.5 lg:flex-row lg:items-baseline lg:gap-5">
+        <h4 className="flex shrink-0 items-center gap-2 text-[0.95rem] font-semibold text-[var(--sm-gold2)]">
+          <span className="h-3 w-[3px] rounded-full bg-[var(--sm-gold)]" aria-hidden="true" />
+          {title}
+        </h4>
+        <p className="text-[0.8rem] leading-relaxed text-[var(--sm-mut)]">
+          <b className="font-semibold text-[var(--sm-egg2)]">Cách đọc: </b>
+          {guide}
+        </p>
+      </div>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">{children}</div>
     </div>
   );
@@ -173,6 +180,7 @@ export default function BankDetailSection({ symbol }: { symbol: string }) {
 
       {group(
         "Tổng quan tăng trưởng",
+        "cột là quy mô (nghìn tỷ đồng), đường vàng là tăng trưởng từ đầu năm (YTD). Tín dụng tăng nhanh hơn tiền gửi thì chênh lệch cho vay − tiền gửi nới rộng, ngân hàng phải dựa nhiều hơn vào vốn liên ngân hàng và giấy tờ có giá.",
         <>
           <Card title="Tăng trưởng huy động" note="Cột: nghìn tỷ đồng · đường: tăng trưởng tiền gửi từ đầu năm">
             <ResponsiveContainer width="100%" height="100%">
@@ -234,6 +242,7 @@ export default function BankDetailSection({ symbol }: { symbol: string }) {
 
       {group(
         "Cơ cấu cho vay",
+        "mỗi cột là 100% dư nợ, chia theo nhóm. Tỷ trọng cá nhân, BĐS, dài hạn cao thường cho lợi suất cao hơn nhưng rủi ro và kỳ hạn dài hơn. Khoảng cách giữa YOEA (lợi suất) và COF (chi phí vốn) càng rộng thì biên lãi càng tốt.",
         <>
           <Card title="Theo nhóm khách hàng" note="Chỉ các quý ngân hàng công bố cơ cấu">
             <ResponsiveContainer width="100%" height="100%">
@@ -299,6 +308,7 @@ export default function BankDetailSection({ symbol }: { symbol: string }) {
 
       {group(
         "Nhóm chỉ số hiệu quả so với ngành",
+        "đường vàng là ngân hàng, nét đứt là trung bình 16 ngân hàng. ROE, ROA, NIM, CASA nằm trên đường ngành là tốt; COF, CIR nằm dưới đường ngành là tốt. ROE, ROA tính trên 4 quý gần nhất.",
         <>
           <Card title="Thu nhập hoạt động" note="Tỷ đồng theo quý">
             <ResponsiveContainer width="100%" height="100%">
@@ -338,6 +348,7 @@ export default function BankDetailSection({ symbol }: { symbol: string }) {
 
       {group(
         "Chất lượng tài sản, thanh khoản & cân đối",
+        "NPL và nợ nhóm 2 càng thấp càng tốt; nợ nhóm 2 tăng thường báo trước nợ xấu tăng. LLR cao là đệm dự phòng dày. LDR cao nghĩa là đã dùng phần lớn tiền gửi để cho vay, dư địa thanh khoản hẹp hơn.",
         <>
           <Card title="Nợ xấu và nợ nhóm 2">
             <ResponsiveContainer width="100%" height="100%">
