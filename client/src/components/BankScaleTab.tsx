@@ -36,7 +36,8 @@ const SORT_KEY: Record<Exclude<Sort, "Tăng trưởng TD & HĐ">, Key> = {
 
 // tỷ đồng → "2.682 nghìn tỷ" / "185 tỷ"
 const money = (ty: number) => (Math.abs(ty) >= 1000 ? `${vn(ty / 1000, ty >= 100000 ? 0 : 1)} nghìn tỷ` : `${vn(ty, 0)} tỷ`);
-const short = (ty: number) => vn(ty / 1000, ty >= 100000 ? 0 : 1);
+// Bảng: luôn 2 chữ số thập phân (nghìn tỷ đồng), cột thẳng hàng như bảng tài chính.
+const short = (ty: number) => vn(ty / 1000, 2);
 
 export default function BankScaleTab({ group }: { group: GroupFilter }) {
   const [sort, setSort] = useState<Sort>("Tổng tài sản");
@@ -165,7 +166,7 @@ export default function BankScaleTab({ group }: { group: GroupFilter }) {
                         }}
                       />
                       <span className="text-xs tabular-nums text-[var(--ab-muted)]">
-                        {isYoy ? `${v > 0 ? "+" : ""}${vn(v, growthMode ? 1 : 0)}%` : `${vn((v / total(sk)) * 100, 1)}%`}
+                        {isYoy ? `${v > 0 ? "+" : ""}${vn(v, 2)}%` : `${vn((v / total(sk)) * 100, 2)}%`}
                       </span>
                     </div>
                   </td>
@@ -176,7 +177,7 @@ export default function BankScaleTab({ group }: { group: GroupFilter }) {
                   ))}
                   <td className="px-2 py-1.5 text-center tabular-nums" style={heat(r.pbtYoy, Math.max(Math.abs(z), Math.abs(r.pbtYoy) / 25))}>
                     {r.pbtYoy > 0 ? "+" : r.pbtYoy < 0 ? "−" : ""}
-                    {vn(Math.abs(r.pbtYoy), 1)}%
+                    {vn(Math.abs(r.pbtYoy), 2)}%
                   </td>
                 </tr>
               );
