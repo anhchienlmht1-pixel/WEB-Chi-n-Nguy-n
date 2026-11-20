@@ -1,5 +1,17 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { CandleType, dispose, init, registerOverlay, type Chart, type DeepPartial, type Styles } from "klinecharts";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  ActionType,
+  CandleType,
+  LineType,
+  TooltipShowRule,
+  dispose,
+  init,
+  registerOverlay,
+  type Chart,
+  type DeepPartial,
+  type KLineData,
+  type Styles,
+} from "klinecharts";
 import { fetchHistory } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { useTheme } from "../hooks/useTheme";
@@ -7,14 +19,16 @@ import { aggregatePoints, type ChartResolution } from "../utils/aggregate";
 import { computeTradingSignals } from "../utils/signals";
 import { dropUnclosedBars } from "../utils/sessionClose";
 
-// Bản phác thảo biểu đồ nến bằng KLineChart (Apache 2.0, không logo):
-// khung Ngày/Tuần/Tháng, nến/đường, chỉ báo, công cụ vẽ và điểm Mua/Đóng lệnh
-// của hệ thống (tính từ phiên đã đóng). Dữ liệu vẫn lấy từ server của web.
+// Biểu đồ nến bằng KLineChart (Apache 2.0, không logo). Bố cục kiểu bàn làm
+// việc: dải thông tin OHLC bằng HTML ở trên (đổi theo con trỏ), thanh công cụ
+// gọn với nhóm phân đoạn, cột biểu tượng vẽ bên trái, khung khối lượng mảnh.
+// Điểm Mua/Đóng lệnh của hệ thống tính từ phiên đã đóng.
 
-const UP = "#16a34a";
+const UP = "#12a150";
 const DOWN = "#e5484d";
+const FONT = "'Be Vietnam Pro', system-ui, sans-serif";
 
-// Tam giác + chữ cho điểm Mua (dưới nến) và Đóng lệnh (trên nến).
+// Thẻ màu có mũi nhọn chỉ vào nến: Mua dưới đáy nến, Đóng lệnh trên đỉnh nến.
 registerOverlay({
   name: "bsSignal",
   totalStep: 1,
@@ -26,19 +40,30 @@ registerOverlay({
     const { buy, text } = overlay.extendData as { buy: boolean; text: string };
     const { x, y } = coordinates[0];
     const d = buy ? 1 : -1;
-    const tip = y + d * 6;
+    const tip = y + d * 4;
     const color = buy ? UP : DOWN;
     return [
       {
         type: "polygon",
-        attrs: { coordinates: [{ x, y: tip }, { x: x - 5, y: tip + d * 9 }, { x: x + 5, y: tip + d * 9 }] },
+        attrs: { coordinates: [{ x, y: tip }, { x: x - 4, y: tip + d * 6 }, { x: x + 4, y: tip + d * 6 }] },
         styles: { style: "fill", color },
         ignoreEvent: true,
       },
       {
         type: "text",
-        attrs: { x, y: tip + d * 12, text, align: "center", baseline: buy ? "top" : "bottom" },
-        styles: { color, size: 11, backgroundColor: "transparent", paddingLeft: 0, paddingRight: 0, paddingTop: 0, paddingBottom: 0 },
+        attrs: { x, y: tip + d * 6, text, align: "center", baseline: buy ? "top" : "bottom" },
+        styles: {
+          color: "#ffffff",
+          size: 10,
+          weight: 600,
+          family: FONT,
+          backgroundColor: color,
+          borderRadius: 3,
+          paddingLeft: 4,
+          paddingRight: 4,
+          paddingTop: 2,
+          paddingBottom: 2,
+        },
         ignoreEvent: true,
       },
     ];
@@ -47,64 +72,120 @@ registerOverlay({
 
 type Ind = "MA" | "BOLL" | "MACD" | "RSI";
 const MAIN_INDS: Ind[] = ["MA", "BOLL"];
-const TOOLS: { name: string; label: string }[] = [
-  { name: "segment", label: "Đoạn thẳng" },
-  { name: "rayLine", label: "Tia" },
-  { name: "horizontalStraightLine", label: "Đường ngang" },
-  { name: "priceChannelLine", label: "Kênh giá" },
-  { name: "fibonacciLine", label: "Fibonacci" },
+
+const ic = (d: ReactNode) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    {d}
+  </svg>
+);
+
+const TOOLS: { name: string; label: string; icon: ReactNode }[] = [
+  { name: "segment", label: "Đoạn thẳng", icon: ic(<><path d="M5 19 19 5" /><circle cx="5" cy="19" r="1.6" /><circle cx="19" cy="5" r="1.6" /></>) },
+  { name: "rayLine", label: "Tia", icon: ic(<><path d="M5 19 21 3" /><circle cx="5" cy="19" r="1.6" /></>) },
+  { name: "horizontalStraightLine", label: "Đường ngang", icon: ic(<path d="M3 12h18" />) },
+  { name: "priceChannelLine", label: "Kênh giá", icon: ic(<><path d="M3 16 15 4" /><path d="M9 20 21 8" /></>) },
+  { name: "fibonacciLine", label: "Fibonacci", icon: ic(<><path d="M3 5h18M3 10h18M3 14h18M3 19h18" strokeDasharray="0" /></>) },
 ];
 
 function themeStyles(dark: boolean): DeepPartial<Styles> {
-  const text = dark ? "#9aa58d" : "#64748b";
-  const grid = dark ? "#1f2a1d" : "#eef0ea";
-  const axis = dark ? "#2a3828" : "#e2e5dc";
+  const text = dark ? "#9aa58d" : "#7a8272";
+  const grid = dark ? "rgba(239,231,212,0.06)" : "rgba(31,43,29,0.06)";
+  const axis = dark ? "rgba(239,231,212,0.12)" : "rgba(31,43,29,0.12)";
+  const tick = { color: text, family: FONT, size: 11 };
+  const cross = { color: dark ? "rgba(230,200,120,0.55)" : "rgba(138,106,30,0.5)", dashedValue: [4, 3] };
+  const crossText = { backgroundColor: dark ? "#3a3218" : "#1f2b1d", borderColor: "transparent", family: FONT, size: 11, color: "#ffffff" };
   return {
-    grid: { horizontal: { color: grid }, vertical: { color: grid } },
+    grid: { horizontal: { color: grid, style: LineType.Dashed, dashedValue: [3, 3] }, vertical: { show: false } },
     candle: {
       bar: { upColor: UP, downColor: DOWN, noChangeColor: "#a39a7a", upBorderColor: UP, downBorderColor: DOWN, upWickColor: UP, downWickColor: DOWN },
-      area: { lineColor: "#c9a24a", backgroundColor: [{ offset: 0, color: "rgba(201,162,74,0.02)" }, { offset: 1, color: "rgba(201,162,74,0.28)" }] },
-      priceMark: { last: { upColor: UP, downColor: DOWN } },
-      tooltip: {
-        text: { color: text },
-        custom: [
-          { title: "Ngày ", value: "{time}" },
-          { title: "Mở ", value: "{open}" },
-          { title: "Cao ", value: "{high}" },
-          { title: "Thấp ", value: "{low}" },
-          { title: "Đóng ", value: "{close}" },
-          { title: "KL ", value: "{volume}" },
+      area: {
+        lineColor: "#c9a24a",
+        lineSize: 2,
+        backgroundColor: [
+          { offset: 0, color: "rgba(201,162,74,0.01)" },
+          { offset: 1, color: "rgba(201,162,74,0.22)" },
         ],
       },
+      priceMark: {
+        high: { color: text, textFamily: FONT },
+        low: { color: text, textFamily: FONT },
+        last: { upColor: UP, downColor: DOWN, line: { style: LineType.Dashed, dashedValue: [3, 3] }, text: { family: FONT, borderRadius: 3 } },
+      },
+      // Thông tin OHLC hiển thị bằng HTML phía trên, không vẽ lên canvas.
+      tooltip: { showRule: TooltipShowRule.None },
     },
     indicator: {
-      bars: [{ upColor: "rgba(22,163,74,0.45)", downColor: "rgba(229,72,77,0.45)", noChangeColor: "#a39a7a" }],
-      tooltip: { text: { color: text } },
+      bars: [{ upColor: "rgba(18,161,80,0.35)", downColor: "rgba(229,72,77,0.35)", noChangeColor: "rgba(163,154,122,0.4)" }],
+      lines: [
+        { color: "#d08a1e", size: 1.2 },
+        { color: "#2f7fd6", size: 1.2 },
+        { color: "#a14fc4", size: 1.2 },
+        { color: "#14a3a3", size: 1.2 },
+        { color: "#d6456b", size: 1.2 },
+      ],
+      lastValueMark: { show: false },
+      tooltip: { showName: true, showParams: true, text: { color: text, family: FONT, size: 11, marginTop: 6 } },
     },
-    xAxis: { axisLine: { color: axis }, tickLine: { color: axis }, tickText: { color: text } },
-    yAxis: { axisLine: { color: axis }, tickLine: { color: axis }, tickText: { color: text } },
-    separator: { color: axis },
+    xAxis: { axisLine: { color: axis }, tickLine: { show: false }, tickText: tick },
+    yAxis: { axisLine: { show: false }, tickLine: { show: false }, tickText: tick },
+    separator: { color: axis, size: 1 },
     crosshair: {
-      horizontal: { line: { color: "#c9a24a" }, text: { backgroundColor: "#8a6a1e" } },
-      vertical: { line: { color: "#c9a24a" }, text: { backgroundColor: "#8a6a1e" } },
+      horizontal: { line: cross, text: crossText },
+      vertical: { line: cross, text: crossText },
     },
   };
 }
 
-const btn = (on: boolean) =>
-  `inline-flex min-h-8 items-center rounded-[3px] px-2.5 text-[0.82rem] font-medium transition-colors ${
-    on ? "bg-[var(--sm-gold)] text-[#1b1608]" : "text-[var(--sm-egg2)] hover:bg-[rgba(201,162,74,0.12)]"
+const fmtP = (v: number) => v.toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtV = (v: number) => (v >= 1e6 ? `${(v / 1e6).toLocaleString("vi-VN", { maximumFractionDigits: 2 })} tr` : Math.round(v).toLocaleString("vi-VN"));
+const fmtD = (ts: number) => {
+  const d = new Date(ts + 7 * 3600_000);
+  return `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}/${d.getUTCFullYear()}`;
+};
+
+// Nhóm phân đoạn: nền mờ chung, mục đang chọn nổi lên như một viên thẻ.
+function Seg<T extends string>({ items, value, onChange, label }: { items: { v: T; t: ReactNode; title?: string }[]; value: T; onChange: (v: T) => void; label: string }) {
+  return (
+    <div role="group" aria-label={label} className="inline-flex rounded-md bg-[rgba(127,120,90,0.12)] p-0.5">
+      {items.map((it) => {
+        const on = it.v === value;
+        return (
+          <button
+            key={it.v}
+            type="button"
+            title={it.title}
+            aria-pressed={on}
+            onClick={() => onChange(it.v)}
+            className={`inline-flex h-7 min-w-8 items-center justify-center rounded-[5px] px-2.5 text-[0.8rem] font-semibold transition-colors ${
+              on ? "bg-[var(--sm-pop)] text-[var(--sm-egg)] shadow-[0_1px_2px_rgba(0,0,0,0.12)]" : "text-[var(--sm-mut)] hover:text-[var(--sm-egg)]"
+            }`}
+          >
+            {it.t}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+const iconBtn = (on = false) =>
+  `inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
+    on ? "bg-[rgba(201,162,74,0.18)] text-[var(--sm-gold2)]" : "text-[var(--sm-mut)] hover:bg-[rgba(127,120,90,0.12)] hover:text-[var(--sm-egg)]"
   }`;
 
 export default function KLinePanel({ symbol, height = 400, fill = false }: { symbol: string; height?: number; fill?: boolean }) {
   const { theme } = useTheme();
   const boxRef = useRef<HTMLDivElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<Chart | null>(null);
   const [res, setRes] = useState<ChartResolution>("D");
+  const resRef = useRef(res);
+  resRef.current = res;
   const [area, setArea] = useState(false);
   const [inds, setInds] = useState<Ind[]>([]);
   const [showSignals, setShowSignals] = useState(true);
   const [tool, setTool] = useState<string | null>(null);
+  const [hover, setHover] = useState<{ bar: KLineData; prev?: KLineData } | null>(null);
 
   const hist = usePolling(() => fetchHistory(symbol, "MAX"), [symbol], 60_000);
   const points = useMemo(() => (hist.data ? aggregatePoints(hist.data.points, res) : []), [hist.data, res]);
@@ -127,28 +208,35 @@ export default function KLinePanel({ symbol, height = 400, fill = false }: { sym
           const dd = String(d.getUTCDate()).padStart(2, "0");
           const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
           const yy = d.getUTCFullYear();
-          return type === 2 ? (res === "D" ? `${dd}/${mm}` : `${mm}/${yy}`) : `${dd}/${mm}/${yy}`;
+          if (type !== 2) return `${dd}/${mm}/${yy}`;
+          return resRef.current === "D" ? `${dd}/${mm}` : resRef.current === "W" ? `${mm}/${String(yy).slice(2)}` : String(yy);
         },
       },
     });
     if (!chart) return;
     chartRef.current = chart;
     chart.setPriceVolumePrecision(2, 0);
-    chart.setOffsetRightDistance(24);
-    chart.createIndicator("VOL", false, { id: "vol", height: 80 });
+    chart.setOffsetRightDistance(28);
+    chart.createIndicator({ name: "VOL", calcParams: [], createTooltipDataSource: () => ({ name: "", calcParamsText: "", icons: [], values: [] }) }, false, { id: "vol", height: 70, dragEnabled: false });
+    const onCross = (d?: unknown) => {
+      const c = d as { kLineData?: KLineData; dataIndex?: number } | undefined;
+      if (!c?.kLineData) return setHover(null);
+      const list = chart.getDataList();
+      setHover({ bar: c.kLineData, prev: c.dataIndex ? list[c.dataIndex - 1] : undefined });
+    };
+    chart.subscribeAction(ActionType.OnCrosshairChange, onCross);
     const ro = new ResizeObserver(() => chart.resize());
     ro.observe(el);
     return () => {
       ro.disconnect();
+      chart.unsubscribeAction(ActionType.OnCrosshairChange, onCross);
       dispose(el);
       chartRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [symbol]);
 
   useEffect(() => {
-    const dark = theme === "dark";
-    chartRef.current?.setStyles(themeStyles(dark));
+    chartRef.current?.setStyles(themeStyles(theme === "dark"));
   }, [theme, symbol]);
 
   useEffect(() => {
@@ -180,7 +268,7 @@ export default function KLinePanel({ symbol, height = 400, fill = false }: { sym
     }
   }, [points, signals, showSignals, res]);
 
-  // Chỉ báo: MA/BOLL nằm chồng trên nến, MACD/RSI có khung riêng bên dưới.
+  // Chỉ báo: MA/BOLL chồng trên nến, MACD/RSI có khung riêng bên dưới.
   useEffect(() => {
     const chart = chartRef.current;
     if (!chart) return;
@@ -188,8 +276,8 @@ export default function KLinePanel({ symbol, height = 400, fill = false }: { sym
     chart.removeIndicator("macd");
     chart.removeIndicator("rsi");
     for (const n of inds) {
-      if (MAIN_INDS.includes(n)) chart.createIndicator(n, true, { id: "candle_pane" });
-      else chart.createIndicator(n, false, { id: n.toLowerCase(), height: 80 });
+      if (MAIN_INDS.includes(n)) chart.createIndicator(n === "MA" ? { name: "MA", calcParams: [20, 50] } : n, true, { id: "candle_pane" });
+      else chart.createIndicator(n, false, { id: n.toLowerCase(), height: 80, dragEnabled: false });
     }
   }, [inds, symbol]);
 
@@ -206,72 +294,155 @@ export default function KLinePanel({ symbol, height = 400, fill = false }: { sym
     a.download = `${symbol}-chart.png`;
     a.click();
   }
-
-  const wrapRef = useRef<HTMLDivElement>(null);
   const full = () => (document.fullscreenElement ? document.exitFullscreen() : wrapRef.current?.requestFullscreen());
+
+  // Dải OHLC: nến dưới con trỏ, hoặc nến mới nhất khi không rê chuột.
+  const lastK = points.length
+    ? (() => {
+        const p = points[points.length - 1];
+        const q = points[points.length - 2];
+        const k = (x: typeof p) => ({ timestamp: new Date(x.time).getTime(), open: x.open, high: x.high, low: x.low, close: x.close, volume: x.volume });
+        return { bar: k(p), prev: q ? k(q) : undefined };
+      })()
+    : null;
+  const cur = hover ?? lastK;
+  const chg = cur?.prev ? (cur.bar.close / cur.prev.close - 1) * 100 : null;
+  const tone = chg == null ? "text-[var(--sm-egg)]" : chg > 0 ? "up" : chg < 0 ? "down" : "text-[var(--sm-mut)]";
 
   return (
     <div
       ref={wrapRef}
       className={`flex flex-col overflow-hidden rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] ${fill ? "lg:h-full" : ""}`}
     >
-      <div className="flex flex-wrap items-center gap-1 border-b border-[var(--sm-line2)] px-2 py-1.5">
-        <b className="mr-1 px-1 text-[0.85rem] text-[var(--sm-egg)]">{symbol}</b>
-        {(["D", "W", "M"] as ChartResolution[]).map((r) => (
-          <button key={r} type="button" className={btn(res === r)} onClick={() => setRes(r)}>
-            {r === "D" ? "Ngày" : r === "W" ? "Tuần" : "Tháng"}
-          </button>
-        ))}
-        <span className="mx-1 h-5 w-px bg-[var(--sm-line)]" />
-        <button type="button" className={btn(!area)} onClick={() => setArea(false)}>Nến</button>
-        <button type="button" className={btn(area)} onClick={() => setArea(true)}>Đường</button>
-        <span className="mx-1 h-5 w-px bg-[var(--sm-line)]" />
-        {(["MA", "BOLL", "MACD", "RSI"] as Ind[]).map((n) => (
-          <button
-            key={n}
-            type="button"
-            aria-pressed={inds.includes(n)}
-            className={btn(inds.includes(n))}
-            onClick={() => setInds((xs) => (xs.includes(n) ? xs.filter((x) => x !== n) : [...xs, n]))}
-          >
-            {n}
-          </button>
-        ))}
-        <button type="button" aria-pressed={showSignals} className={btn(showSignals)} onClick={() => setShowSignals((v) => !v)}>
-          Mua/Bán
+      <div className="flex flex-wrap items-center gap-2 border-b border-[var(--sm-line2)] px-3 py-2">
+        <Seg
+          label="Khung thời gian"
+          value={res}
+          onChange={setRes}
+          items={[
+            { v: "D", t: "Ngày" },
+            { v: "W", t: "Tuần" },
+            { v: "M", t: "Tháng" },
+          ]}
+        />
+        <Seg
+          label="Kiểu biểu đồ"
+          value={area ? "a" : "c"}
+          onChange={(v) => setArea(v === "a")}
+          items={[
+            {
+              v: "c",
+              title: "Nến",
+              t: ic(<><path d="M8 3v4M8 15v6M16 3v6M16 17v4" /><rect x="5.5" y="7" width="5" height="8" rx="1" /><rect x="13.5" y="9" width="5" height="8" rx="1" /></>),
+            },
+            { v: "a", title: "Đường", t: ic(<path d="M3 17l5-6 4 3 4-7 5 5" />) },
+          ]}
+        />
+        <div role="group" aria-label="Chỉ báo" className="flex items-center gap-1">
+          {(["MA", "BOLL", "MACD", "RSI"] as Ind[]).map((n) => {
+            const on = inds.includes(n);
+            return (
+              <button
+                key={n}
+                type="button"
+                aria-pressed={on}
+                title={n === "MA" ? "Trung bình động 20 và 50" : undefined}
+                onClick={() => setInds((xs) => (on ? xs.filter((x) => x !== n) : [...xs, n]))}
+                className={`inline-flex h-7 items-center rounded-md border px-2 text-[0.78rem] font-semibold transition-colors ${
+                  on
+                    ? "border-[var(--sm-gold)] bg-[rgba(201,162,74,0.12)] text-[var(--sm-gold2)]"
+                    : "border-[var(--sm-line)] text-[var(--sm-mut)] hover:text-[var(--sm-egg)]"
+                }`}
+              >
+                {n}
+              </button>
+            );
+          })}
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={showSignals}
+          onClick={() => setShowSignals((v) => !v)}
+          className="inline-flex h-7 items-center gap-2 rounded-md px-1.5 text-[0.8rem] font-semibold text-[var(--sm-egg2)]"
+        >
+          <span className={`relative h-4 w-7 rounded-full transition-colors ${showSignals ? "bg-[var(--sm-gold)]" : "bg-[rgba(127,120,90,0.3)]"}`}>
+            <span className={`absolute top-0.5 h-3 w-3 rounded-full bg-white shadow transition-[left] ${showSignals ? "left-3.5" : "left-0.5"}`} />
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <i className="inline-block h-0 w-0 border-x-[4px] border-b-[6px] border-x-transparent" style={{ borderBottomColor: UP }} />
+            <i className="inline-block h-0 w-0 border-x-[4px] border-t-[6px] border-x-transparent" style={{ borderTopColor: DOWN }} />
+            Tín hiệu
+          </span>
         </button>
-        <span className="ml-auto flex items-center gap-1">
-          <button type="button" className={btn(false)} onClick={shot} title="Tải ảnh biểu đồ" aria-label="Tải ảnh biểu đồ">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z" /><circle cx="12" cy="13" r="3.5" /></svg>
+        <span className="ml-auto flex items-center">
+          <button type="button" className={iconBtn()} onClick={shot} title="Tải ảnh biểu đồ" aria-label="Tải ảnh biểu đồ">
+            {ic(<><path d="M4 8h3l2-3h6l2 3h3v11H4z" /><circle cx="12" cy="13" r="3.5" /></>)}
           </button>
-          <button type="button" className={btn(false)} onClick={full} title="Toàn màn hình" aria-label="Toàn màn hình">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></svg>
+          <button type="button" className={iconBtn()} onClick={full} title="Toàn màn hình" aria-label="Toàn màn hình">
+            {ic(<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />)}
           </button>
         </span>
       </div>
 
       <div className="flex min-h-0 flex-1">
-        <div className="hidden w-[7.5rem] shrink-0 flex-col gap-0.5 border-r border-[var(--sm-line2)] p-1.5 sm:flex">
+        <div className="hidden w-11 shrink-0 flex-col items-center gap-1 border-r border-[var(--sm-line2)] py-2 sm:flex">
           {TOOLS.map((t) => (
-            <button key={t.name} type="button" className={`${btn(tool === t.name)} justify-start`} onClick={() => draw(t.name)}>
-              {t.label}
+            <button key={t.name} type="button" className={iconBtn(tool === t.name)} onClick={() => draw(t.name)} title={t.label} aria-label={t.label}>
+              {t.icon}
             </button>
           ))}
+          <span className="my-1 h-px w-6 bg-[var(--sm-line)]" />
           <button
             type="button"
-            className={`${btn(false)} mt-1 justify-start text-[var(--sm-dn)]!`}
+            className={iconBtn()}
             onClick={() => TOOLS.forEach((t) => chartRef.current?.removeOverlay({ name: t.name }))}
+            title="Xóa nét vẽ"
+            aria-label="Xóa nét vẽ"
           >
-            Xóa nét vẽ
+            {ic(<><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></>)}
           </button>
         </div>
-        <div className="relative min-w-0 flex-1" style={{ height: fill ? undefined : height, minHeight: height }}>
-          <div ref={boxRef} className="absolute inset-0" />
-          {points.length === 0 && (
-            <div className="absolute inset-0 flex items-center justify-center text-[0.9rem] text-[var(--sm-mut)]">
-              {hist.loading ? "Đang tải biểu đồ..." : hist.error ? `Lỗi tải biểu đồ: ${hist.error}` : "Không có dữ liệu biểu đồ"}
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          {cur && (
+            <div className="flex flex-wrap items-baseline gap-x-4 gap-y-0.5 px-3 pt-2 text-[0.8rem] tabular-nums">
+              <span className="font-semibold text-[var(--sm-egg)]">
+                {symbol} <span className="font-normal text-[var(--sm-mut)]">· {fmtD(cur.bar.timestamp)}</span>
+              </span>
+              {(
+                [
+                  ["Mở", cur.bar.open],
+                  ["Cao", cur.bar.high],
+                  ["Thấp", cur.bar.low],
+                  ["Đóng", cur.bar.close],
+                ] as const
+              ).map(([k, v]) => (
+                <span key={k}>
+                  <span className="text-[var(--sm-mut)]">{k} </span>
+                  <b className={`font-semibold ${tone}`}>{fmtP(v)}</b>
+                </span>
+              ))}
+              {chg != null && (
+                <b className={`font-semibold ${tone}`}>
+                  {chg > 0 ? "+" : ""}
+                  {chg.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%
+                </b>
+              )}
+              <span>
+                <span className="text-[var(--sm-mut)]">KL </span>
+                <b className="font-semibold text-[var(--sm-egg)]">{fmtV(cur.bar.volume ?? 0)}</b>
+              </span>
             </div>
           )}
+          <div className="relative min-h-0 flex-1" style={{ height: fill ? undefined : height, minHeight: height }}>
+            <div ref={boxRef} className="absolute inset-0" />
+            {points.length === 0 && (
+              <div className="absolute inset-0 flex items-center justify-center text-[0.9rem] text-[var(--sm-mut)]">
+                {hist.loading ? "Đang tải biểu đồ..." : hist.error ? `Lỗi tải biểu đồ: ${hist.error}` : "Không có dữ liệu biểu đồ"}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
