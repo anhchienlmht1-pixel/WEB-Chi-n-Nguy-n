@@ -15,6 +15,7 @@ import StockOutlookPanel from "../components/StockOutlookPanel";
 import SystemAssessment from "../components/SystemAssessment";
 import AdvisorContactBar from "../components/AdvisorContactBar";
 import FinancialSnapshot from "../components/FinancialSnapshot";
+import BankDetailSection, { DETAIL_BANKS } from "../components/BankDetailSection";
 import StockSummary from "../components/StockSummary";
 
 const SIDEBAR_TABS = [
@@ -96,7 +97,7 @@ export default function StockDetail() {
         <>
           {!isIndexOrFutures && (
             <div className="mt-6">
-              <FinancialSnapshot symbol={quote.symbol} />
+              {DETAIL_BANKS.has(quote.symbol) ? <BankDetailSection symbol={quote.symbol} /> : <FinancialSnapshot symbol={quote.symbol} />}
             </div>
           )}
 
