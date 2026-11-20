@@ -149,24 +149,27 @@ export default function BankScaleTab({ group }: { group: GroupFilter }) {
               return (
                 <tr key={r.bank} className="border-t border-[var(--ab-line)]">
                   <td className="px-3 py-1.5 whitespace-nowrap">
-                    <Link to={`/stock/${r.bank}`} className="font-bold text-[var(--ab-strong)] hover:underline">
+                    <Link to={`/stock/${r.bank}`} className="inline-block w-11 font-bold text-[var(--ab-strong)] hover:underline">
                       {r.bank}
                     </Link>
-                    <span className="ml-2 text-xs text-[var(--ab-muted)]">{groupOf(r.bank)}</span>
+                    <span className="text-xs text-[var(--ab-muted)]">{groupOf(r.bank)}</span>
                   </td>
-                  <td className="w-[210px] px-2 py-1.5">
+                  <td className="w-[230px] px-2 py-1.5">
+                    {/* Số % căn phải trong cột cố định, thanh bắt đầu cùng một mốc.
+                        Tăng trưởng: xanh/đỏ, càng mạnh càng đậm. */}
                     <div className="flex items-center gap-2">
-                      <span
-                        className="h-3 rounded-[3px]"
-                        style={{
-                          width: `${(Math.abs(v) / maxSort) * 130}px`,
-                          minWidth: 2,
-                          background: isYoy ? (v >= 0 ? "var(--heat-up)" : "var(--heat-down)") : "var(--ab-accent)",
-                          opacity: 0.85,
-                        }}
-                      />
-                      <span className="text-xs tabular-nums text-[var(--ab-muted)]">
+                      <span className="w-16 shrink-0 text-right text-xs tabular-nums text-[var(--ab-muted)]">
                         {isYoy ? `${v > 0 ? "+" : ""}${vn(v, 2)}%` : `${vn((v / total(sk)) * 100, 2)}%`}
+                      </span>
+                      <span className="relative h-3 w-[130px] shrink-0">
+                        <span
+                          className="absolute inset-y-0 left-0 rounded-[3px]"
+                          style={{
+                            width: `${Math.max(2, (Math.abs(v) / maxSort) * 130)}px`,
+                            background: isYoy ? (v >= 0 ? "var(--heat-up)" : "var(--heat-down)") : "var(--ab-accent)",
+                            opacity: isYoy ? 0.3 + 0.7 * (Math.abs(v) / maxSort) : 0.85,
+                          }}
+                        />
                       </span>
                     </div>
                   </td>
