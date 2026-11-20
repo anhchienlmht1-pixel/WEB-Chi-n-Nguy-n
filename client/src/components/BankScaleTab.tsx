@@ -4,7 +4,8 @@ import { CHARTER_CAPITAL, PROFIT, SCALE, type BankScale } from "../data/bankValu
 import { BANKS } from "../data/bankSector";
 import { BANK_BRAND } from "../data/bankBrand";
 
-const brand = (b: string) => BANK_BRAND[b];
+// Màu thương hiệu pha nhạt với màu vỏ trứng để cột dịu mắt trên nền tối.
+const brand = (b: string) => (BANK_BRAND[b] ? `color-mix(in srgb, ${BANK_BRAND[b]} 58%, #efe7d4)` : undefined);
 import BankBarChart from "./BankBarChart";
 import { Seg, Tile, banksIn, groupOf, heat, stats, vn, type GroupFilter } from "./bankUi";
 

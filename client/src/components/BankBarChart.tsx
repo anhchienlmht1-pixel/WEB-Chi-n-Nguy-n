@@ -172,7 +172,7 @@ export default function BankBarChart({
                   height={Math.max(1, Math.abs(yv - zeroY))}
                   rx="2"
                   style={{ fill: barColor(d.v, on, d.bank) }}
-                  opacity={hover == null || on ? (colorOf ? 0.95 : 0.9) : colorOf ? 0.35 : 0.55}
+                  opacity={hover == null || on ? 0.92 : colorOf ? 0.35 : 0.55}
                 />
                 {d.v2 != null &&
                   (dot ? (
@@ -230,7 +230,7 @@ export default function BankBarChart({
       <div className="mt-1 flex flex-wrap justify-center gap-x-5 gap-y-1 text-[0.8rem] text-[var(--ab-muted)]">
         <span className="flex items-center gap-1.5">
           {colorOf ? (
-            <i className="inline-block h-2.5 w-4 rounded-sm" style={{ background: "linear-gradient(90deg,#00703C 0 25%,#0067AC 25% 50%,#E31837 50% 75%,#F7941D 75%)" }} />
+            <i className="inline-block h-2.5 w-4 rounded-sm" style={{ background: "linear-gradient(90deg,#00703C 0 25%,#0067AC 25% 50%,#E31837 50% 75%,#F7941D 75%)", opacity: 0.65 }} />
           ) : (
             <i className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: signColor ? "var(--heat-up)" : "var(--ab-accent)" }} />
           )}
