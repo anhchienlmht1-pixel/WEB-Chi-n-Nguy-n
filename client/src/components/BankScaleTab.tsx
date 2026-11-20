@@ -2,10 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { CHARTER_CAPITAL, PROFIT, SCALE, type BankScale } from "../data/bankValuation";
 import { BANKS } from "../data/bankSector";
-import { BANK_BRAND } from "../data/bankBrand";
 
-// Màu thương hiệu pha nhạt với màu vỏ trứng để cột dịu mắt trên nền tối.
-const brand = (b: string) => (BANK_BRAND[b] ? `color-mix(in srgb, ${BANK_BRAND[b]} 58%, #efe7d4)` : undefined);
 import BankBarChart from "./BankBarChart";
 import { Seg, Tile, banksIn, groupOf, heat, stats, vn, type GroupFilter } from "./bankUi";
 
@@ -81,7 +78,6 @@ export default function BankScaleTab({ group }: { group: GroupFilter }) {
       <div className="grid gap-4 xl:grid-cols-2">
         {(["tts", "loan", "dep"] as const).map((k) => (
           <BankBarChart
-          colorOf={brand}
             key={k}
             title={COLS.find((c) => c.key === k)!.title}
             subtitle={`Q3/2026 · nghìn tỷ đồng · ${rows.length} ngân hàng`}
@@ -93,7 +89,6 @@ export default function BankScaleTab({ group }: { group: GroupFilter }) {
           />
         ))}
         <BankBarChart
-          colorOf={brand}
           title="Tăng trưởng tín dụng và huy động"
           subtitle="Từ đầu năm đến cuối Q3/2026 · sắp theo tăng trưởng tín dụng"
           items={[...rows]
@@ -107,7 +102,6 @@ export default function BankScaleTab({ group }: { group: GroupFilter }) {
         />
         <div className="xl:col-span-2">
           <BankBarChart
-          colorOf={brand}
             title={`Lợi nhuận ${tax === "Trước thuế" ? "trước" : "sau"} thuế và tăng trưởng`}
             subtitle="Q3/2026 · cột: nghìn tỷ đồng · chấm: % so với Q3/2025 · sắp theo lợi nhuận"
             items={[...rows]
@@ -173,8 +167,8 @@ export default function BankScaleTab({ group }: { group: GroupFilter }) {
                           className="absolute inset-y-0 left-0 rounded-[3px]"
                           style={{
                             width: `${Math.max(2, (Math.abs(v) / maxSort) * 130)}px`,
-                            background: isYoy ? (v >= 0 ? "var(--heat-up)" : "var(--heat-down)") : "var(--ab-accent)",
-                            opacity: isYoy ? 0.3 + 0.7 * (Math.abs(v) / maxSort) : 0.85,
+                            background: isYoy ? (v >= 0 ? "var(--heat-up)" : "var(--heat-down)") : "linear-gradient(90deg,#34492f,#6a8a5e)",
+                            opacity: isYoy ? 0.3 + 0.7 * (Math.abs(v) / maxSort) : 1,
                           }}
                         />
                       </span>

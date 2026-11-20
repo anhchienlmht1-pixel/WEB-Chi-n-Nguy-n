@@ -72,7 +72,6 @@ export default function BankBarChart({
   signColor = false,
   controls,
   compact = false,
-  colorOf,
 }: {
   items: BarItem[];
   title: string;
@@ -90,8 +89,6 @@ export default function BankBarChart({
   controls?: ReactNode;
   /** Half-width layout (2 charts per row): narrower viewBox so text keeps its size. */
   compact?: boolean;
-  /** Màu riêng cho cột của từng ngân hàng (màu thương hiệu). */
-  colorOf?: (bank: string) => string | undefined;
 }) {
   const [hover, setHover] = useState<number | null>(null);
   if (items.length === 0) return null;
@@ -115,10 +112,14 @@ export default function BankBarChart({
   const grid = Array.from({ length: n + 1 }, (_, i) => ax1.up - i); // in steps, top → bottom
   const cur = hover != null ? items[hover] : null;
   const f2 = fmt2 ?? fmt;
-  const barColor = (v: number, on: boolean, bank?: string) =>
-    (bank && colorOf?.(bank)) ||
-    (signColor ? (v >= 0 ? "var(--heat-up)" : "var(--heat-down)") : on ? "var(--ab-strong)" : "var(--ab-accent)");
-  const triColor = colorOf ? "var(--ab-strong)" : "#e07b39";
+  // Cột xanh rêu đậm, đổ dần từ sáng (đỉnh) xuống tối (chân); cột đang chọn
+  // chuyển vàng son. Chú thích/tooltip dùng màu đặc tương ứng.
+  const gid = `moss-${title.replace(/[^a-z0-9]/gi, "").slice(0, 24)}`;
+  const MOSS = "#4f6b47";
+  const barColor = (v: number, on: boolean) =>
+    signColor ? (v >= 0 ? "var(--heat-up)" : "var(--heat-down)") : on ? "#c9a24a" : MOSS;
+  const barFill = (v: number, on: boolean) => (signColor || on ? barColor(v, on) : `url(#${gid})`);
+  const triColor = "#efe7d4";
   const dotColor = (v: number) => (v >= 0 ? "var(--heat-up)" : "var(--heat-down)");
 
   return (
@@ -130,6 +131,12 @@ export default function BankBarChart({
       </div>
       <div className="relative mt-2 overflow-x-auto sm:overflow-visible" onMouseLeave={() => setHover(null)}>
         <svg viewBox={`0 0 ${W} ${H}`} className={`block h-auto w-full ${compact ? "min-w-[520px]" : "min-w-[640px]"} sm:min-w-0`} role="img" aria-label={title}>
+          <defs>
+            <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#6a8a5e" />
+              <stop offset="100%" stopColor="#34492f" />
+            </linearGradient>
+          </defs>
           {grid.map((k) => (
             <g key={k}>
               <line
@@ -171,8 +178,8 @@ export default function BankBarChart({
                   width={bw}
                   height={Math.max(1, Math.abs(yv - zeroY))}
                   rx="2"
-                  style={{ fill: barColor(d.v, on, d.bank) }}
-                  opacity={hover == null || on ? 0.92 : colorOf ? 0.35 : 0.55}
+                  style={{ fill: barFill(d.v, on) }}
+                  opacity={hover == null || on ? 1 : 0.45}
                 />
                 {d.v2 != null &&
                   (dot ? (
@@ -204,7 +211,7 @@ export default function BankBarChart({
             <b className="text-[var(--ab-strong)]">{cur.bank}</b>
             <p className="mt-1 flex items-center justify-between gap-3 tabular-nums">
               <span className="flex items-center gap-1.5 text-[var(--ab-muted)]">
-                <i className="inline-block h-2 w-2 rounded-sm" style={{ background: barColor(cur.v, false, cur.bank) }} />
+                <i className="inline-block h-2 w-2 rounded-sm" style={{ background: barColor(cur.v, false) }} />
                 {label1}
               </span>
               <b>{fmt(cur.v)}</b>
@@ -229,13 +236,8 @@ export default function BankBarChart({
       </div>
       <div className="mt-1 flex flex-wrap justify-center gap-x-5 gap-y-1 text-[0.8rem] text-[var(--ab-muted)]">
         <span className="flex items-center gap-1.5">
-          {colorOf ? (
-            <i className="inline-block h-2.5 w-4 rounded-sm" style={{ background: "linear-gradient(90deg,#00703C 0 25%,#0067AC 25% 50%,#E31837 50% 75%,#F7941D 75%)", opacity: 0.65 }} />
-          ) : (
-            <i className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: signColor ? "var(--heat-up)" : "var(--ab-accent)" }} />
-          )}
+          <i className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: signColor ? "var(--heat-up)" : MOSS }} />
           {label1}
-          {colorOf ? " (màu theo thương hiệu ngân hàng)" : ""}
           {ax2 ? " (trục phải)" : ""}
         </span>
         {label2 && (
