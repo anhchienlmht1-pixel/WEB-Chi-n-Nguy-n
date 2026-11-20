@@ -3,7 +3,6 @@ import { useLivePoll } from "../hooks/useMarketClock";
 import { useState } from "react";
 import { fetchQuote } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
-import TechnicalChartPanel from "../components/TechnicalChartPanel";
 import SeasonalityHeatmap from "../components/SeasonalityHeatmap";
 import NewsFeed from "../components/NewsFeed";
 import BankFundamentals from "../components/BankFundamentals";
@@ -61,53 +60,43 @@ export default function StockDetail() {
         />
       )}
 
-      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[2fr_1fr]">
-        <div>
-          <TechnicalChartPanel symbol={symbol} height={480} />
+      {/* Biểu đồ giá nằm trong phần tổng quan ở trên; bên dưới là các thẻ
+          thông tin trải rộng hết trang. */}
+      {quote && !isIndexOrFutures && (
+        <section aria-label="Thông tin mã">
+          <div role="tablist" aria-label="Thông tin mã" className="flex gap-1 overflow-x-auto border-b border-[var(--sm-line)]">
+            {SIDEBAR_TABS.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key)}
+                role="tab"
+                aria-selected={activeTab === tab.key}
+                className={`-mb-px min-h-11 shrink-0 border-b-2 px-4 text-base font-semibold transition-colors duration-200 ${
+                  activeTab === tab.key
+                    ? "border-[var(--sm-gold)] text-[var(--sm-egg)]"
+                    : "border-transparent text-[var(--sm-mut)] hover:text-[var(--sm-egg)]"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
 
-          {quote && (
-            <p className="mt-4 text-sm text-slate-600">
-              Cập nhật lúc {new Date(quote.updatedAt).toLocaleTimeString("vi-VN")}
-            </p>
-          )}
-        </div>
-
-        <div className="space-y-3">
-          {quote && !isIndexOrFutures && (
-            <>
-              <div role="tablist" aria-label="Thông tin mã" className="flex gap-1 overflow-x-auto border-b border-slate-200">
-                {SIDEBAR_TABS.map((tab) => (
-                  <button
-                    key={tab.key}
-                    type="button"
-                    onClick={() => setActiveTab(tab.key)}
-                    role="tab"
-                    aria-selected={activeTab === tab.key}
-                    className={`-mb-px min-h-11 shrink-0 border-b-2 px-3 text-base font-bold transition-colors duration-200 ${
-                      activeTab === tab.key
-                        ? "border-brand-700 text-brand-700"
-                        : "border-transparent text-slate-600 hover:text-brand-700"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
+          <div className="mt-4">
+            {activeTab === "tong-quan" && (
+              <div className="grid items-start gap-4 lg:grid-cols-3">
+                <PositionTracker symbol={quote.symbol} currency={quote.currency} />
+                <CompanyProfileCard symbol={quote.symbol} fallbackName={quote.name} />
+                <ForeignFlowPanel quote={quote} />
               </div>
-
-              {activeTab === "tong-quan" && (
-                <div className="space-y-3">
-                  <PositionTracker symbol={quote.symbol} currency={quote.currency} />
-                  <CompanyProfileCard symbol={quote.symbol} fallbackName={quote.name} />
-                  <ForeignFlowPanel quote={quote} />
-                </div>
-              )}
-              {activeTab === "tin-hieu" && <SystemAssessment symbol={quote.symbol} />}
-              {activeTab === "ctck-kn" && <StockOutlookPanel symbol={quote.symbol} />}
-              {activeTab === "tin-tuc" && <NewsFeed symbol={quote.symbol} />}
-            </>
-          )}
-        </div>
-      </div>
+            )}
+            {activeTab === "tin-hieu" && <SystemAssessment symbol={quote.symbol} />}
+            {activeTab === "ctck-kn" && <StockOutlookPanel symbol={quote.symbol} />}
+            {activeTab === "tin-tuc" && <NewsFeed symbol={quote.symbol} />}
+          </div>
+        </section>
+      )}
 
       {quote && (
         <>

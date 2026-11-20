@@ -245,7 +245,7 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
           <dl className="mt-3 grid grid-cols-1 gap-x-6 sm:grid-cols-2">
             {kv
               .filter(([, v, l]) => v != null || l)
-              .map(([label, v, l]) => (
+              .map(([label, v]) => (
                 <div key={label} className="flex min-h-10 items-center justify-between gap-3 border-b border-[var(--sm-line2)]">
                   <dt className="text-[0.88rem] text-[var(--sm-mut)]">{label}</dt>
                   <dd className="text-right text-[0.95rem] font-semibold tabular-nums text-[var(--sm-egg)]">
