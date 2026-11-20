@@ -2,7 +2,10 @@ import { Link } from "react-router-dom";
 import Flash from "./Flash";
 import AnimatedNumber from "./AnimatedNumber";
 import { usePolling } from "../hooks/usePolling";
-import { fetchCompanyProfile, fetchFinancials } from "../api/client";
+import { useMemo } from "react";
+import { fetchCompanyProfile, fetchFinancials, fetchHistory } from "../api/client";
+import { computeTradingSignals, latestConditions, type TradingSignal } from "../utils/signals";
+import { dropUnclosedBars } from "../utils/sessionClose";
 import type { Quote } from "../types";
 import { formatMarketCap, formatPrice, trendClass } from "../utils/format";
 import { BVPS_MATCH, EPS_MATCH, findLatest, PB_MATCH, PE_MATCH } from "../utils/ratios";
@@ -78,6 +81,115 @@ function BoardCell({ label, value, color }: { label: string; value: string | nul
   );
 }
 
+const ddmm = (sec: number) =>
+  new Date(sec * 1000).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Asia/Ho_Chi_Minh" });
+
+// Thẻ "Tín hiệu hiện tại": trạng thái của hệ thống ở phiên đã đóng gần nhất,
+// giá/ngày mua và lãi/lỗ nếu đang giữ, 3 điều kiện ✓/✗ và tóm tắt các lệnh đã
+// đóng của mã. Tính từ chính lịch sử giá, chốt sau 15:00 (không thời gian thực).
+function SignalCard({
+  signals,
+  cond,
+  price,
+  scale,
+  fmt,
+  closeAt,
+}: {
+  closeAt: (sec: number) => number | null;
+  signals: TradingSignal[];
+  cond: ReturnType<typeof latestConditions>;
+  price: number;
+  scale: number;
+  fmt: (n: number) => string;
+}) {
+  if (!cond) return null;
+  // Lệnh đang mở: lần "Mua 1/3" gần nhất không có "Đóng lệnh" sau nó.
+  let entry: TradingSignal | null = null;
+  for (const sg of signals) {
+    if (sg.type === "buy" && sg.note?.startsWith("Mua 1/")) entry = sg;
+    if (sg.type === "sell") entry = null;
+  }
+  const lastBar = cond.time;
+  const isNew = entry != null && entry.time === lastBar;
+  const state = entry ? (isNew ? "Mua mới" : "Đang giữ") : "Không giữ";
+  const stateStyle =
+    state === "Mua mới"
+      ? { background: "rgba(79,209,139,0.16)", color: "var(--sm-up)" }
+      : state === "Đang giữ"
+        ? { background: "rgba(201,162,74,0.18)", color: "var(--sm-gold2)" }
+        : { background: "rgba(239,231,212,0.08)", color: "var(--sm-mut)" };
+  // Giá vào lệnh = giá đóng cửa của phiên có tín hiệu mua (hệ thống mua theo giá đóng cửa).
+  const entryClose = entry ? closeAt(entry.time) : null;
+  const entryPrice = entryClose != null ? entryClose * scale : null;
+  const pnl = entryPrice ? (price / entryPrice - 1) * 100 : null;
+
+  const closes = signals
+    .filter((sg) => sg.type === "sell" && sg.note?.includes("Đóng lệnh"))
+    .map((sg) => parseFloat((sg.note?.match(/([+-]?\d+[.,]?\d*)%/)?.[1] ?? "").replace(",", ".")))
+    .filter((v) => Number.isFinite(v));
+  const wins = closes.filter((v) => v > 0).length;
+  const avg = closes.length ? closes.reduce((a, v) => a + v, 0) / closes.length : null;
+  const pctS = (v: number) => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v).toLocaleString("vi-VN", { maximumFractionDigits: 1 })}%`;
+
+  const checks: [string, boolean, string][] = [
+    ["SMA20 trên SMA50", cond.sma20 > cond.sma50, `${fmt(cond.sma20 * scale)} / ${fmt(cond.sma50 * scale)}`],
+    ["ADX trên 25", cond.adx > 25, cond.adx.toLocaleString("vi-VN", { maximumFractionDigits: 1 })],
+    ["Supertrend hướng lên", cond.supertrendUp, cond.supertrendUp ? "Lên" : "Xuống"],
+  ];
+
+  return (
+    <div className="mb-4 border-b border-[var(--sm-line2)] pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-[0.85rem] text-[var(--sm-mut)]">Tín hiệu hiện tại</span>
+        <span className="text-[0.75rem] text-[var(--sm-mut)]">Chốt sau phiên 15:00 ngày {ddmm(lastBar)}</span>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <span className="rounded-[3px] px-3 py-1 font-display text-[1.3rem] font-bold" style={stateStyle}>
+          {state}
+        </span>
+        {entry && entryPrice != null && (
+          <span className="text-[0.9rem] text-[var(--sm-egg2)]">
+            Mua {ddmm(entry.time)} · giá {fmt(entryPrice)}
+            {pnl != null && <b className={`ml-2 tabular-nums ${pnl > 0 ? "up" : pnl < 0 ? "down" : ""}`}>{pctS(pnl)}</b>}
+          </span>
+        )}
+      </div>
+      <ul className="mt-3 grid gap-1.5">
+        {checks.map(([label, ok, val]) => (
+          <li key={label} className="flex items-center justify-between gap-3 text-[0.9rem]">
+            <span className="flex items-center gap-2">
+              <b className={`grid h-5 w-5 place-items-center rounded-full text-[0.75rem] ${ok ? "bg-[rgba(79,209,139,0.18)] text-[var(--sm-up)]" : "bg-[rgba(255,107,94,0.16)] text-[var(--sm-dn)]"}`}>
+                {ok ? "✓" : "✗"}
+              </b>
+              <span className="text-[var(--sm-egg2)]">{label}</span>
+            </span>
+            <span className="tabular-nums text-[var(--sm-mut)]">{val}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-2 text-[0.75rem] leading-relaxed text-[var(--sm-mut)]">
+        Đủ 3 ✓ là mua; SMA20 xuống dưới SMA50 hoặc Supertrend đảo xuống là đóng lệnh.
+      </p>
+      {closes.length > 0 && (
+        <div className="mt-3 grid grid-cols-3 gap-2 rounded-[3px] border border-[var(--sm-line2)] p-2 text-center">
+          <div>
+            <span className="block text-[0.72rem] text-[var(--sm-mut)]">Lệnh đã đóng</span>
+            <b className="tabular-nums text-[var(--sm-egg)]">{closes.length}</b>
+          </div>
+          <div>
+            <span className="block text-[0.72rem] text-[var(--sm-mut)]">Tỷ lệ thắng</span>
+            <b className="tabular-nums text-[var(--sm-egg)]">{Math.round((wins / closes.length) * 100)}%</b>
+          </div>
+          <div>
+            <span className="block text-[0.72rem] text-[var(--sm-mut)]">Lãi/lỗ TB</span>
+            <b className={`tabular-nums ${avg! > 0 ? "up" : avg! < 0 ? "down" : ""}`}>{pctS(avg!)}</b>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Header card of the stock page: identity on the left, company figures in the
 // middle, live price and valuation on the right.
 export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote; isIndexOrFutures: boolean }) {
@@ -93,6 +205,25 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
     [symbol, isIndexOrFutures],
     6 * 60 * 60 * 1000
   );
+
+  // Lịch sử giá ngày đầy đủ: dùng cho biểu đồ tổng quan và tín hiệu của hệ thống.
+  const { data: hist, loading: histLoading } = usePolling(() => fetchHistory(symbol, "MAX"), [symbol], 10 * 60 * 1000);
+  const history = useMemo(() => hist?.points ?? [], [hist]);
+  const signals = useMemo(
+    () => (isIndexOrFutures || history.length === 0 ? [] : computeTradingSignals(dropUnclosedBars(history)).transitions),
+    [history, isIndexOrFutures]
+  );
+  const cond = useMemo(() => (isIndexOrFutures ? null : latestConditions(history)), [history, isIndexOrFutures]);
+  const closeByDay = useMemo(() => new Map(history.map((p) => [p.time.slice(0, 10), p.close])), [history]);
+  const closeAt = (sec: number) =>
+    closeByDay.get(new Date(sec * 1000 + 7 * 3600_000).toISOString().slice(0, 10)) ?? closeByDay.get(new Date(sec * 1000).toISOString().slice(0, 10)) ?? null;
+  // Lịch sử có thể tính bằng nghìn đồng trong khi giá khớp tính bằng đồng.
+  const histScale = useMemo(() => {
+    const lc = history[history.length - 1]?.close;
+    if (!lc || !quote.price) return 1;
+    const r = quote.price / lc;
+    return r > 500 ? 1000 : r < 0.002 ? 0.001 : 1;
+  }, [history, quote.price]);
 
   const pe = cstc ? findLatest(cstc, PE_MATCH) : null;
   const pb = cstc ? findLatest(cstc, PB_MATCH) : null;
@@ -222,10 +353,11 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
 
       <div className="mt-6 grid items-stretch gap-4 lg:grid-cols-12">
         <div className="min-w-0 lg:col-span-7">
-          <PriceOverviewChart symbol={symbol} prevClose={quote.prevClose} price={quote.price} fmt={fmt} />
+          <PriceOverviewChart symbol={symbol} history={history} loading={histLoading} signals={signals} prevClose={quote.prevClose} price={quote.price} fmt={fmt} />
         </div>
 
         <div className="flex min-w-0 flex-col rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-4 lg:col-span-5">
+          {!isIndexOrFutures && <SignalCard signals={signals} cond={cond} price={quote.price} scale={histScale} fmt={fmt} closeAt={closeAt} />}
           <div className="grid grid-cols-2 gap-4 border-b border-[var(--sm-line2)] pb-4">
             {stat("Khối lượng", count(quote.volume, ""))}
             {isIndexOrFutures

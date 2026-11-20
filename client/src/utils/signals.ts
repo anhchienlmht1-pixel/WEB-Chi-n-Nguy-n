@@ -216,3 +216,34 @@ export function latestSignal(allPoints: HistoryPoint[]): "buy" | "sell" | null {
   const last = all[all.length - 1];
   return last.time === toSeconds(points[points.length - 1]) ? last.type : null;
 }
+
+export interface SignalConditions {
+  /** Ngày của phiên đã đóng gần nhất dùng để tính (giây UTC). */
+  time: number;
+  sma20: number;
+  sma50: number;
+  adx: number;
+  supertrendUp: boolean;
+}
+
+/** Giá trị 3 điều kiện của hệ thống ở phiên ĐÃ ĐÓNG gần nhất (bỏ nến đang chạy). */
+export function latestConditions(allPoints: HistoryPoint[]): SignalConditions | null {
+  const points = dropUnclosedBars(allPoints);
+  if (points.length < 51) return null;
+  const closes = points.map((p) => p.close);
+  const s20 = sma({ period: 20, values: closes });
+  const s50 = sma({ period: 50, values: closes });
+  const adxRows = adx({ high: points.map((p) => p.high), low: points.map((p) => p.low), close: closes, period: 14 });
+  const st = computeSupertrend(points, 10, 3);
+  const last = points[points.length - 1];
+  const lastSt = st[st.length - 1];
+  const lastAdx = adxRows[adxRows.length - 1];
+  if (!s20.length || !s50.length || !lastAdx || !lastSt) return null;
+  return {
+    time: toSeconds(last),
+    sma20: s20[s20.length - 1],
+    sma50: s50[s50.length - 1],
+    adx: lastAdx.adx,
+    supertrendUp: lastSt.direction === 1,
+  };
+}

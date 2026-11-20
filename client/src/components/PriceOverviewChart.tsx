@@ -1,8 +1,7 @@
 import { useMemo, useState } from "react";
-import { Area, Bar, ComposedChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { usePolling } from "../hooks/usePolling";
-import { fetchHistory } from "../api/client";
+import { Area, Bar, ComposedChart, ReferenceDot, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { HistoryPoint } from "../types";
+import type { TradingSignal } from "../utils/signals";
 
 // Biểu đồ tổng quan giá (đường + vùng) kèm khối lượng, và hàng nút khung thời
 // gian 1D … ALL. Mỗi nút hiện % thay đổi giá của khung đó, tính từ chính dữ
@@ -35,20 +34,29 @@ function startIndex(points: HistoryPoint[], k: Key): number {
 
 const pctText = (v: number) => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v).toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
 
+// Ngày (YYYY-MM-DD, giờ VN) của một tín hiệu tính theo giây UTC.
+const sigDay = (sec: number) => new Date(sec * 1000 + 7 * 3600_000).toISOString().slice(0, 10);
+
 export default function PriceOverviewChart({
   symbol,
+  history,
+  loading,
+  signals = [],
   prevClose,
   price,
   fmt,
 }: {
   symbol: string;
+  history: HistoryPoint[];
+  loading: boolean;
+  /** Điểm Mua/Đóng lệnh của hệ thống (tính sau phiên), vẽ thành tam giác. */
+  signals?: TradingSignal[];
   prevClose?: number;
   price?: number;
   fmt: (n: number) => string;
 }) {
   const [k, setK] = useState<Key>("1Y");
-  const { data, loading } = usePolling(() => fetchHistory(symbol, "MAX"), [symbol], 10 * 60 * 1000);
-  const points = useMemo(() => (data?.points ?? []).filter((p) => Number.isFinite(p.close) && p.close > 0), [data]);
+  const points = useMemo(() => history.filter((p) => Number.isFinite(p.close) && p.close > 0), [history]);
 
   // Giá đóng cửa trong lịch sử có thể khác đơn vị giá khớp (nghìn đồng vs đồng):
   // quy về cùng đơn vị với giá hiện tại để trục và tooltip khớp con số ở trên.
@@ -78,6 +86,16 @@ export default function PriceOverviewChart({
     const from = k === "1D" ? Math.max(0, points.length - 5) : startIndex(points, k);
     return points.slice(from).map((p) => ({ t: p.time.slice(0, 10), c: p.close * scale, v: p.volume }));
   }, [points, k, scale]);
+
+  // Chỉ vẽ điểm mua đầu tiên (Mua 1/3) và điểm đóng lệnh để biểu đồ gọn.
+  const marks = useMemo(() => {
+    const byDay = new Map(view.map((d) => [d.t, d.c]));
+    return signals
+      .filter((sg) => sg.type === "sell" || sg.note?.startsWith("Mua 1/"))
+      .map((sg) => ({ t: sigDay(sg.time), buy: sg.type === "buy", note: sg.note ?? "" }))
+      .filter((m) => byDay.has(m.t))
+      .map((m) => ({ ...m, c: byDay.get(m.t)! }));
+  }, [signals, view]);
 
   const years = view.length > 0 ? (new Date(view[view.length - 1].t).getTime() - new Date(view[0].t).getTime()) / (365 * dayMs) : 0;
   const tickFmt = (t: string) => {
@@ -153,6 +171,29 @@ export default function PriceOverviewChart({
                 activeDot={{ r: 4, fill: line, stroke: "#121a11", strokeWidth: 2 }}
                 isAnimationActive={false}
               />
+              {marks.map((m) => (
+                <ReferenceDot
+                  key={m.t + m.note}
+                  yAxisId="p"
+                  x={m.t}
+                  y={m.c}
+                  r={6}
+                  ifOverflow="extendDomain"
+                  shape={(props: { cx?: number; cy?: number }) => {
+                    const cx = props.cx ?? 0;
+                    const cy = props.cy ?? 0;
+                    return m.buy ? (
+                      <path d={`M${cx},${cy + 7} l6,10 h-12 z`} fill="#4fd18b" stroke="#121a11" strokeWidth={1.5}>
+                        <title>{`${m.note} · ${m.t.split("-").reverse().join("/")}`}</title>
+                      </path>
+                    ) : (
+                      <path d={`M${cx},${cy - 7} l6,-10 h-12 z`} fill="#ff6b5e" stroke="#121a11" strokeWidth={1.5}>
+                        <title>{`${m.note} · ${m.t.split("-").reverse().join("/")}`}</title>
+                      </path>
+                    );
+                  }}
+                />
+              ))}
             </ComposedChart>
           </ResponsiveContainer>
         )}
