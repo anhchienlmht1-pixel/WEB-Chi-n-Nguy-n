@@ -13,6 +13,9 @@ export const SECTOR_MAP: Record<string, string> = {
   VIC: "Bất động sản", VHM: "Bất động sản", VRE: "Bất động sản", NVL: "Bất động sản",
   PDR: "Bất động sản", DXG: "Bất động sản", KDH: "Bất động sản", NLG: "Bất động sản",
   DIG: "Bất động sản", KBC: "Bất động sản", CEO: "Bất động sản", IDC: "Bất động sản",
+  TCH: "Bất động sản", HDC: "Bất động sản", HDG: "Bất động sản", NTL: "Bất động sản",
+  DXS: "Bất động sản", NBB: "Bất động sản", SCR: "Bất động sản", HQC: "Bất động sản",
+  QCG: "Bất động sản", SZC: "Bất động sản",
 
   // Bán lẻ / hàng tiêu dùng
   VNM: "Bán lẻ / hàng tiêu dùng", MWG: "Bán lẻ / hàng tiêu dùng", PNJ: "Bán lẻ / hàng tiêu dùng",

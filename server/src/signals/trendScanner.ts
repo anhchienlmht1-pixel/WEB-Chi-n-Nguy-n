@@ -5,6 +5,7 @@ import { fetchFinancialReport } from "../providers/financials.js";
 import { extractKeyRatios } from "../digest/ratios.js";
 import type { HistoryPoint } from "../providers/types.js";
 import { barDateICT, dropUnclosedBars } from "./sessionClose.js";
+import { SECTOR_MAP } from "../data/sectorMap.js";
 
 // Same trend-following combo as the chart's own Mua/Bán markers
 // (client/src/utils/signals.ts computeTradingSignals — SMA20 > SMA50,
@@ -153,6 +154,10 @@ export interface SignalDates {
 // CAN SLIM fundamentals check: ROE, Revenue growth, Earnings growth
 // to reduce noise and only show high-quality buy signals
 async function checkCanSlimFundamentals(symbol: string): Promise<boolean> {
+  // Bất động sản ghi nhận doanh thu, lợi nhuận theo thời điểm bàn giao dự án nên
+  // so sánh năm này với năm trước không phản ánh sức khỏe doanh nghiệp: bỏ qua
+  // bộ lọc tăng trưởng cho nhóm này, chỉ dùng điều kiện kỹ thuật.
+  if (SECTOR_MAP[symbol] === "Bất động sản") return true;
   try {
     // Fetch annual income statement for revenue and earnings
     const incomeReport = await fetchFinancialReport(symbol, "KQKD", "year");
