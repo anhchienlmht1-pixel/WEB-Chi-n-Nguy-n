@@ -101,7 +101,7 @@ export default function SecValuationTab({ d, group }: { d: SecSector; group: Sec
       </section>
 
       <section className="overflow-x-auto rounded-[10px] border border-[var(--ab-line)] bg-[var(--ab-card)]">
-        <table className="w-full min-w-[1020px] border-collapse text-[0.9rem]">
+        <table className="w-full min-w-[920px] border-collapse text-[0.9rem]">
           <thead>
             <tr className="sm-thead">
               <th className="px-3 py-2.5 text-left font-bold">CTCK</th>
@@ -113,7 +113,6 @@ export default function SecValuationTab({ d, group }: { d: SecSector; group: Sec
               <th className="px-2 py-2.5 text-right font-bold" title="P/B hiện tại so với trung bình lịch sử">So với TB</th>
               <th className="px-2 py-2.5 text-right font-bold" title="Phần trăm số phiên có P/B thấp hơn hoặc bằng hiện tại">Vị trí lịch sử</th>
               <th className="px-2 py-2.5 text-right font-bold">ROE quy năm</th>
-              <th className="px-3 py-2.5 text-right font-bold">Dữ liệu từ</th>
             </tr>
           </thead>
           <tbody>
@@ -150,7 +149,6 @@ export default function SecValuationTab({ d, group }: { d: SecSector; group: Sec
                   </td>
                   <td className="px-2 py-1.5 text-right tabular-nums">{vn(r.s.pct, 0)}%</td>
                   <td className="px-2 py-1.5 text-right tabular-nums">{roeOf[r.sym] == null ? "—" : `${vn(roeOf[r.sym] as number, 1)}%`}</td>
-                  <td className="px-3 py-1.5 text-right text-[0.82rem] text-[var(--ab-muted)] tabular-nums">{dLabel(r.s.since).slice(3)}</td>
                 </tr>
               );
             })}
