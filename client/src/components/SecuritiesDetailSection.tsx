@@ -165,9 +165,7 @@ export default function SecuritiesDetailSection({ symbol }: { symbol: string }) 
 
   const pbStat = val?.stats[symbol] ?? null;
   const pb = pbStat
-    ? val!.dates
-        .map((t, i) => ({ t, pb: val!.series[symbol]?.[i] ?? null, band: [Math.max(0, pbStat.avg - pbStat.sd), pbStat.avg + pbStat.sd] }))
-        .filter((x) => x.pb != null)
+    ? (val!.series[symbol] ?? []).map(([t, v]) => ({ t, pb: v, band: [Math.max(0, pbStat.avg - pbStat.sd), pbStat.avg + pbStat.sd] }))
     : null;
   const segFmts = { revBroker: amt, revLoan: amt, revFvtpl: amt, revHtm: amt, revAfs: amt, revOther: amt };
   const pctFmts = Object.fromEntries(Object.keys(segFmts).map((k) => [`${k}Pct`, pct]));
@@ -390,7 +388,7 @@ export default function SecuritiesDetailSection({ symbol }: { symbol: string }) 
             <p className="text-[0.8rem] leading-relaxed text-[var(--sm-mut)]">
               <b className="font-semibold text-[var(--sm-egg2)]">Cách đọc: </b>
               P/B hiện tại {vn(pbStat.cur, 2)} (ngày {dLabel(pbStat.curDate)}), trung bình từ {dLabel(pbStat.since).slice(3)} là {vn(pbStat.avg, 2)}; P/B hiện tại cao hơn hoặc bằng{" "}
-              {vn(pbStat.pct, 0)}% số phiên trong lịch sử. Vùng vàng là trung bình ± 1 độ lệch chuẩn. P/B thấp so với lịch sử cần xem cùng ROE, không tự nó là rẻ.
+              {vn(pbStat.pct, 0)}% số phiên trong lịch sử. Vùng vàng là trung bình ± 1 độ lệch chuẩn. Nguồn: {val?.source[symbol] === "ssi" ? "SSI" : 'sheet "Data P/B Chứng"'}. P/B thấp so với lịch sử cần xem cùng ROE, không tự nó là rẻ.
             </p>
           </div>
           <div className="rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] px-3 pt-2.5 pb-2">

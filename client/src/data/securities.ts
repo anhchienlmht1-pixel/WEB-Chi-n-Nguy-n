@@ -116,13 +116,15 @@ export interface SecPbStat {
   pct: number;
 }
 export interface SecValuation {
-  dates: string[];
-  series: Record<string, (number | null)[]>;
+  /** mỗi mã: [ngày yyyy-mm-dd, P/B] */
+  series: Record<string, [string, number][]>;
   stats: Record<string, SecPbStat>;
+  /** "sheet" = Google Sheet Data P/B Chứng, "ssi" = SSI (bổ sung cho mã sheet không có / ngừng cập nhật) */
+  source: Record<string, "sheet" | "ssi">;
 }
 
-// P/B theo ngày (Google Sheet "Triển vọng đầu tư - Team Bull", sheet "Data P/B Chứng"),
-// xuất bằng scripts/export_securities_pb.py.
+// P/B theo ngày (Google Sheet "Triển vọng đầu tư - Team Bull", sheet "Data P/B Chứng";
+// LPS, KAI, TCX lấy từ SSI), xuất bằng scripts/export_securities_pb.py.
 let vcache: Promise<SecValuation> | null = null;
 export function useSecValuation() {
   const [data, setData] = useState<SecValuation | null>(null);

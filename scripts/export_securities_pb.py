@@ -30,7 +30,33 @@ for line in open(os.path.join(here, "data", "securities_pb.txt"), encoding="utf-
 dates.reverse()
 for c in cols:
     series[c].reverse()
-out = {"source": "Data P/B Chứng", "dates": dates, "series": series, "stats": stats}
+# Mỗi mã một chuỗi [ngày, P/B]; nguồn: "sheet" hoặc "ssi".
+pts = {c: [[d, v] for d, v in zip(dates, series[c]) if v is not None] for c in cols}
+source = {c: "sheet" for c in stats}
+
+# Bổ sung từ SSI (MCP) cho mã sheet không có hoặc đã ngừng cập nhật: thay cả chuỗi
+# và thống kê (tính trên dữ liệu ngày) để mỗi mã chỉ dùng một nguồn.
+ssi = {}
+for line in open(os.path.join(here, "data", "securities_pb_ssi.txt"), encoding="utf-8"):
+    if line.startswith("#") or not line.strip():
+        continue
+    sym, d, v = line.split()
+    ssi.setdefault(sym, []).append((d, float(v)))
+for sym, xs in ssi.items():
+    xs.sort()
+    vs = [v for _, v in xs]
+    n = len(vs)
+    m = sum(vs) / n
+    sd = (sum((v - m) ** 2 for v in vs) / n) ** 0.5
+    sv = sorted(vs)
+    cur_d, cur = xs[-1]
+    mn = min(xs, key=lambda x: x[1])
+    mx = max(xs, key=lambda x: x[1])
+    stats[sym] = dict(cur=round(cur, 2), curDate=cur_d, avg=round(m, 3), med=sv[n // 2], sd=round(sd, 3), min=round(mn[1], 2), minDate=mn[0],
+                      max=round(mx[1], 2), maxDate=mx[0], n=n, since=xs[0][0], pct=round(sum(1 for v in vs if v <= cur) / n * 100, 1))
+    pts[sym] = [[d, round(v, 3)] for d, v in xs]
+    source[sym] = "ssi"
+out = {"series": pts, "stats": stats, "source": source}
 dst = os.path.join(here, "..", "client", "public", "data", "securities", "valuation.json")
 json.dump(out, open(dst, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
 print("ok", len(dates), "điểm,", len(stats), "mã")

@@ -77,9 +77,7 @@ export default function SecValuationTab({ d, group }: { d: SecSector; group: Sec
   // Biểu đồ P/B theo thời gian của mã đang chọn.
   const sel = v.stats[pick] ? pick : rows[0]?.sym ?? "SSI";
   const st = v.stats[sel];
-  const series = v.dates
-    .map((dt, i) => ({ t: dt, pb: v.series[sel]?.[i] ?? null }))
-    .filter((p) => p.pb != null);
+  const series = (v.series[sel] ?? []).map(([t, pb]) => ({ t, pb }));
   const band = st ? [Math.max(0, st.avg - st.sd), st.avg + st.sd] : [0, 0];
   const chartData = series.map((p) => ({ ...p, band }));
 
@@ -90,7 +88,7 @@ export default function SecValuationTab({ d, group }: { d: SecSector; group: Sec
   return (
     <div className="flex flex-col gap-4">
       <section aria-label="Định giá chung" className="flex flex-wrap rounded-[10px] border border-[var(--ab-line)] bg-[var(--ab-card)]">
-        <Tile label="P/B trung vị hiện tại" value={vn(median(rows.map((r) => r.s.cur)))} sub={`${rows.length} CTCK · ngày ${dLabel(latest)}`} />
+        <Tile label="P/B trung vị hiện tại" value={vn(median(rows.map((r) => r.s.cur)))} sub={`${rows.length} CTCK · mới nhất ${dLabel(latest)}`} />
         <Tile label="P/B trung vị lịch sử" value={vn(median(rows.map((r) => r.s.avg)))} sub="Trung vị của mức P/B trung bình từng mã" />
         <Tile label="Thấp hơn trung bình lịch sử" value={`${below}/${rows.length}`} sub="Số CTCK có P/B dưới trung bình lịch sử của chính nó" />
         {lowest && (
@@ -136,6 +134,11 @@ export default function SecValuationTab({ d, group }: { d: SecSector; group: Sec
                   <td className="px-2 py-1.5 text-right font-bold tabular-nums" title={`Ngày ${dLabel(r.s.curDate)}`}>
                     {vn(r.s.cur)}
                     {r.s.curDate !== latest && <span className="ml-1 text-[0.7rem] font-normal text-[var(--ab-muted)]">({dLabel(r.s.curDate).slice(0, 5)})</span>}
+                    {v.source[r.sym] === "ssi" && (
+                      <span className="ml-1 rounded bg-[var(--ab-hover)] px-1 text-[0.66rem] font-semibold text-[var(--ab-muted)]" title="Dữ liệu P/B lấy từ SSI">
+                        SSI
+                      </span>
+                    )}
                   </td>
                   <td className="px-2 py-1.5 text-right tabular-nums">{vn(r.s.avg)}</td>
                   <td className="px-2 py-1.5 text-right tabular-nums" title={dLabel(r.s.minDate)}>
@@ -172,11 +175,11 @@ export default function SecValuationTab({ d, group }: { d: SecSector; group: Sec
             <b>Vị trí lịch sử</b>: phần trăm số phiên có P/B thấp hơn hoặc bằng hiện tại. 5% nghĩa là P/B đang ở vùng thấp nhất 5% số phiên từ khi có dữ liệu.
           </li>
           <li>
-            P/B thấp so với lịch sử không tự nó là rẻ: cần xem cùng ROE và chất lượng tài sản. Lịch sử của VCK, VPX, TCX, DSE ngắn (niêm yết gần đây) nên dải hẹp hơn.
+            P/B thấp so với lịch sử không tự nó là rẻ: cần xem cùng ROE và chất lượng tài sản. Lịch sử của LPS, KAI, VCK, VPX, TCX, DSE ngắn (niêm yết gần đây) nên dải hẹp hơn.
           </li>
           <li className="text-[var(--ab-muted)]">
-            Nguồn: sheet "Data P/B Chứng", dữ liệu theo ngày đến {dLabel(latest)}.{missing.length ? ` Chưa có dữ liệu P/B: ${missing.join(", ")}.` : ""} Chỉ để tham khảo, không phải
-            khuyến nghị mua bán.
+            Nguồn: sheet "Data P/B Chứng" (dữ liệu theo ngày). Mã gắn nhãn SSI (LPS, KAI chưa có trong sheet; TCX sheet ngừng cập nhật từ 15/09/2026) lấy
+            P/B theo ngày từ SSI.{missing.length ? ` Chưa có dữ liệu P/B: ${missing.join(", ")}.` : ""} Chỉ để tham khảo, không phải khuyến nghị mua bán.
           </li>
         </ul>
       </div>
@@ -230,12 +233,14 @@ export default function SecValuationTab({ d, group }: { d: SecSector; group: Sec
               </ComposedChart>
             </ResponsiveContainer>
           </div>
-          <p className="mt-1 text-xs text-[var(--ab-muted)]">Mỗi điểm cách nhau 10 phiên giao dịch. Vùng vàng: trung bình ± 1 độ lệch chuẩn.</p>
+          <p className="mt-1 text-xs text-[var(--ab-muted)]">
+            {v.source[sel] === "ssi" ? "Dữ liệu SSI, mỗi điểm một phiên." : "Mỗi điểm cách nhau 10 phiên giao dịch."} Vùng vàng: trung bình ± 1 độ lệch chuẩn.
+          </p>
         </div>
 
         <div className="min-w-0 rounded-[10px] border border-[var(--ab-line)] bg-[var(--ab-card)] p-4">
           <h2 className="text-lg font-bold text-[var(--ab-strong)]">P/B và ROE</h2>
-          <p className="text-[0.82rem] text-[var(--ab-muted)]">P/B ngày {dLabel(latest)} · ROE quy năm {qLabelOf(d)}. Công ty sinh lời cao thường được định giá P/B cao hơn.</p>
+          <p className="text-[0.82rem] text-[var(--ab-muted)]">P/B mới nhất · ROE quy năm {qLabelOf(d)}. Công ty sinh lời cao thường được định giá P/B cao hơn.</p>
           <div className="mt-3 h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 12, right: 16, bottom: 8, left: -6 }}>
