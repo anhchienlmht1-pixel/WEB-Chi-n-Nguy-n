@@ -133,7 +133,6 @@ export default function SecValuationTab({ d, group }: { d: SecSector; group: Sec
                   </td>
                   <td className="px-2 py-1.5 text-right font-bold tabular-nums" title={`Ngày ${dLabel(r.s.curDate)}`}>
                     {vn(r.s.cur)}
-                    {r.s.curDate !== latest && <span className="ml-1 text-[0.7rem] font-normal text-[var(--ab-muted)]">({dLabel(r.s.curDate).slice(0, 5)})</span>}
                     {v.source[r.sym] === "ssi" && (
                       <span className="ml-1 rounded bg-[var(--ab-hover)] px-1 text-[0.66rem] font-semibold text-[var(--ab-muted)]" title="Dữ liệu P/B lấy từ SSI">
                         SSI
