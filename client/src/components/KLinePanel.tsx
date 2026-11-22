@@ -436,6 +436,14 @@ export default function KLinePanel({ symbol, height = 400, fill = false }: { sym
             </div>
           )}
           <div className="relative min-h-0 flex-1" style={{ height: fill ? undefined : height, minHeight: height }}>
+            {/* Watermark: con bò trong logo Chiến Nguyễn Invest, mờ, nằm dưới nến. */}
+            <img
+              src="/watermark-bull.png"
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+              className="pointer-events-none absolute top-1/2 left-1/2 w-[34%] max-w-[340px] min-w-[140px] -translate-x-1/2 -translate-y-[60%] select-none opacity-[0.08] dark:opacity-[0.1]"
+            />
             <div ref={boxRef} className="absolute inset-0" />
             {points.length === 0 && (
               <div className="absolute inset-0 flex items-center justify-center text-[0.9rem] text-[var(--sm-mut)]">
