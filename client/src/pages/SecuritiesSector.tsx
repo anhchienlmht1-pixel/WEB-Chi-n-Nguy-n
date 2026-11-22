@@ -3,6 +3,7 @@ import type React from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import BankBarChart from "../components/BankBarChart";
+import SecValuationTab from "../components/SecValuationTab";
 import { STEPS, Seg, Tile, heat, mean, stats, vn } from "../components/bankUi";
 import { SEC_GROUPS, qLabel, useSecSector, type SecGroupFilter, type SecMetric, type SecRow, type SecScale, type SecSector } from "../data/securities";
 
@@ -541,6 +542,7 @@ function ShareTab({ d }: { d: SecSector }) {
 
 const TABS = [
   { id: "tong-quan", label: "Chỉ số hoạt động" },
+  { id: "dinh-gia", label: "Định giá" },
   { id: "quy-mo", label: "Quy mô & lợi nhuận" },
   { id: "thi-phan", label: "Thị phần môi giới" },
 ] as const;
@@ -588,6 +590,7 @@ export default function SecuritiesSector() {
         {error && <p className="text-[var(--ab-muted)]">Không tải được số liệu ngành chứng khoán. Tải lại trang để thử lại.</p>}
         {!data && !error && <div aria-busy="true" className="h-[600px] animate-pulse rounded-[10px] bg-[var(--ab-skel)]" />}
         {data && tab === "tong-quan" && <OverviewTab d={data} group={group} />}
+        {data && tab === "dinh-gia" && <SecValuationTab d={data} group={group} />}
         {data && tab === "quy-mo" && <ScaleTab d={data} group={group} />}
         {data && tab === "thi-phan" && <ShareTab d={data} />}
       </div>

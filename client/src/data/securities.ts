@@ -99,3 +99,49 @@ export function useSecSector() {
 
 /** "Q3 2026" → "Q3/2026" */
 export const qLabel = (q: string) => q.replace(" ", "/");
+
+export interface SecPbStat {
+  cur: number;
+  curDate: string;
+  avg: number;
+  med: number;
+  sd: number;
+  min: number;
+  minDate: string;
+  max: number;
+  maxDate: string;
+  n: number;
+  since: string;
+  /** % số phiên có P/B thấp hơn hoặc bằng hiện tại */
+  pct: number;
+}
+export interface SecValuation {
+  dates: string[];
+  series: Record<string, (number | null)[]>;
+  stats: Record<string, SecPbStat>;
+}
+
+// P/B theo ngày (Google Sheet "Triển vọng đầu tư - Team Bull", sheet "Data P/B Chứng"),
+// xuất bằng scripts/export_securities_pb.py.
+let vcache: Promise<SecValuation> | null = null;
+export function useSecValuation() {
+  const [data, setData] = useState<SecValuation | null>(null);
+  const [error, setError] = useState(false);
+  useEffect(() => {
+    let off = false;
+    vcache ??= fetch("/data/securities/valuation.json").then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))));
+    vcache
+      .then((d) => !off && setData(d))
+      .catch(() => {
+        vcache = null;
+        if (!off) setError(true);
+      });
+    return () => {
+      off = true;
+    };
+  }, []);
+  return { data, error };
+}
+
+/** "2026-11-04" → "04/11/2026" */
+export const dLabel = (d: string) => d.split("-").reverse().join("/");

@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Bar, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, Bar, CartesianGrid, ComposedChart, Legend, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { dLabel, useSecValuation } from "../data/securities";
 
 // "Chi tiết công ty chứng khoán" trên trang mã — cùng khung với Chi tiết ngân hàng:
 // các nhóm biểu đồ theo quý, mỗi nhóm có ghi chú "Cách đọc". Dữ liệu:
@@ -70,6 +71,7 @@ const legendStyle = { fontSize: 11, color: C.axis, paddingTop: 2, lineHeight: "1
 export default function SecuritiesDetailSection({ symbol }: { symbol: string }) {
   const [d, setD] = useState<Detail | null>(null);
   const [err, setErr] = useState(false);
+  const { data: val } = useSecValuation();
   useEffect(() => {
     let off = false;
     setD(null);
@@ -161,6 +163,12 @@ export default function SecuritiesDetailSection({ symbol }: { symbol: string }) 
     </div>
   );
 
+  const pbStat = val?.stats[symbol] ?? null;
+  const pb = pbStat
+    ? val!.dates
+        .map((t, i) => ({ t, pb: val!.series[symbol]?.[i] ?? null, band: [Math.max(0, pbStat.avg - pbStat.sd), pbStat.avg + pbStat.sd] }))
+        .filter((x) => x.pb != null)
+    : null;
   const segFmts = { revBroker: amt, revLoan: amt, revFvtpl: amt, revHtm: amt, revAfs: amt, revOther: amt };
   const pctFmts = Object.fromEntries(Object.keys(segFmts).map((k) => [`${k}Pct`, pct]));
   const hasMargin = rows.some((r) => (r.margin as number) > 0);
@@ -371,6 +379,36 @@ export default function SecuritiesDetailSection({ symbol }: { symbol: string }) 
           {vsInd("Biên LNTT", "pbtMargin")}
           {vsInd("Đòn bẩy (tổng TS / VCSH)", "leverage", "times")}
         </>,
+      )}
+      {pb && pbStat && (
+        <div className="mt-6">
+          <div className="mb-2.5 flex flex-col gap-1.5 lg:flex-row lg:items-baseline lg:gap-5">
+            <h4 className="flex shrink-0 items-center gap-2 text-[0.95rem] font-semibold text-[var(--sm-gold2)]">
+              <span className="h-3 w-[3px] rounded-full bg-[var(--sm-gold)]" aria-hidden="true" />
+              Định giá P/B
+            </h4>
+            <p className="text-[0.8rem] leading-relaxed text-[var(--sm-mut)]">
+              <b className="font-semibold text-[var(--sm-egg2)]">Cách đọc: </b>
+              P/B hiện tại {vn(pbStat.cur, 2)} (ngày {dLabel(pbStat.curDate)}), trung bình từ {dLabel(pbStat.since).slice(3)} là {vn(pbStat.avg, 2)}; P/B hiện tại cao hơn hoặc bằng{" "}
+              {vn(pbStat.pct, 0)}% số phiên trong lịch sử. Vùng vàng là trung bình ± 1 độ lệch chuẩn. P/B thấp so với lịch sử cần xem cùng ROE, không tự nó là rẻ.
+            </p>
+          </div>
+          <div className="rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] px-3 pt-2.5 pb-2">
+            <div className="h-56">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={pb} margin={{ top: 6, right: 8, bottom: 0, left: -6 }}>
+                  {grid}
+                  <XAxis dataKey="t" tick={axisTick} tickLine={false} axisLine={{ stroke: C.grid }} minTickGap={40} tickFormatter={(t: string) => `${t.slice(5, 7)}/${t.slice(2, 4)}`} />
+                  <YAxis tick={axisTick} tickLine={false} axisLine={false} width={40} domain={[0, "auto"]} tickFormatter={(v) => vn(v, 1)} />
+                  <Tooltip cursor={lineCursor} content={<Tip fmts={{ pb: (v) => vn(v, 2) }} />} labelFormatter={(t) => dLabel(String(t))} />
+                  <Area dataKey="band" stroke="none" fill="rgba(201,162,74,0.16)" isAnimationActive={false} activeDot={false} />
+                  <ReferenceLine y={pbStat.avg} stroke={C.gold} strokeDasharray="5 4" />
+                  <Line dataKey="pb" name="P/B" stroke="var(--sm-egg)" strokeWidth={2} dot={false} isAnimationActive={false} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
       )}
       <p className="mt-3 text-xs text-[var(--sm-mut)]">Chỉ để tham khảo, không phải khuyến nghị mua bán.</p>
     </section>
