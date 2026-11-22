@@ -8,6 +8,7 @@ import AccountOpeningGuide from './pages/AccountOpeningGuide'
 import About from './pages/About'
 import BankSector from './pages/BankSector'
 import SecuritiesSector from './pages/SecuritiesSector'
+import RealEstateSector from './pages/RealEstateSector'
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           <Route path="/huong-dan-mo-tai-khoan" element={<AccountOpeningGuide />} />
           <Route path="/nganh-ngan-hang" element={<BankSector />} />
           <Route path="/nganh-chung-khoan" element={<SecuritiesSector />} />
+          <Route path="/nganh-bat-dong-san" element={<RealEstateSector />} />
           <Route path="/gioi-thieu" element={<About />} />
           <Route path="*" element={<About />} />
         </Routes>

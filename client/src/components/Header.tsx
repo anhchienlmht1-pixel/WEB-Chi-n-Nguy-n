@@ -50,6 +50,9 @@ export default function Header() {
           <NavLink to="/nganh-chung-khoan" className={({ isActive }) => `${NAV_BASE} ${isActive ? NAV_ACTIVE : NAV_IDLE}`}>
             Ngành chứng khoán
           </NavLink>
+          <NavLink to="/nganh-bat-dong-san" className={({ isActive }) => `${NAV_BASE} ${isActive ? NAV_ACTIVE : NAV_IDLE}`}>
+            Ngành bất động sản
+          </NavLink>
           <NavLink
             to="/huong-dan-mo-tai-khoan"
             className={({ isActive }) => `${NAV_BASE} ${isActive ? NAV_ACTIVE : NAV_IDLE}`}

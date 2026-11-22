@@ -37,6 +37,9 @@ export default function Footer() {
               <Link to="/nganh-chung-khoan" className={LINK}>
                 Ngành chứng khoán
               </Link>
+              <Link to="/nganh-bat-dong-san" className={LINK}>
+                Ngành bất động sản
+              </Link>
               <Link to="/" className={LINK}>
                 Giới thiệu
               </Link>

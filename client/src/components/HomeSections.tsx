@@ -5,6 +5,7 @@ import type { TradeJournal, TrendBuyResult } from "../api/client";
 import { BANKS } from "../data/bankSector";
 import { PROFIT } from "../data/bankValuation";
 import { useSecSector } from "../data/securities";
+import { useReSector } from "../data/realestate";
 import { InsightCard, dmy, pct, useMarketTrend } from "./SonMaiHome";
 
 // Các khối dùng chung cho trang Giới thiệu và trang Tín hiệu: tiêu đề mục,
@@ -42,6 +43,12 @@ export function ProductGrid({ quotes, scan, journal }: { quotes?: Quote[]; scan?
   const secPrev = sec?.scale.reduce((a, r) => a + (r.pbtPrev ?? 0), 0) ?? 0;
   const secYoy = secPrev ? (secPbt / secPrev - 1) * 100 : 0;
   const secMargin = sec?.scale.reduce((a, r) => a + (r.margin ?? 0), 0) ?? 0;
+
+  const { data: re } = useReSector();
+  const reSafe = re ? re.rows.filter((r) => (r.score ?? -9) >= 2).length : 0;
+  const rePre = re ? re.rows.reduce((a, r) => a + (r.v.prepaid ?? 0), 0) : 0;
+  const rePrev = re ? re.rows.reduce((a, r) => a + (r.v.prepaidPrev ?? 0), 0) : 0;
+  const reYoy = rePrev ? (rePre / rePrev - 1) * 100 : 0;
 
   const t = journal?.closed ?? [];
   const wins = t.filter((x) => x.returnPercent > 0).length;
@@ -87,17 +94,13 @@ export function ProductGrid({ quotes, scan, journal }: { quotes?: Quote[]; scan?
         sub="Giá, biểu đồ nến, khối ngoại, doanh thu, lợi nhuận, P/E, P/B của từng mã"
         foot={`Xem ví dụ: ${sample}`}
       />
-      <a
-        href="https://www.youtube.com/@chiennguyen.taichinh"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="group flex min-w-0 flex-col rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-3.5 transition-colors sm:p-5 hover:border-[rgba(201,162,74,0.55)]"
-      >
-        <span className="text-[0.78rem] text-[var(--sm-mut)] sm:text-[0.85rem]">Kênh YouTube</span>
-        <b className="mt-1.5 font-display text-[1.2rem] leading-[1.15] text-[var(--sm-egg)] sm:mt-2 sm:text-[1.75rem]">Chiến Nguyễn Tài Chính</b>
-        <span className="mt-1.5 text-[0.78rem] leading-snug text-[var(--sm-egg2)] sm:mt-2 sm:text-[0.88rem]">Giải thích cách làm, nói chuyện thị trường</span>
-        <span className="mt-auto hidden pt-3 text-[0.78rem] text-[var(--sm-mut)] group-hover:text-[var(--sm-gold2)] sm:block">Mở YouTube</span>
-      </a>
+      <InsightCard
+        to="/nganh-bat-dong-san"
+        label={`Ngành bất động sản ${re ? re.period.replace(" ", "/") : ""}`}
+        value={re ? `${reSafe}/${re.rows.length} CĐT an toàn` : "—"}
+        sub={re ? `Người mua trả trước ${num(rePre / 1000, 0)} nghìn tỷ, ${pct(reYoy)} so với cùng kỳ` : "Đang tải…"}
+        foot="Sức khỏe tài chính, tồn kho, dự án bàn giao"
+      />
     </div>
   );
 }

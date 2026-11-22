@@ -13,6 +13,8 @@ import FinancialSnapshot from "../components/FinancialSnapshot";
 import BankDetailSection, { DETAIL_BANKS } from "../components/BankDetailSection";
 import SecuritiesDetailSection from "../components/SecuritiesDetailSection";
 import { SEC_SYMBOLS } from "../data/securities";
+import RealEstateDetailSection from "../components/RealEstateDetailSection";
+import { RE_SYMBOLS } from "../data/realestate";
 import StockSummary from "../components/StockSummary";
 
 
@@ -56,6 +58,8 @@ export default function StockDetail() {
                 <BankDetailSection symbol={quote.symbol} />
               ) : SEC_SYMBOLS.has(quote.symbol) ? (
                 <SecuritiesDetailSection symbol={quote.symbol} />
+              ) : RE_SYMBOLS.has(quote.symbol) ? (
+                <RealEstateDetailSection symbol={quote.symbol} />
               ) : (
                 <FinancialSnapshot symbol={quote.symbol} />
               )}
