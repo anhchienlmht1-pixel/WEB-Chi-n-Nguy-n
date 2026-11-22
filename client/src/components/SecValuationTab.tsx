@@ -178,7 +178,7 @@ export default function SecValuationTab({ d, group }: { d: SecSector; group: Sec
         </ul>
       </div>
 
-      <section className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
+      <section className="flex flex-col gap-4">
         <div className="min-w-0 rounded-[10px] border border-[var(--ab-line)] bg-[var(--ab-card)] p-4">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="text-lg font-bold text-[var(--ab-strong)]">P/B {sel} theo thời gian</h2>
@@ -235,20 +235,21 @@ export default function SecValuationTab({ d, group }: { d: SecSector; group: Sec
         <div className="min-w-0 rounded-[10px] border border-[var(--ab-line)] bg-[var(--ab-card)] p-4">
           <h2 className="text-lg font-bold text-[var(--ab-strong)]">P/B và ROE</h2>
           <p className="text-[0.82rem] text-[var(--ab-muted)]">P/B mới nhất · ROE quy năm {qLabelOf(d)}. Công ty sinh lời cao thường được định giá P/B cao hơn.</p>
-          <div className="mt-3 h-[300px]">
+          <div className="mt-3 h-[460px]">
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 12, right: 16, bottom: 8, left: -6 }}>
                 <CartesianGrid stroke="var(--ab-line)" />
                 <XAxis
                   type="number"
                   dataKey="roe"
+                  domain={[(m: number) => Math.floor(m - 1), (m: number) => Math.ceil(m + 1)]}
                   name="ROE"
                   tick={{ fontSize: 11, fill: "var(--ab-muted)" }}
                   tickFormatter={(x) => `${vn(x, 0)}%`}
                   label={{ value: "ROE quy năm", position: "insideBottom", offset: -4, fontSize: 11, fill: "var(--ab-muted)" }}
                 />
-                <YAxis type="number" dataKey="pb" name="P/B" tick={{ fontSize: 11, fill: "var(--ab-muted)" }} width={40} tickFormatter={(x) => vn(x, 1)} />
-                <ZAxis range={[60, 60]} />
+                <YAxis type="number" dataKey="pb" name="P/B" tick={{ fontSize: 11, fill: "var(--ab-muted)" }} width={40} tickFormatter={(x) => vn(x, 1)} domain={[(m: number) => Math.max(0, Math.floor((m - 0.15) * 10) / 10), (m: number) => Math.ceil((m + 0.15) * 10) / 10]} />
+                <ZAxis range={[90, 90]} />
                 <Tooltip
                   cursor={{ strokeDasharray: "3 3" }}
                   content={({ active, payload }) => {
@@ -264,7 +265,7 @@ export default function SecValuationTab({ d, group }: { d: SecSector; group: Sec
                 />
                 {Object.keys(GROUP_COLOR).map((g) => (
                   <Scatter key={g} name={g} data={scatter.filter((x) => x.g === g)} fill={GROUP_COLOR[g]} isAnimationActive={false}>
-                    <LabelList dataKey="sym" position="top" style={{ fontSize: 10, fill: "var(--ab-text)" }} />
+                    <LabelList dataKey="sym" position="top" style={{ fontSize: 12, fontWeight: 600, fill: "var(--ab-text)" }} />
                   </Scatter>
                 ))}
               </ScatterChart>
