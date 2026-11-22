@@ -11,6 +11,8 @@ import { isSecuritiesSymbol } from "../utils/securitiesData";
 import AdvisorContactBar from "../components/AdvisorContactBar";
 import FinancialSnapshot from "../components/FinancialSnapshot";
 import BankDetailSection, { DETAIL_BANKS } from "../components/BankDetailSection";
+import SecuritiesDetailSection from "../components/SecuritiesDetailSection";
+import { SEC_SYMBOLS } from "../data/securities";
 import StockSummary from "../components/StockSummary";
 
 
@@ -50,7 +52,13 @@ export default function StockDetail() {
         <>
           {!isIndexOrFutures && (
             <div className="mt-6">
-              {DETAIL_BANKS.has(quote.symbol) ? <BankDetailSection symbol={quote.symbol} /> : <FinancialSnapshot symbol={quote.symbol} />}
+              {DETAIL_BANKS.has(quote.symbol) ? (
+                <BankDetailSection symbol={quote.symbol} />
+              ) : SEC_SYMBOLS.has(quote.symbol) ? (
+                <SecuritiesDetailSection symbol={quote.symbol} />
+              ) : (
+                <FinancialSnapshot symbol={quote.symbol} />
+              )}
             </div>
           )}
 

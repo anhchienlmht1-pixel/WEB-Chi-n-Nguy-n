@@ -7,6 +7,7 @@ import StockDetail from './pages/StockDetail'
 import AccountOpeningGuide from './pages/AccountOpeningGuide'
 import About from './pages/About'
 import BankSector from './pages/BankSector'
+import SecuritiesSector from './pages/SecuritiesSector'
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="/stock/:symbol" element={<StockDetail />} />
           <Route path="/huong-dan-mo-tai-khoan" element={<AccountOpeningGuide />} />
           <Route path="/nganh-ngan-hang" element={<BankSector />} />
+          <Route path="/nganh-chung-khoan" element={<SecuritiesSector />} />
           <Route path="/gioi-thieu" element={<About />} />
           <Route path="*" element={<About />} />
         </Routes>

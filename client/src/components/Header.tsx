@@ -33,7 +33,7 @@ export default function Header() {
           </picture>
         </NavLink>
 
-        <nav aria-label="Điều hướng chính" className="order-last flex w-full items-center gap-6 md:order-none md:w-auto">
+        <nav aria-label="Điều hướng chính" className="order-last -mx-1 flex w-full items-center gap-5 overflow-x-auto px-1 [scrollbar-width:none] md:order-none md:w-auto lg:gap-6">
           <Link to="/" aria-current={onAbout ? "page" : undefined} className={`${NAV_BASE} ${onAbout ? NAV_ACTIVE : NAV_IDLE}`}>
             Giới thiệu
           </Link>
@@ -46,6 +46,9 @@ export default function Header() {
           </Link>
           <NavLink to="/nganh-ngan-hang" className={({ isActive }) => `${NAV_BASE} ${isActive ? NAV_ACTIVE : NAV_IDLE}`}>
             Ngành ngân hàng
+          </NavLink>
+          <NavLink to="/nganh-chung-khoan" className={({ isActive }) => `${NAV_BASE} ${isActive ? NAV_ACTIVE : NAV_IDLE}`}>
+            Ngành chứng khoán
           </NavLink>
           <NavLink
             to="/huong-dan-mo-tai-khoan"
