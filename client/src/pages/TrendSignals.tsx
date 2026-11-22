@@ -1,24 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { fetchMarketOverview } from "../api/client";
-import { usePolling } from "../hooks/usePolling";
 import { useWatchlist } from "../hooks/useWatchlist";
-import PriceBoard from "../components/PriceBoardBg";
-import TechnicalChartPanel from "../components/TechnicalChartPanel";
-import { SonMaiHero, SonMaiHoldings, SonMaiInsights, SonMaiJournal, SonMaiKpis, useSignalData } from "../components/SonMaiHome";
+import KLinePanel from "../components/KLinePanel";
+import { SonMaiHoldings, SonMaiJournal, SonMaiKpis, dmy, useMarketTrend, useSignalData } from "../components/SonMaiHome";
+import { MethodSteps, SectionHead } from "../components/HomeSections";
 
 const DEFAULT_SYMBOL = "VNINDEX";
 
-const H2 = "text-[1.75rem] leading-tight";
-
-// Trang chủ, bố cục Sơn mài: mở đầu (chữ + thẻ Chốt phiên), dải hiệu suất,
-// danh mục đang giữ cạnh nhật ký đóng lệnh, biểu đồ của mã đang chọn (giữ
-// nguyên biểu đồ cũ), rồi người phụ trách, cách chọn mã và mở tài khoản.
+// Trang Tín hiệu — trang công cụ, đi thẳng vào số liệu:
+//  1. Tiêu đề + trạng thái phiên (chốt ngày nào, thị trường đang thế nào)
+//  2. Dải hiệu suất
+//  3. Danh mục đang giữ | nhật ký đóng lệnh
+//  4. Biểu đồ nến của mã đang chọn (bấm mã trong danh mục để đổi)
+//  5. Phương pháp + liên hệ ngắn
 export default function TrendSignals() {
-  const { data } = usePolling(fetchMarketOverview, [], 10000);
   const { symbols: watchlist } = useWatchlist();
   const [chartSymbol, setChartSymbol] = useState(watchlist[0] ?? DEFAULT_SYMBOL);
   const { scan, journal } = useSignalData();
+  const { trend, trendCls, trendSub } = useMarketTrend();
   const chartRef = useRef<HTMLElement>(null);
 
   // VNINDEX không có điểm Mua/Bán: khi có danh mục thì mặc định mở mã đầu tiên.
@@ -33,120 +32,92 @@ export default function TrendSignals() {
     chartRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  const held = scan?.items.length ?? null;
+  const fresh = scan ? scan.items.filter((i) => i.buyDate.slice(0, 10) === scan.sessionDate.slice(0, 10)).length : null;
+
   return (
-    <div id="tin-hieu" className="scroll-mt-20">
-      <div className="gutter-x mx-auto max-w-[1280px]">
-        <SonMaiInsights quotes={data?.quotes} scan={scan} journal={journal} />
-      </div>
-      {/* Mở đầu trên nền bảng điện chạy (giống trang Giới thiệu). */}
-      <section className="relative overflow-hidden">
-        <PriceBoard bright />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(90deg, rgba(var(--ab-bg-rgb),0.94) 0%, rgba(var(--ab-bg-rgb),0.8) 38%, rgba(var(--ab-bg-rgb),0.25) 62%, rgba(var(--ab-bg-rgb),0.05) 100%)",
-          }}
-        />
-        {/* Màn hẹp: chữ phủ hết chiều ngang nên che thêm để dễ đọc. */}
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[rgba(var(--ab-bg-rgb),0.62)] lg:hidden" />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-40"
-          style={{ background: "linear-gradient(180deg, rgba(var(--ab-bg-rgb),0) 0%, rgba(var(--ab-bg-rgb),1) 100%)" }}
-        />
-        <div className="gutter-x relative z-[1] mx-auto max-w-[1280px] pb-10">
-          <SonMaiHero />
+    <div id="tin-hieu" className="scroll-mt-20 text-[var(--sm-egg)]">
+      {/* 1. Tiêu đề + trạng thái */}
+      <header className="border-b border-[var(--sm-line)] bg-[var(--sm-panel)]">
+        <div className="gutter-x mx-auto flex max-w-[1280px] flex-wrap items-end justify-between gap-x-10 gap-y-5 py-8">
+          <div className="max-w-[42rem]">
+            <h1 className="text-[clamp(2rem,3.6vw,2.8rem)] leading-tight text-[var(--sm-egg)]">Tín hiệu xu hướng</h1>
+            <p className="mt-2 text-[1.05rem] leading-relaxed text-[var(--sm-egg2)]">
+              Danh sách mã đang đi lên theo hệ thống của chuyên viên Nguyễn Anh Chiến, chốt sau 15:00 mỗi ngày giao dịch, kèm nhật ký lệnh công khai.
+            </p>
+          </div>
+          <dl className="grid grid-cols-3 gap-x-8 gap-y-2 text-[0.9rem]">
+            <div>
+              <dt className="text-[var(--sm-mut)]">Chốt phiên</dt>
+              <dd className="mt-0.5 font-display text-[1.35rem] leading-tight text-[var(--sm-egg)]">{scan ? dmy(scan.sessionDate) : "—"}</dd>
+            </div>
+            <div>
+              <dt className="text-[var(--sm-mut)]">Đang giữ · mua mới</dt>
+              <dd className="mt-0.5 font-display text-[1.35rem] leading-tight text-[var(--sm-egg)]">
+                {held ?? "—"} · <span className="up">{fresh ?? "—"}</span>
+              </dd>
+            </div>
+            <div title={trendSub}>
+              <dt className="text-[var(--sm-mut)]">VN-Index</dt>
+              <dd className={`mt-0.5 font-display text-[1.35rem] leading-tight ${trendCls || "text-[var(--sm-egg)]"}`}>{trend}</dd>
+            </div>
+          </dl>
         </div>
-      </section>
-    <div className="gutter-x mx-auto max-w-[1280px] pb-16">
+      </header>
 
-      <div className="mt-12">
-        <SonMaiKpis journal={journal} />
-      </div>
+      <div className="gutter-x mx-auto max-w-[1280px] pb-20">
+        {/* 2. Hiệu suất */}
+        <section aria-label="Hiệu suất hệ thống" className="pt-8">
+          <SonMaiKpis journal={journal} />
+        </section>
 
-      <div className="mt-16 grid gap-x-6 gap-y-12 lg:grid-cols-12">
-        <div className="min-w-0 lg:col-span-8">
-          <SonMaiHoldings scan={scan} onPick={pick} />
+        {/* 3. Danh mục + nhật ký */}
+        <div className="mt-12 grid gap-x-6 gap-y-12 lg:grid-cols-12">
+          <div className="min-w-0 lg:col-span-8">
+            <SonMaiHoldings scan={scan} onPick={pick} />
+          </div>
+          <div className="min-w-0 lg:col-span-4">
+            <SonMaiJournal journal={journal} />
+          </div>
         </div>
-        <div className="min-w-0 lg:col-span-4">
-          <SonMaiJournal journal={journal} />
-        </div>
-      </div>
 
-      <section ref={chartRef} aria-label="Biểu đồ" className="mt-16 scroll-mt-28">
-        <h2 className={`${H2} mb-4`}>Biểu đồ {chartSymbol}</h2>
-        <TechnicalChartPanel
-          symbol={chartSymbol}
-          height={480}
-          onSymbolChange={setChartSymbol}
-          preferSource={data?.quotes.find((q) => q.symbol === chartSymbol)?.source}
-          hideStats
-          hideDrawingTools
-        />
-      </section>
+        {/* 4. Biểu đồ */}
+        <section ref={chartRef} aria-label="Biểu đồ" className="mt-14 scroll-mt-28">
+          <SectionHead
+            title={`Biểu đồ ${chartSymbol}`}
+            lead="Bấm mã trong danh mục để đổi biểu đồ. Tam giác xanh là điểm mua, đỏ là điểm đóng lệnh của hệ thống."
+            right={
+              <Link to={`/stock/${chartSymbol}`} className="text-[0.95rem] font-semibold text-[var(--sm-gold2)] hover:underline">
+                Mở trang {chartSymbol}
+              </Link>
+            }
+          />
+          <KLinePanel symbol={chartSymbol} height={500} />
+        </section>
 
-      <div className="mt-16 flex flex-wrap items-start gap-x-12 gap-y-8 border-t border-[var(--sm-line)] pt-12">
-        <div className="min-w-0 flex-[1_1_22rem]">
-          <h2 className={H2}>Nguyễn Anh Chiến</h2>
-          <p className="mt-0.5 text-base text-slate-900">Chuyên viên tư vấn đầu tư, CTCP Chứng khoán KAFI</p>
-          <p className="mt-2.5 text-base">
-            <a href="tel:0886284212" className="inline-flex min-h-11 items-center font-bold text-brand-700 hover:underline">
-              0886.284.212
+        {/* 5. Phương pháp */}
+        <section aria-label="Phương pháp" className="mt-16">
+          <SectionHead title="Hệ thống chọn mã thế nào" id="phuong-phap" />
+          <MethodSteps />
+        </section>
+
+        <div className="mt-10 flex flex-wrap items-center justify-between gap-x-8 gap-y-4 rounded-md border border-[rgba(201,162,74,0.45)] bg-[var(--sm-panel)] px-6 py-6 sm:px-8">
+          <div className="min-w-0 flex-[1_1_26rem]">
+            <h2 className="text-[1.5rem] leading-tight text-[var(--sm-egg)]">Cần hỏi về một mã trong danh sách?</h2>
+            <p className="mt-1 max-w-xl text-[1rem] text-[var(--sm-egg2)]">
+              Nhắn Zalo cho anh Chiến (0886.284.212), hoặc mở tài khoản KAFI với mã giới thiệu CHIEN005 để được hỗ trợ trực tiếp.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <a href="https://zalo.me/0886284212" target="_blank" rel="noopener noreferrer" className="sm-btn sm-btn-p">
+              Nhắn Zalo
             </a>
-            <span className="text-slate-500"> · Zalo cùng số</span>
-          </p>
-        </div>
-
-        <div className="min-w-0 flex-[1.3_1_28rem]">
-          <h2 className={H2}>Hệ thống chọn mã thế nào</h2>
-          <p className="mt-2 max-w-2xl text-base text-slate-900">
-            Mỗi ngày sau 15:00, hệ thống tự lọc ra những mã đang đi lên rõ ràng. Anh chị không cần ngồi dò hàng trăm mã.
-          </p>
-          <ul className="mt-2 max-w-2xl border-t border-slate-200 text-base text-slate-800">
-            <li className="border-b border-slate-200 py-2">
-              <b className="text-slate-950">Chỉ chọn mã đang lên đều,</b> không chọn mã chỉ nhích lên một hôm.
-            </li>
-            <li className="border-b border-slate-200 py-2">
-              <b className="text-slate-950">Chỉ chọn khi đà đủ mạnh,</b> bỏ qua mã đi ngang lình xình.
-            </li>
-            <li className="border-b border-slate-200 py-2">
-              <b className="text-slate-950">Xu hướng gãy thì mã tự rời danh sách,</b> nhắc anh chị cân nhắc thoát, không ôm hàng.
-            </li>
-          </ul>
-          <p className="mt-2 max-w-2xl text-sm text-slate-500">
-            Dựa trên đường trung bình giá, độ mạnh xu hướng và Supertrend, tính trên giá đóng cửa. Danh sách không đổi
-            trong phiên. Chỉ để tham khảo, quyết định mua bán là của nhà đầu tư.
-          </p>
+            <Link to="/huong-dan-mo-tai-khoan" className="sm-btn">
+              Mở tài khoản
+            </Link>
+          </div>
         </div>
       </div>
-
-      <div className="mt-8 flex flex-wrap items-center justify-between gap-x-8 gap-y-4 rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] px-8 py-7">
-        <div className="min-w-0 flex-[1_1_26rem]">
-          <h2 className={H2}>Mở tài khoản chứng khoán tại KAFI</h2>
-          <p className="mt-1 max-w-xl text-base text-slate-900">
-            Mở miễn phí, không phí duy trì. Có video hướng dẫn từng bước; cần hỗ trợ thì nhắn Zalo cho anh Chiến.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-          <Link
-            to="/huong-dan-mo-tai-khoan"
-            className="sm-btn sm-btn-p"
-          >
-            Mở tài khoản
-          </Link>
-          <a
-            href="https://zalo.me/0886284212"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex min-h-11 items-center border-b border-brand-700 text-base font-bold text-brand-700 hover:opacity-80"
-          >
-            Nhắn Zalo
-          </a>
-        </div>
-      </div>
-    </div>
     </div>
   );
 }

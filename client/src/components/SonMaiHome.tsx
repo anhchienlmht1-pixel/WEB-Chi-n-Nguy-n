@@ -285,7 +285,7 @@ export function SonMaiJournal({ journal }: { journal?: TradeJournal | null }) {
 
 const sma = (xs: number[], n: number) => (xs.length >= n ? xs.slice(-n).reduce((a, v) => a + v, 0) / n : NaN);
 
-function InsightCard({ to, label, value, cls, sub, foot }: { to: string; label: string; value: string; cls?: string; sub: string; foot: string }) {
+export function InsightCard({ to, label, value, cls, sub, foot }: { to: string; label: string; value: string; cls?: string; sub: string; foot: string }) {
   return (
     <Link
       to={to}
@@ -303,7 +303,8 @@ function InsightCard({ to, label, value, cls, sub, foot }: { to: string; label: 
 // số liệu sống và dẫn tới trang tương ứng: xu hướng VN-Index (SMA20/50 từ giá đóng cửa), độ rộng
 // thị trường (số mã tăng/giảm của chỉ số), báo cáo tài chính ngân hàng Q3/2026
 // và hiệu suất hệ thống tín hiệu. Chỉ mô tả trạng thái, không dự báo.
-export function SonMaiInsights({ quotes, scan, journal }: { quotes?: Quote[]; scan?: TrendBuyResult | null; journal?: TradeJournal | null }) {
+// Xu hướng VN-Index theo giá đóng cửa: trên/dưới SMA20, SMA50. Chỉ mô tả trạng thái.
+export function useMarketTrend() {
   const { data: hist } = usePolling(() => fetchHistory("VNINDEX", "6M"), [], POLL_MS);
   const closes = (hist?.points ?? []).map((p) => p.close).filter((v) => Number.isFinite(v));
   const last = closes[closes.length - 1];
@@ -320,6 +321,11 @@ export function SonMaiInsights({ quotes, scan, journal }: { quotes?: Quote[]; sc
     trendSub = `${num(last, 2)} điểm · ${above20 ? "trên" : "dưới"} SMA20 (${num(s20, 0)}), ${above50 ? "trên" : "dưới"} SMA50 (${num(s50, 0)})`;
   }
 
+  return { trend, trendCls, trendSub, last, s20, s50 };
+}
+
+export function SonMaiInsights({ quotes, scan, journal }: { quotes?: Quote[]; scan?: TrendBuyResult | null; journal?: TradeJournal | null }) {
+  const { trend, trendCls, trendSub } = useMarketTrend();
   const vni = quotes?.find((q) => q.symbol === "VNINDEX");
   const adv = vni?.advances;
   const dec = vni?.declines;
