@@ -290,6 +290,7 @@ function addAgg(st: State, p: HistoryPoint[], after: string | undefined): string
 // Trạng thái thị trường kiểu "M" trong CAN SLIM (William O'Neil), tính trên chỉ số cân bằng:
 //  Thận trọng → Tích cực: có phiên xác nhận (ngày thứ 4–10 của nhịp hồi từ đáy, tăng ≥ 1,5%, thanh khoản tăng).
 //  Tích cực → Quan sát: từ 4 ngày phân phối trong 25 phiên, hoặc chỉ số đóng cửa dưới MA50.
+//  Thận trọng → Quan sát (không cần phiên xác nhận): chỉ số trên MA50 và MA50 đi lên so với 10 phiên trước.
 //  Quan sát → Tích cực: ngày phân phối giảm còn dưới 4 và chỉ số trở lại trên MA50.
 //  → Thận trọng: từ 6 ngày phân phối, hoặc chỉ số thủng đáy thấp nhất 50 phiên trước đó.
 //  Ngày phân phối hết hiệu lực sau 25 phiên hoặc khi chỉ số đã cao hơn giá đóng cửa ngày đó 5%.
@@ -308,7 +309,7 @@ export interface MarketRule {
    *  "ma50high" như trên nhưng lên Tích cực chỉ khi lập đỉnh 50 phiên */
   recover: "none" | "ma50" | "ma50high";
 }
-export const MARKET_RULE: MarketRule = { gain: FTD_GAIN, vol: "prev", maxDay: 10, minBreadth: null, failFast: false, recover: "none" };
+export const MARKET_RULE: MarketRule = { gain: FTD_GAIN, vol: "prev", maxDay: 10, minBreadth: null, failFast: false, recover: "ma50" };
 
 interface MarketDaily {
   dates: string[];
