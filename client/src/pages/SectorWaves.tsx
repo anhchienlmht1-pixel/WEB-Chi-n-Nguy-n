@@ -454,7 +454,7 @@ export default function SectorWavesPage() {
                           <b className="text-[var(--sm-egg)]">Ngày phân phối:</b> chỉ số giảm từ 0,2% với thanh khoản cao hơn phiên trước. Hết tính sau 25 phiên, hoặc khi chỉ số đã vượt giá đóng cửa ngày đó 5%.
                         </li>
                         <li>
-                          <b className="text-[var(--sm-egg)]">Phiên xác nhận:</b> sau khi tạo đáy, từ ngày thứ 4 của nhịp hồi có phiên tăng từ 1,5% với thanh khoản cao hơn phiên trước. Thận trọng chuyển sang Tích cực.
+                          <b className="text-[var(--sm-egg)]">Phiên xác nhận:</b> sau khi tạo đáy, từ ngày thứ 4 đến ngày thứ 10 của nhịp hồi có phiên tăng từ 1,5% với thanh khoản cao hơn phiên trước. Thận trọng chuyển sang Tích cực. Nhịp hồi quá 10 phiên chưa có phiên xác nhận thì bỏ, chờ nhịp hồi mới.
                         </li>
                         <li>
                           <b style={{ color: MSTATE[2].text }}>Quan sát</b> khi có từ 4 ngày phân phối, hoặc chỉ số rơi xuống dưới MA50 sau khi đã vượt lên MA50 (ngay sau phiên xác nhận, chỉ số dưới MA50 vẫn tính Tích cực); quay lại <b style={{ color: MSTATE[1].text }}>Tích cực</b> khi dưới 4 ngày và trở lại trên MA50.

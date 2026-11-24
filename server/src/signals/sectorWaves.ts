@@ -263,7 +263,7 @@ const MAX_DAILY_MOVE = 0.15;
 const EW_MIN_STOCKS = 30;
 /** Phiên ngày phân phối: chỉ số giảm từ 0,2% với thanh khoản cao hơn phiên trước. */
 const DIST_DROP = -0.002;
-/** Phiên xác nhận: từ ngày thứ 4 của nhịp hồi, chỉ số tăng từ 1,5% với thanh khoản cao hơn phiên trước. */
+/** Phiên xác nhận: ngày thứ 4–10 của nhịp hồi, chỉ số tăng từ 1,5% với thanh khoản cao hơn phiên trước. */
 const FTD_GAIN = 0.015;
 
 /** Cộng một mã vào tổng theo ngày của chỉ số cân bằng, chỉ các phiên sau `after` (không cộng trùng). */
@@ -288,7 +288,7 @@ function addAgg(st: State, p: HistoryPoint[], after: string | undefined): string
 }
 
 // Trạng thái thị trường kiểu "M" trong CAN SLIM (William O'Neil), tính trên chỉ số cân bằng:
-//  Thận trọng → Tích cực: có phiên xác nhận (ngày thứ 4 trở đi của nhịp hồi từ đáy, tăng ≥ 1,5%, thanh khoản tăng).
+//  Thận trọng → Tích cực: có phiên xác nhận (ngày thứ 4–10 của nhịp hồi từ đáy, tăng ≥ 1,5%, thanh khoản tăng).
 //  Tích cực → Quan sát: từ 4 ngày phân phối trong 25 phiên, hoặc chỉ số đóng cửa dưới MA50.
 //  Quan sát → Tích cực: ngày phân phối giảm còn dưới 4 và chỉ số trở lại trên MA50.
 //  → Thận trọng: từ 6 ngày phân phối, hoặc chỉ số thủng đáy thấp nhất 50 phiên trước đó.
@@ -305,7 +305,7 @@ export interface MarketRule {
   /** thủng đáy nhịp hồi thì về Thận trọng ngay */
   failFast: boolean;
 }
-export const MARKET_RULE: MarketRule = { gain: FTD_GAIN, vol: "prev", maxDay: null, minBreadth: null, failFast: false };
+export const MARKET_RULE: MarketRule = { gain: FTD_GAIN, vol: "prev", maxDay: 10, minBreadth: null, failFast: false };
 
 interface MarketDaily {
   dates: string[];
