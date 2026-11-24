@@ -128,9 +128,7 @@ function pct(from: number, to: number): string {
 // tranches, adding to the position as the trend proves itself (pyramiding)
 // instead of going all-in on the first bar; sell all open tranches when
 // trend actually reverses.
-// allow(timeSec): điểm mua mở vị thế mới chỉ khi đúng (lọc theo sóng ngành, xem useEntryGate);
-// bỏ trống = không lọc. Mua thêm phần 2/3, 3/3 và điểm bán không bị ảnh hưởng.
-export function computeTradingSignals(points: HistoryPoint[], allow?: (timeSec: number) => boolean): TradingSignalsResult {
+export function computeTradingSignals(points: HistoryPoint[]): TradingSignalsResult {
   if (points.length < 51) return { all: [], transitions: [] };
 
   const closes = points.map((p) => p.close);
@@ -172,9 +170,7 @@ export function computeTradingSignals(points: HistoryPoint[], allow?: (timeSec: 
     // bar when flat, add tranches while holding, close on a sell bar. Neutral
     // bars (e.g. ADX ≤ 25 in an intact uptrend) keep the position as it is.
     if (type === "buy") {
-      if (!position && allow && !allow(t)) {
-        // Thị trường chưa Tích cực hoặc ngành chưa có sóng: không mở vị thế mới.
-      } else if (!position) {
+      if (!position) {
         // Fresh entry — start a new position with tranche 1.
         position = { entryPrice: p.close, tranches: [{ price: p.close, sold: false }] };
         transitions.push({ time: t, price: p.low, type: "buy", note: `Mua 1/${TRANCHE_COUNT}` });
@@ -249,34 +245,5 @@ export function latestConditions(allPoints: HistoryPoint[]): SignalConditions | 
     sma50: s50[s50.length - 1],
     adx: lastAdx.adx,
     supertrendUp: lastSt.direction === 1,
-  };
-}
-
-/** Hàm lọc điểm mua theo sóng ngành từ dữ liệu server (cùng quy tắc với danh sách tín hiệu). */
-export function makeEntryAllow(g: {
-  from: string;
-  dates: string[];
-  states: string;
-  weekEnds: string[];
-  waves: string | null;
-}): (timeSec: number) => boolean {
-  const lastLE = (arr: string[], d: string) => {
-    let lo = 0, hi = arr.length - 1, ans = -1;
-    while (lo <= hi) {
-      const mid = (lo + hi) >> 1;
-      if (arr[mid] <= d) {
-        ans = mid;
-        lo = mid + 1;
-      } else hi = mid - 1;
-    }
-    return ans;
-  };
-  return (timeSec) => {
-    const d = new Date((timeSec + 7 * 3600) * 1000).toISOString().slice(0, 10);
-    if (d < g.from) return true;
-    const i = lastLE(g.dates, d);
-    if (i < 0 || g.states[i] !== "1") return false;
-    const w = lastLE(g.weekEnds, d);
-    return w >= 0 && g.waves?.[w] === "1";
   };
 }

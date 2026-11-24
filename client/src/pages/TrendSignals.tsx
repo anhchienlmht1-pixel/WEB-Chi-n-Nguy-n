@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useWatchlist } from "../hooks/useWatchlist";
 import KLinePanel from "../components/KLinePanel";
 import { SonMaiHoldings, SonMaiJournal, SonMaiKpis, dmy, useMarketTrend, useSignalData } from "../components/SonMaiHome";
 import { MethodSteps, SectionHead } from "../components/HomeSections";
-import { fetchSectorWaves, type SectorWaves } from "../api/client";
 
 const DEFAULT_SYMBOL = "VNINDEX";
 
@@ -27,26 +26,6 @@ export default function TrendSignals() {
     const first = scan?.items[0]?.symbol;
     if (first) setChartSymbol(first);
   }, [scan, watchlist, chartSymbol]);
-
-  // Điều kiện mua mới theo sóng ngành (cùng dữ liệu với trang Sóng ngành)
-  const [waves, setWaves] = useState<SectorWaves | null>(null);
-  useEffect(() => {
-    let alive = true;
-    fetchSectorWaves()
-      .then((w) => alive && setWaves(w))
-      .catch(() => {});
-    return () => {
-      alive = false;
-    };
-  }, []);
-  const gate = useMemo(() => {
-    const now = waves?.market?.now;
-    if (!waves || !now) return null;
-    const L = waves.weeks.length - 1;
-    const hot = waves.sectors.filter((x) => (x.pct[L] ?? -1) >= waves.threshold).map((x) => x.sector);
-    const label = { 1: "Tích cực", 2: "Quan sát", 3: "Thận trọng" }[now.state];
-    return { state: now.state, label, hot, open: now.state === 1 && hot.length > 0 };
-  }, [waves]);
 
   const pick = (s: string) => {
     setChartSymbol(s);
@@ -87,29 +66,6 @@ export default function TrendSignals() {
       </header>
 
       <div className="gutter-x mx-auto max-w-[1920px] pb-20">
-        {/* Điều kiện mua mới theo sóng ngành */}
-        {gate && (
-          <div className="mt-8 flex flex-wrap items-baseline gap-x-6 gap-y-1 rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] px-5 py-3.5" role="status">
-            <p className={`font-display text-[1.2rem] leading-tight ${gate.open ? "up" : "down"}`}>{gate.open ? "Đang cho phép mua mới" : "Tạm dừng mua mới"}</p>
-            <p className="text-[0.92rem] text-[var(--sm-egg2)]">
-              Thị trường <b className={gate.state === 1 ? "up" : gate.state === 3 ? "down" : "text-[#c58a1c]"}>{gate.label}</b> ·{" "}
-              {gate.hot.length ? (
-                <>
-                  ngành có sóng: <b className="up">{gate.hot.join(", ")}</b>
-                </>
-              ) : (
-                <b className="down">chưa có ngành nào có sóng</b>
-              )}
-            </p>
-            <p className="basis-full text-[0.85rem] text-[var(--sm-mut)]">
-              Hệ thống chỉ mở lệnh mới khi thị trường Tích cực và ngành của mã đang có sóng; mã đang giữ vẫn theo điểm bán như cũ.{" "}
-              <Link to="/song-nganh" className="text-[var(--sm-gold2)] hover:underline">
-                Xem trang Sóng ngành
-              </Link>
-            </p>
-          </div>
-        )}
-
         {/* 2. Hiệu suất */}
         <section aria-label="Hiệu suất hệ thống" className="pt-8">
           <SonMaiKpis journal={journal} />

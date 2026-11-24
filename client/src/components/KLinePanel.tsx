@@ -17,7 +17,6 @@ import { usePolling } from "../hooks/usePolling";
 import { useTheme } from "../hooks/useTheme";
 import { aggregatePoints, type ChartResolution } from "../utils/aggregate";
 import { computeTradingSignals } from "../utils/signals";
-import { useEntryGate } from "../hooks/useEntryGate";
 import { dropUnclosedBars } from "../utils/sessionClose";
 
 // Biểu đồ nến bằng KLineChart (Apache 2.0, không logo). Bố cục kiểu bàn làm
@@ -190,12 +189,11 @@ export default function KLinePanel({ symbol, height = 400, fill = false }: { sym
 
   const hist = usePolling(() => fetchHistory(symbol, "MAX"), [symbol], 60_000);
   const points = useMemo(() => (hist.data ? aggregatePoints(hist.data.points, res) : []), [hist.data, res]);
-  const gate = useEntryGate(symbol);
   const signals = useMemo(() => {
     const src = hist.data?.points;
-    if (!src || symbol === "VNINDEX" || !gate.ready) return [];
-    return computeTradingSignals(aggregatePoints(dropUnclosedBars(src), res), gate.allow).transitions;
-  }, [hist.data, res, symbol, gate]);
+    if (!src || symbol === "VNINDEX") return [];
+    return computeTradingSignals(aggregatePoints(dropUnclosedBars(src), res)).transitions;
+  }, [hist.data, res, symbol]);
 
   // Tạo biểu đồ một lần cho mỗi mã.
   useEffect(() => {

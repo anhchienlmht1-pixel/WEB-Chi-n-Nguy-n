@@ -10,7 +10,7 @@ import { fetchInvestmentOutlook } from "../providers/googleSheet.js";
 import { fetchNewsForSymbol } from "../news/cafefNews.js";
 import { getCompanyProfileWithFallback } from "../providers/companyProfileFallback.js";
 import { scanBuySignalsWithSession, type TrendScanResult } from "../signals/trendScanner.js";
-import { getEntryGateData, getMarketBacktest, getMarketOOS, getSectorWaves, getSectorWavesLive, isComplete, type SectorWavesResult } from "../signals/sectorWaves.js";
+import { getMarketBacktest, getMarketOOS, getSectorWaves, getSectorWavesLive, isComplete, type SectorWavesResult } from "../signals/sectorWaves.js";
 import { isSettlingWindow, lastClosedSessionDate } from "../signals/sessionClose.js";
 import { getTradeJournal } from "../signals/tradeJournal.js";
 import { scanMovingAverages } from "../signals/maScanner.js";
@@ -398,22 +398,6 @@ router.get(
 );
 
 let sectorWavesInFlight: Promise<SectorWavesResult> | null = null;
-router.get(
-  "/sector-waves/gate",
-  asyncHandler(async (req, res) => {
-    // Dữ liệu lọc điểm mua theo sóng ngành cho biểu đồ của một mã (cùng quy tắc với danh sách tín hiệu).
-    const g = await getEntryGateData();
-    const sym = String(req.query.symbol ?? "").toUpperCase();
-    if (!g) {
-      res.setHeader("Cache-Control", "no-store");
-      res.json(null);
-      return;
-    }
-    const sector = g.sectorOf[sym] ?? null;
-    edgeCache(res, 600, 3600);
-    res.json({ from: g.from, dates: g.dates, states: g.states, weekEnds: g.weekEnds, sector, waves: sector ? g.waves[sector] : null });
-  })
-);
 router.get(
   "/sector-waves/oos",
   asyncHandler(async (_req, res) => {

@@ -3,7 +3,6 @@ import { STOCK_UNIVERSE } from "../providers/universe.js";
 import { getHistoryWithFallback } from "../providers/fallback.js";
 import { computeSignalSeries, dedupeSameDay, type BarSignal } from "./trendScanner.js";
 import { barDateICT, dropUnclosedBars, lastClosedSessionDate } from "./sessionClose.js";
-import { getEntryGateData, makeEntryGate } from "./sectorWaves.js";
 
 // Real, forward-only trade log for "Lịch sử giao dịch" — unlike
 // scanClosedTrades (a backtest that reconstructs every historical
@@ -39,9 +38,7 @@ export interface JournalClosedTrade extends JournalPosition {
 // from JOURNAL_START_DATE under the new rule (forward-only, closed sessions).
 //  v2 (18/11/2026): exits only on SMA20 < SMA50 or Supertrend down — ADX ≤ 25
 //  alone no longer closes a position (same rule as the chart).
-//  v3 (24/11/2026): chỉ mở vị thế mới khi trạng thái thị trường Tích cực và ngành
-//  của mã đang có sóng (trang Sóng ngành); điểm bán không đổi.
-const RULE_VERSION = 3;
+const RULE_VERSION = 2;
 
 interface JournalState {
   rule?: number;
@@ -172,9 +169,6 @@ async function updateTradeJournal(): Promise<JournalState> {
   if (Date.now() - lastAttemptMs < RETRY_AFTER_MS) return saved;
   lastAttemptMs = Date.now();
 
-  const gateData = await getEntryGateData();
-  if (!gateData) return saved; // chưa có dữ liệu sóng ngành: chưa kết luận, thử lại sau
-  const gate = makeEntryGate(gateData);
   const { symbols, dataDate } = await scanCurrentSignals();
   if (symbols.size === 0 || dataDate === null) return saved; // scan failed entirely — don't touch positions on bad data
   // The closed session's bar isn't published yet (provider lag) or it was a
@@ -206,7 +200,7 @@ async function updateTradeJournal(): Promise<JournalState> {
           holdingDays: Math.round((new Date(bar.date).getTime() - new Date(pos.buyDate).getTime()) / 86_400_000),
         });
         pos = null;
-      } else if (!pos && bar.signal === "buy" && gate(symbol, bar.date)) {
+      } else if (!pos && bar.signal === "buy") {
         pos = { symbol, name: info.name, exchange: info.exchange, currency: info.currency, buyDate: bar.date, buyPrice: bar.close };
       }
     }

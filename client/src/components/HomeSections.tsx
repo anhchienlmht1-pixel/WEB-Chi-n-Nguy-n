@@ -113,10 +113,6 @@ const STEPS: { title: string; text: string }[] = [
     text: "Sau 15:00, hệ thống quét toàn thị trường trên giá đóng cửa, chỉ giữ lại mã đang đi lên rõ ràng: SMA20 trên SMA50, ADX trên 25 và Supertrend báo tăng.",
   },
   {
-    title: "Chỉ mua khi có sóng ngành",
-    text: "Mã đủ điều kiện chỉ được mở lệnh mới khi trạng thái thị trường là Tích cực và ngành của mã đang có sóng (từ 50% mã trong ngành đạt Trend Template). Không đủ thì chưa mua; mã đang giữ vẫn theo điểm bán.",
-  },
-  {
     title: "Vào lệnh từng phần",
     text: "Mã đủ điều kiện được ghi Mua theo từng phần 1/3, không dồn hết vốn một lần. Mỗi lệnh ghi lại ngày và giá đóng cửa vào lệnh.",
   },
@@ -129,7 +125,7 @@ const STEPS: { title: string; text: string }[] = [
 export function MethodSteps() {
   return (
     <>
-      <ol className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <ol className="grid gap-4 md:grid-cols-3">
         {STEPS.map((s, i) => (
           <li key={s.title} className="flex gap-4 rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-5">
             <span className="font-display text-[2.2rem] leading-none text-[var(--sm-gold)]" aria-hidden="true">
