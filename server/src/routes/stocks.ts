@@ -404,13 +404,13 @@ router.get(
     // So sánh các cách lọc phiên xác nhận (trạng thái thị trường) trên dữ liệu đã lưu.
     const data = await getMarketBacktest({
       CR: {},
-      D3: { distDrop: -0.003 },
       D5: { distDrop: -0.005 },
-      V50: { distVol: "avg50" },
-      V50D3: { distVol: "avg50", distDrop: -0.003 },
-      K7: { distCaution: 7 },
       K8: { distCaution: 8 },
-      V50K7: { distVol: "avg50", distCaution: 7 },
+      D5K7: { distDrop: -0.005, distCaution: 7 },
+      D3K8: { distDrop: -0.003, distCaution: 8 },
+      M: { cautionBelowMa50: true },
+      D3M: { distDrop: -0.003, cautionBelowMa50: true },
+      D5M: { distDrop: -0.005, cautionBelowMa50: true },
     });
     res.setHeader("Cache-Control", "no-store");
     res.json(data);

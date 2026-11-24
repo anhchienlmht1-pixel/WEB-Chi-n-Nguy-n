@@ -313,8 +313,10 @@ export interface MarketRule {
   distVol: "prev" | "avg50";
   /** số ngày phân phối để chuyển Thận trọng */
   distCaution: number;
+  /** ngày phân phối chỉ đẩy về Thận trọng khi chỉ số đã dưới MA50 (trên MA50 thì dừng ở Quan sát) */
+  cautionBelowMa50: boolean;
 }
-export const MARKET_RULE: MarketRule = { gain: FTD_GAIN, vol: "prev", maxDay: 10, minBreadth: null, failFast: false, recover: "ma50", distDrop: DIST_DROP, distVol: "prev", distCaution: 6 };
+export const MARKET_RULE: MarketRule = { gain: FTD_GAIN, vol: "prev", maxDay: 10, minBreadth: null, failFast: false, recover: "ma50", distDrop: DIST_DROP, distVol: "prev", distCaution: 6, cautionBelowMa50: false };
 
 interface MarketDaily {
   dates: string[];
@@ -416,8 +418,9 @@ function runMarket(st: State, rule: MarketRule, breadth?: (number | null)[]): Ma
       const prevLow = i > 0 ? low50[i - 1] : lvl[i];
       const m = ma50[i];
       if (m != null && lvl[i] >= m) crossed = true;
-      if (dist.length >= rule.distCaution || lvl[i] < prevLow || (rule.failFast && lvl[i] < ftdLow)) {
-        why.push(dist.length >= rule.distCaution ? "d" : "l");
+      const distHit = dist.length >= rule.distCaution && (!rule.cautionBelowMa50 || (m != null && lvl[i] < m));
+      if (distHit || lvl[i] < prevLow || (rule.failFast && lvl[i] < ftdLow)) {
+        why.push(distHit ? "d" : "l");
         next = 3;
         rallyLow = lvl[i];
         rallyStart = -1;
