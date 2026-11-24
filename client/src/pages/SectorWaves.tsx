@@ -45,13 +45,13 @@ const MSTATE: Record<1 | 2 | 3, { label: string; fill: string; text: string; wha
     label: "Tích cực",
     fill: "rgba(79,209,139,0.15)",
     text: "var(--sm-up)",
-    what: "Xu hướng tăng đã được xác nhận, chưa tích lũy nhiều ngày phân phối, và có ít nhất một ngành có sóng đang hình thành.",
+    what: "Xu hướng tăng chưa tích lũy nhiều ngày phân phối, được phiên xác nhận hoặc sóng ngành xác nhận.",
   },
   2: {
     label: "Quan sát",
     fill: "rgba(230,190,90,0.18)",
     text: "#c58a1c",
-    what: "Xu hướng tăng bị áp lực (từ 4 ngày phân phối, hoặc chỉ số rơi xuống dưới MA50 sau khi đã vượt lên), hoặc chỉ số tốt nhưng chưa có ngành nào có sóng hình thành.",
+    what: "Xu hướng tăng bị áp lực (từ 4 ngày phân phối, hoặc chỉ số rơi xuống dưới MA50 sau khi đã vượt lên), hoặc chỉ số đi lên nhưng chưa có phiên xác nhận lẫn ngành có sóng.",
   },
   3: {
     label: "Thận trọng",
@@ -338,7 +338,7 @@ export default function SectorWavesPage() {
                   <h2 className="text-[1.6rem] leading-tight">Trạng thái thị trường</h2>
                   <p className="mt-1 max-w-[52rem] text-[0.92rem] text-[var(--sm-egg2)]">
                     Đo trên chỉ số cân bằng của Bull Stock: gần 200 mã trong danh sách theo dõi, mỗi mã một tỷ trọng như nhau, phiên đầu tiên đủ {raw!.market?.minStocks ?? 30} mã = 100. Chỉ số
-                    này phản ánh cổ phiếu trung bình, không bị vài mã vốn hóa lớn kéo như VN-Index. Trạng thái xét theo ngày phân phối và phiên xác nhận (phần “M” trong CAN SLIM), kết hợp với sóng ngành: chỉ Tích cực khi có ít nhất một ngành có sóng đang hình thành.
+                    này phản ánh cổ phiếu trung bình, không bị vài mã vốn hóa lớn kéo như VN-Index. Trạng thái xét theo ngày phân phối và phiên xác nhận (phần “M” trong CAN SLIM), kết hợp với sóng ngành.
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-[0.8rem] text-[var(--sm-egg2)]">
@@ -377,7 +377,7 @@ export default function SectorWavesPage() {
                         </p>
                         {now.waves != null && (
                           <p className="text-[0.86rem] text-[var(--sm-egg2)]">
-                            <b className={`tabular-nums ${now.waves > 0 ? "up" : "text-[var(--sm-egg)]"}`}>{now.waves}</b> ngành có sóng đang hình thành (từ 30% mã đạt)
+                            <b className={`tabular-nums ${now.waves > 0 ? "up" : "text-[var(--sm-egg)]"}`}>{now.waves}</b> ngành có sóng
                           </p>
                         )}
                         <p className="text-[0.86rem] text-[var(--sm-egg2)]">
@@ -385,7 +385,7 @@ export default function SectorWavesPage() {
                         </p>
                         {now.base === 1 && now.state === 2 && (
                           <p className="basis-full text-[0.84rem] text-[var(--sm-egg2)]">
-                            Chỉ số đã đủ điều kiện Tích cực nhưng chưa có ngành nào có sóng hình thành, nên giữ ở Quan sát.
+                            Chỉ số đi lên nhưng chưa có phiên xác nhận và chưa có ngành nào có sóng, nên giữ ở Quan sát.
                           </p>
                         )}
                       </div>
@@ -470,7 +470,7 @@ export default function SectorWavesPage() {
                           <b style={{ color: MSTATE[2].text }}>Quan sát</b> khi có từ 4 ngày phân phối, hoặc chỉ số rơi xuống dưới MA50 sau khi đã vượt lên MA50 (ngay sau phiên xác nhận, chỉ số dưới MA50 vẫn tính Tích cực); quay lại <b style={{ color: MSTATE[1].text }}>Tích cực</b> khi dưới 4 ngày và trở lại trên MA50.
                         </li>
                         <li>
-                          <b className="text-[var(--sm-egg)]">Kết hợp sóng ngành:</b> chỉ số đủ điều kiện Tích cực nhưng không có ngành nào có sóng đang hình thành (từ 30% mã trong ngành đạt Trend Template) thì giữ ở <b style={{ color: MSTATE[2].text }}>Quan sát</b>. Xét theo tuần đã chốt gần nhất.
+                          <b className="text-[var(--sm-egg)]">Kết hợp sóng ngành:</b> có phiên xác nhận thì Tích cực ngay. Nếu chỉ số đi lên từ từ mà không có phiên xác nhận, chỉ chuyển Tích cực khi đã có ít nhất một ngành có sóng (từ {d.threshold}% mã trong ngành đạt Trend Template), chưa có thì giữ ở <b style={{ color: MSTATE[2].text }}>Quan sát</b>. Sóng ngành xét theo tuần đã chốt gần nhất.
                         </li>
                         <li>
                           Đợt tăng đi từ từ, không có phiên tăng mạnh: khi chỉ số đứng trên MA50 và MA50 đi lên so với 10 phiên trước, Thận trọng chuyển sang <b style={{ color: MSTATE[2].text }}>Quan sát</b>, rồi lên Tích cực theo quy tắc trên.
