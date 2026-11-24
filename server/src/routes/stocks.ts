@@ -10,6 +10,7 @@ import { fetchInvestmentOutlook } from "../providers/googleSheet.js";
 import { fetchNewsForSymbol } from "../news/cafefNews.js";
 import { getCompanyProfileWithFallback } from "../providers/companyProfileFallback.js";
 import { scanBuySignalsWithSession, type TrendScanResult } from "../signals/trendScanner.js";
+import { getSectorWaves } from "../signals/sectorWaves.js";
 import { isSettlingWindow, lastClosedSessionDate } from "../signals/sessionClose.js";
 import { getTradeJournal } from "../signals/tradeJournal.js";
 import { scanMovingAverages } from "../signals/maScanner.js";
@@ -393,6 +394,19 @@ router.get(
     const { items, sessionDate } = await loadTrendSignals();
     // Ngành (theo SECTOR_MAP) cho cột "Ngành" trong bảng tín hiệu.
     res.json({ items: items.map((h) => ({ ...h, sector: SECTOR_MAP[h.symbol] ?? null })), sessionDate });
+  })
+);
+
+router.get(
+  "/sector-waves",
+  asyncHandler(async (_req, res) => {
+    // Sóng ngành (Minervini): % mã đạt Trend Template theo ngành, theo tuần,
+    // kèm giai đoạn VN-Index. Tính một lần mỗi phiên (lưu Blob), giữ 1 giờ
+    // trong bộ nhớ của từng instance.
+    const key = `sector-waves:${lastClosedSessionDate()}`;
+    const data = await cached(key, 60 * 60, () => getSectorWaves(), { staleOnError: true });
+    edgeCache(res, 600, 3600);
+    res.json(data);
   })
 );
 

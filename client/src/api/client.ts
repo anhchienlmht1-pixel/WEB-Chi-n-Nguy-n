@@ -260,3 +260,26 @@ export async function fetchTradeJournal(): Promise<TradeJournal> {
   return data;
 }
 
+
+// Sóng ngành (Minervini): % mã đạt Trend Template theo ngành và theo tuần,
+// kèm giai đoạn VN-Index — server/src/signals/sectorWaves.ts.
+export interface SectorWaveRow {
+  sector: string;
+  n: number;
+  pct: (number | null)[];
+  highs: number[];
+  leaders: string[];
+}
+export interface SectorWaves {
+  sessionDate: string;
+  weeks: string[];
+  vnindex: { close: number[]; ma50: (number | null)[]; ma150: (number | null)[]; ma200: (number | null)[]; stage: (1 | 2 | 3 | 4 | null)[] };
+  breadth: (number | null)[];
+  sectors: SectorWaveRow[];
+  threshold: number;
+}
+
+export async function fetchSectorWaves(): Promise<SectorWaves> {
+  const { data } = await api.get("/sector-waves", { timeout: 60_000 });
+  return data;
+}

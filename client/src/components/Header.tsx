@@ -44,6 +44,9 @@ export default function Header() {
           >
             Tín hiệu
           </Link>
+          <NavLink to="/song-nganh" className={({ isActive }) => `${NAV_BASE} ${isActive ? NAV_ACTIVE : NAV_IDLE}`}>
+            Sóng ngành
+          </NavLink>
           <NavLink to="/nganh-ngan-hang" className={({ isActive }) => `${NAV_BASE} ${isActive ? NAV_ACTIVE : NAV_IDLE}`}>
             Ngành ngân hàng
           </NavLink>

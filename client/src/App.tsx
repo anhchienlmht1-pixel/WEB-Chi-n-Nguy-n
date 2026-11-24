@@ -9,6 +9,7 @@ import About from './pages/About'
 import BankSector from './pages/BankSector'
 import SecuritiesSector from './pages/SecuritiesSector'
 import RealEstateSector from './pages/RealEstateSector'
+import SectorWavesPage from './pages/SectorWaves'
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           <Route path="/nganh-ngan-hang" element={<BankSector />} />
           <Route path="/nganh-chung-khoan" element={<SecuritiesSector />} />
           <Route path="/nganh-bat-dong-san" element={<RealEstateSector />} />
+          <Route path="/song-nganh" element={<SectorWavesPage />} />
           <Route path="/gioi-thieu" element={<About />} />
           <Route path="*" element={<About />} />
         </Routes>
