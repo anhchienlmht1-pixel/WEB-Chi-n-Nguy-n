@@ -301,7 +301,7 @@ export default function SectorWavesPage() {
                   {
                     k: "Ngành đang có sóng",
                     v: `${wv}/${d.sectors.length}`,
-                    cls: wv > 0 ? "up" : "",
+                    cls: wv > 0 ? "up" : "down",
                     sub: `${when} · từ ${d.threshold}% mã đạt Trend Template · 4 tuần trước: ${wv4}`,
                   },
                   {
@@ -377,7 +377,7 @@ export default function SectorWavesPage() {
                         </p>
                         {now.waves != null && (
                           <p className="text-[0.86rem] text-[var(--sm-egg2)]">
-                            <b className={`tabular-nums ${now.waves > 0 ? "up" : "text-[var(--sm-egg)]"}`}>{now.waves}</b> ngành có sóng
+                            <b className={`tabular-nums ${now.waves > 0 ? "up" : "down"}`}>{now.waves}</b> ngành có sóng
                           </p>
                         )}
                         <p className="text-[0.86rem] text-[var(--sm-egg2)]">
