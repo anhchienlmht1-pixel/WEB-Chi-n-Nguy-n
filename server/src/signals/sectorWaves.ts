@@ -369,7 +369,13 @@ function runMarket(st: State, rule: MarketRule, breadth?: (number | null)[]): Ma
         rallyLow = lvl[i];
         rallyStart = -1;
       } else if (rallyStart < 0 && ret[i] > 0) rallyStart = i;
-      const day = rallyStart >= 0 ? i - rallyStart + 1 : 0;
+      let day = rallyStart >= 0 ? i - rallyStart + 1 : 0;
+      if (rule.maxDay != null && day > rule.maxDay) {
+        // nhịp hồi quá dài không có phiên xác nhận: bỏ, chờ nhịp hồi mới từ đáy mới
+        rallyLow = lvl[i];
+        rallyStart = -1;
+        day = 0;
+      }
       const volOk = rule.vol === "prev" ? up : v50[i - 1] != null && vol[i] > v50[i - 1]!;
       if (
         day >= 4 &&

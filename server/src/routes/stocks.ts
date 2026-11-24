@@ -407,12 +407,15 @@ router.get(
       B: { gain: 0.02, vol: "avg50" },
       C: { maxDay: 10 },
       D: { minBreadth: 15 },
-      E: { failFast: true },
+      C15: { maxDay: 15 },
+      D10: { minBreadth: 10 },
+      D20: { minBreadth: 20 },
       BC: { gain: 0.02, vol: "avg50", maxDay: 10 },
       BCD: { gain: 0.02, vol: "avg50", maxDay: 10, minBreadth: 15 },
-      BCDE: { gain: 0.02, vol: "avg50", maxDay: 10, minBreadth: 15, failFast: true },
-      BE: { gain: 0.02, vol: "avg50", failFast: true },
-      DE: { minBreadth: 15, failFast: true },
+      BD: { gain: 0.02, vol: "avg50", minBreadth: 15 },
+      BD10: { gain: 0.02, vol: "avg50", minBreadth: 10 },
+      B2: { gain: 0.02, vol: "prev" },
+      B3: { gain: 0.015, vol: "avg50" },
     });
     res.setHeader("Cache-Control", "no-store");
     res.json(data);
