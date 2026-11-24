@@ -304,8 +304,11 @@ export interface MarketRule {
   minBreadth: number | null;
   /** thủng đáy nhịp hồi thì về Thận trọng ngay */
   failFast: boolean;
+  /** thoát Thận trọng không cần phiên xác nhận: "ma50" chỉ số trên MA50 đang đi lên → Quan sát;
+   *  "ma50high" như trên nhưng lên Tích cực chỉ khi lập đỉnh 50 phiên */
+  recover: "none" | "ma50" | "ma50high";
 }
-export const MARKET_RULE: MarketRule = { gain: FTD_GAIN, vol: "prev", maxDay: 10, minBreadth: null, failFast: false };
+export const MARKET_RULE: MarketRule = { gain: FTD_GAIN, vol: "prev", maxDay: 10, minBreadth: null, failFast: false, recover: "none" };
 
 interface MarketDaily {
   dates: string[];
@@ -340,6 +343,7 @@ function runMarket(st: State, rule: MarketRule, breadth?: (number | null)[]): Ma
   const v20 = rollingMean(vol, 20), v50 = rollingMean(vol, 50), v250 = rollingMean(vol, 250);
   const liq = vol.map((_, i) => (v20[i] != null && v250[i] ? Math.round((v20[i]! / v250[i]!) * 1000) / 10 : null));
   const low50 = rollingExtreme(lvl, 50, false);
+  const high50 = rollingExtreme(lvl, 50, true);
   // % thị trường đạt Trend Template của tuần trước ngày i (tránh nhìn trước)
   let wk = 0;
   const breadthPrev = (i: number) => {
@@ -358,6 +362,7 @@ function runMarket(st: State, rule: MarketRule, breadth?: (number | null)[]): Ma
   let dist: number[] = [];
   // sau phiên xác nhận chỉ số thường còn dưới MA50: chỉ xét MA50 khi đã vượt lên MA50 ít nhất một lần
   let crossed = false;
+  let viaRecover = false;
   for (let i = 0; i < N; i++) {
     const up = i > 0 && vol[i] > vol[i - 1];
     const b = breadthPrev(i);
@@ -388,7 +393,15 @@ function runMarket(st: State, rule: MarketRule, breadth?: (number | null)[]): Ma
         dist = [];
         ftdLow = rallyLow;
         crossed = ma50[i] != null && lvl[i] >= ma50[i]!;
+        viaRecover = false;
         sigIdx.push(i);
+      } else if (rule.recover !== "none") {
+        const m = ma50[i], m10 = i >= 10 ? ma50[i - 10] : null;
+        if (m != null && m10 != null && lvl[i] > m && m > m10) {
+          next = 2;
+          crossed = true;
+          viaRecover = rule.recover === "ma50high";
+        }
       }
     } else {
       const prevLow = i > 0 ? low50[i - 1] : lvl[i];
@@ -398,8 +411,13 @@ function runMarket(st: State, rule: MarketRule, breadth?: (number | null)[]): Ma
         next = 3;
         rallyLow = lvl[i];
         rallyStart = -1;
+        viaRecover = false;
       } else if (dist.length >= 4 || (crossed && m != null && lvl[i] < m)) next = 2;
-      else next = 1;
+      else if (viaRecover && !(i > 0 && lvl[i] >= high50[i - 1])) next = 2;
+      else {
+        next = 1;
+        viaRecover = false;
+      }
     }
     if (next !== s) since = i;
     s = next;
