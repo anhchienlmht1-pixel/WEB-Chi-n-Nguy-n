@@ -286,7 +286,7 @@ export interface SectorWaves {
     state: (1 | 2 | 3 | null)[];
     liq: (number | null)[];
     signals: { date: string; w: number; level: number; after3m: number | null; after6m: number | null }[];
-    now: { date: string; state: 1 | 2 | 3; since: string; dist: number; liq: number | null; level: number } | null;
+    now: { date: string; state: 1 | 2 | 3; base?: 1 | 2 | 3; since: string; dist: number; liq: number | null; level: number; waves?: number } | null;
     minStocks: number;
   };
 }

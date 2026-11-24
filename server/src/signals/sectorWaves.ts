@@ -88,7 +88,18 @@ export interface MarketState {
   /** thanh khoản 20 phiên so với trung bình 250 phiên, % */
   liq: (number | null)[];
   signals: MarketSignal[];
-  now: { date: string; state: MarketStateCode; since: string; dist: number; liq: number | null; level: number } | null;
+  now: {
+    date: string;
+    state: MarketStateCode;
+    /** trạng thái theo chỉ số trước khi xét sóng ngành */
+    base: MarketStateCode;
+    since: string;
+    dist: number;
+    liq: number | null;
+    level: number;
+    /** số ngành có sóng ở phiên gần nhất */
+    waves: number;
+  } | null;
   /** số mã tối thiểu mỗi phiên để tính chỉ số */
   minStocks: number;
 }
@@ -315,8 +326,10 @@ export interface MarketRule {
   distCaution: number;
   /** ngày phân phối chỉ đẩy về Thận trọng khi chỉ số đã dưới MA50 (trên MA50 thì dừng ở Quan sát) */
   cautionBelowMa50: boolean;
+  /** Tích cực chỉ khi có ít nhất một ngành có sóng; không có thì hạ về Quan sát */
+  needWave: boolean;
 }
-export const MARKET_RULE: MarketRule = { gain: FTD_GAIN, vol: "prev", maxDay: 10, minBreadth: null, failFast: false, recover: "ma50", distDrop: DIST_DROP, distVol: "prev", distCaution: 6, cautionBelowMa50: true };
+export const MARKET_RULE: MarketRule = { gain: FTD_GAIN, vol: "prev", maxDay: 10, minBreadth: null, failFast: false, recover: "ma50", distDrop: DIST_DROP, distVol: "prev", distCaution: 6, cautionBelowMa50: true, needWave: true };
 
 interface MarketDaily {
   dates: string[];
@@ -326,12 +339,14 @@ interface MarketDaily {
   liq: (number | null)[];
   state: MarketStateCode[];
   sigIdx: number[];
+  base: MarketStateCode[];
+  waveAt: number[];
   since: number;
   dist: number;
   why: string[];
 }
 
-function runMarket(st: State, rule: MarketRule, breadth?: (number | null)[]): MarketDaily | null {
+function runMarket(st: State, rule: MarketRule, breadth?: (number | null)[], waves?: number[]): MarketDaily | null {
   const ew = st.ew ?? {};
   const dates = Object.keys(ew)
     .filter((d) => ew[d][1] >= EW_MIN_STOCKS)
@@ -436,12 +451,26 @@ function runMarket(st: State, rule: MarketRule, breadth?: (number | null)[]): Ma
     s = next;
     state.push(s);
   }
-  return { dates, lvl, ret, ma50, liq, state, sigIdx, since, dist: dist.length, why };
+  // kết hợp sóng ngành: số ngành có sóng của tuần đã chốt gần nhất (phiên cuối tuần dùng chính tuần đó)
+  const base = state.slice();
+  const waveAt: number[] = new Array(N).fill(0);
+  if (waves) {
+    let w = 0;
+    for (let i = 0; i < N; i++) {
+      while (w < st.weekEnds.length && st.weekEnds[w] < dates[i]) w++;
+      const k = w < st.weekEnds.length && st.weekEnds[w] === dates[i] ? w : w - 1;
+      waveAt[i] = k >= 0 ? (waves[k] ?? 0) : 0;
+      if (rule.needWave && state[i] === 1 && waveAt[i] === 0) state[i] = 2;
+    }
+    since = N - 1;
+    while (since > 0 && state[since - 1] === state[N - 1]) since--;
+  }
+  return { dates, lvl, ret, ma50, liq, state, base, waveAt, sigIdx, since, dist: dist.length, why };
 }
 
-export function computeMarket(st: State, rule: MarketRule = MARKET_RULE, breadth?: (number | null)[]): MarketState {
+export function computeMarket(st: State, rule: MarketRule = MARKET_RULE, breadth?: (number | null)[], waves?: number[]): MarketState {
   const empty: MarketState = { index: st.weekEnds.map(() => null), ma50: st.weekEnds.map(() => null), state: st.weekEnds.map(() => null), liq: st.weekEnds.map(() => null), signals: [], now: null, minStocks: EW_MIN_STOCKS };
-  const md = runMarket(st, rule, breadth);
+  const md = runMarket(st, rule, breadth, waves);
   if (!md) return empty;
   const { dates, lvl, ma50, liq, state, sigIdx, since } = md;
   const N = dates.length;
@@ -472,7 +501,7 @@ export function computeMarket(st: State, rule: MarketRule = MARKET_RULE, breadth
     after6m: i + 126 < N ? pct(lvl[i], lvl[i + 126]) : null,
   }));
   const L = N - 1;
-  out.now = { date: dates[L], state: state[L], since: dates[since], dist: md.dist, liq: liq[L], level: Math.round(lvl[L] * 100) / 100 };
+  out.now = { date: dates[L], state: state[L], base: md.base[L], waves: md.waveAt[L], since: dates[since], dist: md.dist, liq: liq[L], level: Math.round(lvl[L] * 100) / 100 };
   return out;
 }
 
@@ -538,6 +567,27 @@ async function step(prev: State | null): Promise<State> {
   return st;
 }
 
+/** Số ngành có sóng theo tuần (từ WAVE_THRESHOLD% mã đạt Trend Template, tối thiểu 3 mã có dữ liệu) */
+function wavesOf(st: State): number[] {
+  const W = st.weekKeys.length;
+  const out = new Array(W).fill(0);
+  for (const syms of Object.values(WAVE_SECTORS)) {
+    const pass = new Array(W).fill(0), tot = new Array(W).fill(0);
+    for (const sym of syms) {
+      const c = st.symbols[sym]?.codes;
+      if (!c) continue;
+      for (let w = 0; w < Math.min(W, c.length); w++) {
+        const ch = c.charCodeAt(w) - 48;
+        if (ch < 0 || ch > 3) continue;
+        tot[w]++;
+        if (ch & 1) pass[w]++;
+      }
+    }
+    for (let w = 0; w < W; w++) if (tot[w] >= 3 && (pass[w] / tot[w]) * 100 >= WAVE_THRESHOLD) out[w]++;
+  }
+  return out;
+}
+
 /** % toàn thị trường đạt Trend Template theo tuần */
 function breadthOf(st: State): (number | null)[] {
   const W = st.weekKeys.length;
@@ -558,9 +608,10 @@ export async function getMarketBacktest(variants: Record<string, Partial<MarketR
   const st = await readState();
   if (!st) return null;
   const br = breadthOf(st);
+  const wv = wavesOf(st);
   const out: Record<string, unknown> = {};
   for (const [name, v] of Object.entries(variants)) {
-    const md = runMarket(st, { ...MARKET_RULE, ...v }, br);
+    const md = runMarket(st, { ...MARKET_RULE, ...v }, br, wv);
     if (!md) continue;
     const { lvl, ret, state, sigIdx, dates } = md;
     const N = lvl.length;
@@ -629,7 +680,7 @@ function summarize(st: State): SectorWavesResult {
     sectors: rows,
     threshold: WAVE_THRESHOLD,
     progress: { done: Object.values(st.symbols).filter((x) => x.aggUntil).length, total: Object.keys(SECTOR_OF).length },
-    market: computeMarket(st, MARKET_RULE, breadthOf(st)),
+    market: computeMarket(st, MARKET_RULE, breadthOf(st), wavesOf(st)),
   };
 }
 
