@@ -121,6 +121,12 @@ export default function SectorWavesPage() {
       const k = range === "5y" ? 261 : 104;
       pick = raw.weeks.map((_, i) => i).slice(-k);
     }
+    // cả trang bắt đầu cùng mốc với chỉ số cân bằng (biểu đồ trạng thái thị trường)
+    const m0 = raw.market?.index.findIndex((x) => x != null) ?? -1;
+    if (m0 > 0) {
+      const cut = pick.filter((i) => i >= m0);
+      if (cut.length > 1) pick = cut;
+    }
     const sel = <T,>(a: T[]) => pick.map((i) => a[i]);
     const m = raw.market;
     return {
@@ -399,7 +405,7 @@ export default function SectorWavesPage() {
                   <div className="mt-3 rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-3">
                     <div className="h-[300px]">
                       <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={view.mChart} syncId="market" margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                        <ComposedChart data={view.mChart} syncId="waves" margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                           <CartesianGrid vertical={false} stroke="var(--sm-line2)" />
                           {view.mBands.filter((b) => b.s !== 2).map((b) => (
                             <ReferenceArea key={b.x1} x1={b.x1} x2={b.x2} fill={MSTATE[b.s].fill} fillOpacity={1} ifOverflow="extendDomain" />
@@ -446,7 +452,7 @@ export default function SectorWavesPage() {
                       </p>
                       <div className="h-[150px]">
                         <ResponsiveContainer width="100%" height="100%">
-                          <ComposedChart data={view.mChart} syncId="market" margin={{ top: 6, right: 8, bottom: 0, left: 0 }}>
+                          <ComposedChart data={view.mChart} syncId="waves" margin={{ top: 6, right: 8, bottom: 0, left: 0 }}>
                             <CartesianGrid vertical={false} stroke="var(--sm-line2)" />
                             <XAxis dataKey="t" hide />
                             <YAxis orientation="right" width={52} domain={[0, (max: number) => Math.max(200, Math.ceil(max / 50) * 50)]} tick={{ fontSize: 10, fill: "var(--sm-mut)" }} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}%`} />
