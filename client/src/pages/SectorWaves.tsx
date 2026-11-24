@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Bar, CartesianGrid, ComposedChart, Line, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { fetchSectorWaves, type SectorWaves } from "../api/client";
+import { fetchSectorWaves, fetchSectorWavesLive, type SectorWaves, type SectorWavesLive } from "../api/client";
 
 // Sóng ngành theo cách nhìn của Mark Minervini:
 //  - VN-Index và 4 giai đoạn (1 tích lũy · 2 tăng · 3 phân phối · 4 giảm)
@@ -90,6 +90,24 @@ export default function SectorWavesPage() {
     };
   }, [raw, range]);
 
+  // Trạng thái trong phiên (giá khớp hiện tại), làm mới mỗi 30 giây.
+  const [live, setLive] = useState<SectorWavesLive | null>(null);
+  useEffect(() => {
+    let off = false;
+    const tick = () =>
+      fetchSectorWavesLive()
+        .then((x) => !off && setLive(x))
+        .catch(() => {});
+    tick();
+    const id = setInterval(tick, 30_000);
+    return () => {
+      off = true;
+      clearInterval(id);
+    };
+  }, []);
+  const liveOf = useMemo(() => new Map((live?.sectors ?? []).map((x) => [x.sector, x])), [live]);
+  const liveTime = live ? new Date(live.asOf).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Ho_Chi_Minh" }) : null;
+
   // Thay đổi 4 tuần (luôn tính trên dữ liệu tuần, không phụ thuộc khung xem)
   const ch4 = useMemo(() => {
     const m: Record<string, number | null> = {};
@@ -107,7 +125,8 @@ export default function SectorWavesPage() {
     const n = d.weeks.length;
     const last = n - 1;
     const waveCount = d.weeks.map((_, w) => d.sectors.filter((s) => (s.pct[w] ?? 0) >= d.threshold).length);
-    const rows = [...d.sectors].sort((a, b) => (b.pct[last] ?? -1) - (a.pct[last] ?? -1));
+    const now = (x: { sector: string; pct: (number | null)[] }) => liveOf.get(x.sector)?.pct ?? x.pct[last] ?? -1;
+    const rows = [...d.sectors].sort((a, b) => now(b) - now(a));
     const chart = d.weeks.map((t, w) => ({
       t,
       close: d.vnindex.close[w],
@@ -128,7 +147,7 @@ export default function SectorWavesPage() {
       else bands.push({ x1: d.weeks[w], x2: d.weeks[w], s });
     }
     return { n, last, waveCount, rows, chart, bands };
-  }, [d, raw]);
+  }, [d, raw, liveOf]);
 
   return (
     <div className="text-[var(--sm-egg)]">
@@ -191,11 +210,13 @@ export default function SectorWavesPage() {
               {(() => {
                 const s = d.vnindex.stage[view.last];
                 const top = view.rows[0];
-                const wv = view.waveCount[view.last];
+                const topLive = top ? liveOf.get(top.sector) : undefined;
+                const wv = live ? live.sectors.filter((x) => (x.pct ?? 0) >= d.threshold).length : view.waveCount[view.last];
                 const R = raw!;
                 const RL = R.weeks.length - 1;
                 const wv4 = R.sectors.filter((x) => (x.pct[Math.max(0, RL - 4)] ?? 0) >= R.threshold).length;
-                const b = d.breadth[view.last];
+                const b = live?.breadth ?? d.breadth[view.last];
+                const when = live?.intraday ? `Trong phiên, ${liveTime}` : `Phiên ${dmy(d.sessionDate)}`;
                 const b4 = R.breadth[Math.max(0, RL - 4)];
                 const cells = [
                   { k: "VN-Index", v: s ? STAGE[s].label : "—", cls: s ? STAGE[s].text : "", sub: `Chốt phiên ${dmy(d.sessionDate)}` },
@@ -203,19 +224,21 @@ export default function SectorWavesPage() {
                     k: "Ngành đang có sóng",
                     v: `${wv}/${d.sectors.length}`,
                     cls: wv > 0 ? "up" : "",
-                    sub: `Từ ${d.threshold}% mã trong ngành đạt Trend Template · 4 tuần trước: ${wv4}`,
+                    sub: `${when} · từ ${d.threshold}% mã đạt Trend Template · 4 tuần trước: ${wv4}`,
                   },
                   {
                     k: "Toàn thị trường đạt Trend Template",
                     v: b == null ? "—" : `${vn(b, 1)}%`,
                     cls: "",
-                    sub: b != null && b4 != null ? `${b >= b4 ? "+" : ""}${vn(b - b4, 1)} điểm % so với 4 tuần trước` : "",
+                    sub: `${when}${b != null && b4 != null ? ` · ${b >= b4 ? "+" : ""}${vn(b - b4, 1)} điểm % so với 4 tuần trước` : ""}`,
                   },
                   {
                     k: "Ngành mạnh nhất",
                     v: top ? top.sector : "—",
                     cls: "",
-                    sub: top && top.pct[view.last] != null ? `${vn(top.pct[view.last]!, 0)}% mã đạt · ${top.leaders.slice(0, 4).join(", ")}` : "",
+                    sub: top
+                      ? `${vn(topLive?.pct ?? top.pct[view.last] ?? 0, 0)}% mã đạt · ${(topLive?.leaders ?? top.leaders).slice(0, 4).join(", ")}`
+                      : "",
                   },
                 ];
                 return cells.map((c) => (
@@ -324,7 +347,17 @@ export default function SectorWavesPage() {
               <div className="mt-3 overflow-x-auto rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-3">
                 <div className="min-w-[980px]">
                   {/* trục tháng */}
-                  <div className="flex items-end pl-[11.5rem] pr-[13rem]">
+                  <div className="relative flex items-end pl-[11.5rem] pr-[13rem]">
+                    <span className="absolute right-0 bottom-0 flex w-[13rem] items-center gap-1.5 pl-2 text-[0.72rem] font-semibold text-[var(--sm-egg2)]">
+                      {live?.intraday ? (
+                        <>
+                          <i className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--sm-up)]" aria-hidden="true" />
+                          Trong phiên · {liveTime}
+                        </>
+                      ) : (
+                        <>Phiên {dmy(d.sessionDate)}</>
+                      )}
+                    </span>
                     <div className="relative h-4 flex-1">
                       {d.weeks.map((w, i) =>
                         i === 0 || w.slice(5, 7) !== d.weeks[i - 1].slice(5, 7) ? (
@@ -338,8 +371,12 @@ export default function SectorWavesPage() {
                     </div>
                   </div>
                   {view.rows.map((s) => {
-                    const cur = s.pct[view.last];
-                    const ch = ch4[s.sector] ?? null;
+                    const lv = liveOf.get(s.sector);
+                    const closedNow = raw!.sectors.find((x) => x.sector === s.sector)?.pct[raw!.weeks.length - 1] ?? null;
+                    const cur = lv ? lv.pct : s.pct[view.last];
+                    // trong phiên: so với phiên đã đóng; ngoài phiên: so với 4 tuần trước
+                    const ch = live?.intraday ? (cur != null && closedNow != null ? cur - closedNow : null) : (ch4[s.sector] ?? null);
+                    const leadersNow = lv ? lv.leaders : s.leaders;
                     return (
                       <div key={s.sector} className="flex items-center gap-2 py-[3px]">
                         <span className="w-[11rem] shrink-0 truncate text-[0.84rem] text-[var(--sm-egg)]" title={`${s.sector} · ${s.n} mã`}>
@@ -367,8 +404,8 @@ export default function SectorWavesPage() {
                               {ch > 0 ? "▲" : ch < 0 ? "▼" : "·"} {vn(Math.abs(ch), 0)}
                             </span>
                           )}
-                          <span className="ml-1.5 text-[var(--sm-mut)]" title={s.leaders.join(", ")}>
-                            {s.leaders.slice(0, 3).join(" ")}
+                          <span className="ml-1.5 text-[var(--sm-mut)]" title={leadersNow.join(", ")}>
+                            {leadersNow.slice(0, 3).join(" ")}
                           </span>
                         </span>
                       </div>
@@ -381,7 +418,7 @@ export default function SectorWavesPage() {
                         <i key={p} className="block h-full flex-1" style={{ background: cellColor(p) }} />
                       ))}
                     </span>
-                    100% số mã trong ngành đạt Trend Template · cột phải: hiện tại, thay đổi so với 4 tuần trước (điểm %), mã đang đạt
+                    100% số mã trong ngành đạt Trend Template · cột phải: hiện tại (trong phiên tính theo giá khớp, cập nhật 30 giây), thay đổi điểm % (trong phiên: so với phiên trước; ngoài giờ: so với 4 tuần trước), mã đang đạt
                   </div>
                 </div>
               </div>

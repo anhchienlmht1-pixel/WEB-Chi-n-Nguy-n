@@ -76,7 +76,8 @@ interface State {
   weekKeys: string[]; // thứ Hai của tuần
   weekEnds: string[]; // phiên cuối của tuần (VN-Index)
   vnindex: SectorWavesResult["vnindex"];
-  symbols: Record<string, { codes: string; len: number }>;
+  /** tail: 250 giá đóng cửa gần nhất (phiên đã đóng) để tính trạng thái trong phiên; tailDate: ngày phiên cuối */
+  symbols: Record<string, { codes: string; len: number; tail?: number[]; tailDate?: string }>;
 }
 
 function dedupeSameDay(points: HistoryPoint[]): HistoryPoint[] {
@@ -162,6 +163,11 @@ function encodeWeeks(points: HistoryPoint[], weekKeys: string[], from: number): 
   return out;
 }
 
+const tailOf = (p: HistoryPoint[]) => ({
+  tail: p.slice(-250).map((x) => Math.round(x.close * 1000) / 1000),
+  tailDate: p.length ? dayOf(p[p.length - 1]) : undefined,
+});
+
 async function buildIndex(): Promise<Pick<State, "sessionDate" | "weekKeys" | "weekEnds" | "vnindex">> {
   const v = await closedHistory("VNINDEX", "MAX");
   if (v.length < 260) throw new Error("Không đủ dữ liệu VN-Index để tính sóng ngành");
@@ -227,7 +233,9 @@ async function step(prev: State | null): Promise<State> {
   const missing = universe.filter((s) => !st.symbols[s]);
   const stale = universe.filter((s) => st.symbols[s] && (st.symbols[s].len < W || st.symbols[s].codes.length < W));
   // tuần cuối có thể chưa trọn (thêm phiên mới trong tuần) → luôn tính lại tuần cuối của phiên mới
-  const refreshLast = prev && prev.sessionDate !== st.sessionDate ? universe.filter((s) => st.symbols[s] && !stale.includes(s)) : [];
+  const refreshLast = universe.filter(
+    (s) => st.symbols[s] && !stale.includes(s) && ((prev && prev.sessionDate !== st.sessionDate) || !st.symbols[s].tail),
+  );
 
   await mapWithConcurrency(
     missing,
@@ -235,7 +243,7 @@ async function step(prev: State | null): Promise<State> {
     async (s) => {
       try {
         const p = await closedHistory(s, "MAX");
-        st.symbols[s] = { codes: encodeWeeks(p, st.weekKeys, 0), len: W };
+        st.symbols[s] = { codes: encodeWeeks(p, st.weekKeys, 0), len: W, ...tailOf(p) };
       } catch {
         // thử lại ở lượt sau
       }
@@ -251,7 +259,7 @@ async function step(prev: State | null): Promise<State> {
         const from = Math.max(0, Math.min(cur.len, cur.codes.length) - 1);
         const gap = W - from;
         const p = await closedHistory(s, gap > 8 ? "5Y" : "1Y");
-        st.symbols[s] = { codes: cur.codes.slice(0, from) + encodeWeeks(p, st.weekKeys, from), len: W };
+        st.symbols[s] = { codes: cur.codes.slice(0, from) + encodeWeeks(p, st.weekKeys, from), len: W, ...tailOf(p) };
       } catch {
         /* lượt sau */
       }
@@ -335,7 +343,7 @@ function upToDate(s: State, closed: string): boolean {
   const W = s.weekKeys.length;
   const total = Object.keys(SECTOR_OF).length;
   const syms = Object.values(s.symbols);
-  return s.sessionDate >= closed && syms.length >= total && syms.every((x) => x.len >= W);
+  return s.sessionDate >= closed && syms.length >= total && syms.every((x) => x.len >= W && x.tail);
 }
 
 /**
@@ -353,4 +361,68 @@ export async function getSectorWaves(closed: string): Promise<SectorWavesResult>
 
 export function isComplete(r: SectorWavesResult): boolean {
   return r.progress.done >= r.progress.total;
+}
+
+// ----------------------------------------------------------------- trong phiên
+export interface SectorWavesLive {
+  asOf: string;
+  /** true khi đã có giá của phiên đang giao dịch (khác phiên đã đóng) */
+  intraday: boolean;
+  breadth: number | null;
+  sectors: { sector: string; n: number; pct: number | null; leaders: string[] }[];
+}
+
+/** Trend Template ở phiên hiện tại: chuỗi giá đóng cửa đã lưu + giá khớp hiện tại. */
+function templateNow(closes: number[]): boolean | null {
+  const n = closes.length;
+  if (n < 221) return null;
+  const mean = (k: number, end: number) => {
+    let s = 0;
+    for (let i = end - k + 1; i <= end; i++) s += closes[i];
+    return s / k;
+  };
+  const x = closes[n - 1];
+  const a = mean(50, n - 1), b = mean(150, n - 1), d = mean(200, n - 1), d20 = mean(200, n - 21);
+  const w = closes.slice(-250);
+  const hi = Math.max(...w), lo = Math.min(...w);
+  return x > a && a > b && b > d && d > d20 && x >= 1.3 * lo && x >= 0.75 * hi;
+}
+
+let liveState: { at: number; st: State | null } = { at: 0, st: null };
+
+export async function getSectorWavesLive(quotes: { symbol: string; price: number; time?: string }[], closed: string): Promise<SectorWavesLive> {
+  if (!liveState.st || Date.now() - liveState.at > 10 * 60_000) liveState = { at: Date.now(), st: await readState() };
+  const st = liveState.st;
+  const price = new Map(quotes.filter((q) => Number.isFinite(q.price) && q.price > 0).map((q) => [q.symbol, q.price]));
+  // Đang trong phiên khi phiên đã đóng gần nhất là ngày trước hôm nay (giờ VN) và có giá khớp.
+  const today = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
+  const intraday = closed < today && price.size > 0;
+  const sectors = Object.entries(WAVE_SECTORS).map(([sector, syms]) => {
+    let n = 0, pass = 0;
+    const leaders: string[] = [];
+    for (const s of syms) {
+      const rec = st?.symbols[s];
+      if (!rec?.tail || rec.tail.length < 221) continue;
+      let closes = rec.tail;
+      const p = price.get(s);
+      if (intraday && p && rec.tailDate && rec.tailDate < today) {
+        // quy giá khớp về cùng đơn vị với giá lịch sử (nghìn đồng hay đồng)
+        const last = rec.tail[rec.tail.length - 1];
+        const r = p / last;
+        const px = r > 500 ? p / 1000 : r < 0.002 ? p * 1000 : p;
+        closes = [...rec.tail.slice(1), px];
+      }
+      const t = templateNow(closes);
+      if (t == null) continue;
+      n++;
+      if (t) {
+        pass++;
+        leaders.push(s);
+      }
+    }
+    return { sector, n, pct: n >= 3 ? Math.round((pass / n) * 1000) / 10 : null, leaders };
+  });
+  const N = sectors.reduce((a, x) => a + x.n, 0);
+  const P = sectors.reduce((a, x) => a + x.leaders.length, 0);
+  return { asOf: new Date().toISOString(), intraday, breadth: N ? Math.round((P / N) * 1000) / 10 : null, sectors };
 }

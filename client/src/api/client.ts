@@ -285,3 +285,14 @@ export async function fetchSectorWaves(): Promise<SectorWaves> {
   const { data } = await api.get("/sector-waves", { timeout: 60_000 });
   return data;
 }
+
+export interface SectorWavesLive {
+  asOf: string;
+  intraday: boolean;
+  breadth: number | null;
+  sectors: { sector: string; n: number; pct: number | null; leaders: string[] }[];
+}
+export async function fetchSectorWavesLive(): Promise<SectorWavesLive> {
+  const { data } = await api.get("/sector-waves/live");
+  return data;
+}

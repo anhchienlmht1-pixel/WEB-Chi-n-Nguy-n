@@ -10,7 +10,7 @@ import { fetchInvestmentOutlook } from "../providers/googleSheet.js";
 import { fetchNewsForSymbol } from "../news/cafefNews.js";
 import { getCompanyProfileWithFallback } from "../providers/companyProfileFallback.js";
 import { scanBuySignalsWithSession, type TrendScanResult } from "../signals/trendScanner.js";
-import { getSectorWaves, isComplete, type SectorWavesResult } from "../signals/sectorWaves.js";
+import { getSectorWaves, getSectorWavesLive, isComplete, type SectorWavesResult } from "../signals/sectorWaves.js";
 import { isSettlingWindow, lastClosedSessionDate } from "../signals/sessionClose.js";
 import { getTradeJournal } from "../signals/tradeJournal.js";
 import { scanMovingAverages } from "../signals/maScanner.js";
@@ -398,6 +398,17 @@ router.get(
 );
 
 let sectorWavesInFlight: Promise<SectorWavesResult> | null = null;
+router.get(
+  "/sector-waves/live",
+  asyncHandler(async (_req, res) => {
+    // Trạng thái sóng ngành trong phiên: Trend Template tính với giá khớp hiện
+    // tại (bảng giá toàn danh sách, cùng nguồn trang chủ), cập nhật ~30 giây.
+    const { quotes } = await cached("overview", 30, () => getMarketOverviewWithFallback());
+    const data = await cached(`sector-waves-live`, 30, () => getSectorWavesLive(quotes, lastClosedSessionDate()));
+    edgeCache(res, 20, 30);
+    res.json(data);
+  })
+);
 router.get(
   "/sector-waves",
   asyncHandler(async (_req, res) => {
