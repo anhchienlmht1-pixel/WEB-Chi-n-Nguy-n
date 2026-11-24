@@ -615,6 +615,70 @@ function breadthOf(st: State): (number | null)[] {
   return pass.map((p, w) => (tot[w] >= 10 ? Math.round((p / tot[w]) * 1000) / 10 : null));
 }
 
+/**
+ * Kiểm tra ngoài mẫu: dò bộ ngưỡng tốt nhất trên giai đoạn trước `split`, rồi chạy nguyên xi trên giai đoạn sau.
+ * Chiến lược đo: nắm chỉ số cân bằng khi Tích cực, đứng ngoài khi Quan sát/Thận trọng
+ * (trạng thái hôm trước, lợi suất hôm sau: không nhìn trước). Không tính phí giao dịch.
+ */
+export async function getMarketOOS(split = "2022-01-01") {
+  const st = await readState();
+  if (!st) return null;
+  const br = breadthOf(st);
+  const evalRule = (rule: MarketRule) => {
+    const md = runMarket(st, rule, br);
+    if (!md) return null;
+    const { dates, ret, state } = md;
+    const seg = (from: string, to: string) => {
+      let eq = 1, peak = 1, dd = 0, bh = 1, bhPeak = 1, bhDd = 0, inDays = 0, n = 0, sw = 0;
+      for (let i = 1; i < dates.length; i++) {
+        if (dates[i] < from || dates[i] >= to) continue;
+        n++;
+        bh *= 1 + ret[i];
+        bhPeak = Math.max(bhPeak, bh);
+        bhDd = Math.min(bhDd, bh / bhPeak - 1);
+        if (state[i - 1] === 1) {
+          eq *= 1 + ret[i];
+          inDays++;
+        }
+        if ((state[i - 1] === 1) !== (state[i] === 1)) sw++;
+        peak = Math.max(peak, eq);
+        dd = Math.min(dd, eq / peak - 1);
+      }
+      const r = (x: number) => Math.round(x * 1000) / 10;
+      return { ret: r(eq - 1), dd: r(dd), bh: r(bh - 1), bhDd: r(bhDd), inPct: n ? Math.round((inDays / n) * 100) : 0, trades: Math.round(sw / 2) };
+    };
+    return { is: seg(dates[0], split), oos: seg(split, "9999") };
+  };
+  const ORIGINAL: MarketRule = { ...MARKET_RULE, maxDay: null, recover: "none", cautionBelowMa50: false, needWave: false };
+  const grid: { key: string; rule: MarketRule }[] = [];
+  for (const gain of [0.012, 0.015, 0.02])
+    for (const maxDay of [null, 10] as const)
+      for (const recover of ["none", "ma50"] as const)
+        for (const cautionBelowMa50 of [false, true])
+          for (const distCaution of [5, 6, 7])
+            for (const needWave of [false, true])
+              grid.push({
+                key: `g${gain * 1000}|d${maxDay ?? "-"}|${recover}|${cautionBelowMa50 ? "m50" : "-"}|k${distCaution}|${needWave ? "w" : "-"}`,
+                rule: { ...MARKET_RULE, gain, maxDay, recover, cautionBelowMa50, distCaution, needWave, waveFtdExempt: true },
+              });
+  const scored = grid
+    .map((g) => ({ key: g.key, r: evalRule(g.rule)! }))
+    .filter((x) => x.r)
+    // điểm trong mẫu: lợi nhuận chia mức sụt giảm lớn nhất (càng cao càng tốt)
+    .map((x) => ({ ...x, score: (x.r.is.ret / 100 + 1) / (1 + Math.abs(x.r.is.dd) / 100) }))
+    .sort((a, b) => b.score - a.score);
+  const oosRank = [...scored].sort((a, b) => b.r.oos.ret / (1 + Math.abs(b.r.oos.dd)) - a.r.oos.ret / (1 + Math.abs(a.r.oos.dd)));
+  return {
+    split,
+    original: evalRule(ORIGINAL),
+    current: evalRule(MARKET_RULE),
+    isBest: scored.slice(0, 5).map((x) => ({ key: x.key, ...x.r, oosRank: oosRank.findIndex((y) => y.key === x.key) + 1 })),
+    gridSize: scored.length,
+    // phân bố kết quả ngoài mẫu của cả lưới, để biết bộ chọn từ trong mẫu đứng ở đâu
+    oosMedian: oosRank[Math.floor(oosRank.length / 2)]?.r.oos,
+  };
+}
+
 /** So sánh các cách lọc phiên xác nhận trên dữ liệu đã lưu (không tải thêm). */
 export async function getMarketBacktest(variants: Record<string, Partial<MarketRule>>) {
   const st = await readState();

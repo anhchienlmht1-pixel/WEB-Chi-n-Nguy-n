@@ -10,7 +10,7 @@ import { fetchInvestmentOutlook } from "../providers/googleSheet.js";
 import { fetchNewsForSymbol } from "../news/cafefNews.js";
 import { getCompanyProfileWithFallback } from "../providers/companyProfileFallback.js";
 import { scanBuySignalsWithSession, type TrendScanResult } from "../signals/trendScanner.js";
-import { getMarketBacktest, getSectorWaves, getSectorWavesLive, isComplete, type SectorWavesResult } from "../signals/sectorWaves.js";
+import { getMarketBacktest, getMarketOOS, getSectorWaves, getSectorWavesLive, isComplete, type SectorWavesResult } from "../signals/sectorWaves.js";
 import { isSettlingWindow, lastClosedSessionDate } from "../signals/sessionClose.js";
 import { getTradeJournal } from "../signals/tradeJournal.js";
 import { scanMovingAverages } from "../signals/maScanner.js";
@@ -398,6 +398,13 @@ router.get(
 );
 
 let sectorWavesInFlight: Promise<SectorWavesResult> | null = null;
+router.get(
+  "/sector-waves/oos",
+  asyncHandler(async (_req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    res.json(await getMarketOOS());
+  })
+);
 router.get(
   "/sector-waves/backtest",
   asyncHandler(async (_req, res) => {
