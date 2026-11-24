@@ -332,10 +332,12 @@ export interface MarketRule {
   waveMin: number;
   /** thay điều kiện ngành bằng % toàn thị trường đạt Trend Template (null: dùng ngành) */
   waveBreadth: number | null;
+  /** sau phiên xác nhận thì không cần điều kiện sóng ngành (chỉ áp cho nhịp tăng không có phiên xác nhận) */
+  waveFtdExempt: boolean;
 }
 /** Điều kiện Tích cực: có ngành từ 30% mã đạt Trend Template (sóng đang hình thành; ngưỡng 50% vào quá trễ). */
 const WAVE_MIN_FOR_MARKET = 30;
-export const MARKET_RULE: MarketRule = { gain: FTD_GAIN, vol: "prev", maxDay: 10, minBreadth: null, failFast: false, recover: "ma50", distDrop: DIST_DROP, distVol: "prev", distCaution: 6, cautionBelowMa50: true, needWave: true, waveMin: WAVE_MIN_FOR_MARKET, waveBreadth: null };
+export const MARKET_RULE: MarketRule = { gain: FTD_GAIN, vol: "prev", maxDay: 10, minBreadth: null, failFast: false, recover: "ma50", distDrop: DIST_DROP, distVol: "prev", distCaution: 6, cautionBelowMa50: true, needWave: true, waveMin: WAVE_MIN_FOR_MARKET, waveBreadth: null, waveFtdExempt: false };
 
 interface MarketDaily {
   dates: string[];
@@ -394,6 +396,8 @@ function runMarket(st: State, rule: MarketRule, breadth?: (number | null)[]): Ma
   // sau phiên xác nhận chỉ số thường còn dưới MA50: chỉ xét MA50 khi đã vượt lên MA50 ít nhất một lần
   let crossed = false;
   let viaRecover = false;
+  let fromFtd = false;
+  const ftdFlag: boolean[] = [];
   const why: string[] = [];
   for (let i = 0; i < N; i++) {
     const up = i > 0 && vol[i] > vol[i - 1];
@@ -427,6 +431,7 @@ function runMarket(st: State, rule: MarketRule, breadth?: (number | null)[]): Ma
         ftdLow = rallyLow;
         crossed = ma50[i] != null && lvl[i] >= ma50[i]!;
         viaRecover = false;
+        fromFtd = true;
         sigIdx.push(i);
       } else if (rule.recover !== "none") {
         const m = ma50[i], m10 = i >= 10 ? ma50[i - 10] : null;
@@ -447,6 +452,7 @@ function runMarket(st: State, rule: MarketRule, breadth?: (number | null)[]): Ma
         rallyLow = lvl[i];
         rallyStart = -1;
         viaRecover = false;
+        fromFtd = false;
       } else if (dist.length >= 4 || (crossed && m != null && lvl[i] < m)) next = 2;
       else if (viaRecover && !(i > 0 && lvl[i] >= high50[i - 1])) next = 2;
       else {
@@ -457,6 +463,7 @@ function runMarket(st: State, rule: MarketRule, breadth?: (number | null)[]): Ma
     if (next !== s) since = i;
     s = next;
     state.push(s);
+    ftdFlag.push(fromFtd);
   }
   // kết hợp sóng ngành: số ngành có sóng của tuần đã chốt gần nhất (phiên cuối tuần dùng chính tuần đó)
   const base = state.slice();
@@ -467,7 +474,7 @@ function runMarket(st: State, rule: MarketRule, breadth?: (number | null)[]): Ma
       while (w < st.weekEnds.length && st.weekEnds[w] < dates[i]) w++;
       const k = w < st.weekEnds.length && st.weekEnds[w] === dates[i] ? w : w - 1;
       waveAt[i] = k >= 0 ? (waves[k] ?? 0) : 0;
-      if (rule.needWave && state[i] === 1 && waveAt[i] === 0) state[i] = 2;
+      if (rule.needWave && state[i] === 1 && waveAt[i] === 0 && !(rule.waveFtdExempt && ftdFlag[i])) state[i] = 2;
     }
     since = N - 1;
     while (since > 0 && state[since - 1] === state[N - 1]) since--;
