@@ -213,22 +213,26 @@ export default function SectorWavesPage() {
         c.sigY = c.mIdx;
       }
     }
-    const mBands: { x1: string; x2: string; s: 1 | 2 | 3 }[] = [];
+    const mBands: { x1: string; x2: string; s: 1 | 2 | 3; e: number }[] = [];
     for (let w = 0; w < n; w++) {
       const s = d.market?.state[w];
       if (!s) continue;
       const b = mBands[mBands.length - 1];
-      if (b && b.s === s && b.x2 === d.weeks[w - 1]) b.x2 = d.weeks[w];
-      else mBands.push({ x1: d.weeks[w], x2: d.weeks[w], s });
+      if (b && b.s === s && b.e === w - 1) {
+        b.e = w;
+        b.x2 = d.weeks[Math.min(w + 1, n - 1)];
+      } else mBands.push({ x1: d.weeks[w], x2: d.weeks[Math.min(w + 1, n - 1)], s, e: w });
     }
     // các đoạn liên tiếp cùng giai đoạn → vùng nền
-    const bands: { x1: string; x2: string; s: 1 | 2 | 3 | 4 }[] = [];
+    const bands: { x1: string; x2: string; s: 1 | 2 | 3 | 4; e: number }[] = [];
     for (let w = 0; w < n; w++) {
       const s = d.vnindex.stage[w];
       if (!s) continue;
       const b = bands[bands.length - 1];
-      if (b && b.s === s && b.x2 === d.weeks[w - 1]) b.x2 = d.weeks[w];
-      else bands.push({ x1: d.weeks[w], x2: d.weeks[w], s });
+      if (b && b.s === s && b.e === w - 1) {
+        b.e = w;
+        b.x2 = d.weeks[Math.min(w + 1, n - 1)];
+      } else bands.push({ x1: d.weeks[w], x2: d.weeks[Math.min(w + 1, n - 1)], s, e: w });
     }
     // biểu đồ trạng thái thị trường: bỏ đoạn đầu chưa có chỉ số cân bằng
     const m0 = chart.findIndex((c) => c.mIdx != null);
