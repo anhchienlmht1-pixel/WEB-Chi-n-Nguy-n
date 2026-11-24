@@ -403,13 +403,8 @@ router.get(
   asyncHandler(async (_req, res) => {
     // So sánh các cách lọc phiên xác nhận (trạng thái thị trường) trên dữ liệu đã lưu.
     const data = await getMarketBacktest({
+      CURRENT: {},
       NOWAVE: { needWave: false },
-      W50: {},
-      W40: { waveMin: 40 },
-      W30: { waveMin: 30 },
-      B10: { waveBreadth: 10 },
-      B15: { waveBreadth: 15 },
-      B20: { waveBreadth: 20 },
     });
     res.setHeader("Cache-Control", "no-store");
     res.json(data);

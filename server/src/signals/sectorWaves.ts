@@ -333,7 +333,9 @@ export interface MarketRule {
   /** thay điều kiện ngành bằng % toàn thị trường đạt Trend Template (null: dùng ngành) */
   waveBreadth: number | null;
 }
-export const MARKET_RULE: MarketRule = { gain: FTD_GAIN, vol: "prev", maxDay: 10, minBreadth: null, failFast: false, recover: "ma50", distDrop: DIST_DROP, distVol: "prev", distCaution: 6, cautionBelowMa50: true, needWave: true, waveMin: WAVE_THRESHOLD, waveBreadth: null };
+/** Điều kiện Tích cực: có ngành từ 30% mã đạt Trend Template (sóng đang hình thành; ngưỡng 50% vào quá trễ). */
+const WAVE_MIN_FOR_MARKET = 30;
+export const MARKET_RULE: MarketRule = { gain: FTD_GAIN, vol: "prev", maxDay: 10, minBreadth: null, failFast: false, recover: "ma50", distDrop: DIST_DROP, distVol: "prev", distCaution: 6, cautionBelowMa50: true, needWave: true, waveMin: WAVE_MIN_FOR_MARKET, waveBreadth: null };
 
 interface MarketDaily {
   dates: string[];
