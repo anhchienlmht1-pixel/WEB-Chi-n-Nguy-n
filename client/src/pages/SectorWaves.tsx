@@ -626,16 +626,25 @@ export default function SectorWavesPage() {
               <div className="mt-3 overflow-x-auto rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-3">
                 <div className="min-w-[980px]">
                   {/* trục tháng */}
-                  <div className="relative flex items-end pl-[11.5rem] pr-[13rem]">
-                    <span className="absolute right-0 bottom-0 flex w-[13rem] items-center gap-1.5 pl-2 text-[0.72rem] font-semibold text-[var(--sm-egg2)]">
-                      {live?.intraday ? (
-                        <>
-                          <i className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--sm-up)]" aria-hidden="true" />
-                          Trong phiên · {liveTime}
-                        </>
-                      ) : (
-                        <>Phiên {dmy(d.sessionDate)}</>
-                      )}
+                  <div className="relative flex min-h-[2.4rem] items-end pl-[11.5rem] pr-[13rem]">
+                    <span className="absolute right-0 bottom-0 w-[13rem] pl-2 text-[0.68rem] leading-tight text-[var(--sm-mut)]">
+                      <span className="flex items-center gap-1.5 font-semibold text-[var(--sm-egg2)]">
+                        {live?.intraday ? (
+                          <>
+                            <i className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--sm-up)]" aria-hidden="true" />
+                            Trong phiên · {liveTime}
+                          </>
+                        ) : (
+                          <>Phiên {dmy(d.sessionDate)}</>
+                        )}
+                      </span>
+                      <span className="mt-0.5 flex">
+                        <span className="w-[3rem]" title="% số mã trong ngành đang đạt Trend Template">% đạt</span>
+                        <span className="w-[3.6rem]" title={live?.intraday ? "Thay đổi so với phiên trước, điểm %" : "Thay đổi so với 4 tuần trước, điểm %"}>
+                          Thay đổi
+                        </span>
+                        <span>Mã đạt</span>
+                      </span>
                     </span>
                     <div className="relative h-4 flex-1">
                       {d.weeks.map((w, i) =>
@@ -652,10 +661,11 @@ export default function SectorWavesPage() {
                   {view.rows.map((s) => {
                     const lv = liveOf.get(s.sector);
                     const closedNow = raw!.sectors.find((x) => x.sector === s.sector)?.pct[raw!.weeks.length - 1] ?? null;
-                    const cur = lv ? lv.pct : s.pct[view.last];
+                    // số trong phiên; thiếu thì dùng phiên đã chốt
+                    const cur = lv?.pct ?? s.pct[view.last];
                     // trong phiên: so với phiên đã đóng; ngoài phiên: so với 4 tuần trước
                     const ch = live?.intraday ? (cur != null && closedNow != null ? cur - closedNow : null) : (ch4[s.sector] ?? null);
-                    const leadersNow = lv ? lv.leaders : s.leaders;
+                    const leadersNow = lv?.pct != null ? lv.leaders : s.leaders;
                     return (
                       <div key={s.sector} className="flex items-center gap-2 py-[3px]">
                         <span className="w-[11rem] shrink-0 truncate text-[0.84rem] text-[var(--sm-egg)]" title={`${s.sector} · ${s.n} mã`}>
@@ -676,15 +686,13 @@ export default function SectorWavesPage() {
                             />
                           ))}
                         </div>
-                        <span className="w-[13rem] shrink-0 pl-2 text-[0.8rem] tabular-nums">
-                          <b className={cur != null && cur >= d.threshold ? "up" : "text-[var(--sm-egg)]"}>{cur == null ? "—" : `${vn(cur, 0)}%`}</b>
-                          {ch != null && (
-                            <span className={`ml-1.5 ${ch > 0 ? "up" : ch < 0 ? "down" : "text-[var(--sm-mut)]"}`}>
-                              {ch > 0 ? "▲" : ch < 0 ? "▼" : "·"} {vn(Math.abs(ch), 0)}
-                            </span>
-                          )}
-                          <span className="ml-1.5 text-[var(--sm-mut)]" title={leadersNow.join(", ")}>
-                            {leadersNow.slice(0, 3).join(" ")}
+                        <span className="flex w-[13rem] shrink-0 items-baseline pl-2 text-[0.8rem] tabular-nums">
+                          <b className={`w-[3rem] ${cur != null && cur >= d.threshold ? "up" : "text-[var(--sm-egg)]"}`}>{cur == null ? "—" : `${vn(cur, 0)}%`}</b>
+                          <span className={`w-[3.6rem] ${ch != null && ch > 0 ? "up" : ch != null && ch < 0 ? "down" : "text-[var(--sm-mut)]"}`}>
+                            {ch == null ? "—" : ch === 0 ? "0" : `${ch > 0 ? "+" : "−"}${vn(Math.abs(ch), 0)}`}
+                          </span>
+                          <span className="min-w-0 truncate text-[var(--sm-mut)]" title={leadersNow.join(", ")}>
+                            {leadersNow.length ? leadersNow.slice(0, 3).join(" ") : "—"}
                           </span>
                         </span>
                       </div>
@@ -697,7 +705,7 @@ export default function SectorWavesPage() {
                         <i key={p} className="block h-full flex-1" style={{ background: cellColor(p) }} />
                       ))}
                     </span>
-                    100% số mã trong ngành đạt Trend Template · cột phải: hiện tại (trong phiên tính theo giá khớp, cập nhật 30 giây), thay đổi điểm % (trong phiên: so với phiên trước; ngoài giờ: so với 4 tuần trước), mã đang đạt
+                    100% số mã trong ngành đạt Trend Template · cột phải: % mã trong ngành đang đạt Trend Template (trong phiên tính theo giá khớp, cập nhật 30 giây); thay đổi điểm % so với phiên trước (trong phiên) hoặc 4 tuần trước (ngoài giờ), ví dụ −25 là giảm 25 điểm %; các mã đang đạt
                   </div>
                 </div>
               </div>
