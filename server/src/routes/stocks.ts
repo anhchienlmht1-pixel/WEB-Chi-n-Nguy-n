@@ -10,7 +10,7 @@ import { fetchInvestmentOutlook } from "../providers/googleSheet.js";
 import { fetchNewsForSymbol } from "../news/cafefNews.js";
 import { getCompanyProfileWithFallback } from "../providers/companyProfileFallback.js";
 import { scanBuySignalsWithSession, type TrendScanResult } from "../signals/trendScanner.js";
-import { getSectorWaves, getSectorWavesLive, isComplete, type SectorWavesResult } from "../signals/sectorWaves.js";
+import { getMarketBacktest, getSectorWaves, getSectorWavesLive, isComplete, type SectorWavesResult } from "../signals/sectorWaves.js";
 import { isSettlingWindow, lastClosedSessionDate } from "../signals/sessionClose.js";
 import { getTradeJournal } from "../signals/tradeJournal.js";
 import { scanMovingAverages } from "../signals/maScanner.js";
@@ -398,6 +398,26 @@ router.get(
 );
 
 let sectorWavesInFlight: Promise<SectorWavesResult> | null = null;
+router.get(
+  "/sector-waves/backtest",
+  asyncHandler(async (_req, res) => {
+    // So sánh các cách lọc phiên xác nhận (trạng thái thị trường) trên dữ liệu đã lưu.
+    const data = await getMarketBacktest({
+      A: {},
+      B: { gain: 0.02, vol: "avg50" },
+      C: { maxDay: 10 },
+      D: { minBreadth: 15 },
+      E: { failFast: true },
+      BC: { gain: 0.02, vol: "avg50", maxDay: 10 },
+      BCD: { gain: 0.02, vol: "avg50", maxDay: 10, minBreadth: 15 },
+      BCDE: { gain: 0.02, vol: "avg50", maxDay: 10, minBreadth: 15, failFast: true },
+      BE: { gain: 0.02, vol: "avg50", failFast: true },
+      DE: { minBreadth: 15, failFast: true },
+    });
+    res.setHeader("Cache-Control", "no-store");
+    res.json(data);
+  })
+);
 router.get(
   "/sector-waves/live",
   asyncHandler(async (_req, res) => {

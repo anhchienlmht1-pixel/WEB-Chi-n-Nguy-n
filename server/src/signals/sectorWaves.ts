@@ -293,13 +293,38 @@ function addAgg(st: State, p: HistoryPoint[], after: string | undefined): string
 //  Quan sát → Tích cực: ngày phân phối giảm còn dưới 4 và chỉ số trở lại trên MA50.
 //  → Thận trọng: từ 6 ngày phân phối, hoặc chỉ số thủng đáy thấp nhất 50 phiên trước đó.
 //  Ngày phân phối hết hiệu lực sau 25 phiên hoặc khi chỉ số đã cao hơn giá đóng cửa ngày đó 5%.
-export function computeMarket(st: State): MarketState {
+export interface MarketRule {
+  /** mức tăng tối thiểu của phiên xác nhận */
+  gain: number;
+  /** thanh khoản phiên xác nhận: cao hơn phiên trước, hay cao hơn trung bình 50 phiên */
+  vol: "prev" | "avg50";
+  /** chỉ tính phiên xác nhận tới ngày thứ maxDay của nhịp hồi (null: không giới hạn) */
+  maxDay: number | null;
+  /** % toàn thị trường đạt Trend Template (tuần trước) tối thiểu (null: không xét) */
+  minBreadth: number | null;
+  /** thủng đáy nhịp hồi thì về Thận trọng ngay */
+  failFast: boolean;
+}
+export const MARKET_RULE: MarketRule = { gain: FTD_GAIN, vol: "prev", maxDay: null, minBreadth: null, failFast: false };
+
+interface MarketDaily {
+  dates: string[];
+  lvl: number[];
+  ret: number[];
+  ma50: (number | null)[];
+  liq: (number | null)[];
+  state: MarketStateCode[];
+  sigIdx: number[];
+  since: number;
+  dist: number;
+}
+
+function runMarket(st: State, rule: MarketRule, breadth?: (number | null)[]): MarketDaily | null {
   const ew = st.ew ?? {};
   const dates = Object.keys(ew)
     .filter((d) => ew[d][1] >= EW_MIN_STOCKS)
     .sort();
-  const empty: MarketState = { index: st.weekEnds.map(() => null), ma50: st.weekEnds.map(() => null), state: st.weekEnds.map(() => null), liq: st.weekEnds.map(() => null), signals: [], now: null, minStocks: EW_MIN_STOCKS };
-  if (dates.length < 60) return empty;
+  if (dates.length < 60) return null;
   const N = dates.length;
   const lvl: number[] = [];
   const vol: number[] = [];
@@ -312,9 +337,16 @@ export function computeMarket(st: State): MarketState {
     vol.push(e[3] > 0 ? e[2] / e[3] : 0);
   }
   const ma50 = rollingMean(lvl, 50);
-  const v20 = rollingMean(vol, 20), v250 = rollingMean(vol, 250);
+  const v20 = rollingMean(vol, 20), v50 = rollingMean(vol, 50), v250 = rollingMean(vol, 250);
   const liq = vol.map((_, i) => (v20[i] != null && v250[i] ? Math.round((v20[i]! / v250[i]!) * 1000) / 10 : null));
   const low50 = rollingExtreme(lvl, 50, false);
+  // % thị trường đạt Trend Template của tuần trước ngày i (tránh nhìn trước)
+  let wk = 0;
+  const breadthPrev = (i: number) => {
+    if (!breadth) return null;
+    while (wk < st.weekEnds.length && st.weekEnds[wk] < dates[i]) wk++;
+    return wk > 0 ? breadth[wk - 1] : null;
+  };
 
   const state: MarketStateCode[] = [];
   const sigIdx: number[] = [];
@@ -322,11 +354,13 @@ export function computeMarket(st: State): MarketState {
   let since = 0;
   let rallyLow = lvl[0];
   let rallyStart = -1;
+  let ftdLow = 0;
   let dist: number[] = [];
   // sau phiên xác nhận chỉ số thường còn dưới MA50: chỉ xét MA50 khi đã vượt lên MA50 ít nhất một lần
   let crossed = false;
   for (let i = 0; i < N; i++) {
     const up = i > 0 && vol[i] > vol[i - 1];
+    const b = breadthPrev(i);
     dist = dist.filter((j) => i - j < 25 && lvl[i] < lvl[j] * 1.05);
     if (i > 0 && ret[i] <= DIST_DROP && up) dist.push(i);
     let next: MarketStateCode = s;
@@ -335,9 +369,18 @@ export function computeMarket(st: State): MarketState {
         rallyLow = lvl[i];
         rallyStart = -1;
       } else if (rallyStart < 0 && ret[i] > 0) rallyStart = i;
-      if (rallyStart >= 0 && i - rallyStart >= 3 && ret[i] >= FTD_GAIN && up) {
+      const day = rallyStart >= 0 ? i - rallyStart + 1 : 0;
+      const volOk = rule.vol === "prev" ? up : v50[i - 1] != null && vol[i] > v50[i - 1]!;
+      if (
+        day >= 4 &&
+        (rule.maxDay == null || day <= rule.maxDay) &&
+        ret[i] >= rule.gain &&
+        volOk &&
+        (rule.minBreadth == null || (b != null && b >= rule.minBreadth))
+      ) {
         next = 1;
         dist = [];
+        ftdLow = rallyLow;
         crossed = ma50[i] != null && lvl[i] >= ma50[i]!;
         sigIdx.push(i);
       }
@@ -345,7 +388,7 @@ export function computeMarket(st: State): MarketState {
       const prevLow = i > 0 ? low50[i - 1] : lvl[i];
       const m = ma50[i];
       if (m != null && lvl[i] >= m) crossed = true;
-      if (dist.length >= 6 || lvl[i] < prevLow) {
+      if (dist.length >= 6 || lvl[i] < prevLow || (rule.failFast && lvl[i] < ftdLow)) {
         next = 3;
         rallyLow = lvl[i];
         rallyStart = -1;
@@ -356,6 +399,15 @@ export function computeMarket(st: State): MarketState {
     s = next;
     state.push(s);
   }
+  return { dates, lvl, ret, ma50, liq, state, sigIdx, since, dist: dist.length };
+}
+
+export function computeMarket(st: State, rule: MarketRule = MARKET_RULE, breadth?: (number | null)[]): MarketState {
+  const empty: MarketState = { index: st.weekEnds.map(() => null), ma50: st.weekEnds.map(() => null), state: st.weekEnds.map(() => null), liq: st.weekEnds.map(() => null), signals: [], now: null, minStocks: EW_MIN_STOCKS };
+  const md = runMarket(st, rule, breadth);
+  if (!md) return empty;
+  const { dates, lvl, ma50, liq, state, sigIdx, since } = md;
+  const N = dates.length;
 
   // lấy mẫu theo tuần: phiên gần nhất không sau ngày cuối tuần
   const W = st.weekEnds.length;
@@ -383,7 +435,7 @@ export function computeMarket(st: State): MarketState {
     after6m: i + 126 < N ? pct(lvl[i], lvl[i + 126]) : null,
   }));
   const L = N - 1;
-  out.now = { date: dates[L], state: state[L], since: dates[since], dist: dist.length, liq: liq[L], level: Math.round(lvl[L] * 100) / 100 };
+  out.now = { date: dates[L], state: state[L], since: dates[since], dist: md.dist, liq: liq[L], level: Math.round(lvl[L] * 100) / 100 };
   return out;
 }
 
@@ -449,6 +501,49 @@ async function step(prev: State | null): Promise<State> {
   return st;
 }
 
+/** % toàn thị trường đạt Trend Template theo tuần */
+function breadthOf(st: State): (number | null)[] {
+  const W = st.weekKeys.length;
+  const pass = new Array(W).fill(0), tot = new Array(W).fill(0);
+  for (const x of Object.values(st.symbols)) {
+    for (let w = 0; w < Math.min(W, x.codes.length); w++) {
+      const ch = x.codes.charCodeAt(w) - 48;
+      if (ch < 0 || ch > 3) continue;
+      tot[w]++;
+      if (ch & 1) pass[w]++;
+    }
+  }
+  return pass.map((p, w) => (tot[w] >= 10 ? Math.round((p / tot[w]) * 1000) / 10 : null));
+}
+
+/** So sánh các cách lọc phiên xác nhận trên dữ liệu đã lưu (không tải thêm). */
+export async function getMarketBacktest(variants: Record<string, Partial<MarketRule>>) {
+  const st = await readState();
+  if (!st) return null;
+  const br = breadthOf(st);
+  const out: Record<string, unknown> = {};
+  for (const [name, v] of Object.entries(variants)) {
+    const md = runMarket(st, { ...MARKET_RULE, ...v }, br);
+    if (!md) continue;
+    const { lvl, ret, state, sigIdx, dates } = md;
+    const N = lvl.length;
+    const f = (i: number, k: number) => (i + k < N ? Math.round((lvl[i + k] / lvl[i] - 1) * 1000) / 10 : null);
+    // lợi suất chỉ số khi đang ở từng trạng thái (trạng thái hôm trước, lợi suất hôm sau: không nhìn trước)
+    const g = [1, 1, 1, 1], days = [0, 0, 0, 0];
+    for (let i = 1; i < N; i++) {
+      g[state[i - 1]] *= 1 + ret[i];
+      days[state[i - 1]]++;
+    }
+    out[name] = {
+      sig: sigIdx.map((i) => `${dates[i]}:${f(i, 63) ?? "-"}/${f(i, 126) ?? "-"}`),
+      days: days.slice(1),
+      gain: g.slice(1).map((x) => Math.round((x - 1) * 1000) / 10),
+      start: dates[0],
+    };
+  }
+  return out;
+}
+
 function summarize(st: State): SectorWavesResult {
   const W = st.weekKeys.length;
   const sectors = Object.keys(WAVE_SECTORS);
@@ -491,7 +586,7 @@ function summarize(st: State): SectorWavesResult {
     sectors: rows,
     threshold: WAVE_THRESHOLD,
     progress: { done: Object.values(st.symbols).filter((x) => x.aggUntil).length, total: Object.keys(SECTOR_OF).length },
-    market: computeMarket(st),
+    market: computeMarket(st, MARKET_RULE, breadthOf(st)),
   };
 }
 
