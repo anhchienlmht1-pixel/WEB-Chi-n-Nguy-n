@@ -10,7 +10,7 @@ import { fetchInvestmentOutlook } from "../providers/googleSheet.js";
 import { fetchNewsForSymbol } from "../news/cafefNews.js";
 import { getCompanyProfileWithFallback } from "../providers/companyProfileFallback.js";
 import { scanBuySignalsWithSession, type TrendScanResult } from "../signals/trendScanner.js";
-import { getSectorWaves } from "../signals/sectorWaves.js";
+import { getSectorWaves, isComplete, type SectorWavesResult } from "../signals/sectorWaves.js";
 import { isSettlingWindow, lastClosedSessionDate } from "../signals/sessionClose.js";
 import { getTradeJournal } from "../signals/tradeJournal.js";
 import { scanMovingAverages } from "../signals/maScanner.js";
@@ -397,15 +397,30 @@ router.get(
   })
 );
 
+let sectorWavesInFlight: Promise<SectorWavesResult> | null = null;
 router.get(
   "/sector-waves",
   asyncHandler(async (_req, res) => {
-    // Sóng ngành (Minervini): % mã đạt Trend Template theo ngành, theo tuần,
-    // kèm giai đoạn VN-Index. Tính một lần mỗi phiên (lưu Blob), giữ 1 giờ
-    // trong bộ nhớ của từng instance.
-    const key = `sector-waves:${lastClosedSessionDate()}`;
-    const data = await cached(key, 60 * 60, () => getSectorWaves(), { staleOnError: true });
-    edgeCache(res, 600, 3600);
+    // Sóng ngành (Minervini) từ năm 2000: % mã đạt Trend Template theo ngành,
+    // theo tuần, kèm giai đoạn VN-Index. Lịch sử dựng dần qua nhiều lượt gọi
+    // (progress), sau đó mỗi phiên chỉ cập nhật tuần mới; lưu Vercel Blob.
+    const closed = lastClosedSessionDate();
+    const key = `sector-waves:${closed}`;
+    const hit = cache.get<SectorWavesResult>(key);
+    if (hit) {
+      edgeCache(res, 600, 3600);
+      res.json(hit);
+      return;
+    }
+    sectorWavesInFlight ??= getSectorWaves(closed).finally(() => (sectorWavesInFlight = null));
+    const data = await sectorWavesInFlight;
+    const done = isComplete(data) && data.sessionDate >= closed;
+    if (done) {
+      cache.set(key, data, 60 * 60);
+      edgeCache(res, 600, 3600);
+    } else {
+      res.set("Cache-Control", "no-store");
+    }
     res.json(data);
   })
 );

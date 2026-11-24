@@ -19,6 +19,13 @@ const vn = (n: number, d = 0) => n.toLocaleString("vi-VN", { minimumFractionDigi
 const dmy = (d: string) => `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(0, 4)}`;
 const my = (d: string) => `${d.slice(5, 7)}/${d.slice(2, 4)}`;
 
+type Range = "all" | "5y" | "2y";
+const RANGES: { v: Range; t: string }[] = [
+  { v: "all", t: "Từ 2000" },
+  { v: "5y", t: "5 năm" },
+  { v: "2y", t: "2 năm" },
+];
+
 // màu ô bản đồ nhiệt: 0% nhạt → 100% xanh đậm; từ ngưỡng sóng trở lên có viền vàng
 function cellColor(p: number | null): string {
   if (p == null) return "transparent";
@@ -27,22 +34,76 @@ function cellColor(p: number | null): string {
 }
 
 export default function SectorWavesPage() {
-  const [d, setD] = useState<SectorWaves | null>(null);
+  const [raw, setRaw] = useState<SectorWaves | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [hover, setHover] = useState<number | null>(null);
+  const [range, setRange] = useState<Range>("all");
 
+  // Lịch sử từ năm 2000 được server dựng dần: gọi lại cho tới khi đủ mã.
   useEffect(() => {
     let off = false;
-    fetchSectorWaves()
-      .then((x) => !off && setD(x))
-      .catch((e) => !off && setErr(e instanceof Error ? e.message : String(e)));
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const load = () =>
+      fetchSectorWaves()
+        .then((x) => {
+          if (off) return;
+          setRaw(x);
+          setErr(null);
+          if (x.progress && x.progress.done < x.progress.total) timer = setTimeout(load, 1500);
+        })
+        .catch((e) => {
+          if (off) return;
+          setErr(e instanceof Error ? e.message : String(e));
+          timer = setTimeout(load, 8000);
+        });
+    load();
     return () => {
       off = true;
+      clearTimeout(timer);
     };
   }, []);
 
+  // Khung xem: từ 2000 (mỗi tháng một điểm), 5 năm hoặc 2 năm (mỗi tuần một điểm).
+  const d = useMemo<SectorWaves | null>(() => {
+    if (!raw) return null;
+    const W = raw.weeks.length;
+    let pick: number[];
+    if (range === "all") {
+      pick = raw.weeks.map((_, i) => i).filter((i) => i === W - 1 || raw.weeks[i + 1].slice(0, 7) !== raw.weeks[i].slice(0, 7));
+    } else {
+      const k = range === "5y" ? 261 : 104;
+      pick = raw.weeks.map((_, i) => i).slice(-k);
+    }
+    const sel = <T,>(a: T[]) => pick.map((i) => a[i]);
+    return {
+      ...raw,
+      weeks: sel(raw.weeks),
+      vnindex: {
+        close: sel(raw.vnindex.close),
+        ma50: sel(raw.vnindex.ma50),
+        ma150: sel(raw.vnindex.ma150),
+        ma200: sel(raw.vnindex.ma200),
+        stage: sel(raw.vnindex.stage),
+      },
+      breadth: sel(raw.breadth),
+      sectors: raw.sectors.map((s) => ({ ...s, pct: sel(s.pct), highs: sel(s.highs) })),
+    };
+  }, [raw, range]);
+
+  // Thay đổi 4 tuần (luôn tính trên dữ liệu tuần, không phụ thuộc khung xem)
+  const ch4 = useMemo(() => {
+    const m: Record<string, number | null> = {};
+    if (!raw) return m;
+    const L = raw.weeks.length - 1;
+    for (const s of raw.sectors) {
+      const a = s.pct[L], b = s.pct[Math.max(0, L - 4)];
+      m[s.sector] = a != null && b != null ? a - b : null;
+    }
+    return m;
+  }, [raw]);
+
   const view = useMemo(() => {
-    if (!d) return null;
+    if (!d || !raw) return null;
     const n = d.weeks.length;
     const last = n - 1;
     const waveCount = d.weeks.map((_, w) => d.sectors.filter((s) => (s.pct[w] ?? 0) >= d.threshold).length);
@@ -67,7 +128,7 @@ export default function SectorWavesPage() {
       else bands.push({ x1: d.weeks[w], x2: d.weeks[w], s });
     }
     return { n, last, waveCount, rows, chart, bands };
-  }, [d]);
+  }, [d, raw]);
 
   return (
     <div className="text-[var(--sm-egg)]">
@@ -97,15 +158,45 @@ export default function SectorWavesPage() {
 
         {d && view && (
           <>
+            <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
+              <div role="group" aria-label="Khung thời gian" className="inline-flex rounded-md bg-[rgba(127,120,90,0.12)] p-0.5">
+                {RANGES.map((r) => (
+                  <button
+                    key={r.v}
+                    type="button"
+                    aria-pressed={range === r.v}
+                    onClick={() => setRange(r.v)}
+                    className={`inline-flex h-8 items-center rounded-[5px] px-3.5 text-[0.88rem] font-semibold transition-colors ${
+                      range === r.v ? "bg-[var(--sm-pop)] text-[var(--sm-egg)] shadow-[0_1px_2px_rgba(0,0,0,0.12)]" : "text-[var(--sm-mut)] hover:text-[var(--sm-egg)]"
+                    }`}
+                  >
+                    {r.t}
+                  </button>
+                ))}
+              </div>
+              {raw && raw.progress && raw.progress.done < raw.progress.total && (
+                <div className="flex min-w-[260px] items-center gap-3 text-[0.85rem] text-[var(--sm-egg2)]" role="status">
+                  <span>
+                    Đang dựng lịch sử từ năm 2000: {raw.progress.done}/{raw.progress.total} mã
+                  </span>
+                  <span className="h-1.5 w-32 overflow-hidden rounded-full bg-[var(--sm-line)]">
+                    <i className="block h-full bg-[var(--sm-gold)]" style={{ width: `${(raw.progress.done / raw.progress.total) * 100}%` }} />
+                  </span>
+                </div>
+              )}
+            </div>
+
             {/* Trạng thái hiện tại */}
-            <section aria-label="Trạng thái hiện tại" className="mt-8 grid gap-px overflow-hidden rounded-md border border-[var(--sm-line)] bg-[var(--sm-line)] sm:grid-cols-2 lg:grid-cols-4">
+            <section aria-label="Trạng thái hiện tại" className="mt-4 grid gap-px overflow-hidden rounded-md border border-[var(--sm-line)] bg-[var(--sm-line)] sm:grid-cols-2 lg:grid-cols-4">
               {(() => {
                 const s = d.vnindex.stage[view.last];
                 const top = view.rows[0];
                 const wv = view.waveCount[view.last];
-                const wv4 = view.waveCount[Math.max(0, view.last - 4)];
+                const R = raw!;
+                const RL = R.weeks.length - 1;
+                const wv4 = R.sectors.filter((x) => (x.pct[Math.max(0, RL - 4)] ?? 0) >= R.threshold).length;
                 const b = d.breadth[view.last];
-                const b4 = d.breadth[Math.max(0, view.last - 4)];
+                const b4 = R.breadth[Math.max(0, RL - 4)];
                 const cells = [
                   { k: "VN-Index", v: s ? STAGE[s].label : "—", cls: s ? STAGE[s].text : "", sub: `Chốt phiên ${dmy(d.sessionDate)}` },
                   {
@@ -145,7 +236,8 @@ export default function SectorWavesPage() {
                 <div>
                   <h2 className="text-[1.6rem] leading-tight">VN-Index và giai đoạn thị trường</h2>
                   <p className="mt-1 text-[0.92rem] text-[var(--sm-egg2)]">
-                    Theo tuần, {my(d.weeks[0])} – {my(d.weeks[view.last])}. Nền màu là giai đoạn: xét giá so với MA150 và độ dốc MA150, MA50 so với MA150.
+                    {range === "all" ? "Mỗi điểm một tháng" : "Mỗi điểm một tuần"}, {my(d.weeks[0])} – {my(d.weeks[view.last])}
+                    {range === "all" ? " (thang logarit)" : ""}. Nền màu là giai đoạn: xét giá so với MA150 và độ dốc MA150, MA50 so với MA150.
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-[0.8rem] text-[var(--sm-egg2)]">
@@ -165,15 +257,15 @@ export default function SectorWavesPage() {
                       {view.bands.map((b) => (
                         <ReferenceArea key={b.x1} x1={b.x1} x2={b.x2} fill={STAGE[b.s].fill} fillOpacity={1} ifOverflow="extendDomain" />
                       ))}
-                      <XAxis dataKey="t" tickFormatter={my} tick={{ fontSize: 11, fill: "var(--sm-mut)" }} tickLine={false} axisLine={{ stroke: "var(--sm-line)" }} minTickGap={36} />
-                      <YAxis domain={["auto", "auto"]} orientation="right" width={52} tick={{ fontSize: 11, fill: "var(--sm-mut)" }} tickLine={false} axisLine={false} tickFormatter={(v) => vn(v)} />
+                      <XAxis dataKey="t" tickFormatter={range === "all" ? (t: string) => t.slice(0, 4) : my} tick={{ fontSize: 11, fill: "var(--sm-mut)" }} tickLine={false} axisLine={{ stroke: "var(--sm-line)" }} minTickGap={36} />
+                      <YAxis scale={range === "all" ? "log" : "auto"} domain={["auto", "auto"]} allowDataOverflow={false} orientation="right" width={52} tick={{ fontSize: 11, fill: "var(--sm-mut)" }} tickLine={false} axisLine={false} tickFormatter={(v) => vn(v)} />
                       <Tooltip
                         content={({ active, payload }) => {
                           if (!active || !payload?.length) return null;
                           const p = payload[0].payload as (typeof view.chart)[number];
                           return (
                             <div className="rounded-md border border-[rgba(201,162,74,0.45)] bg-[var(--sm-pop)] px-3 py-2 text-[0.8rem] shadow-lg">
-                              <b>Tuần {dmy(p.t)}</b>
+                              <b>{range === "all" ? `Tháng ${my(p.t)}` : `Tuần ${dmy(p.t)}`}</b>
                               <div className="tabular-nums">VN-Index {vn(p.close, 2)}</div>
                               {p.stage && <div style={{ color: STAGE[p.stage].text }}>{STAGE[p.stage].label}</div>}
                               <div className="text-[var(--sm-egg2)]">
@@ -226,8 +318,8 @@ export default function SectorWavesPage() {
             <section aria-label="Bản đồ sóng ngành" className="mt-10">
               <h2 className="text-[1.6rem] leading-tight">Bản đồ sóng ngành</h2>
               <p className="mt-1 max-w-[52rem] text-[0.92rem] text-[var(--sm-egg2)]">
-                Mỗi ô là một tuần: màu càng đậm thì càng nhiều mã trong ngành đạt Trend Template. Ô có viền vàng là tuần ngành có sóng (từ {d.threshold}%). Dải ô đậm kéo dài
-                theo chiều ngang là một con sóng ngành; nhiều dải cùng lúc là thị trường có sóng lan tỏa.
+                Mỗi ô là {range === "all" ? "một tháng" : "một tuần"}: màu càng đậm thì càng nhiều mã trong ngành đạt Trend Template. Ô có viền vàng là tuần ngành có sóng (từ {d.threshold}%). Dải ô đậm kéo dài
+                theo chiều ngang là một con sóng ngành; nhiều dải cùng lúc là thị trường có sóng lan tỏa. Ô trống là giai đoạn ngành chưa có đủ 3 mã niêm yết đủ dữ liệu (thường là những năm đầu thị trường).
               </p>
               <div className="mt-3 overflow-x-auto rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-3">
                 <div className="min-w-[980px]">
@@ -236,7 +328,7 @@ export default function SectorWavesPage() {
                     <div className="relative h-4 flex-1">
                       {d.weeks.map((w, i) =>
                         i === 0 || w.slice(5, 7) !== d.weeks[i - 1].slice(5, 7) ? (
-                          (w.slice(5, 7) === "01" || (i === 0 && !d.weeks.slice(0, 10).some((x) => x.slice(5, 7) === "01"))) && (
+                          ((w.slice(5, 7) === "01" && (range !== "all" || Number(w.slice(0, 4)) % 2 === 0)) || (i === 0 && !d.weeks.slice(0, 10).some((x) => x.slice(5, 7) === "01"))) && (
                             <span key={w} className="absolute bottom-0 text-[0.68rem] text-[var(--sm-mut)]" style={{ left: `${(i / view.n) * 100}%` }}>
                               {w.slice(0, 4)}
                             </span>
@@ -247,25 +339,24 @@ export default function SectorWavesPage() {
                   </div>
                   {view.rows.map((s) => {
                     const cur = s.pct[view.last];
-                    const prev = s.pct[Math.max(0, view.last - 4)];
-                    const ch = cur != null && prev != null ? cur - prev : null;
+                    const ch = ch4[s.sector] ?? null;
                     return (
                       <div key={s.sector} className="flex items-center gap-2 py-[3px]">
                         <span className="w-[11rem] shrink-0 truncate text-[0.84rem] text-[var(--sm-egg)]" title={`${s.sector} · ${s.n} mã`}>
                           {s.sector}
                         </span>
-                        <div className="flex h-5 flex-1 gap-px">
+                        <div className={`flex h-5 flex-1 ${range === "all" ? "" : "gap-px"}`}>
                           {s.pct.map((p, w) => (
                             <span
                               key={w}
-                              className="h-full flex-1 rounded-[1px]"
+                              className={`h-full flex-1 ${range === "all" ? "" : "rounded-[1px]"}`}
                               style={{
                                 background: cellColor(p),
                                 outline: p != null && p >= d.threshold ? "1px solid rgba(201,162,74,0.85)" : undefined,
                                 outlineOffset: -1,
                                 opacity: hover != null && hover !== w ? 0.75 : 1,
                               }}
-                              title={`${s.sector} · tuần ${dmy(d.weeks[w])}: ${p == null ? "chưa đủ dữ liệu" : `${vn(p, 0)}% mã đạt Trend Template`}${s.highs[w] ? ` · ${s.highs[w]} mã lập đỉnh 52 tuần` : ""}`}
+                              title={`${s.sector} · ${range === "all" ? "tháng" : "tuần"} ${range === "all" ? my(d.weeks[w]) : dmy(d.weeks[w])}: ${p == null ? "chưa đủ dữ liệu" : `${vn(p, 0)}% mã đạt Trend Template`}${s.highs[w] ? ` · ${s.highs[w]} mã lập đỉnh 52 tuần` : ""}`}
                             />
                           ))}
                         </div>
@@ -320,7 +411,7 @@ export default function SectorWavesPage() {
                   <li>Sóng yếu dần khi % mã đạt giảm liên tục dù chỉ số vẫn cao, thường đi kèm VN-Index chuyển sang giai đoạn 3.</li>
                 </ul>
                 <p className="mt-2 text-[0.82rem] text-[var(--sm-mut)]">
-                  Mô tả trạng thái theo dữ liệu quá khứ, phiên đã đóng; không dự báo, không phải khuyến nghị mua bán. Phân ngành theo nhóm của Bull Stock, gần 200 mã.{" "}
+                  Mô tả trạng thái theo dữ liệu quá khứ, phiên đã đóng; không dự báo, không phải khuyến nghị mua bán. Phân ngành theo nhóm của Bull Stock, gần 200 mã đang niêm yết hiện nay (mã đã hủy niêm yết không có trong dữ liệu).{" "}
                   <Link to="/tin-hieu" className="text-[var(--sm-gold2)] hover:underline">
                     Xem tín hiệu từng mã
                   </Link>

@@ -1,17 +1,17 @@
 import { put, head } from "@vercel/blob";
 import { STOCK_UNIVERSE } from "../providers/universe.js";
 import { getHistoryWithFallback } from "../providers/fallback.js";
-import type { HistoryPoint } from "../providers/types.js";
-import { barDateICT, dropUnclosedBars, lastClosedSessionDate } from "./sessionClose.js";
+import type { HistoryPoint, HistoryRange } from "../providers/types.js";
+import { barDateICT, dropUnclosedBars } from "./sessionClose.js";
 
 // "Sóng ngành" theo cách nhìn của Mark Minervini: một ngành đang có sóng khi
 // nhiều cổ phiếu trong ngành cùng lúc đạt Trend Template (xu hướng tăng giai
-// đoạn 2). Với mỗi tuần trong ~2 năm gần nhất, tính:
+// đoạn 2). Tính theo tuần từ năm 2000 đến nay:
 //   - mỗi ngành: % số mã đạt Trend Template, số mã lập đỉnh 52 tuần
-//   - VN-Index: giá đóng cửa, MA50/150/200 và giai đoạn (1 tích lũy, 2 tăng,
-//     3 phân phối, 4 giảm) theo vị trí giá – MA150 và độ dốc MA150
-// Chỉ dùng phiên đã đóng. Kết quả lưu Vercel Blob theo phiên để chỉ tính một
-// lần mỗi ngày (cùng cách tradeJournal.ts).
+//   - VN-Index: giá đóng cửa, MA50/150/200 (ngày) và giai đoạn 1–4
+// Lịch sử từng mã được tính dần (mỗi lượt gọi xử lý một nhóm mã trong giới hạn
+// thời gian của hàm serverless) và lưu Vercel Blob dưới dạng chuỗi mã hóa theo
+// tuần; mỗi phiên chỉ cập nhật thêm các tuần mới. Chỉ dùng phiên đã đóng.
 
 // Phân ngành cho phân tích sóng ngành — phủ toàn bộ STOCK_UNIVERSE.
 export const WAVE_SECTORS: Record<string, string[]> = {
@@ -40,15 +40,16 @@ const SECTOR_OF: Record<string, string> = Object.fromEntries(
   Object.entries(WAVE_SECTORS).flatMap(([sec, syms]) => syms.map((s) => [s, sec])),
 );
 
-const WEEKS = 104;
 /** Ngưỡng coi là "có sóng": từ 50% số mã trong ngành đạt Trend Template. */
 export const WAVE_THRESHOLD = 50;
+/** Ngân sách thời gian mỗi lượt gọi (hàm Vercel tối đa 30 giây). */
+const BUDGET_MS = 19_000;
 
 export interface SectorWaveRow {
   sector: string;
-  /** số mã đủ dữ liệu tính được ở tuần gần nhất */
+  /** số mã có dữ liệu ở tuần gần nhất */
   n: number;
-  /** % mã đạt Trend Template theo từng tuần (null nếu chưa đủ dữ liệu) */
+  /** % mã đạt Trend Template theo từng tuần (null nếu dưới 3 mã có dữ liệu) */
   pct: (number | null)[];
   /** số mã lập đỉnh 52 tuần trong tuần */
   highs: number[];
@@ -60,10 +61,22 @@ export interface SectorWavesResult {
   sessionDate: string;
   weeks: string[];
   vnindex: { close: number[]; ma50: (number | null)[]; ma150: (number | null)[]; ma200: (number | null)[]; stage: (1 | 2 | 3 | 4 | null)[] };
-  /** % toàn bộ mã đạt Trend Template theo tuần */
   breadth: (number | null)[];
   sectors: SectorWaveRow[];
   threshold: number;
+  /** tiến độ dựng lịch sử: số mã đã tính / tổng */
+  progress: { done: number; total: number };
+}
+
+// Trạng thái lưu Blob. codes: mỗi ký tự là một tuần của lịch (cùng độ dài weekKeys):
+//  "." chưa đủ dữ liệu · "0" không đạt · "1" đạt · "2" không đạt + đỉnh 52 tuần · "3" đạt + đỉnh 52 tuần
+interface State {
+  version: 2;
+  sessionDate: string;
+  weekKeys: string[]; // thứ Hai của tuần
+  weekEnds: string[]; // phiên cuối của tuần (VN-Index)
+  vnindex: SectorWavesResult["vnindex"];
+  symbols: Record<string, { codes: string; len: number }>;
 }
 
 function dedupeSameDay(points: HistoryPoint[]): HistoryPoint[] {
@@ -87,83 +100,74 @@ function rollingMean(xs: number[], n: number): (number | null)[] {
   return out;
 }
 
+// cửa sổ trượt max/min O(n) bằng hàng đợi đơn điệu
 function rollingExtreme(xs: number[], n: number, max: boolean): number[] {
   const out: number[] = [];
+  const q: number[] = [];
   for (let i = 0; i < xs.length; i++) {
-    let v = xs[i];
-    for (let j = Math.max(0, i - n + 1); j < i; j++) v = max ? Math.max(v, xs[j]) : Math.min(v, xs[j]);
-    out.push(v);
+    while (q.length && (max ? xs[q[q.length - 1]] <= xs[i] : xs[q[q.length - 1]] >= xs[i])) q.pop();
+    q.push(i);
+    if (q[0] <= i - n) q.shift();
+    out.push(xs[q[0]]);
   }
   return out;
 }
 
-interface DailyState {
-  dates: string[];
-  template: (boolean | null)[];
-  newHigh: boolean[];
+const weekKey = (d: string) => {
+  const t = new Date(`${d}T00:00:00Z`);
+  const day = (t.getUTCDay() + 6) % 7;
+  return new Date(t.getTime() - day * 86_400_000).toISOString().slice(0, 10);
+};
+const dayOf = (p: HistoryPoint) => barDateICT(p.time) ?? p.time.slice(0, 10);
+
+async function closedHistory(symbol: string, range: HistoryRange): Promise<HistoryPoint[]> {
+  const { points } = await getHistoryWithFallback(symbol, range);
+  return dropUnclosedBars(dedupeSameDay(points)).filter((x) => Number.isFinite(x.close) && x.close > 0);
 }
 
-// Trend Template (Minervini), bản dùng giá đóng cửa:
+// Trend Template (Minervini), dùng giá đóng cửa:
 //  giá > MA50 > MA150 > MA200; MA200 đi lên so với 20 phiên trước;
 //  giá ≥ 1,3 × đáy 52 tuần; giá ≥ 0,75 × đỉnh 52 tuần.
-function dailyState(points: HistoryPoint[]): DailyState {
+// Trả về mã tuần cho các tuần từ chỉ số `from` của lịch.
+function encodeWeeks(points: HistoryPoint[], weekKeys: string[], from: number): string {
   const c = points.map((p) => p.close);
-  const dates = points.map((p) => barDateICT(p.time) ?? p.time.slice(0, 10));
-  const m50 = rollingMean(c, 50);
-  const m150 = rollingMean(c, 150);
-  const m200 = rollingMean(c, 200);
-  const hi = rollingExtreme(c, 250, true);
-  const lo = rollingExtreme(c, 250, false);
-  const template = c.map((x, i) => {
-    const a = m50[i], b = m150[i], d = m200[i], d20 = i >= 20 ? m200[i - 20] : null;
-    if (a == null || b == null || d == null || d20 == null || i < 220) return null;
-    return x > a && a > b && b > d && d > d20 && x >= 1.3 * lo[i] && x >= 0.75 * hi[i];
-  });
-  const newHigh = c.map((x, i) => i >= 240 && x >= hi[i]);
-  return { dates, template, newHigh };
-}
-
-async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
-  const results: R[] = new Array(items.length);
-  let next = 0;
-  async function worker() {
-    while (next < items.length) {
-      const i = next++;
-      results[i] = await fn(items[i]);
-    }
+  const dates = points.map(dayOf);
+  const m50 = rollingMean(c, 50), m150 = rollingMean(c, 150), m200 = rollingMean(c, 200);
+  const hi = rollingExtreme(c, 250, true), lo = rollingExtreme(c, 250, false);
+  // gom theo tuần: phiên cuối tuần + có đỉnh 52 tuần trong tuần không
+  const byWeek = new Map<string, { last: number; high: boolean }>();
+  for (let i = 0; i < c.length; i++) {
+    const k = weekKey(dates[i]);
+    const e = byWeek.get(k) ?? { last: i, high: false };
+    e.last = i;
+    if (i >= 240 && c[i] >= hi[i]) e.high = true;
+    byWeek.set(k, e);
   }
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
-  return results;
+  let out = "";
+  for (let w = from; w < weekKeys.length; w++) {
+    const e = byWeek.get(weekKeys[w]);
+    if (!e) {
+      out += ".";
+      continue;
+    }
+    const i = e.last;
+    const a = m50[i], b = m150[i], d = m200[i], d20 = i >= 20 ? m200[i - 20] : null;
+    if (a == null || b == null || d == null || d20 == null || i < 220) {
+      out += ".";
+      continue;
+    }
+    const t = c[i] > a && a > b && b > d && d > d20 && c[i] >= 1.3 * lo[i] && c[i] >= 0.75 * hi[i];
+    out += String((t ? 1 : 0) + (e.high ? 2 : 0));
+  }
+  return out;
 }
 
-/** Chỉ số của phần tử cuối cùng có date ≤ d (mảng dates tăng dần), hoặc -1. */
-function lastAtOrBefore(dates: string[], d: string, from: number): number {
-  let i = from;
-  while (i + 1 < dates.length && dates[i + 1] <= d) i++;
-  return dates[i] <= d ? i : -1;
-}
-
-export async function computeSectorWaves(): Promise<SectorWavesResult> {
-  // VN-Index: lịch tuần (phiên cuối mỗi tuần) và giai đoạn thị trường
-  const { points: vRaw } = await getHistoryWithFallback("VNINDEX", "5Y");
-  const v = dropUnclosedBars(dedupeSameDay(vRaw));
+async function buildIndex(): Promise<Pick<State, "sessionDate" | "weekKeys" | "weekEnds" | "vnindex">> {
+  const v = await closedHistory("VNINDEX", "MAX");
   if (v.length < 260) throw new Error("Không đủ dữ liệu VN-Index để tính sóng ngành");
   const vc = v.map((p) => p.close);
-  const vd = v.map((p) => barDateICT(p.time) ?? p.time.slice(0, 10));
+  const vd = v.map(dayOf);
   const v50 = rollingMean(vc, 50), v150 = rollingMean(vc, 150), v200 = rollingMean(vc, 200);
-
-  // phiên cuối của mỗi tuần (tuần tính từ thứ Hai)
-  const weekEnd: number[] = [];
-  const wk = (d: string) => {
-    const t = new Date(`${d}T00:00:00Z`);
-    const day = (t.getUTCDay() + 6) % 7;
-    return new Date(t.getTime() - day * 86_400_000).toISOString().slice(0, 10);
-  };
-  for (let i = 0; i < vd.length; i++) if (i === vd.length - 1 || wk(vd[i + 1]) !== wk(vd[i])) weekEnd.push(i);
-  const idx = weekEnd.slice(-WEEKS);
-  const weeks = idx.map((i) => vd[i]);
-
-  // giai đoạn VN-Index theo ngày, rồi lấy giá trị ở cuối tuần
   const stageDaily: (1 | 2 | 3 | 4 | null)[] = [];
   let lastDef: 2 | 4 | null = null;
   for (let i = 0; i < vc.length; i++) {
@@ -180,70 +184,14 @@ export async function computeSectorWaves(): Promise<SectorWavesResult> {
     }
     stageDaily.push(lastDef);
   }
-
-  // từng mã
-  const universe = STOCK_UNIVERSE.filter((s) => SECTOR_OF[s.symbol]);
-  const states = await mapWithConcurrency(universe, 25, async (seed) => {
-    try {
-      const { points } = await getHistoryWithFallback(seed.symbol, "5Y");
-      const p = dropUnclosedBars(dedupeSameDay(points)).filter((x) => Number.isFinite(x.close) && x.close > 0);
-      return p.length >= 230 ? { symbol: seed.symbol, s: dailyState(p) } : null;
-    } catch {
-      return null;
-    }
-  });
-
-  const sectors = Object.keys(WAVE_SECTORS);
-  const pass: Record<string, number[]> = {};
-  const total: Record<string, number[]> = {};
-  const highs: Record<string, number[]> = {};
-  const leaders: Record<string, string[]> = {};
-  for (const s of sectors) {
-    pass[s] = new Array(weeks.length).fill(0);
-    total[s] = new Array(weeks.length).fill(0);
-    highs[s] = new Array(weeks.length).fill(0);
-    leaders[s] = [];
-  }
-  for (const st of states) {
-    if (!st) continue;
-    const sec = SECTOR_OF[st.symbol];
-    let k = 0;
-    for (let w = 0; w < weeks.length; w++) {
-      const j = lastAtOrBefore(st.s.dates, weeks[w], k);
-      if (j < 0) continue;
-      k = j;
-      // bỏ mã đã ngừng giao dịch lâu (dữ liệu cũ hơn 10 ngày so với tuần đang xét)
-      if ((Date.parse(weeks[w]) - Date.parse(st.s.dates[j])) / 86_400_000 > 10) continue;
-      const t = st.s.template[j];
-      if (t == null) continue;
-      total[sec][w]++;
-      if (t) pass[sec][w]++;
-      // đỉnh 52 tuần bất kỳ phiên nào trong tuần
-      let h = false;
-      for (let q = j; q >= 0 && q > j - 5 && wk(st.s.dates[q]) === wk(weeks[w]); q--) if (st.s.newHigh[q]) h = true;
-      if (h) highs[sec][w]++;
-      if (w === weeks.length - 1 && t) leaders[sec].push(st.symbol);
-    }
-  }
-
-  const pctOf = (p: number, t: number) => (t >= 3 ? Math.round((p / t) * 1000) / 10 : null);
-  const rows: SectorWaveRow[] = sectors.map((s) => ({
-    sector: s,
-    n: total[s][weeks.length - 1],
-    pct: weeks.map((_, w) => pctOf(pass[s][w], total[s][w])),
-    highs: highs[s],
-    leaders: leaders[s],
-  }));
-  const breadth = weeks.map((_, w) => {
-    const p = sectors.reduce((a, s) => a + pass[s][w], 0);
-    const t = sectors.reduce((a, s) => a + total[s][w], 0);
-    return t ? Math.round((p / t) * 1000) / 10 : null;
-  });
+  const idx: number[] = [];
+  // lịch tuần từ năm 2000 (HOSE mở cửa 7/2000)
+  for (let i = 0; i < vd.length; i++) if (vd[i] >= "2000-01-01" && (i === vd.length - 1 || weekKey(vd[i + 1]) !== weekKey(vd[i]))) idx.push(i);
   const r2 = (x: number | null) => (x == null ? null : Math.round(x * 100) / 100);
-
   return {
     sessionDate: vd[vd.length - 1],
-    weeks,
+    weekKeys: idx.map((i) => weekKey(vd[i])),
+    weekEnds: idx.map((i) => vd[i]),
     vnindex: {
       close: idx.map((i) => r2(vc[i])!),
       ma50: idx.map((i) => r2(v50[i])),
@@ -251,48 +199,158 @@ export async function computeSectorWaves(): Promise<SectorWavesResult> {
       ma200: idx.map((i) => r2(v200[i])),
       stage: idx.map((i) => stageDaily[i]),
     },
-    breadth,
+  };
+}
+
+async function mapWithConcurrency<T>(items: T[], limit: number, fn: (item: T) => Promise<void>, deadline: number): Promise<void> {
+  let next = 0;
+  async function worker() {
+    while (next < items.length && Date.now() < deadline) await fn(items[next++]);
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+}
+
+/** Một lượt: dựng/cập nhật trạng thái trong ngân sách thời gian. Trả về trạng thái mới. */
+async function step(prev: State | null): Promise<State> {
+  const t0 = Date.now();
+  const deadline = t0 + BUDGET_MS;
+  let st: State = prev ?? { version: 2, sessionDate: "", weekKeys: [], weekEnds: [], vnindex: { close: [], ma50: [], ma150: [], ma200: [], stage: [] }, symbols: {} };
+  const idx = await buildIndex();
+  if (idx.sessionDate !== st.sessionDate || idx.weekKeys.length !== st.weekKeys.length) {
+    // lịch mới: giữ mã tuần cũ nếu lịch cũ là tiền tố của lịch mới
+    const prefixOk = st.weekKeys.every((k, i) => idx.weekKeys[i] === k);
+    st = { ...st, ...idx, symbols: prefixOk ? st.symbols : {} };
+  }
+  const W = st.weekKeys.length;
+  const universe = STOCK_UNIVERSE.map((s) => s.symbol).filter((s) => SECTOR_OF[s]);
+  // ưu tiên: mã chưa có lịch sử (cần MAX), rồi mã cần cập nhật tuần mới
+  const missing = universe.filter((s) => !st.symbols[s]);
+  const stale = universe.filter((s) => st.symbols[s] && (st.symbols[s].len < W || st.symbols[s].codes.length < W));
+  // tuần cuối có thể chưa trọn (thêm phiên mới trong tuần) → luôn tính lại tuần cuối của phiên mới
+  const refreshLast = prev && prev.sessionDate !== st.sessionDate ? universe.filter((s) => st.symbols[s] && !stale.includes(s)) : [];
+
+  await mapWithConcurrency(
+    missing,
+    12,
+    async (s) => {
+      try {
+        const p = await closedHistory(s, "MAX");
+        st.symbols[s] = { codes: encodeWeeks(p, st.weekKeys, 0), len: W };
+      } catch {
+        // thử lại ở lượt sau
+      }
+    },
+    deadline,
+  );
+  await mapWithConcurrency(
+    [...stale, ...refreshLast],
+    20,
+    async (s) => {
+      try {
+        const cur = st.symbols[s];
+        const from = Math.max(0, Math.min(cur.len, cur.codes.length) - 1);
+        const gap = W - from;
+        const p = await closedHistory(s, gap > 8 ? "5Y" : "1Y");
+        st.symbols[s] = { codes: cur.codes.slice(0, from) + encodeWeeks(p, st.weekKeys, from), len: W };
+      } catch {
+        /* lượt sau */
+      }
+    },
+    deadline,
+  );
+  return st;
+}
+
+function summarize(st: State): SectorWavesResult {
+  const W = st.weekKeys.length;
+  const sectors = Object.keys(WAVE_SECTORS);
+  const rows: SectorWaveRow[] = [];
+  const allPass = new Array(W).fill(0);
+  const allTot = new Array(W).fill(0);
+  for (const sec of sectors) {
+    const pass = new Array(W).fill(0), tot = new Array(W).fill(0), highs = new Array(W).fill(0);
+    const leaders: string[] = [];
+    for (const s of WAVE_SECTORS[sec]) {
+      const c = st.symbols[s]?.codes;
+      if (!c) continue;
+      for (let w = 0; w < Math.min(W, c.length); w++) {
+        const ch = c.charCodeAt(w) - 48;
+        if (ch < 0 || ch > 3) continue;
+        tot[w]++;
+        if (ch & 1) pass[w]++;
+        if (ch & 2) highs[w]++;
+      }
+      const lastCh = c.charCodeAt(W - 1) - 48;
+      if (lastCh >= 0 && lastCh & 1) leaders.push(s);
+    }
+    for (let w = 0; w < W; w++) {
+      allPass[w] += pass[w];
+      allTot[w] += tot[w];
+    }
+    rows.push({
+      sector: sec,
+      n: tot[W - 1],
+      pct: pass.map((p, w) => (tot[w] >= 3 ? Math.round((p / tot[w]) * 1000) / 10 : null)),
+      highs,
+      leaders,
+    });
+  }
+  const done = Object.keys(st.symbols).length;
+  return {
+    sessionDate: st.sessionDate,
+    weeks: st.weekEnds,
+    vnindex: st.vnindex,
+    breadth: allPass.map((p, w) => (allTot[w] >= 10 ? Math.round((p / allTot[w]) * 1000) / 10 : null)),
     sectors: rows,
     threshold: WAVE_THRESHOLD,
+    progress: { done, total: Object.keys(SECTOR_OF).length },
   };
 }
 
 // ----------------------------------------------------------------- lưu trữ
-const BLOB_PATHNAME = "sector-waves/latest.json";
+const BLOB_PATHNAME = "sector-waves/state-v2.json";
 const blobConfigured = () => Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+let memState: State | null = null;
 
-async function readBlob(): Promise<SectorWavesResult | null> {
-  if (!blobConfigured()) return null;
+async function readState(): Promise<State | null> {
+  if (!blobConfigured()) return memState;
   try {
     const meta = await head(BLOB_PATHNAME);
     const r = await fetch(`${meta.url}?t=${Date.now()}`, { cache: "no-store" });
-    return r.ok ? ((await r.json()) as SectorWavesResult) : null;
+    if (!r.ok) return memState;
+    const s = (await r.json()) as State;
+    return s.version === 2 ? s : memState;
   } catch {
-    return null;
+    return memState;
   }
 }
 
-async function writeBlob(v: SectorWavesResult): Promise<void> {
+async function writeState(s: State): Promise<void> {
+  memState = s;
   if (!blobConfigured()) return;
-  await put(BLOB_PATHNAME, JSON.stringify(v), {
-    access: "public",
-    contentType: "application/json",
-    addRandomSuffix: false,
-    allowOverwrite: true,
-  });
+  await put(BLOB_PATHNAME, JSON.stringify(s), { access: "public", contentType: "application/json", addRandomSuffix: false, allowOverwrite: true });
 }
 
-/** Kết quả của phiên đã đóng gần nhất: đọc Blob nếu đã có, không thì tính và lưu lại. */
-export async function getSectorWaves(): Promise<SectorWavesResult> {
-  const closed = lastClosedSessionDate();
-  const saved = await readBlob();
-  if (saved && saved.sessionDate >= closed) return saved;
-  try {
-    const fresh = await computeSectorWaves();
-    await writeBlob(fresh).catch((e) => console.error("[sector-waves] không lưu được Blob:", e instanceof Error ? e.message : e));
-    return fresh;
-  } catch (err) {
-    if (saved) return saved;
-    throw err;
-  }
+function upToDate(s: State, closed: string): boolean {
+  const W = s.weekKeys.length;
+  const total = Object.keys(SECTOR_OF).length;
+  const syms = Object.values(s.symbols);
+  return s.sessionDate >= closed && syms.length >= total && syms.every((x) => x.len >= W);
+}
+
+/**
+ * Trả về sóng ngành của phiên đã đóng gần nhất. Nếu lịch sử chưa dựng xong hoặc
+ * chưa cập nhật phiên mới, chạy một lượt (≈20 giây) rồi trả về kết quả hiện có
+ * kèm `progress`; client gọi lại cho tới khi done = total.
+ */
+export async function getSectorWaves(closed: string): Promise<SectorWavesResult> {
+  const saved = await readState();
+  if (saved && upToDate(saved, closed)) return summarize(saved);
+  const next = await step(saved);
+  await writeState(next).catch((e) => console.error("[sector-waves] không lưu được trạng thái:", e instanceof Error ? e.message : e));
+  return summarize(next);
+}
+
+export function isComplete(r: SectorWavesResult): boolean {
+  return r.progress.done >= r.progress.total;
 }

@@ -277,6 +277,8 @@ export interface SectorWaves {
   breadth: (number | null)[];
   sectors: SectorWaveRow[];
   threshold: number;
+  /** tiến độ dựng lịch sử từ năm 2000: số mã đã tính / tổng */
+  progress: { done: number; total: number };
 }
 
 export async function fetchSectorWaves(): Promise<SectorWaves> {
