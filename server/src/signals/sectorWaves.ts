@@ -328,8 +328,12 @@ export interface MarketRule {
   cautionBelowMa50: boolean;
   /** Tích cực chỉ khi có ít nhất một ngành có sóng; không có thì hạ về Quan sát */
   needWave: boolean;
+  /** ngưỡng % mã đạt Trend Template của một ngành để tính là "có sóng" cho điều kiện trên */
+  waveMin: number;
+  /** thay điều kiện ngành bằng % toàn thị trường đạt Trend Template (null: dùng ngành) */
+  waveBreadth: number | null;
 }
-export const MARKET_RULE: MarketRule = { gain: FTD_GAIN, vol: "prev", maxDay: 10, minBreadth: null, failFast: false, recover: "ma50", distDrop: DIST_DROP, distVol: "prev", distCaution: 6, cautionBelowMa50: true, needWave: true };
+export const MARKET_RULE: MarketRule = { gain: FTD_GAIN, vol: "prev", maxDay: 10, minBreadth: null, failFast: false, recover: "ma50", distDrop: DIST_DROP, distVol: "prev", distCaution: 6, cautionBelowMa50: true, needWave: true, waveMin: WAVE_THRESHOLD, waveBreadth: null };
 
 interface MarketDaily {
   dates: string[];
@@ -346,7 +350,8 @@ interface MarketDaily {
   why: string[];
 }
 
-function runMarket(st: State, rule: MarketRule, breadth?: (number | null)[], waves?: number[]): MarketDaily | null {
+function runMarket(st: State, rule: MarketRule, breadth?: (number | null)[]): MarketDaily | null {
+  const waves = rule.needWave ? (rule.waveBreadth != null ? (breadth ?? []).map((b) => (b != null && b >= rule.waveBreadth! ? 1 : 0)) : wavesOf(st, rule.waveMin)) : undefined;
   const ew = st.ew ?? {};
   const dates = Object.keys(ew)
     .filter((d) => ew[d][1] >= EW_MIN_STOCKS)
@@ -468,9 +473,9 @@ function runMarket(st: State, rule: MarketRule, breadth?: (number | null)[], wav
   return { dates, lvl, ret, ma50, liq, state, base, waveAt, sigIdx, since, dist: dist.length, why };
 }
 
-export function computeMarket(st: State, rule: MarketRule = MARKET_RULE, breadth?: (number | null)[], waves?: number[]): MarketState {
+export function computeMarket(st: State, rule: MarketRule = MARKET_RULE, breadth?: (number | null)[]): MarketState {
   const empty: MarketState = { index: st.weekEnds.map(() => null), ma50: st.weekEnds.map(() => null), state: st.weekEnds.map(() => null), liq: st.weekEnds.map(() => null), signals: [], now: null, minStocks: EW_MIN_STOCKS };
-  const md = runMarket(st, rule, breadth, waves);
+  const md = runMarket(st, rule, breadth);
   if (!md) return empty;
   const { dates, lvl, ma50, liq, state, sigIdx, since } = md;
   const N = dates.length;
@@ -568,7 +573,7 @@ async function step(prev: State | null): Promise<State> {
 }
 
 /** Số ngành có sóng theo tuần (từ WAVE_THRESHOLD% mã đạt Trend Template, tối thiểu 3 mã có dữ liệu) */
-function wavesOf(st: State): number[] {
+function wavesOf(st: State, min: number = WAVE_THRESHOLD): number[] {
   const W = st.weekKeys.length;
   const out = new Array(W).fill(0);
   for (const syms of Object.values(WAVE_SECTORS)) {
@@ -583,7 +588,7 @@ function wavesOf(st: State): number[] {
         if (ch & 1) pass[w]++;
       }
     }
-    for (let w = 0; w < W; w++) if (tot[w] >= 3 && (pass[w] / tot[w]) * 100 >= WAVE_THRESHOLD) out[w]++;
+    for (let w = 0; w < W; w++) if (tot[w] >= 3 && (pass[w] / tot[w]) * 100 >= min) out[w]++;
   }
   return out;
 }
@@ -608,10 +613,9 @@ export async function getMarketBacktest(variants: Record<string, Partial<MarketR
   const st = await readState();
   if (!st) return null;
   const br = breadthOf(st);
-  const wv = wavesOf(st);
   const out: Record<string, unknown> = {};
   for (const [name, v] of Object.entries(variants)) {
-    const md = runMarket(st, { ...MARKET_RULE, ...v }, br, wv);
+    const md = runMarket(st, { ...MARKET_RULE, ...v }, br);
     if (!md) continue;
     const { lvl, ret, state, sigIdx, dates } = md;
     const N = lvl.length;
@@ -680,7 +684,7 @@ function summarize(st: State): SectorWavesResult {
     sectors: rows,
     threshold: WAVE_THRESHOLD,
     progress: { done: Object.values(st.symbols).filter((x) => x.aggUntil).length, total: Object.keys(SECTOR_OF).length },
-    market: computeMarket(st, MARKET_RULE, breadthOf(st), wavesOf(st)),
+    market: computeMarket(st, MARKET_RULE, breadthOf(st)),
   };
 }
 
