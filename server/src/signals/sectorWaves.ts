@@ -292,7 +292,7 @@ function addAgg(st: State, p: HistoryPoint[], after: string | undefined): string
 //  Tích cực → Quan sát: từ 4 ngày phân phối trong 25 phiên, hoặc chỉ số đóng cửa dưới MA50.
 //  Thận trọng → Quan sát (không cần phiên xác nhận): chỉ số trên MA50 và MA50 đi lên so với 10 phiên trước.
 //  Quan sát → Tích cực: ngày phân phối giảm còn dưới 4 và chỉ số trở lại trên MA50.
-//  → Thận trọng: từ 6 ngày phân phối, hoặc chỉ số thủng đáy thấp nhất 50 phiên trước đó.
+//  → Thận trọng: từ 6 ngày phân phối khi chỉ số đã dưới MA50, hoặc chỉ số thủng đáy thấp nhất 50 phiên trước đó.
 //  Ngày phân phối hết hiệu lực sau 25 phiên hoặc khi chỉ số đã cao hơn giá đóng cửa ngày đó 5%.
 export interface MarketRule {
   /** mức tăng tối thiểu của phiên xác nhận */
@@ -316,7 +316,7 @@ export interface MarketRule {
   /** ngày phân phối chỉ đẩy về Thận trọng khi chỉ số đã dưới MA50 (trên MA50 thì dừng ở Quan sát) */
   cautionBelowMa50: boolean;
 }
-export const MARKET_RULE: MarketRule = { gain: FTD_GAIN, vol: "prev", maxDay: 10, minBreadth: null, failFast: false, recover: "ma50", distDrop: DIST_DROP, distVol: "prev", distCaution: 6, cautionBelowMa50: false };
+export const MARKET_RULE: MarketRule = { gain: FTD_GAIN, vol: "prev", maxDay: 10, minBreadth: null, failFast: false, recover: "ma50", distDrop: DIST_DROP, distVol: "prev", distCaution: 6, cautionBelowMa50: true };
 
 interface MarketDaily {
   dates: string[];

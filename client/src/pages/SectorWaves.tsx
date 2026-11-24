@@ -57,7 +57,7 @@ const MSTATE: Record<1 | 2 | 3, { label: string; fill: string; text: string; wha
     label: "Thận trọng",
     fill: "rgba(255,107,94,0.11)",
     text: "var(--sm-dn)",
-    what: "Thị trường điều chỉnh: từ 6 ngày phân phối, hoặc chỉ số thủng đáy 50 phiên. Chờ phiên xác nhận mới, hoặc chỉ số trở lại trên MA50 đang đi lên.",
+    what: "Thị trường điều chỉnh: từ 6 ngày phân phối và chỉ số dưới MA50, hoặc chỉ số thủng đáy 50 phiên. Chờ phiên xác nhận mới, hoặc chỉ số trở lại trên MA50 đang đi lên.",
   },
 };
 const pctS = (x: number | null) => (x == null ? "—" : `${x > 0 ? "+" : ""}${x.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}%`);
@@ -463,7 +463,7 @@ export default function SectorWavesPage() {
                           Đợt tăng đi từ từ, không có phiên tăng mạnh: khi chỉ số đứng trên MA50 và MA50 đi lên so với 10 phiên trước, Thận trọng chuyển sang <b style={{ color: MSTATE[2].text }}>Quan sát</b>, rồi lên Tích cực theo quy tắc trên.
                         </li>
                         <li>
-                          <b style={{ color: MSTATE[3].text }}>Thận trọng</b> khi có từ 6 ngày phân phối hoặc chỉ số thủng đáy thấp nhất 50 phiên trước đó.
+                          <b style={{ color: MSTATE[3].text }}>Thận trọng</b> khi có từ 6 ngày phân phối và chỉ số đã rơi xuống dưới MA50, hoặc chỉ số thủng đáy thấp nhất 50 phiên trước đó. Nhiều ngày phân phối nhưng chỉ số vẫn trên MA50 thì chỉ dừng ở Quan sát.
                         </li>
                       </ul>
                       <p className="mt-2 text-[0.82rem] text-[var(--sm-mut)]">
