@@ -51,7 +51,7 @@ const MSTATE: Record<1 | 2 | 3, { label: string; fill: string; text: string; wha
     label: "Quan sát",
     fill: "rgba(230,190,90,0.18)",
     text: "#c58a1c",
-    what: "Xu hướng tăng bị áp lực: từ 4 ngày phân phối trong 25 phiên, hoặc chỉ số rơi xuống dưới MA50.",
+    what: "Xu hướng tăng bị áp lực: từ 4 ngày phân phối trong 25 phiên, hoặc chỉ số rơi xuống dưới MA50 sau khi đã vượt lên.",
   },
   3: {
     label: "Thận trọng",
@@ -457,7 +457,7 @@ export default function SectorWavesPage() {
                           <b className="text-[var(--sm-egg)]">Phiên xác nhận:</b> sau khi tạo đáy, từ ngày thứ 4 của nhịp hồi có phiên tăng từ 1,5% với thanh khoản cao hơn phiên trước. Thận trọng chuyển sang Tích cực.
                         </li>
                         <li>
-                          <b style={{ color: MSTATE[2].text }}>Quan sát</b> khi có từ 4 ngày phân phối hoặc chỉ số dưới MA50; quay lại <b style={{ color: MSTATE[1].text }}>Tích cực</b> khi dưới 4 ngày và trở lại trên MA50.
+                          <b style={{ color: MSTATE[2].text }}>Quan sát</b> khi có từ 4 ngày phân phối, hoặc chỉ số rơi xuống dưới MA50 sau khi đã vượt lên MA50 (ngay sau phiên xác nhận, chỉ số dưới MA50 vẫn tính Tích cực); quay lại <b style={{ color: MSTATE[1].text }}>Tích cực</b> khi dưới 4 ngày và trở lại trên MA50.
                         </li>
                         <li>
                           <b style={{ color: MSTATE[3].text }}>Thận trọng</b> khi có từ 6 ngày phân phối hoặc chỉ số thủng đáy thấp nhất 50 phiên trước đó.

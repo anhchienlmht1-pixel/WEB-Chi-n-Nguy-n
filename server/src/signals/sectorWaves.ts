@@ -323,6 +323,8 @@ export function computeMarket(st: State): MarketState {
   let rallyLow = lvl[0];
   let rallyStart = -1;
   let dist: number[] = [];
+  // sau phiên xác nhận chỉ số thường còn dưới MA50: chỉ xét MA50 khi đã vượt lên MA50 ít nhất một lần
+  let crossed = false;
   for (let i = 0; i < N; i++) {
     const up = i > 0 && vol[i] > vol[i - 1];
     dist = dist.filter((j) => i - j < 25 && lvl[i] < lvl[j] * 1.05);
@@ -336,16 +338,18 @@ export function computeMarket(st: State): MarketState {
       if (rallyStart >= 0 && i - rallyStart >= 3 && ret[i] >= FTD_GAIN && up) {
         next = 1;
         dist = [];
+        crossed = ma50[i] != null && lvl[i] >= ma50[i]!;
         sigIdx.push(i);
       }
     } else {
       const prevLow = i > 0 ? low50[i - 1] : lvl[i];
       const m = ma50[i];
+      if (m != null && lvl[i] >= m) crossed = true;
       if (dist.length >= 6 || lvl[i] < prevLow) {
         next = 3;
         rallyLow = lvl[i];
         rallyStart = -1;
-      } else if (dist.length >= 4 || (m != null && lvl[i] < m)) next = 2;
+      } else if (dist.length >= 4 || (crossed && m != null && lvl[i] < m)) next = 2;
       else next = 1;
     }
     if (next !== s) since = i;
