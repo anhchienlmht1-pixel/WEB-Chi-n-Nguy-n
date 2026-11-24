@@ -52,7 +52,7 @@ function RefCode() {
 // who to ask. The Zalo button is the one orange element on the page.
 export default function AccountOpeningGuide() {
   return (
-    <div className="gutter-x mx-auto max-w-[1280px] pt-12 pb-20 lg:pt-16">
+    <div className="gutter-x mx-auto max-w-[1920px] pt-12 pb-20 lg:pt-16">
       <p className="text-[0.92rem] text-[var(--sm-mut)]">Hướng dẫn</p>
       <h1 className="mt-4 max-w-[52rem] font-display text-[clamp(2.2rem,4.4vw,3.1rem)] leading-[1.15] text-[var(--sm-egg)]">
         Mở tài khoản Kafi X ngay trên điện thoại.

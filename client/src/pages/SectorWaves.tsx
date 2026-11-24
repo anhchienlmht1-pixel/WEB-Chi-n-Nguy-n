@@ -230,7 +230,7 @@ export default function SectorWavesPage() {
   return (
     <div className="text-[var(--sm-egg)]">
       <header className="border-b border-[var(--sm-line)] bg-[var(--sm-panel)]">
-        <div className="gutter-x mx-auto max-w-[1280px] py-8">
+        <div className="gutter-x mx-auto max-w-[1920px] py-8">
           <h1 className="text-[clamp(2rem,3.6vw,2.8rem)] leading-tight">Sóng ngành</h1>
           <p className="mt-2 max-w-[48rem] text-[1.05rem] leading-relaxed text-[var(--sm-egg2)]">
             Theo cách nhìn của Mark Minervini: một ngành đang có sóng khi nhiều cổ phiếu trong ngành cùng lúc vào xu hướng tăng (đạt Trend Template). Biểu đồ VN-Index cho
@@ -239,7 +239,7 @@ export default function SectorWavesPage() {
         </div>
       </header>
 
-      <div className="gutter-x mx-auto max-w-[1280px] pb-20">
+      <div className="gutter-x mx-auto max-w-[1920px] pb-20">
         {err && (
           <p className="mt-8 rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-4 text-[var(--sm-egg2)]">
             Chưa tải được dữ liệu sóng ngành ({err}). Lần tính đầu tiên của mỗi phiên mất khoảng 20–30 giây; tải lại trang sau ít phút.

@@ -277,7 +277,7 @@ export default function BankSector() {
   return (
     <div className="text-[var(--ab-text)]">
       <nav aria-label="Mục trong Ngành ngân hàng" className="border-b border-[var(--ab-line)] bg-[var(--ab-card)]">
-        <div className="gutter-x mx-auto flex max-w-[1440px] gap-1 overflow-x-auto">
+        <div className="gutter-x mx-auto flex max-w-[1920px] gap-1 overflow-x-auto">
           {TABS.map((t) => {
             const on = t.id === tab;
             return (
@@ -298,7 +298,7 @@ export default function BankSector() {
           })}
         </div>
       </nav>
-      <div className="gutter-x mx-auto flex max-w-[1440px] flex-col gap-4 py-7">
+      <div className="gutter-x mx-auto flex max-w-[1920px] flex-col gap-4 py-7">
         <div className="flex flex-wrap items-end gap-3">
           <div className="mr-auto">
             <h1 className="text-[clamp(1.6rem,3vw,2rem)] font-bold leading-tight text-[var(--ab-strong)]">

@@ -34,7 +34,7 @@ export default function About() {
           className="pointer-events-none absolute inset-x-0 bottom-0 h-40"
           style={{ background: "linear-gradient(180deg, rgba(var(--ab-bg-rgb),0) 0%, var(--ab-bg) 100%)" }}
         />
-        <div className="gutter-x relative z-[1] mx-auto grid max-w-[1280px] items-center gap-x-12 gap-y-10 pt-12 pb-16 lg:grid-cols-12 lg:pt-20 lg:pb-20">
+        <div className="gutter-x relative z-[1] mx-auto grid max-w-[1920px] items-center gap-x-12 gap-y-10 pt-12 pb-16 lg:grid-cols-12 lg:pt-20 lg:pb-20">
           <div className="lg:col-span-6">
             <h1 className="text-[clamp(2.3rem,4.8vw,3.8rem)] leading-[1.08] text-[var(--sm-egg)]">Đầu tư theo xu hướng, có kỷ luật và minh bạch.</h1>
             <div className="my-6 h-px w-24 bg-[var(--sm-gold)]" />
@@ -60,7 +60,7 @@ export default function About() {
         </div>
       </section>
 
-      <div className="gutter-x mx-auto max-w-[1280px] pb-20">
+      <div className="gutter-x mx-auto max-w-[1920px] pb-20">
         {/* 2. Kết quả công khai */}
         <section aria-label="Kết quả công khai" className="pt-6">
           <SectionHead

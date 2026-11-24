@@ -81,7 +81,7 @@ export default function TickerTape() {
   ];
 
   return (
-    <div className="gutter-x mx-auto flex h-8 max-w-[1280px] items-center gap-3 border-t border-[rgba(201,162,74,0.18)]">
+    <div className="gutter-x mx-auto flex h-8 max-w-[1920px] items-center gap-3 border-t border-[rgba(201,162,74,0.18)]">
       <SessionPill />
       <div className="ticker relative min-w-0 flex-1 overflow-hidden" aria-label="Bảng giá chạy">
         {items.length > 0 && (

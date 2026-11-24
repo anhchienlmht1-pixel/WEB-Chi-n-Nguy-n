@@ -39,7 +39,7 @@ export default function TrendSignals() {
     <div id="tin-hieu" className="scroll-mt-20 text-[var(--sm-egg)]">
       {/* 1. Tiêu đề + trạng thái */}
       <header className="border-b border-[var(--sm-line)] bg-[var(--sm-panel)]">
-        <div className="gutter-x mx-auto flex max-w-[1280px] flex-wrap items-end justify-between gap-x-10 gap-y-5 py-8">
+        <div className="gutter-x mx-auto flex max-w-[1920px] flex-wrap items-end justify-between gap-x-10 gap-y-5 py-8">
           <div className="max-w-[42rem]">
             <h1 className="text-[clamp(2rem,3.6vw,2.8rem)] leading-tight text-[var(--sm-egg)]">Tín hiệu xu hướng</h1>
             <p className="mt-2 text-[1.05rem] leading-relaxed text-[var(--sm-egg2)]">
@@ -65,7 +65,7 @@ export default function TrendSignals() {
         </div>
       </header>
 
-      <div className="gutter-x mx-auto max-w-[1280px] pb-20">
+      <div className="gutter-x mx-auto max-w-[1920px] pb-20">
         {/* 2. Hiệu suất */}
         <section aria-label="Hiệu suất hệ thống" className="pt-8">
           <SonMaiKpis journal={journal} />

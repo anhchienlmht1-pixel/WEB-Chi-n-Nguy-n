@@ -16,7 +16,7 @@ const SOCIAL = [
 export default function Footer() {
   return (
     <footer id="footer" className="scroll-mt-20 border-t border-[rgba(201,162,74,0.35)] bg-band text-[#efe7d4]">
-      <div className="gutter-x mx-auto max-w-[1280px] pb-7 pt-14">
+      <div className="gutter-x mx-auto max-w-[1920px] pb-7 pt-14">
         <div className="flex flex-wrap justify-between gap-x-16 gap-y-10">
           <div className="max-w-sm flex-1 basis-72">
             <img src="/logo-bullstock-dark.svg" alt="Bull Stock" className="block h-[52px]! w-auto" />
