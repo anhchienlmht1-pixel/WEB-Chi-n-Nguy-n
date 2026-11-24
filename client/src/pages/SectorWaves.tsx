@@ -342,7 +342,7 @@ export default function SectorWavesPage() {
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-[0.8rem] text-[var(--sm-egg2)]">
-                  {([1, 2, 3] as const).map((k) => (
+                  {([1, 3] as const).map((k) => (
                     <span key={k} className="flex cursor-help items-center gap-1.5" title={MSTATE[k].what}>
                       <i className="inline-block h-3 w-4 rounded-sm border border-[var(--sm-line)]" style={{ background: MSTATE[k].fill.replace(/0\.1\d\)/, "0.5)") }} />
                       {MSTATE[k].label}
@@ -396,7 +396,7 @@ export default function SectorWavesPage() {
                       <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={view.chart} syncId="waves" margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                           <CartesianGrid vertical={false} stroke="var(--sm-line2)" />
-                          {view.mBands.map((b) => (
+                          {view.mBands.filter((b) => b.s !== 2).map((b) => (
                             <ReferenceArea key={b.x1} x1={b.x1} x2={b.x2} fill={MSTATE[b.s].fill} fillOpacity={1} ifOverflow="extendDomain" />
                           ))}
                           <XAxis dataKey="t" tickFormatter={range === "all" ? (t: string) => t.slice(0, 4) : my} tick={{ fontSize: 11, fill: "var(--sm-mut)" }} tickLine={false} axisLine={{ stroke: "var(--sm-line)" }} minTickGap={36} />
@@ -528,7 +528,7 @@ export default function SectorWavesPage() {
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-[0.8rem] text-[var(--sm-egg2)]">
-                  {([1, 2, 3, 4] as const).map((s) => (
+                  {([2, 4] as const).map((s) => (
                     <span key={s} className="flex cursor-help items-center gap-1.5" title={STAGE[s].what}>
                       <i className="inline-block h-3 w-4 rounded-sm border border-[var(--sm-line)]" style={{ background: STAGE[s].fill.replace(/0\.1\d?\)/, "0.45)") }} />
                       {STAGE[s].short}
@@ -541,7 +541,7 @@ export default function SectorWavesPage() {
                   <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={view.chart} syncId="waves" margin={{ top: 8, right: 8, bottom: 0, left: 0 }} onMouseMove={(e) => setHover(e?.activeTooltipIndex != null ? Number(e.activeTooltipIndex) : null)} onMouseLeave={() => setHover(null)}>
                       <CartesianGrid vertical={false} stroke="var(--sm-line2)" />
-                      {view.bands.map((b) => (
+                      {view.bands.filter((b) => b.s === 2 || b.s === 4).map((b) => (
                         <ReferenceArea key={b.x1} x1={b.x1} x2={b.x2} fill={STAGE[b.s].fill} fillOpacity={1} ifOverflow="extendDomain" />
                       ))}
                       <XAxis dataKey="t" tickFormatter={range === "all" ? (t: string) => t.slice(0, 4) : my} tick={{ fontSize: 11, fill: "var(--sm-mut)" }} tickLine={false} axisLine={{ stroke: "var(--sm-line)" }} minTickGap={36} />
