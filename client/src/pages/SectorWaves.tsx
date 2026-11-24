@@ -224,7 +224,12 @@ export default function SectorWavesPage() {
       if (b && b.s === s && b.x2 === d.weeks[w - 1]) b.x2 = d.weeks[w];
       else bands.push({ x1: d.weeks[w], x2: d.weeks[w], s });
     }
-    return { n, last, waveCount, rows, chart, bands, mBands };
+    // biểu đồ trạng thái thị trường: bỏ đoạn đầu chưa có chỉ số cân bằng
+    const m0 = chart.findIndex((c) => c.mIdx != null);
+    const mChart = m0 > 0 ? chart.slice(m0) : chart;
+    // mốc năm cho trục X ở chế độ "Từ 2000": một nhãn mỗi năm
+    const yearTicks = (rows: typeof chart) => rows.filter((c, i) => i === 0 || c.t.slice(0, 4) !== rows[i - 1].t.slice(0, 4)).map((c) => c.t);
+    return { n, last, waveCount, rows, chart, bands, mBands, mChart, yearTicks };
   }, [d, raw, liveOf]);
 
   return (
@@ -394,12 +399,12 @@ export default function SectorWavesPage() {
                   <div className="mt-3 rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-3">
                     <div className="h-[300px]">
                       <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={view.chart} syncId="waves" margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                        <ComposedChart data={view.mChart} syncId="market" margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                           <CartesianGrid vertical={false} stroke="var(--sm-line2)" />
                           {view.mBands.filter((b) => b.s !== 2).map((b) => (
                             <ReferenceArea key={b.x1} x1={b.x1} x2={b.x2} fill={MSTATE[b.s].fill} fillOpacity={1} ifOverflow="extendDomain" />
                           ))}
-                          <XAxis dataKey="t" tickFormatter={range === "all" ? (t: string) => t.slice(0, 4) : my} tick={{ fontSize: 11, fill: "var(--sm-mut)" }} tickLine={false} axisLine={{ stroke: "var(--sm-line)" }} minTickGap={36} />
+                          <XAxis dataKey="t" ticks={range === "all" ? view.yearTicks(view.mChart) : undefined} interval={range === "all" ? "preserveStartEnd" : undefined} tickFormatter={range === "all" ? (t: string) => t.slice(0, 4) : my} tick={{ fontSize: 11, fill: "var(--sm-mut)" }} tickLine={false} axisLine={{ stroke: "var(--sm-line)" }} minTickGap={24} />
                           <YAxis scale={range === "all" ? "log" : "auto"} domain={["auto", "auto"]} orientation="right" width={52} tick={{ fontSize: 11, fill: "var(--sm-mut)" }} tickLine={false} axisLine={false} tickFormatter={(v) => vn(v)} />
                           <Tooltip
                             content={({ active, payload }) => {
@@ -439,12 +444,12 @@ export default function SectorWavesPage() {
                           giá trị giao dịch trung bình 20 phiên chia cho trung bình 1 năm · trên <span className="up">120%</span> tiền vào mạnh · dưới <span className="down">80%</span> tiền rút
                         </span>
                       </p>
-                      <div className="h-[130px]">
+                      <div className="h-[150px]">
                         <ResponsiveContainer width="100%" height="100%">
-                          <ComposedChart data={view.chart} syncId="waves" margin={{ top: 6, right: 8, bottom: 0, left: 0 }}>
+                          <ComposedChart data={view.mChart} syncId="market" margin={{ top: 6, right: 8, bottom: 0, left: 0 }}>
                             <CartesianGrid vertical={false} stroke="var(--sm-line2)" />
                             <XAxis dataKey="t" hide />
-                            <YAxis orientation="right" width={52} domain={[40, 220]} allowDataOverflow ticks={[50, 80, 100, 120, 160, 200]} tick={{ fontSize: 10, fill: "var(--sm-mut)" }} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}%`} />
+                            <YAxis orientation="right" width={52} domain={[0, (max: number) => Math.max(200, Math.ceil(max / 50) * 50)]} tick={{ fontSize: 10, fill: "var(--sm-mut)" }} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}%`} />
                             <Tooltip content={() => null} cursor={{ stroke: "rgba(201,162,74,0.5)" }} />
                             <ReferenceLine y={100} stroke="var(--sm-line)" />
                             <ReferenceLine y={120} stroke="var(--sm-up)" strokeDasharray="3 3" />
@@ -544,7 +549,7 @@ export default function SectorWavesPage() {
                       {view.bands.filter((b) => b.s === 2 || b.s === 4).map((b) => (
                         <ReferenceArea key={b.x1} x1={b.x1} x2={b.x2} fill={STAGE[b.s].fill} fillOpacity={1} ifOverflow="extendDomain" />
                       ))}
-                      <XAxis dataKey="t" tickFormatter={range === "all" ? (t: string) => t.slice(0, 4) : my} tick={{ fontSize: 11, fill: "var(--sm-mut)" }} tickLine={false} axisLine={{ stroke: "var(--sm-line)" }} minTickGap={36} />
+                      <XAxis dataKey="t" ticks={range === "all" ? view.yearTicks(view.chart) : undefined} interval={range === "all" ? "preserveStartEnd" : undefined} tickFormatter={range === "all" ? (t: string) => t.slice(0, 4) : my} tick={{ fontSize: 11, fill: "var(--sm-mut)" }} tickLine={false} axisLine={{ stroke: "var(--sm-line)" }} minTickGap={24} />
                       <YAxis scale={range === "all" ? "log" : "auto"} domain={["auto", "auto"]} allowDataOverflow={false} orientation="right" width={52} tick={{ fontSize: 11, fill: "var(--sm-mut)" }} tickLine={false} axisLine={false} tickFormatter={(v) => vn(v)} />
                       <Tooltip
                         content={({ active, payload }) => {

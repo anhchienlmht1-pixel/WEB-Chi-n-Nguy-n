@@ -371,7 +371,18 @@ function runMarket(st: State, rule: MarketRule, breadth?: (number | null)[]): Ma
     vol.push(e[3] > 0 ? e[2] / e[3] : 0);
   }
   const ma50 = rollingMean(lvl, 50);
-  const v20 = rollingMean(vol, 20), v50 = rollingMean(vol, 50), v250 = rollingMean(vol, 250);
+  const v20 = rollingMean(vol, 20), v50 = rollingMean(vol, 50);
+  // mức bình thường: trung bình 250 phiên; năm đầu chưa đủ thì dùng các phiên đã có (tối thiểu 60)
+  const v250: (number | null)[] = [];
+  {
+    let sum = 0;
+    for (let i = 0; i < vol.length; i++) {
+      sum += vol[i];
+      if (i >= 250) sum -= vol[i - 250];
+      const n = Math.min(i + 1, 250);
+      v250.push(n >= 60 ? sum / n : null);
+    }
+  }
   const liq = vol.map((_, i) => (v20[i] != null && v250[i] ? Math.round((v20[i]! / v250[i]!) * 1000) / 10 : null));
   const low50 = rollingExtreme(lvl, 50, false);
   const high50 = rollingExtreme(lvl, 50, true);
