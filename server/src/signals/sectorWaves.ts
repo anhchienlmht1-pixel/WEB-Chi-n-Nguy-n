@@ -308,8 +308,13 @@ export interface MarketRule {
   /** thoát Thận trọng không cần phiên xác nhận: "ma50" chỉ số trên MA50 đang đi lên → Quan sát;
    *  "ma50high" như trên nhưng lên Tích cực chỉ khi lập đỉnh 50 phiên */
   recover: "none" | "ma50" | "ma50high";
+  /** ngày phân phối: mức giảm tối thiểu (âm) và thanh khoản so với phiên trước hay trung bình 50 phiên */
+  distDrop: number;
+  distVol: "prev" | "avg50";
+  /** số ngày phân phối để chuyển Thận trọng */
+  distCaution: number;
 }
-export const MARKET_RULE: MarketRule = { gain: FTD_GAIN, vol: "prev", maxDay: 10, minBreadth: null, failFast: false, recover: "ma50" };
+export const MARKET_RULE: MarketRule = { gain: FTD_GAIN, vol: "prev", maxDay: 10, minBreadth: null, failFast: false, recover: "ma50", distDrop: DIST_DROP, distVol: "prev", distCaution: 6 };
 
 interface MarketDaily {
   dates: string[];
@@ -321,6 +326,7 @@ interface MarketDaily {
   sigIdx: number[];
   since: number;
   dist: number;
+  why: string[];
 }
 
 function runMarket(st: State, rule: MarketRule, breadth?: (number | null)[]): MarketDaily | null {
@@ -364,11 +370,13 @@ function runMarket(st: State, rule: MarketRule, breadth?: (number | null)[]): Ma
   // sau phiên xác nhận chỉ số thường còn dưới MA50: chỉ xét MA50 khi đã vượt lên MA50 ít nhất một lần
   let crossed = false;
   let viaRecover = false;
+  const why: string[] = [];
   for (let i = 0; i < N; i++) {
     const up = i > 0 && vol[i] > vol[i - 1];
     const b = breadthPrev(i);
     dist = dist.filter((j) => i - j < 25 && lvl[i] < lvl[j] * 1.05);
-    if (i > 0 && ret[i] <= DIST_DROP && up) dist.push(i);
+    const distVolOk = rule.distVol === "prev" ? up : i > 0 && v50[i - 1] != null && vol[i] > v50[i - 1]!;
+    if (i > 0 && ret[i] <= rule.distDrop && distVolOk) dist.push(i);
     let next: MarketStateCode = s;
     if (s === 3) {
       if (lvl[i] < rallyLow) {
@@ -408,7 +416,8 @@ function runMarket(st: State, rule: MarketRule, breadth?: (number | null)[]): Ma
       const prevLow = i > 0 ? low50[i - 1] : lvl[i];
       const m = ma50[i];
       if (m != null && lvl[i] >= m) crossed = true;
-      if (dist.length >= 6 || lvl[i] < prevLow || (rule.failFast && lvl[i] < ftdLow)) {
+      if (dist.length >= rule.distCaution || lvl[i] < prevLow || (rule.failFast && lvl[i] < ftdLow)) {
+        why.push(dist.length >= rule.distCaution ? "d" : "l");
         next = 3;
         rallyLow = lvl[i];
         rallyStart = -1;
@@ -424,7 +433,7 @@ function runMarket(st: State, rule: MarketRule, breadth?: (number | null)[]): Ma
     s = next;
     state.push(s);
   }
-  return { dates, lvl, ret, ma50, liq, state, sigIdx, since, dist: dist.length };
+  return { dates, lvl, ret, ma50, liq, state, sigIdx, since, dist: dist.length, why };
 }
 
 export function computeMarket(st: State, rule: MarketRule = MARKET_RULE, breadth?: (number | null)[]): MarketState {
@@ -564,6 +573,12 @@ export async function getMarketBacktest(variants: Record<string, Partial<MarketR
       days: days.slice(1),
       gain: g.slice(1).map((x) => Math.round((x - 1) * 1000) / 10),
       start: dates[0],
+      // các đợt Thận trọng: số đợt, số đợt ngắn dưới 15 phiên, lý do (d: ngày phân phối, l: thủng đáy 50 phiên)
+      caution: (() => {
+        const runs: number[] = [];
+        for (let i = 0; i < N; i++) if (state[i] === 3) (i > 0 && state[i - 1] === 3 ? runs[runs.length - 1]++ : runs.push(1));
+        return { n: runs.length, short: runs.filter((x) => x < 15).length, d: md.why.filter((x) => x === "d").length, l: md.why.filter((x) => x === "l").length };
+      })(),
     };
   }
   return out;

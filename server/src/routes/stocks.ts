@@ -403,11 +403,14 @@ router.get(
   asyncHandler(async (_req, res) => {
     // So sánh các cách lọc phiên xác nhận (trạng thái thị trường) trên dữ liệu đã lưu.
     const data = await getMarketBacktest({
-      C: {},
-      CR: { recover: "ma50" },
-      CRH: { recover: "ma50high" },
-      A: { maxDay: null },
-      AR: { maxDay: null, recover: "ma50" },
+      CR: {},
+      D3: { distDrop: -0.003 },
+      D5: { distDrop: -0.005 },
+      V50: { distVol: "avg50" },
+      V50D3: { distVol: "avg50", distDrop: -0.003 },
+      K7: { distCaution: 7 },
+      K8: { distCaution: 8 },
+      V50K7: { distVol: "avg50", distCaution: 7 },
     });
     res.setHeader("Cache-Control", "no-store");
     res.json(data);
