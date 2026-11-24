@@ -626,6 +626,77 @@ function breadthOf(st: State): (number | null)[] {
   return pass.map((p, w) => (tot[w] >= 10 ? Math.round((p / tot[w]) * 1000) / 10 : null));
 }
 
+// ----------------------------------------------------------------- điều kiện vào lệnh theo sóng ngành
+/**
+ * Dữ liệu để lọc điểm mua của hệ thống tín hiệu: chỉ mở vị thế mới khi
+ * (1) trạng thái thị trường là Tích cực và (2) ngành của mã đang có sóng (từ WAVE_THRESHOLD% mã đạt Trend Template).
+ * Theo ngày đã đóng phiên, không nhìn trước: ngày D dùng trạng thái thị trường của D và sóng ngành của tuần chốt gần nhất ≤ D.
+ */
+export interface EntryGateData {
+  /** ngày đầu tiên có trạng thái thị trường; trước đó chưa có dữ liệu → không lọc */
+  from: string;
+  dates: string[];
+  /** trạng thái thị trường theo ngày, chuỗi "1"/"2"/"3" song song với dates */
+  states: string;
+  weekEnds: string[];
+  /** theo ngành: chuỗi "1"/"0" song song với weekEnds (1 = có sóng) */
+  waves: Record<string, string>;
+  sectorOf: Record<string, string>;
+}
+
+let gateCache: { at: number; data: EntryGateData | null } = { at: 0, data: null };
+
+export async function getEntryGateData(): Promise<EntryGateData | null> {
+  if (gateCache.data && Date.now() - gateCache.at < 10 * 60_000) return gateCache.data;
+  const st = await readState();
+  if (!st || !st.ew) return gateCache.data;
+  const md = runMarket(st, MARKET_RULE, breadthOf(st));
+  if (!md) return gateCache.data;
+  const W = st.weekKeys.length;
+  const waves: Record<string, string> = {};
+  for (const [sector, syms] of Object.entries(WAVE_SECTORS)) {
+    let out = "";
+    for (let w = 0; w < W; w++) {
+      let pass = 0, tot = 0;
+      for (const sym of syms) {
+        const ch = (st.symbols[sym]?.codes.charCodeAt(w) ?? 46) - 48;
+        if (ch < 0 || ch > 3) continue;
+        tot++;
+        if (ch & 1) pass++;
+      }
+      out += tot >= 3 && (pass / tot) * 100 >= WAVE_THRESHOLD ? "1" : "0";
+    }
+    waves[sector] = out;
+  }
+  const data: EntryGateData = { from: md.dates[0], dates: md.dates, states: md.state.join(""), weekEnds: st.weekEnds, waves, sectorOf: SECTOR_OF };
+  gateCache = { at: Date.now(), data };
+  return data;
+}
+
+/** Hàm kiểm tra: mã `symbol` có được mở vị thế mới ở phiên `date` (YYYY-MM-DD) không. */
+export function makeEntryGate(g: EntryGateData): (symbol: string, date: string) => boolean {
+  const lastLE = (arr: string[], d: string) => {
+    let lo = 0, hi = arr.length - 1, ans = -1;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      if (arr[mid] <= d) {
+        ans = mid;
+        lo = mid + 1;
+      } else hi = mid - 1;
+    }
+    return ans;
+  };
+  return (symbol, date) => {
+    if (date < g.from) return true;
+    const i = lastLE(g.dates, date);
+    if (i < 0 || g.states[i] !== "1") return false;
+    const sector = g.sectorOf[symbol];
+    if (!sector) return false;
+    const w = lastLE(g.weekEnds, date);
+    return w >= 0 && g.waves[sector]?.[w] === "1";
+  };
+}
+
 /**
  * Kiểm tra ngoài mẫu: dò bộ ngưỡng tốt nhất trên giai đoạn trước `split`, rồi chạy nguyên xi trên giai đoạn sau.
  * Chiến lược đo: nắm chỉ số cân bằng khi Tích cực, đứng ngoài khi Quan sát/Thận trọng

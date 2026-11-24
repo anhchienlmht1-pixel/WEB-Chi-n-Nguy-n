@@ -3,6 +3,7 @@ import { fetchHistory } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { aggregatePoints, type ChartResolution } from "../utils/aggregate";
 import { computeTradingSignals } from "../utils/signals";
+import { useEntryGate } from "../hooks/useEntryGate";
 import { dropUnclosedBars } from "../utils/sessionClose";
 import PriceChart, { type ActiveIndicator, type ChartType, type DrawingTool, type PriceChartHandle } from "./PriceChart";
 import ChartToolbar from "./ChartToolbar";
@@ -130,6 +131,7 @@ export default function TechnicalChartPanel({
     [historyState.data, resolution]
   );
 
+  const gate = useEntryGate(symbol);
   const signalResult = useMemo(
     () => {
       // Don't show signals for VNINDEX
@@ -142,9 +144,10 @@ export default function TechnicalChartPanel({
       // can't appear and vanish while the bar is still moving.
       const source = historyState.data?.points;
       if (!source) return { all: [], transitions: [] };
-      return computeTradingSignals(aggregatePoints(dropUnclosedBars(source), resolution));
+      if (!gate.ready) return { all: [], transitions: [] };
+      return computeTradingSignals(aggregatePoints(dropUnclosedBars(source), resolution), gate.allow);
     },
-    [historyState.data, symbol, resolution]
+    [historyState.data, symbol, resolution, gate]
   );
 
   return (

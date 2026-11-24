@@ -306,3 +306,17 @@ export async function fetchSectorWavesLive(): Promise<SectorWavesLive> {
   const { data } = await api.get("/sector-waves/live");
   return data;
 }
+
+/** Dữ liệu lọc điểm mua theo sóng ngành cho một mã (null nếu server chưa có dữ liệu). */
+export interface EntryGateData {
+  from: string;
+  dates: string[];
+  states: string;
+  weekEnds: string[];
+  sector: string | null;
+  waves: string | null;
+}
+export async function fetchEntryGate(symbol: string): Promise<EntryGateData | null> {
+  const { data } = await api.get("/sector-waves/gate", { params: { symbol }, timeout: 60_000 });
+  return data ?? null;
+}

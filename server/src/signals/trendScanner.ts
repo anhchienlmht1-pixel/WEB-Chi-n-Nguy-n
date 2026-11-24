@@ -6,6 +6,7 @@ import { extractKeyRatios } from "../digest/ratios.js";
 import type { HistoryPoint } from "../providers/types.js";
 import { barDateICT, dropUnclosedBars } from "./sessionClose.js";
 import { SECTOR_MAP } from "../data/sectorMap.js";
+import { getEntryGateData, makeEntryGate } from "./sectorWaves.js";
 
 // Same trend-following combo as the chart's own Mua/Bán markers
 // (client/src/utils/signals.ts computeTradingSignals — SMA20 > SMA50,
@@ -127,6 +128,23 @@ export function computeSignalSeries(points: HistoryPoint[]): SignalBar[] {
   return out;
 }
 
+/**
+ * Lọc điểm vào theo sóng ngành: khi đang không giữ, thanh "buy" chỉ mở vị thế nếu
+ * `allow(ngày)` đúng (thị trường Tích cực và ngành có sóng); không thì coi là trung tính.
+ * Điểm bán và việc giữ vị thế không đổi.
+ */
+export function gateEntries(series: SignalBar[], allow: (date: string) => boolean): SignalBar[] {
+  let holding = false;
+  return series.map((b) => {
+    if (!holding && b.signal === "buy") {
+      const d = barDateICT(b.time);
+      if (!d || !allow(d)) return { ...b, signal: null };
+      holding = true;
+    } else if (holding && b.signal === "sell") holding = false;
+    return b;
+  });
+}
+
 /** Index (in series) of the bar that opened the position still held at the end, or null if flat. */
 export function openPositionIndex(series: SignalBar[]): number | null {
   let pos: number | null = null;
@@ -236,9 +254,9 @@ async function checkCanSlimFundamentals(symbol: string): Promise<boolean> {
 // BÁN bar (see the rule above) — neutral bars (ADX ≤ 25 in an intact uptrend)
 // keep it open. sellDate = the bar just before the entry (end of the previous
 // flat stretch), kept for backward compatibility.
-export function latestBuySince(points: HistoryPoint[]): SignalDates | null {
+export function latestBuySince(points: HistoryPoint[], allow?: (date: string) => boolean): SignalDates | null {
   if (points.length < 51) return null;
-  const series = computeSignalSeries(points);
+  const series = allow ? gateEntries(computeSignalSeries(points), allow) : computeSignalSeries(points);
   const pos = openPositionIndex(series);
   if (pos === null) return null;
   return { buyDate: series[pos].time, buyPrice: series[pos].close, sellDate: pos > 0 ? series[pos - 1].time : null };
@@ -289,6 +307,10 @@ export async function scanBuySignals(): Promise<BuySignalHit[]> {
 export async function scanBuySignalsWithSession(): Promise<TrendScanResult> {
   const failed = new Map<string, string>();
   let sessionDate: string | null = null;
+  // Điểm mua chỉ tính khi thị trường Tích cực và ngành có sóng (trang Sóng ngành).
+  const gateData = await getEntryGateData();
+  if (!gateData) throw new Error("Chưa có dữ liệu sóng ngành để lọc tín hiệu");
+  const gate = makeEntryGate(gateData);
   const hits = await mapWithConcurrency(STOCK_UNIVERSE, 20, async (seed): Promise<BuySignalHit | null> => {
     try {
       const { points: raw } = await getHistoryWithFallback(seed.symbol, "1Y");
@@ -297,7 +319,7 @@ export async function scanBuySignalsWithSession(): Promise<TrendScanResult> {
         const barDate = barDateICT(points[points.length - 1].time);
         if (barDate && (!sessionDate || barDate > sessionDate)) sessionDate = barDate;
       }
-      const signalDates = latestBuySince(points);
+      const signalDates = latestBuySince(points, (d) => gate(seed.symbol, d));
       if (!signalDates || points.length === 0) {
         if (points.length === 0) {
           failed.set(seed.symbol, "No historical data");

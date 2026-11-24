@@ -5,6 +5,7 @@ import { usePolling } from "../hooks/usePolling";
 import { useMemo, useState } from "react";
 import { fetchCompanyProfile, fetchFinancials, fetchHistory } from "../api/client";
 import { computeTradingSignals, latestConditions, type TradingSignal } from "../utils/signals";
+import { useEntryGate } from "../hooks/useEntryGate";
 import { dropUnclosedBars } from "../utils/sessionClose";
 import type { Quote } from "../types";
 import { formatMarketCap, formatPrice, trendClass } from "../utils/format";
@@ -201,9 +202,10 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
   // Lịch sử giá ngày đầy đủ: dùng cho biểu đồ tổng quan và tín hiệu của hệ thống.
   const { data: hist } = usePolling(() => fetchHistory(symbol, "MAX"), [symbol], 10 * 60 * 1000);
   const history = useMemo(() => hist?.points ?? [], [hist]);
+  const gate = useEntryGate(symbol);
   const signals = useMemo(
-    () => (isIndexOrFutures || history.length === 0 ? [] : computeTradingSignals(dropUnclosedBars(history)).transitions),
-    [history, isIndexOrFutures]
+    () => (isIndexOrFutures || history.length === 0 || !gate.ready ? [] : computeTradingSignals(dropUnclosedBars(history), gate.allow).transitions),
+    [history, isIndexOrFutures, gate]
   );
   const cond = useMemo(() => (isIndexOrFutures ? null : latestConditions(history)), [history, isIndexOrFutures]);
   const closeByDay = useMemo(() => new Map(history.map((p) => [p.time.slice(0, 10), p.close])), [history]);
