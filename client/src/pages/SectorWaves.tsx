@@ -39,6 +39,29 @@ const STAGE: Record<1 | 2 | 3 | 4, { label: string; short: string; fill: string;
   },
 };
 
+// Trạng thái thị trường kiểu "M" trong CAN SLIM, tính trên chỉ số cân bằng của Bull Stock
+const MSTATE: Record<1 | 2 | 3, { label: string; fill: string; text: string; what: string }> = {
+  1: {
+    label: "Tích cực",
+    fill: "rgba(79,209,139,0.15)",
+    text: "var(--sm-up)",
+    what: "Xu hướng tăng đã được xác nhận bằng một phiên tăng mạnh có thanh khoản, chưa tích lũy nhiều ngày phân phối.",
+  },
+  2: {
+    label: "Quan sát",
+    fill: "rgba(230,190,90,0.18)",
+    text: "#c58a1c",
+    what: "Xu hướng tăng bị áp lực: từ 4 ngày phân phối trong 25 phiên, hoặc chỉ số rơi xuống dưới MA50.",
+  },
+  3: {
+    label: "Thận trọng",
+    fill: "rgba(255,107,94,0.11)",
+    text: "var(--sm-dn)",
+    what: "Thị trường điều chỉnh: từ 6 ngày phân phối, hoặc chỉ số thủng đáy 50 phiên. Chờ phiên xác nhận mới.",
+  },
+};
+const pctS = (x: number | null) => (x == null ? "—" : `${x > 0 ? "+" : ""}${x.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}%`);
+
 const vn = (n: number, d = 0) => n.toLocaleString("vi-VN", { minimumFractionDigits: d, maximumFractionDigits: d });
 const dmy = (d: string) => `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(0, 4)}`;
 const my = (d: string) => `${d.slice(5, 7)}/${d.slice(2, 4)}`;
@@ -99,8 +122,18 @@ export default function SectorWavesPage() {
       pick = raw.weeks.map((_, i) => i).slice(-k);
     }
     const sel = <T,>(a: T[]) => pick.map((i) => a[i]);
+    const m = raw.market;
     return {
       ...raw,
+      market: m && {
+        ...m,
+        index: sel(m.index),
+        ma50: sel(m.ma50),
+        state: sel(m.state),
+        liq: sel(m.liq),
+        // phiên xác nhận → điểm đầu tiên của khung xem không trước tuần đó
+        signals: m.signals.filter((x) => x.w >= pick[0]).map((x) => ({ ...x, w: pick.findIndex((i) => i >= x.w) })),
+      },
       weeks: sel(raw.weeks),
       vnindex: {
         close: sel(raw.vnindex.close),
@@ -160,7 +193,28 @@ export default function SectorWavesPage() {
       stage: d.vnindex.stage[w],
       waves: waveCount[w],
       breadth: d.breadth[w],
+      mIdx: d.market?.index[w] ?? null,
+      mMa50: d.market?.ma50[w] ?? null,
+      mState: d.market?.state[w] ?? null,
+      liq: d.market?.liq[w] ?? null,
+      sig: null as null | NonNullable<SectorWaves["market"]>["signals"][number],
+      sigY: null as number | null,
     }));
+    for (const x of d.market?.signals ?? []) {
+      const c = chart[x.w];
+      if (c && c.mIdx != null) {
+        c.sig = x;
+        c.sigY = c.mIdx;
+      }
+    }
+    const mBands: { x1: string; x2: string; s: 1 | 2 | 3 }[] = [];
+    for (let w = 0; w < n; w++) {
+      const s = d.market?.state[w];
+      if (!s) continue;
+      const b = mBands[mBands.length - 1];
+      if (b && b.s === s && b.x2 === d.weeks[w - 1]) b.x2 = d.weeks[w];
+      else mBands.push({ x1: d.weeks[w], x2: d.weeks[w], s });
+    }
     // các đoạn liên tiếp cùng giai đoạn → vùng nền
     const bands: { x1: string; x2: string; s: 1 | 2 | 3 | 4 }[] = [];
     for (let w = 0; w < n; w++) {
@@ -170,7 +224,7 @@ export default function SectorWavesPage() {
       if (b && b.s === s && b.x2 === d.weeks[w - 1]) b.x2 = d.weeks[w];
       else bands.push({ x1: d.weeks[w], x2: d.weeks[w], s });
     }
-    return { n, last, waveCount, rows, chart, bands };
+    return { n, last, waveCount, rows, chart, bands, mBands };
   }, [d, raw, liveOf]);
 
   return (
@@ -275,6 +329,176 @@ export default function SectorWavesPage() {
                   </div>
                 ));
               })()}
+            </section>
+
+            {/* Trạng thái thị trường (chỉ số cân bằng) */}
+            <section aria-label="Trạng thái thị trường" className="mt-10">
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <h2 className="text-[1.6rem] leading-tight">Trạng thái thị trường</h2>
+                  <p className="mt-1 max-w-[52rem] text-[0.92rem] text-[var(--sm-egg2)]">
+                    Đo trên chỉ số cân bằng của Bull Stock: gần 200 mã trong danh sách theo dõi, mỗi mã một tỷ trọng như nhau, phiên đầu tiên đủ {raw!.market?.minStocks ?? 30} mã = 100. Chỉ số
+                    này phản ánh cổ phiếu trung bình, không bị vài mã vốn hóa lớn kéo như VN-Index. Trạng thái xét theo ngày phân phối và phiên xác nhận (phần “M” trong CAN SLIM).
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-[0.8rem] text-[var(--sm-egg2)]">
+                  {([1, 2, 3] as const).map((k) => (
+                    <span key={k} className="flex cursor-help items-center gap-1.5" title={MSTATE[k].what}>
+                      <i className="inline-block h-3 w-4 rounded-sm border border-[var(--sm-line)]" style={{ background: MSTATE[k].fill.replace(/0\.1\d\)/, "0.5)") }} />
+                      {MSTATE[k].label}
+                    </span>
+                  ))}
+                  <span className="flex items-center gap-1.5" title="Phiên xác nhận: thị trường chuyển sang Tích cực">
+                    <i className="inline-block h-2.5 w-2.5 rounded-full border-2 border-[var(--sm-panel)] bg-[var(--sm-up)] shadow-[0_0_0_1px_var(--sm-up)]" />
+                    Phiên xác nhận
+                  </span>
+                </div>
+              </div>
+
+              {!raw?.market?.now ? (
+                <p className="mt-3 rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-4 text-[0.92rem] text-[var(--sm-egg2)]">
+                  Đang dựng chỉ số cân bằng từ lịch sử từng mã, phần này sẽ hiện khi đủ dữ liệu.
+                </p>
+              ) : (
+                <>
+                  {(() => {
+                    const now = raw!.market!.now!;
+                    const S = MSTATE[now.state];
+                    return (
+                      <div className="mt-3 flex flex-wrap items-baseline gap-x-6 gap-y-1 rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] px-4 py-3" role="status">
+                        <p className="font-display text-[1.35rem] leading-tight" style={{ color: S.text }}>
+                          {S.label}
+                        </p>
+                        <p className="text-[0.86rem] text-[var(--sm-egg2)]">
+                          Từ phiên {dmy(now.since)} · chốt phiên {dmy(now.date)}
+                        </p>
+                        <p className="text-[0.86rem] text-[var(--sm-egg2)]">
+                          <b className="text-[var(--sm-egg)] tabular-nums">{now.dist}</b> ngày phân phối trong 25 phiên
+                        </p>
+                        <p className="text-[0.86rem] text-[var(--sm-egg2)]">
+                          Thanh khoản <b className={`tabular-nums ${now.liq != null && now.liq >= 120 ? "up" : now.liq != null && now.liq <= 80 ? "down" : "text-[var(--sm-egg)]"}`}>{now.liq == null ? "—" : `${vn(now.liq, 0)}%`}</b> so với bình thường
+                        </p>
+                      </div>
+                    );
+                  })()}
+                  <div className="mt-3 rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-3">
+                    <div className="h-[300px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <ComposedChart data={view.chart} syncId="waves" margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                          <CartesianGrid vertical={false} stroke="var(--sm-line2)" />
+                          {view.mBands.map((b) => (
+                            <ReferenceArea key={b.x1} x1={b.x1} x2={b.x2} fill={MSTATE[b.s].fill} fillOpacity={1} ifOverflow="extendDomain" />
+                          ))}
+                          <XAxis dataKey="t" tickFormatter={range === "all" ? (t: string) => t.slice(0, 4) : my} tick={{ fontSize: 11, fill: "var(--sm-mut)" }} tickLine={false} axisLine={{ stroke: "var(--sm-line)" }} minTickGap={36} />
+                          <YAxis scale={range === "all" ? "log" : "auto"} domain={["auto", "auto"]} orientation="right" width={52} tick={{ fontSize: 11, fill: "var(--sm-mut)" }} tickLine={false} axisLine={false} tickFormatter={(v) => vn(v)} />
+                          <Tooltip
+                            content={({ active, payload }) => {
+                              if (!active || !payload?.length) return null;
+                              const p = payload[0].payload as (typeof view.chart)[number];
+                              if (p.mIdx == null) return null;
+                              return (
+                                <div className="rounded-md border border-[rgba(201,162,74,0.45)] bg-[var(--sm-pop)] px-3 py-2 text-[0.8rem] shadow-lg">
+                                  <b>{range === "all" ? `Tháng ${my(p.t)}` : `Tuần ${dmy(p.t)}`}</b>
+                                  <div className="tabular-nums">Chỉ số cân bằng {vn(p.mIdx, 1)} · MA50 {p.mMa50 == null ? "—" : vn(p.mMa50, 1)}</div>
+                                  {p.mState && <div style={{ color: MSTATE[p.mState].text }}>{MSTATE[p.mState].label}</div>}
+                                  <div className="text-[var(--sm-egg2)]">Thanh khoản {p.liq == null ? "—" : `${vn(p.liq, 0)}%`} so với bình thường</div>
+                                  {p.sig && (
+                                    <div className="mt-1 border-t border-[var(--sm-line2)] pt-1">
+                                      Phiên xác nhận {dmy(p.sig.date)}: sau 3 tháng <b className={p.sig.after3m != null && p.sig.after3m >= 0 ? "up" : "down"}>{pctS(p.sig.after3m)}</b>, sau 6 tháng{" "}
+                                      <b className={p.sig.after6m != null && p.sig.after6m >= 0 ? "up" : "down"}>{pctS(p.sig.after6m)}</b>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            }}
+                          />
+                          <Line dataKey="mMa50" stroke="#d08a1e" strokeWidth={1.2} dot={false} isAnimationActive={false} connectNulls />
+                          <Line dataKey="mIdx" stroke="var(--sm-egg)" strokeWidth={2} dot={false} isAnimationActive={false} />
+                          <Line dataKey="sigY" stroke="none" isAnimationActive={false} legendType="none" dot={{ r: 4.5, fill: "var(--sm-up)", stroke: "var(--sm-panel)", strokeWidth: 2 }} activeDot={false} />
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="mt-1 flex flex-wrap gap-x-4 px-1 text-[0.78rem] text-[var(--sm-egg2)]">
+                      <span className="flex items-center gap-1.5"><i className="inline-block h-0.5 w-5 bg-[var(--sm-egg)]" />Chỉ số cân bằng</span>
+                      <span className="flex items-center gap-1.5"><i className="inline-block h-0.5 w-5 bg-[#d08a1e]" />MA50</span>
+                    </div>
+                    <div className="mt-3 border-t border-[var(--sm-line2)] pt-2">
+                      <p className="px-1 text-[0.82rem] font-semibold text-[var(--sm-egg)]">
+                        Thanh khoản so với bình thường
+                        <span className="ml-2 font-normal text-[var(--sm-egg2)]">
+                          giá trị giao dịch trung bình 20 phiên chia cho trung bình 1 năm · trên <span className="up">120%</span> tiền vào mạnh · dưới <span className="down">80%</span> tiền rút
+                        </span>
+                      </p>
+                      <div className="h-[130px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <ComposedChart data={view.chart} syncId="waves" margin={{ top: 6, right: 8, bottom: 0, left: 0 }}>
+                            <CartesianGrid vertical={false} stroke="var(--sm-line2)" />
+                            <XAxis dataKey="t" hide />
+                            <YAxis orientation="right" width={52} domain={[40, 220]} allowDataOverflow ticks={[50, 80, 100, 120, 160, 200]} tick={{ fontSize: 10, fill: "var(--sm-mut)" }} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}%`} />
+                            <Tooltip content={() => null} cursor={{ stroke: "rgba(201,162,74,0.5)" }} />
+                            <ReferenceLine y={100} stroke="var(--sm-line)" />
+                            <ReferenceLine y={120} stroke="var(--sm-up)" strokeDasharray="3 3" />
+                            <ReferenceLine y={80} stroke="var(--sm-dn)" strokeDasharray="3 3" />
+                            <Line dataKey="liq" stroke="#2f7fd6" strokeWidth={1.6} dot={false} isAnimationActive={false} />
+                          </ComposedChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <div className="rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-5 text-[0.92rem] leading-relaxed text-[var(--sm-egg2)]">
+                      <h3 className="text-[1.15rem] text-[var(--sm-egg)]">Cách xác định trạng thái</h3>
+                      <ul className="mt-1.5 list-disc space-y-1 pl-5">
+                        <li>
+                          <b className="text-[var(--sm-egg)]">Ngày phân phối:</b> chỉ số giảm từ 0,2% với thanh khoản cao hơn phiên trước. Hết tính sau 25 phiên, hoặc khi chỉ số đã vượt giá đóng cửa ngày đó 5%.
+                        </li>
+                        <li>
+                          <b className="text-[var(--sm-egg)]">Phiên xác nhận:</b> sau khi tạo đáy, từ ngày thứ 4 của nhịp hồi có phiên tăng từ 1,5% với thanh khoản cao hơn phiên trước. Thận trọng chuyển sang Tích cực.
+                        </li>
+                        <li>
+                          <b style={{ color: MSTATE[2].text }}>Quan sát</b> khi có từ 4 ngày phân phối hoặc chỉ số dưới MA50; quay lại <b style={{ color: MSTATE[1].text }}>Tích cực</b> khi dưới 4 ngày và trở lại trên MA50.
+                        </li>
+                        <li>
+                          <b style={{ color: MSTATE[3].text }}>Thận trọng</b> khi có từ 6 ngày phân phối hoặc chỉ số thủng đáy thấp nhất 50 phiên trước đó.
+                        </li>
+                      </ul>
+                      <p className="mt-2 text-[0.82rem] text-[var(--sm-mut)]">
+                        Ngưỡng 120% / 80% của thanh khoản chỉ để tham chiếu, không tham gia xác định trạng thái. Phiên tăng/giảm quá 15% của một mã (thường do chia tách, cổ tức) được loại khỏi chỉ số.
+                      </p>
+                    </div>
+                    <div className="rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-5 text-[0.92rem] text-[var(--sm-egg2)]">
+                      <h3 className="text-[1.15rem] text-[var(--sm-egg)]">Các phiên xác nhận gần đây</h3>
+                      <table className="mt-2 w-full text-[0.86rem] tabular-nums">
+                        <thead>
+                          <tr className="border-b border-[var(--sm-line)] text-left text-[0.8rem] text-[var(--sm-mut)]">
+                            <th className="py-1.5 font-normal">Phiên</th>
+                            <th className="py-1.5 text-right font-normal">Chỉ số</th>
+                            <th className="py-1.5 text-right font-normal">Sau 3 tháng</th>
+                            <th className="py-1.5 text-right font-normal">Sau 6 tháng</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {raw!.market!.signals
+                            .slice(-8)
+                            .reverse()
+                            .map((x) => (
+                              <tr key={x.date} className="border-b border-[var(--sm-line2)] last:border-0">
+                                <td className="py-1.5 text-[var(--sm-egg)]">{dmy(x.date)}</td>
+                                <td className="py-1.5 text-right">{vn(x.level, 1)}</td>
+                                <td className={`py-1.5 text-right ${x.after3m == null ? "text-[var(--sm-mut)]" : x.after3m >= 0 ? "up" : "down"}`}>{x.after3m == null ? "chưa đủ" : pctS(x.after3m)}</td>
+                                <td className={`py-1.5 text-right ${x.after6m == null ? "text-[var(--sm-mut)]" : x.after6m >= 0 ? "up" : "down"}`}>{x.after6m == null ? "chưa đủ" : pctS(x.after6m)}</td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
+                      <p className="mt-2 text-[0.82rem] text-[var(--sm-mut)]">
+                        Biến động của chỉ số cân bằng sau 63 và 126 phiên kể từ phiên xác nhận. Số liệu quá khứ, không bảo đảm kết quả tương lai; chỉ để tham khảo, không phải khuyến nghị mua bán.
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
             </section>
 
             {/* VN-Index + giai đoạn */}

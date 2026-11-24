@@ -279,6 +279,16 @@ export interface SectorWaves {
   threshold: number;
   /** tiến độ dựng lịch sử từ năm 2000: số mã đã tính / tổng */
   progress: { done: number; total: number };
+  /** trạng thái thị trường trên chỉ số cân bằng (1 Tích cực · 2 Quan sát · 3 Thận trọng); có thể thiếu ở bản cũ */
+  market?: {
+    index: (number | null)[];
+    ma50: (number | null)[];
+    state: (1 | 2 | 3 | null)[];
+    liq: (number | null)[];
+    signals: { date: string; w: number; level: number; after3m: number | null; after6m: number | null }[];
+    now: { date: string; state: 1 | 2 | 3; since: string; dist: number; liq: number | null; level: number } | null;
+    minStocks: number;
+  };
 }
 
 export async function fetchSectorWaves(): Promise<SectorWaves> {

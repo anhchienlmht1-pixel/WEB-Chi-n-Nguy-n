@@ -66,6 +66,31 @@ export interface SectorWavesResult {
   threshold: number;
   /** tiến độ dựng lịch sử: số mã đã tính / tổng */
   progress: { done: number; total: number };
+  /** trạng thái thị trường trên chỉ số cân bằng của Bull Stock (theo tuần, cùng trục với weeks) */
+  market: MarketState;
+}
+
+/** 1 Tích cực · 2 Quan sát · 3 Thận trọng */
+export type MarketStateCode = 1 | 2 | 3;
+export interface MarketSignal {
+  date: string;
+  /** chỉ số tuần (vị trí trong weeks) */
+  w: number;
+  level: number;
+  /** % thay đổi của chỉ số cân bằng sau 63 / 126 phiên (≈3 / 6 tháng); null nếu chưa đủ phiên */
+  after3m: number | null;
+  after6m: number | null;
+}
+export interface MarketState {
+  index: (number | null)[];
+  ma50: (number | null)[];
+  state: (MarketStateCode | null)[];
+  /** thanh khoản 20 phiên so với trung bình 250 phiên, % */
+  liq: (number | null)[];
+  signals: MarketSignal[];
+  now: { date: string; state: MarketStateCode; since: string; dist: number; liq: number | null; level: number } | null;
+  /** số mã tối thiểu mỗi phiên để tính chỉ số */
+  minStocks: number;
 }
 
 // Trạng thái lưu Blob. codes: mỗi ký tự là một tuần của lịch (cùng độ dài weekKeys):
@@ -78,7 +103,9 @@ interface State {
   weekEnds: string[]; // phiên cuối của tuần (VN-Index)
   vnindex: SectorWavesResult["vnindex"];
   /** tail: 250 giá đóng cửa gần nhất (phiên đã đóng) để tính trạng thái trong phiên; tailDate: ngày phiên cuối */
-  symbols: Record<string, { codes: string; len: number; tail?: number[]; tailDate?: string }>;
+  symbols: Record<string, { codes: string; len: number; tail?: number[]; tailDate?: string; aggUntil?: string }>;
+  /** chỉ số cân bằng, theo ngày: [tổng lợi suất ngày, số mã, tổng giá trị giao dịch, số mã có giá trị] */
+  ew?: Record<string, [number, number, number, number]>;
 }
 
 function dedupeSameDay(points: HistoryPoint[]): HistoryPoint[] {
@@ -230,6 +257,132 @@ async function mapWithConcurrency<T>(items: T[], limit: number, fn: (item: T) =>
   await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
 }
 
+// ----------------------------------------------------------------- chỉ số cân bằng + trạng thái thị trường
+/** Biến động ngày vượt ±15% coi là do chia tách/cổ tức chưa điều chỉnh: bỏ khỏi chỉ số. */
+const MAX_DAILY_MOVE = 0.15;
+const EW_MIN_STOCKS = 30;
+/** Phiên ngày phân phối: chỉ số giảm từ 0,2% với thanh khoản cao hơn phiên trước. */
+const DIST_DROP = -0.002;
+/** Phiên xác nhận: từ ngày thứ 4 của nhịp hồi, chỉ số tăng từ 1,5% với thanh khoản cao hơn phiên trước. */
+const FTD_GAIN = 0.015;
+
+/** Cộng một mã vào tổng theo ngày của chỉ số cân bằng, chỉ các phiên sau `after` (không cộng trùng). */
+function addAgg(st: State, p: HistoryPoint[], after: string | undefined): string | undefined {
+  const ew = (st.ew ??= {});
+  for (let i = 1; i < p.length; i++) {
+    const d = dayOf(p[i]);
+    if (after && d <= after) continue;
+    const r = p[i].close / p[i - 1].close - 1;
+    const e = (ew[d] ??= [0, 0, 0, 0]);
+    if (Number.isFinite(r) && Math.abs(r) <= MAX_DAILY_MOVE) {
+      e[0] = Math.round((e[0] + r) * 1e6) / 1e6;
+      e[1] += 1;
+    }
+    const v = p[i].close * (p[i].volume || 0);
+    if (Number.isFinite(v) && v > 0) {
+      e[2] = Math.round(e[2] + v);
+      e[3] += 1;
+    }
+  }
+  return p.length ? dayOf(p[p.length - 1]) : after;
+}
+
+// Trạng thái thị trường kiểu "M" trong CAN SLIM (William O'Neil), tính trên chỉ số cân bằng:
+//  Thận trọng → Tích cực: có phiên xác nhận (ngày thứ 4 trở đi của nhịp hồi từ đáy, tăng ≥ 1,5%, thanh khoản tăng).
+//  Tích cực → Quan sát: từ 4 ngày phân phối trong 25 phiên, hoặc chỉ số đóng cửa dưới MA50.
+//  Quan sát → Tích cực: ngày phân phối giảm còn dưới 4 và chỉ số trở lại trên MA50.
+//  → Thận trọng: từ 6 ngày phân phối, hoặc chỉ số thủng đáy thấp nhất 50 phiên trước đó.
+//  Ngày phân phối hết hiệu lực sau 25 phiên hoặc khi chỉ số đã cao hơn giá đóng cửa ngày đó 5%.
+export function computeMarket(st: State): MarketState {
+  const ew = st.ew ?? {};
+  const dates = Object.keys(ew)
+    .filter((d) => ew[d][1] >= EW_MIN_STOCKS)
+    .sort();
+  const empty: MarketState = { index: st.weekEnds.map(() => null), ma50: st.weekEnds.map(() => null), state: st.weekEnds.map(() => null), liq: st.weekEnds.map(() => null), signals: [], now: null, minStocks: EW_MIN_STOCKS };
+  if (dates.length < 60) return empty;
+  const N = dates.length;
+  const lvl: number[] = [];
+  const vol: number[] = [];
+  const ret: number[] = [];
+  for (let i = 0; i < N; i++) {
+    const e = ew[dates[i]];
+    const r = e[0] / e[1];
+    ret.push(i === 0 ? 0 : r);
+    lvl.push(i === 0 ? 100 : lvl[i - 1] * (1 + r));
+    vol.push(e[3] > 0 ? e[2] / e[3] : 0);
+  }
+  const ma50 = rollingMean(lvl, 50);
+  const v20 = rollingMean(vol, 20), v250 = rollingMean(vol, 250);
+  const liq = vol.map((_, i) => (v20[i] != null && v250[i] ? Math.round((v20[i]! / v250[i]!) * 1000) / 10 : null));
+  const low50 = rollingExtreme(lvl, 50, false);
+
+  const state: MarketStateCode[] = [];
+  const sigIdx: number[] = [];
+  let s: MarketStateCode = 3;
+  let since = 0;
+  let rallyLow = lvl[0];
+  let rallyStart = -1;
+  let dist: number[] = [];
+  for (let i = 0; i < N; i++) {
+    const up = i > 0 && vol[i] > vol[i - 1];
+    dist = dist.filter((j) => i - j < 25 && lvl[i] < lvl[j] * 1.05);
+    if (i > 0 && ret[i] <= DIST_DROP && up) dist.push(i);
+    let next: MarketStateCode = s;
+    if (s === 3) {
+      if (lvl[i] < rallyLow) {
+        rallyLow = lvl[i];
+        rallyStart = -1;
+      } else if (rallyStart < 0 && ret[i] > 0) rallyStart = i;
+      if (rallyStart >= 0 && i - rallyStart >= 3 && ret[i] >= FTD_GAIN && up) {
+        next = 1;
+        dist = [];
+        sigIdx.push(i);
+      }
+    } else {
+      const prevLow = i > 0 ? low50[i - 1] : lvl[i];
+      const m = ma50[i];
+      if (dist.length >= 6 || lvl[i] < prevLow) {
+        next = 3;
+        rallyLow = lvl[i];
+        rallyStart = -1;
+      } else if (dist.length >= 4 || (m != null && lvl[i] < m)) next = 2;
+      else next = 1;
+    }
+    if (next !== s) since = i;
+    s = next;
+    state.push(s);
+  }
+
+  // lấy mẫu theo tuần: phiên gần nhất không sau ngày cuối tuần
+  const W = st.weekEnds.length;
+  const out: MarketState = { ...empty, index: [], ma50: [], state: [], liq: [] };
+  const wOf: number[] = new Array(N).fill(-1);
+  let j = -1;
+  for (let w = 0; w < W; w++) {
+    while (j + 1 < N && dates[j + 1] <= st.weekEnds[w]) {
+      j++;
+      wOf[j] = w;
+    }
+    const ok = j >= 0 && dates[j] > (w > 0 ? st.weekEnds[w - 1] : "");
+    const r1 = (x: number | null) => (x == null ? null : Math.round(x * 100) / 100);
+    out.index.push(ok ? r1(lvl[j]) : null);
+    out.ma50.push(ok ? r1(ma50[j]) : null);
+    out.state.push(ok ? state[j] : null);
+    out.liq.push(ok ? liq[j] : null);
+  }
+  const pct = (a: number, b: number) => Math.round((b / a - 1) * 1000) / 10;
+  out.signals = sigIdx.map((i) => ({
+    date: dates[i],
+    w: wOf[i] >= 0 ? wOf[i] : W - 1,
+    level: Math.round(lvl[i] * 100) / 100,
+    after3m: i + 63 < N ? pct(lvl[i], lvl[i + 63]) : null,
+    after6m: i + 126 < N ? pct(lvl[i], lvl[i + 126]) : null,
+  }));
+  const L = N - 1;
+  out.now = { date: dates[L], state: state[L], since: dates[since], dist: dist.length, liq: liq[L], level: Math.round(lvl[L] * 100) / 100 };
+  return out;
+}
+
 /** Một lượt: dựng/cập nhật trạng thái trong ngân sách thời gian. Trả về trạng thái mới. */
 async function step(prev: State | null): Promise<State> {
   const t0 = Date.now();
@@ -239,7 +392,7 @@ async function step(prev: State | null): Promise<State> {
   if (idx.sessionDate !== st.sessionDate || idx.weekKeys.length !== st.weekKeys.length) {
     // lịch mới: giữ mã tuần cũ nếu lịch cũ là tiền tố của lịch mới
     const prefixOk = st.weekKeys.every((k, i) => idx.weekKeys[i] === k);
-    st = { ...st, ...idx, symbols: prefixOk ? st.symbols : {} };
+    st = prefixOk ? { ...st, ...idx } : { ...st, ...idx, symbols: {}, ew: {} };
   } else {
     // cùng lịch: vẫn cập nhật VN-Index (quy tắc giai đoạn có thể đã đổi)
     st = { ...st, stageRule: idx.stageRule, vnindex: idx.vnindex };
@@ -247,11 +400,12 @@ async function step(prev: State | null): Promise<State> {
   const W = st.weekKeys.length;
   const universe = STOCK_UNIVERSE.map((s) => s.symbol).filter((s) => SECTOR_OF[s]);
   // ưu tiên: mã chưa có lịch sử (cần MAX), rồi mã cần cập nhật tuần mới
-  const missing = universe.filter((s) => !st.symbols[s]);
-  const stale = universe.filter((s) => st.symbols[s] && (st.symbols[s].len < W || st.symbols[s].codes.length < W));
+  // mã chưa có lịch sử, hoặc chưa góp vào chỉ số cân bằng (trạng thái lưu từ bản cũ) → tải MAX
+  const missing = universe.filter((s) => !st.symbols[s] || !st.symbols[s].aggUntil);
+  const stale = universe.filter((s) => st.symbols[s]?.aggUntil && (st.symbols[s].len < W || st.symbols[s].codes.length < W));
   // tuần cuối có thể chưa trọn (thêm phiên mới trong tuần) → luôn tính lại tuần cuối của phiên mới
   const refreshLast = universe.filter(
-    (s) => st.symbols[s] && !stale.includes(s) && ((prev && prev.sessionDate !== st.sessionDate) || !st.symbols[s].tail),
+    (s) => st.symbols[s]?.aggUntil && !stale.includes(s) && ((prev && prev.sessionDate !== st.sessionDate) || !st.symbols[s].tail),
   );
 
   await mapWithConcurrency(
@@ -260,7 +414,11 @@ async function step(prev: State | null): Promise<State> {
     async (s) => {
       try {
         const p = await closedHistory(s, "MAX");
-        st.symbols[s] = { codes: encodeWeeks(p, st.weekKeys, 0), len: W, ...tailOf(p) };
+        const old = st.symbols[s];
+        // mã đã có từ bản cũ: chỉ bổ sung phần chỉ số cân bằng; chưa có: tính mã tuần
+        const codes = old && old.len >= W ? old.codes : encodeWeeks(p, st.weekKeys, 0);
+        const aggUntil = addAgg(st, p, undefined);
+        st.symbols[s] = { codes, len: W, ...tailOf(p), aggUntil };
       } catch {
         // thử lại ở lượt sau
       }
@@ -276,7 +434,8 @@ async function step(prev: State | null): Promise<State> {
         const from = Math.max(0, Math.min(cur.len, cur.codes.length) - 1);
         const gap = W - from;
         const p = await closedHistory(s, gap > 8 ? "5Y" : "1Y");
-        st.symbols[s] = { codes: cur.codes.slice(0, from) + encodeWeeks(p, st.weekKeys, from), len: W, ...tailOf(p) };
+        const aggUntil = addAgg(st, p, cur.aggUntil);
+        st.symbols[s] = { codes: cur.codes.slice(0, from) + encodeWeeks(p, st.weekKeys, from), len: W, ...tailOf(p), aggUntil };
       } catch {
         /* lượt sau */
       }
@@ -320,7 +479,6 @@ function summarize(st: State): SectorWavesResult {
       leaders,
     });
   }
-  const done = Object.keys(st.symbols).length;
   return {
     sessionDate: st.sessionDate,
     weeks: st.weekEnds,
@@ -328,7 +486,8 @@ function summarize(st: State): SectorWavesResult {
     breadth: allPass.map((p, w) => (allTot[w] >= 10 ? Math.round((p / allTot[w]) * 1000) / 10 : null)),
     sectors: rows,
     threshold: WAVE_THRESHOLD,
-    progress: { done, total: Object.keys(SECTOR_OF).length },
+    progress: { done: Object.values(st.symbols).filter((x) => x.aggUntil).length, total: Object.keys(SECTOR_OF).length },
+    market: computeMarket(st),
   };
 }
 
@@ -360,7 +519,7 @@ function upToDate(s: State, closed: string): boolean {
   const W = s.weekKeys.length;
   const total = Object.keys(SECTOR_OF).length;
   const syms = Object.values(s.symbols);
-  return s.stageRule === STAGE_RULE && s.sessionDate >= closed && syms.length >= total && syms.every((x) => x.len >= W && x.tail);
+  return s.stageRule === STAGE_RULE && s.sessionDate >= closed && syms.length >= total && syms.every((x) => x.len >= W && x.tail && x.aggUntil);
 }
 
 /**
