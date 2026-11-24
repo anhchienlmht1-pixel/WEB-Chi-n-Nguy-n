@@ -72,6 +72,7 @@ export interface SectorWavesResult {
 //  "." chưa đủ dữ liệu · "0" không đạt · "1" đạt · "2" không đạt + đỉnh 52 tuần · "3" đạt + đỉnh 52 tuần
 interface State {
   version: 2;
+  stageRule?: number;
   sessionDate: string;
   weekKeys: string[]; // thứ Hai của tuần
   weekEnds: string[]; // phiên cuối của tuần (VN-Index)
@@ -163,38 +164,51 @@ function encodeWeeks(points: HistoryPoint[], weekKeys: string[], from: number): 
   return out;
 }
 
+/** MA150 thay đổi dưới ±1% trong 20 phiên coi là đi ngang. */
+const STAGE_FLAT = 0.01;
+/** Đổi số này khi đổi quy tắc giai đoạn để trạng thái đã lưu được tính lại. */
+const STAGE_RULE = 2;
+
 const tailOf = (p: HistoryPoint[]) => ({
   tail: p.slice(-250).map((x) => Math.round(x.close * 1000) / 1000),
   tailDate: p.length ? dayOf(p[p.length - 1]) : undefined,
 });
 
-async function buildIndex(): Promise<Pick<State, "sessionDate" | "weekKeys" | "weekEnds" | "vnindex">> {
+async function buildIndex(): Promise<Pick<State, "stageRule" | "sessionDate" | "weekKeys" | "weekEnds" | "vnindex">> {
   const v = await closedHistory("VNINDEX", "MAX");
   if (v.length < 260) throw new Error("Không đủ dữ liệu VN-Index để tính sóng ngành");
   const vc = v.map((p) => p.close);
   const vd = v.map(dayOf);
   const v50 = rollingMean(vc, 50), v150 = rollingMean(vc, 150), v200 = rollingMean(vc, 200);
+  // Giai đoạn theo Weinstein, lấy độ dốc MA150 (20 phiên) làm chính:
+  //  MA150 đi lên (> +1%)            → 2 Tăng (kể cả khi giá điều chỉnh xuống dưới MA150)
+  //  MA150 đi xuống (< −1%), giá < MA150 → 4 Giảm; giá > MA150 → 1 (hồi phục, bắt đầu tích lũy)
+  //  MA150 đi ngang (±1%)            → 3 Phân phối nếu trước đó là xu hướng tăng, 1 Tích lũy nếu trước đó giảm
   const stageDaily: (1 | 2 | 3 | 4 | null)[] = [];
-  let lastDef: 2 | 4 | null = null;
+  let regime: 2 | 4 | null = null;
   for (let i = 0; i < vc.length; i++) {
-    const a = v50[i], b = v150[i], b20 = i >= 20 ? v150[i - 20] : null;
-    if (a == null || b == null || b20 == null) {
+    const b = v150[i], b20 = i >= 20 ? v150[i - 20] : null;
+    if (b == null || b20 == null) {
       stageDaily.push(null);
       continue;
     }
-    if (vc[i] > b && b > b20 && a > b) lastDef = 2;
-    else if (vc[i] < b && b < b20 && a < b) lastDef = 4;
-    else {
-      stageDaily.push(lastDef === 2 ? 3 : 1);
-      continue;
+    const slope = (b - b20) / b20;
+    if (slope > STAGE_FLAT) {
+      regime = 2;
+      stageDaily.push(2);
+    } else if (slope < -STAGE_FLAT) {
+      regime = 4;
+      stageDaily.push(vc[i] < b ? 4 : 1);
+    } else {
+      stageDaily.push(regime === 2 ? 3 : 1);
     }
-    stageDaily.push(lastDef);
   }
   const idx: number[] = [];
   // lịch tuần từ năm 2000 (HOSE mở cửa 7/2000)
   for (let i = 0; i < vd.length; i++) if (vd[i] >= "2000-01-01" && (i === vd.length - 1 || weekKey(vd[i + 1]) !== weekKey(vd[i]))) idx.push(i);
   const r2 = (x: number | null) => (x == null ? null : Math.round(x * 100) / 100);
   return {
+    stageRule: STAGE_RULE,
     sessionDate: vd[vd.length - 1],
     weekKeys: idx.map((i) => weekKey(vd[i])),
     weekEnds: idx.map((i) => vd[i]),
@@ -226,6 +240,9 @@ async function step(prev: State | null): Promise<State> {
     // lịch mới: giữ mã tuần cũ nếu lịch cũ là tiền tố của lịch mới
     const prefixOk = st.weekKeys.every((k, i) => idx.weekKeys[i] === k);
     st = { ...st, ...idx, symbols: prefixOk ? st.symbols : {} };
+  } else {
+    // cùng lịch: vẫn cập nhật VN-Index (quy tắc giai đoạn có thể đã đổi)
+    st = { ...st, stageRule: idx.stageRule, vnindex: idx.vnindex };
   }
   const W = st.weekKeys.length;
   const universe = STOCK_UNIVERSE.map((s) => s.symbol).filter((s) => SECTOR_OF[s]);
@@ -343,7 +360,7 @@ function upToDate(s: State, closed: string): boolean {
   const W = s.weekKeys.length;
   const total = Object.keys(SECTOR_OF).length;
   const syms = Object.values(s.symbols);
-  return s.sessionDate >= closed && syms.length >= total && syms.every((x) => x.len >= W && x.tail);
+  return s.stageRule === STAGE_RULE && s.sessionDate >= closed && syms.length >= total && syms.every((x) => x.len >= W && x.tail);
 }
 
 /**

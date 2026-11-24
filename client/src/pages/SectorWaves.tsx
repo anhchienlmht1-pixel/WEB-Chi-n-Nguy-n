@@ -8,11 +8,35 @@ import { fetchSectorWaves, fetchSectorWavesLive, type SectorWaves, type SectorWa
 //  - Mỗi tuần, mỗi ngành: % số mã đạt Trend Template. Ngành có từ 50% trở lên
 //    là "đang có sóng". Bản đồ nhiệt cho thấy sóng xuất hiện, lan và tắt ra sao.
 
-const STAGE: Record<1 | 2 | 3 | 4, { label: string; short: string; fill: string; text: string }> = {
-  1: { label: "Giai đoạn 1 · Tích lũy", short: "Tích lũy", fill: "rgba(160,160,140,0.10)", text: "var(--sm-mut)" },
-  2: { label: "Giai đoạn 2 · Xu hướng tăng", short: "Tăng", fill: "rgba(79,209,139,0.12)", text: "var(--sm-up)" },
-  3: { label: "Giai đoạn 3 · Phân phối", short: "Phân phối", fill: "rgba(230,190,90,0.14)", text: "#c58a1c" },
-  4: { label: "Giai đoạn 4 · Xu hướng giảm", short: "Giảm", fill: "rgba(255,107,94,0.10)", text: "var(--sm-dn)" },
+const STAGE: Record<1 | 2 | 3 | 4, { label: string; short: string; fill: string; text: string; what: string }> = {
+  1: {
+    label: "Giai đoạn 1 · Tích lũy",
+    short: "Tích lũy",
+    fill: "rgba(160,160,140,0.10)",
+    text: "var(--sm-mut)",
+    what: "Sau đợt giảm, MA150 đi ngang (hoặc còn dốc xuống nhưng giá đã hồi lên trên MA150): bên bán yếu dần, chờ xác nhận xu hướng mới.",
+  },
+  2: {
+    label: "Giai đoạn 2 · Xu hướng tăng",
+    short: "Tăng",
+    fill: "rgba(79,209,139,0.12)",
+    text: "var(--sm-up)",
+    what: "MA150 đi lên: xu hướng tăng, kể cả các nhịp điều chỉnh xuống dưới MA150. Minervini chỉ mua ở giai đoạn này.",
+  },
+  3: {
+    label: "Giai đoạn 3 · Phân phối",
+    short: "Phân phối",
+    fill: "rgba(230,190,90,0.14)",
+    text: "#c58a1c",
+    what: "Sau xu hướng tăng, MA150 chững lại đi ngang: giá giằng co trên cao, có thể gãy xuống hoặc vượt lên tiếp.",
+  },
+  4: {
+    label: "Giai đoạn 4 · Xu hướng giảm",
+    short: "Giảm",
+    fill: "rgba(255,107,94,0.10)",
+    text: "var(--sm-dn)",
+    what: "MA150 đi xuống và giá nằm dưới MA150: xu hướng giảm, ưu tiên bảo toàn vốn.",
+  },
 };
 
 const vn = (n: number, d = 0) => n.toLocaleString("vi-VN", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -260,12 +284,12 @@ export default function SectorWavesPage() {
                   <h2 className="text-[1.6rem] leading-tight">VN-Index và giai đoạn thị trường</h2>
                   <p className="mt-1 text-[0.92rem] text-[var(--sm-egg2)]">
                     {range === "all" ? "Mỗi điểm một tháng" : "Mỗi điểm một tuần"}, {my(d.weeks[0])} – {my(d.weeks[view.last])}
-                    {range === "all" ? " (thang logarit)" : ""}. Nền màu là giai đoạn: xét giá so với MA150 và độ dốc MA150, MA50 so với MA150.
+                    {range === "all" ? " (thang logarit)" : ""}. Nền màu là giai đoạn, xét theo độ dốc MA150 trong 20 phiên: đi lên là Tăng (kể cả nhịp điều chỉnh xuống dưới MA150), đi xuống và giá dưới MA150 là Giảm, đi ngang là Phân phối nếu trước đó tăng hoặc Tích lũy nếu trước đó giảm.
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-[0.8rem] text-[var(--sm-egg2)]">
                   {([1, 2, 3, 4] as const).map((s) => (
-                    <span key={s} className="flex items-center gap-1.5">
+                    <span key={s} className="flex cursor-help items-center gap-1.5" title={STAGE[s].what}>
                       <i className="inline-block h-3 w-4 rounded-sm border border-[var(--sm-line)]" style={{ background: STAGE[s].fill.replace(/0\.1\d?\)/, "0.45)") }} />
                       {STAGE[s].short}
                     </span>
@@ -426,6 +450,22 @@ export default function SectorWavesPage() {
 
             {/* Cách đọc */}
             <section aria-label="Cách đọc" className="mt-10 grid gap-4 md:grid-cols-2">
+              <div className="rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-5 text-[0.92rem] leading-relaxed text-[var(--sm-egg2)] md:col-span-2">
+                <h3 className="text-[1.15rem] text-[var(--sm-egg)]">4 giai đoạn của thị trường</h3>
+                <ul className="mt-2 grid gap-x-6 gap-y-2 sm:grid-cols-2 lg:grid-cols-4">
+                  {([1, 2, 3, 4] as const).map((k) => (
+                    <li key={k} className="flex gap-2">
+                      <i className="mt-1 inline-block h-3 w-3 shrink-0 rounded-sm border border-[var(--sm-line)]" style={{ background: STAGE[k].fill.replace(/0\.1\d?\)/, "0.5)") }} />
+                      <span>
+                        <b style={{ color: STAGE[k].text }}>{STAGE[k].label}.</b> {STAGE[k].what}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-2 text-[0.82rem] text-[var(--sm-mut)]">
+                  Chu kỳ đi theo thứ tự 1 → 2 → 3 → 4. Giai đoạn được xác định tại thời điểm đó, không nhìn lại sau: một vùng Phân phối vẫn có thể vượt lên quay lại Tăng.
+                </p>
+              </div>
               <div className="rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-5 text-[0.92rem] leading-relaxed text-[var(--sm-egg2)]">
                 <h3 className="text-[1.15rem] text-[var(--sm-egg)]">Trend Template là gì</h3>
                 <p className="mt-1.5">Bộ lọc xu hướng của Mark Minervini. Một mã đạt khi đủ cả:</p>
