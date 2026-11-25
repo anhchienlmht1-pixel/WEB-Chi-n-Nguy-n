@@ -33,6 +33,8 @@ export interface SecRow {
   v: Record<SecMetric, number | null>;
   /** cùng kỳ năm trước */
   p: Record<SecMetric, number | null>;
+  /** chỉ số tạm tính do thiếu số liệu gốc (vd. tăng trưởng margin theo tổng cho vay) */
+  est?: SecMetric[];
 }
 
 export interface SecScale {

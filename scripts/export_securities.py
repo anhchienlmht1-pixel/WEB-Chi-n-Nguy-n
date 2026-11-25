@@ -65,6 +65,7 @@ def main(path):
     def metrics(s):
         d = raw[s]
         z = lambda k, i: d[k][i] if d[k][i] is not None else 0.0
+        est = {}  # quý -> các chỉ số tạm tính (ước tính)
         out = {k: [None] * nq for k in [
             "roe", "roa", "pbtMargin", "grossMargin", "brokerMargin", "brokerShare", "takeRate",
             "marginYield", "fundingCost", "spread", "marginGrowth", "marginToEq", "propToEq",
@@ -103,8 +104,13 @@ def main(path):
             o["fundingCost"][i] = fc * 4 if fc is not None else None
             if my is not None and fc is not None:
                 o["spread"][i] = (my - fc) * 4
-            if i and d["margin"][i - 1]:
-                o["marginGrowth"][i] = div(d["margin"][i], d["margin"][i - 1]) - 1 if d["margin"][i] is not None else None
+            if i and d["margin"][i - 1] and d["margin"][i] is not None:
+                o["marginGrowth"][i] = div(d["margin"][i], d["margin"][i - 1]) - 1
+            elif i and d["loans"][i - 1] and d["loans"][i] is not None and (d["margin"][i] is None or not d["margin"][i - 1]):
+                # Thiếu dư nợ margin (thuyết minh chưa có): tạm tính theo tổng cho vay
+                # (margin + ứng trước), đánh dấu là ước tính.
+                o["marginGrowth"][i] = div(d["loans"][i], d["loans"][i - 1]) - 1
+                est.setdefault(i, set()).add("marginGrowth")
             o["marginToEq"][i] = div(d["loans"][i], eq)
             o["propToEq"][i] = div(prop, eq)
             o["propToAssets"][i] = div(prop, tts)
@@ -117,6 +123,7 @@ def main(path):
                     o["pbtYoy"][i] = (d["pbt"][i] - d["pbt"][i - 4]) / abs(d["pbt"][i - 4])
             sh = d["shares"][i]
             o["bvps"][i] = div(eq, sh) if sh else None  # nghìn đồng/cp? (eq tỷ / cp tỷ) = đồng
+        out["_est"] = est
         return out
 
     M = {s: metrics(s) for s in SYMS}
@@ -142,6 +149,7 @@ def main(path):
             "group": GROUP[s],
             "v": {k: val(s, k, li) for k in table_keys},
             "p": {k: val(s, k, yi) for k in table_keys},
+            **({"est": sorted(M[s]["_est"][li])} if li in M[s]["_est"] else {}),
         })
 
     def r2(x):

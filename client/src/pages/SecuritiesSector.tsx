@@ -160,7 +160,7 @@ function OverviewTab({ d, group }: { d: SecSector; group: SecGroupFilter }) {
             <b>Nhóm</b> theo file tổng hợp: <b>Cho vay margin</b> (thu nhập chính từ cho vay ký quỹ) và <b>Tự doanh</b> (thu nhập chính từ đầu tư). LPS, KAI chưa được xếp nhóm trong file nên để ở "Khác".
           </li>
           <li className="text-[var(--ab-muted)] md:col-span-2">
-            ROE, lãi suất margin, chi phí vốn vay đã quy năm (số quý × 4). Chênh lệch margin = lãi suất margin − chi phí vốn vay. Ô "—" là CTCK không phát sinh khoản đó
+            ROE, lãi suất margin, chi phí vốn vay đã quy năm (số quý × 4). Chênh lệch margin = lãi suất margin − chi phí vốn vay. Ô có dấu "≈" ở cột tăng trưởng margin là ước tính theo tổng cho vay vì báo cáo chưa có dư nợ margin. Ô "—" là CTCK không phát sinh hoặc chưa công bố khoản đó
             (vd. không hạch toán chi phí lãi vay riêng). Rê chuột vào ô để xem trung bình ngành và số cùng kỳ. Nguồn: báo cáo tài chính {P}. Chỉ để tham khảo, không phải
             khuyến nghị mua bán.
           </li>
@@ -245,9 +245,11 @@ function Cell({ m, r, st }: { m: Metric; r: SecRow; st: { m: number; sd: number 
   const arrow = d == null || Math.abs(d) < 1e-9 ? "" : d > 0 ? "▲" : "▼";
   const arrowColor = m.dir === 0 ? "var(--ab-muted)" : m.dir * (d ?? 0) > 0 ? "var(--heat-up)" : "var(--heat-down)";
   const unit = m.unit === "%" ? "%" : " lần";
-  const title = `TB ngành: ${vn(st.m, m.digits)}${unit}${p != null && !m.growth ? ` · cùng kỳ: ${vn(p, m.digits)}${unit}` : ""}`;
+  const est = r.est?.includes(m.key);
+  const title = `${est ? "Ước tính theo tổng cho vay (margin + ứng trước) vì chưa có dư nợ margin trong báo cáo. " : ""}TB ngành: ${vn(st.m, m.digits)}${unit}${p != null && !m.growth ? ` · cùng kỳ: ${vn(p, m.digits)}${unit}` : ""}`;
   return (
     <td title={title} className="px-1.5 py-1.5 text-center tabular-nums" style={style}>
+      {est && <span className="mr-px opacity-70">≈</span>}
       {vn(v, m.digits)}
       {arrow && (
         <span aria-hidden="true" className="ml-1 text-[0.6rem] opacity-80" style={{ color: arrowColor }}>
