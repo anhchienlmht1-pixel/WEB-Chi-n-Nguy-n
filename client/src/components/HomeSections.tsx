@@ -204,17 +204,17 @@ export function HomePillars() {
               <Link
                 key={it.title}
                 to={it.to}
-                className={`group relative flex min-w-0 flex-col overflow-hidden rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-5 ${it.logos ? "min-h-[270px]" : ""}`}
+                className={`group relative flex min-w-0 flex-col overflow-hidden rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-5 ${it.logos ? "min-h-[240px]" : ""}`}
               >
                 <i className="absolute inset-x-0 top-0 h-[3px]" style={{ background: p.accent }} aria-hidden="true" />
                 {it.logos && (
-                  // logo các doanh nghiệp tiêu biểu, mờ phía sau nội dung
+                  // logo các doanh nghiệp tiêu biểu, mờ phía sau toàn bộ nội dung thẻ
                   <span
                     aria-hidden="true"
-                    className="pointer-events-none absolute right-2 bottom-3 grid rotate-[-6deg] grid-cols-3 gap-x-5 gap-y-3 opacity-[0.16] grayscale transition-[opacity,filter] duration-300 group-hover:opacity-[0.28] group-hover:grayscale-[0.4]"
+                    className="pointer-events-none absolute inset-0 grid grid-cols-3 content-center place-items-center gap-y-8 px-4 opacity-[0.11] grayscale transition-[opacity,filter] duration-300 group-hover:opacity-[0.2] group-hover:grayscale-[0.3]"
                   >
                     {it.logos.map((sym) => (
-                      <CompanyLogo key={sym} symbol={sym} size={34} width={70} fallback="space" />
+                      <CompanyLogo key={sym} symbol={sym} size={44} width={92} fallback="space" />
                     ))}
                   </span>
                 )}
