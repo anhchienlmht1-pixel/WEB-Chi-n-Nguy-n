@@ -76,25 +76,24 @@ export default function TrendSignals() {
         {/* 3. Biểu đồ | Danh mục, nhật ký, sổ lệnh */}
         <section ref={chartRef} id="danh-muc" aria-label="Biểu đồ và danh mục" className="mt-10 scroll-mt-28">
           <span id="nhat-ky" className="block scroll-mt-28" aria-hidden="true" />
-          <div className="grid items-stretch gap-4 lg:grid-cols-12">
-            <div className="flex min-w-0 flex-col gap-2 lg:col-span-8">
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h2 className="text-[1.5rem] leading-tight text-[var(--sm-egg)]">Biểu đồ {chartSymbol}</h2>
-                {chartSymbol !== "VNINDEX" && (
-                  <Link to={`/stock/${chartSymbol}`} className="text-[0.92rem] font-semibold text-[var(--sm-gold2)] hover:underline">
-                    Thông tin cơ bản của {chartSymbol}
-                  </Link>
-                )}
-              </div>
-              <div className="min-h-0 flex-1">
-                <KLinePanel symbol={chartSymbol} height={560} fill />
-              </div>
-              <p className="text-[0.8rem] text-[var(--sm-mut)]">Tam giác xanh là điểm mua, đỏ là điểm đóng lệnh của hệ thống. Bấm mã ở cột phải để đổi biểu đồ.</p>
+          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="text-[1.5rem] leading-tight text-[var(--sm-egg)]">Biểu đồ {chartSymbol}</h2>
+            {chartSymbol !== "VNINDEX" && (
+              <Link to={`/stock/${chartSymbol}`} className="text-[0.92rem] font-semibold text-[var(--sm-gold2)] hover:underline">
+                Thông tin cơ bản của {chartSymbol}
+              </Link>
+            )}
+          </div>
+          {/* biểu đồ và cột phải cùng mép trên, cùng chiều cao */}
+          <div className="grid items-stretch gap-4 lg:h-[760px] lg:grid-cols-12">
+            <div className="min-h-[480px] min-w-0 lg:col-span-8 lg:min-h-0">
+              <KLinePanel symbol={chartSymbol} height={560} fill />
             </div>
-            <div className="min-w-0 lg:col-span-4">
+            <div className="min-w-0 lg:col-span-4 lg:min-h-0">
               <SignalSidePanel scan={scan} journal={journal} symbol={chartSymbol} onPick={pick} />
             </div>
           </div>
+          <p className="mt-2 text-[0.8rem] text-[var(--sm-mut)]">Tam giác xanh là điểm mua, đỏ là điểm đóng lệnh của hệ thống. Bấm mã ở cột phải để đổi biểu đồ.</p>
         </section>
 
         {/* 5. Phương pháp */}

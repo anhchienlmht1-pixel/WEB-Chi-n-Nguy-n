@@ -41,7 +41,7 @@ export default function SignalSidePanel({
   ];
 
   return (
-    <div className="flex min-w-0 flex-col overflow-hidden rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] lg:h-[760px]">
+    <div className="flex min-w-0 flex-col overflow-hidden rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] max-lg:h-[640px] lg:h-full">
       <div role="tablist" aria-label="Tín hiệu" className="flex shrink-0 border-b border-[var(--sm-line)]">
         {tabs.map((x) => (
           <button
