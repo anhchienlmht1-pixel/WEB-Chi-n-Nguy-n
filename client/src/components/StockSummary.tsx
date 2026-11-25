@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import Flash from "./Flash";
+import OrderBookPanel from "./OrderBookPanel";
 import AnimatedNumber from "./AnimatedNumber";
 import { usePolling } from "../hooks/usePolling";
 import { useMemo, useState } from "react";
@@ -429,6 +430,7 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
           )}
         </div>
       </div>
+      {!isIndexOrFutures && <OrderBookPanel symbol={symbol} fmt={fmt} />}
     </div>
   );
 }

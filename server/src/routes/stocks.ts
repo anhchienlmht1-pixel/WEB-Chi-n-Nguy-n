@@ -6,6 +6,7 @@ import { HistoryRange, Quote } from "../providers/types.js";
 import { KbsPeriodType, KbsReportType } from "../providers/kbsFinancials.js";
 import { fetchFinancialReport } from "../providers/financials.js";
 import { getQuoteWithFallback, getHistoryWithFallback, getMarketOverviewWithFallback } from "../providers/fallback.js";
+import { getVpsOrderBook, getVpsTrades } from "../providers/vpsProvider.js";
 import { fetchInvestmentOutlook } from "../providers/googleSheet.js";
 import { fetchNewsForSymbol } from "../news/cafefNews.js";
 import { getCompanyProfileWithFallback } from "../providers/companyProfileFallback.js";
@@ -96,7 +97,7 @@ function edgeCache(res: Response, sMaxAge: number, staleWhileRevalidate: number)
 // so the shape/source match what getQuoteWithFallback would have returned.
 function quoteFromOverview(symbol: string, preferSource?: string): { quote: Quote; source: string } | undefined {
   const overview = cache.get<{ quotes: Quote[]; source: string }>("overview");
-  if (!overview || overview.source !== (preferSource ?? getProvider().id)) return undefined;
+  if (!overview || (overview.source !== (preferSource ?? getProvider().id) && overview.source !== "vps")) return undefined;
   const quote = overview.quotes.find((q) => q.symbol === symbol);
   return quote ? { quote, source: overview.source } : undefined;
 }
@@ -108,8 +109,8 @@ function asyncHandler(fn: (req: Request, res: Response) => Promise<void>) {
 router.get(
   "/market/overview",
   asyncHandler(async (_req, res) => {
-    const { quotes, source } = await cached("overview", 30, () => getMarketOverviewWithFallback());
-    edgeCache(res, 10, 20);
+    const { quotes, source } = await cached("overview", 5, () => getMarketOverviewWithFallback());
+    edgeCache(res, 3, 10);
     res.json({ provider: source, quotes });
   })
 );
@@ -155,9 +156,29 @@ router.get(
     }
     const { quote, source } =
       quoteFromOverview(symbol, preferSource) ??
-      (await cached(`quote:${symbol}:${preferSource ?? ""}`, 20, () => getQuoteWithFallback(symbol, preferSource)));
-    edgeCache(res, 10, 10);
+      (await cached(`quote:${symbol}:${preferSource ?? ""}`, 5, () => getQuoteWithFallback(symbol, preferSource)));
+    edgeCache(res, 3, 10);
     res.json({ ...quote, source, sector: SECTOR_MAP[symbol] ?? null });
+  })
+);
+
+// Bước giá 3 mức và lệnh khớp trong phiên (datafeed bảng giá VPS, đệm vài giây)
+router.get(
+  "/orderbook/:symbol",
+  asyncHandler(async (req, res) => {
+    const symbol = String(req.params.symbol).toUpperCase();
+    const book = await cached(`orderbook:${symbol}`, 3, () => getVpsOrderBook(symbol));
+    edgeCache(res, 2, 5);
+    res.json(book);
+  })
+);
+router.get(
+  "/trades/:symbol",
+  asyncHandler(async (req, res) => {
+    const symbol = String(req.params.symbol).toUpperCase();
+    const trades = await cached(`trades:${symbol}`, 3, () => getVpsTrades(symbol, 60));
+    edgeCache(res, 2, 5);
+    res.json({ symbol, trades });
   })
 );
 

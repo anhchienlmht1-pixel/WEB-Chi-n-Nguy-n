@@ -8,10 +8,12 @@ import { vndirectProvider } from "./vndirectProvider.js";
 import { yahooProvider } from "./yahooProvider.js";
 import { alphaVantageProvider } from "./alphaVantageProvider.js";
 import { finnhubProvider } from "./finnhubProvider.js";
+import { vpsProvider } from "./vpsProvider.js";
 
 const PROVIDERS: Record<string, StockProvider> = {
   mock: mockProvider,
   kbs: kbsMarketProvider,
+  vps: vpsProvider,
   vnstock: vnstockProvider,
   tradingview: tradingviewProvider,
   fireant: fireantProvider,

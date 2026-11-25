@@ -3,6 +3,7 @@ import { kbsMarketProvider } from "./kbsMarketProvider.js";
 import { vndirectProvider } from "./vndirectProvider.js";
 import { vnstockProvider } from "./vnstockProvider.js";
 import { topTradedOf } from "./topTraded.js";
+import { vpsProvider } from "./vpsProvider.js";
 import type { HistoryPoint, HistoryRange, Quote, TopExchange, TopTradedItem } from "./types.js";
 
 // Financials already has a multi-source fallback (financials.ts: vndirect/
@@ -21,6 +22,14 @@ const FALLBACK_PROVIDERS: StockProvider[] = [kbsMarketProvider, vndirectProvider
 // providers for the same symbol in the same view (a stale/inconsistent
 // quote-vs-chart mismatch), same failure mode as manually combining two
 // sources' data — this just avoids it happening implicitly across requests.
+// Giá thời gian thực (quote, bảng giá): VPS đứng đầu, trừ khi chạy dữ liệu giả lập
+// hoặc VPS_REALTIME=0. VPS lỗi/chặn thì chuỗi tự chuyển sang nguồn kế tiếp.
+function realtimeProviders(preferSource?: string): StockProvider[] {
+  const base = orderedProviders(preferSource);
+  if (process.env.VPS_REALTIME === "0" || getProvider().id === "mock") return base;
+  return [vpsProvider, ...base.filter((p) => p.id !== "vps")];
+}
+
 function orderedProviders(preferSource?: string): StockProvider[] {
   const primary = getProvider();
   const rest = FALLBACK_PROVIDERS.filter((p) => p.id !== primary.id);
@@ -102,7 +111,7 @@ function firstSuccess<T>(
 
 export async function getQuoteWithFallback(symbol: string, preferSource?: string): Promise<QuoteWithSource> {
   try {
-    const { value, source } = await firstSuccess(orderedProviders(preferSource), (p) => p.getQuote(symbol));
+    const { value, source } = await firstSuccess(realtimeProviders(preferSource), (p) => p.getQuote(symbol));
     return { quote: value, source };
   } catch (err) {
     throw Object.assign(new Error(`Tất cả nguồn giá đều lỗi cho ${symbol}. ${errorMessage(err)}`), {
@@ -143,7 +152,7 @@ export interface MarketOverviewWithSource {
 // per-symbol detail view tend to agree on which source answered.
 export async function getMarketOverviewWithFallback(): Promise<MarketOverviewWithSource> {
   const errors: string[] = [];
-  for (const provider of orderedProviders()) {
+  for (const provider of realtimeProviders()) {
     try {
       const quotes = await provider.getMarketOverview();
       if (quotes.length > 0) return { quotes, source: provider.id };

@@ -306,3 +306,29 @@ export async function fetchSectorWavesLive(): Promise<SectorWavesLive> {
   const { data } = await api.get("/sector-waves/live");
   return data;
 }
+
+/** Bước giá 3 mức (giá nghìn đồng, khối lượng cổ phiếu) — datafeed bảng giá VPS. */
+export interface OrderBook {
+  symbol: string;
+  ceiling: number | null;
+  floor: number | null;
+  ref: number | null;
+  bids: { price: number; volume: number }[];
+  asks: { price: number; volume: number }[];
+  updatedAt: string;
+}
+export async function fetchOrderBook(symbol: string): Promise<OrderBook> {
+  const { data } = await api.get(`/orderbook/${encodeURIComponent(symbol)}`);
+  return data;
+}
+export interface MatchedTrade {
+  time: string;
+  price: number;
+  volume: number;
+  side: "B" | "S" | "";
+  change: number;
+}
+export async function fetchTrades(symbol: string): Promise<{ symbol: string; trades: MatchedTrade[] }> {
+  const { data } = await api.get(`/trades/${encodeURIComponent(symbol)}`);
+  return data;
+}
