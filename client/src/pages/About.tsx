@@ -1,12 +1,11 @@
 import { Link } from "react-router-dom";
 import HeroSignals from "../components/HeroSignals";
 import PriceBoard from "../components/PriceBoardBg";
-import { AdvisorAndAccount, HomePillars, MethodSteps, SectionHead } from "../components/HomeSections";
+import { AdvisorAndAccount, HomePillars, SectionHead } from "../components/HomeSections";
 
 // Trang Giới thiệu (trang chủ) — bố cục trang giới thiệu sản phẩm:
 //  1. Mở đầu: thông điệp + 2 nút hành động, bên phải là "hôm nay" (chỉ số + phiên vừa chốt)
 //  2. Dữ liệu → Sóng ngành → Tín hiệu: mỗi mảng một thông điệp và 3 thẻ dẫn sang trang chi tiết
-//  4. Phương pháp: 3 bước
 //  5. Người phụ trách + mở tài khoản
 export default function About() {
 
@@ -59,12 +58,6 @@ export default function About() {
         <div className="pt-6">
           <HomePillars />
         </div>
-
-        {/* 4. Phương pháp */}
-        <section aria-label="Phương pháp" className="pt-16">
-          <SectionHead title="Hệ thống chọn mã thế nào" lead="Một quy trình cố định, chạy giống nhau cho mọi mã, không phụ thuộc cảm xúc." />
-          <MethodSteps />
-        </section>
 
         {/* 5. Người phụ trách + mở tài khoản */}
         <section aria-label="Liên hệ" className="pt-16">
