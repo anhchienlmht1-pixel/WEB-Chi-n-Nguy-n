@@ -59,12 +59,12 @@
   --color-orange-900: #7a4220;
   --color-orange-950: #4f2b15;
 
-  /* Small, even corners everywhere. */
-  --radius-sm: 3px;
-  --radius-md: 4px;
-  --radius-lg: 4px;
-  --radius-xl: 6px;
-  --radius-2xl: 6px;
+  /* Bo góc mềm, đồng đều: thẻ 10px, khung lớn 14px. */
+  --radius-sm: 4px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+  --radius-2xl: 18px;
 }
 
 /* Page tokens (used as bg-paper / text-ink / bg-band / bg-mid / text-quiet…):
@@ -550,13 +550,64 @@ html.theme-dark body { background: transparent; }
 /* Nút vàng son */
 .sm-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  min-height: 44px; padding: 0 20px; border-radius: 2px; font-weight: 600;
+  min-height: 44px; padding: 0 20px; border-radius: 10px; font-weight: 600;
   border: 1px solid var(--sm-gold); color: var(--sm-gold2); background: transparent;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color var(--motion-200) ease, color var(--motion-200) ease, box-shadow var(--motion-200) ease, transform var(--motion-150) var(--ease-out);
 }
-.sm-btn:hover { background: rgba(201, 162, 74, 0.12); }
-.sm-btn-p { background: var(--sm-gold); color: #1b1608; }
-.sm-btn-p:hover { background: var(--sm-gold2); }
+.sm-btn:hover { background: rgba(201, 162, 74, 0.12); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(31, 43, 29, 0.10); }
+.sm-btn:active { transform: translateY(0) scale(0.98); box-shadow: none; }
+.sm-btn-p {
+  background: var(--sm-gold); color: #1b1608;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 1px 2px rgba(31, 43, 29, 0.12);
+}
+.sm-btn-p:hover { background: var(--sm-gold2); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 6px 18px rgba(201, 162, 74, 0.32); }
+
+/* Khung, thẻ: bóng rất nhẹ để tách khỏi nền */
+.rounded-md.border, .rounded-lg.border, .rounded-xl.border {
+  box-shadow: 0 1px 2px rgba(31, 43, 29, 0.04), 0 8px 24px -12px rgba(31, 43, 29, 0.10);
+}
+.theme-dark .rounded-md.border, .theme-dark .rounded-lg.border, .theme-dark .rounded-xl.border {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25), 0 10px 28px -14px rgba(0, 0, 0, 0.55);
+}
+/* Thẻ bấm được (liên kết dạng thẻ): nhấc nhẹ, viền vàng khi rê chuột */
+a.rounded-md.border, a.rounded-lg.border {
+  transition: transform var(--motion-200) var(--ease-out), box-shadow var(--motion-200) ease, border-color var(--motion-200) ease;
+}
+a.rounded-md.border:hover, a.rounded-lg.border:hover {
+  transform: translateY(-2px);
+  border-color: rgba(201, 162, 74, 0.75);
+  box-shadow: 0 2px 4px rgba(31, 43, 29, 0.05), 0 16px 32px -14px rgba(31, 43, 29, 0.22);
+}
+a.rounded-md.border:active, a.rounded-lg.border:active { transform: translateY(0); }
+
+/* Nút nói chung: đổi màu mượt, nhấn có cảm giác */
+button:not(:disabled) {
+  transition: background-color var(--motion-150) ease, color var(--motion-150) ease, box-shadow var(--motion-150) ease, transform var(--motion-100) var(--ease-out), opacity var(--motion-150) ease;
+}
+button:not(:disabled):active { transform: scale(0.97); }
+button[aria-pressed="true"] { box-shadow: 0 1px 2px rgba(31, 43, 29, 0.12), 0 0 0 1px rgba(201, 162, 74, 0.35); }
+
+/* Ô nhập: viền vàng mềm khi đang gõ */
+input[type="text"], input[type="search"], input:not([type]) {
+  transition: border-color var(--motion-150) ease, box-shadow var(--motion-150) ease;
+}
+input[type="text"]:focus, input[type="search"]:focus, input:not([type]):focus {
+  border-color: var(--sm-gold);
+  box-shadow: 0 0 0 3px rgba(201, 162, 74, 0.22);
+  outline: none;
+}
+
+/* Bảng số liệu: tô nhẹ dòng đang rê chuột (không đè màu sẵn có của ô) */
+tbody tr > td { transition: background-image var(--motion-100) ease; }
+tbody tr:hover > td { background-image: linear-gradient(rgba(201, 162, 74, 0.07), rgba(201, 162, 74, 0.07)); }
+
+/* Chú thích biểu đồ (recharts): bo góc, mờ nền phía sau */
+.recharts-tooltip-wrapper > div { border-radius: 10px; backdrop-filter: blur(6px); }
+.recharts-active-dot circle { filter: drop-shadow(0 1px 2px rgba(31, 43, 29, 0.35)); }
+
+/* Câu hỏi thường gặp: nội dung mở ra mượt */
+details[open] > summary + * { animation: sm-reveal var(--motion-200) var(--ease-out); }
+@keyframes sm-reveal { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 }
 .theme-dark .bg-orange-600 { color: #1b1608; }
 /* Đầu bảng và nút đang chọn: rêu ở chế độ sáng, vàng son trên nền sơn mài. */
