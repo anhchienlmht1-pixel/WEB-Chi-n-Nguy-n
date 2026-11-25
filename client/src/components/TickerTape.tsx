@@ -60,7 +60,7 @@ function SessionPill() {
 }
 
 export default function TickerTape() {
-  const poll = useLivePoll(15 * 1000);
+  const poll = useLivePoll(30 * 1000);
   const idx = usePolling(
     async () => {
       const res = await Promise.allSettled(INDICES.map((i) => fetchQuote(i.symbol)));

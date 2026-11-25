@@ -28,11 +28,11 @@ function priceColor(p: number, ref: number | null, ceil: number | null, floor: n
 }
 
 function useTape(symbol: string) {
-  const every = inSession() ? 3000 : 60_000;
+  const every = inSession() ? 5000 : 0;
   return usePolling(() => fetchTrades(symbol), [symbol], every);
 }
 function useBook(symbol: string) {
-  const every = inSession() ? 3000 : 60_000;
+  const every = inSession() ? 5000 : 0;
   return usePolling(() => fetchOrderBook(symbol), [symbol], every);
 }
 

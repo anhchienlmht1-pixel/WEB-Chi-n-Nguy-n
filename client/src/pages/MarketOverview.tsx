@@ -201,7 +201,7 @@ function SessionPanel({ st }: { st: SessionStats | null }) {
 }
 
 function Breadth() {
-  const poll = useLivePoll(20_000);
+  const poll = useLivePoll(30_000);
   const qs = usePolling(() => Promise.all(EXCHANGES.map((e) => fetchQuote(e.symbol).catch(() => null))), [], poll);
   return (
     <section className={`${CARD} flex h-full flex-col p-5`} aria-label="Độ rộng thị trường">
@@ -421,10 +421,10 @@ function TopStocks({ quotes, loading }: { quotes: Quote[]; loading: boolean }) {
 }
 
 export default function MarketOverview() {
-  const board = usePolling(fetchMarketOverview, [], useLivePoll(15_000));
+  const board = usePolling(fetchMarketOverview, [], useLivePoll(30_000));
   const quotes = useMemo(() => (board.data?.quotes ?? []).filter((q) => q.price > 0 && q.volume > 0), [board.data]);
   const loading = board.loading && !board.data;
-  const stats = usePolling(fetchSessionStats, [], useLivePoll(20_000));
+  const stats = usePolling(fetchSessionStats, [], useLivePoll(60_000));
   return (
     <div className="text-[var(--sm-egg)]">
       <header className="border-b border-[var(--sm-line)] bg-[var(--sm-panel)]">

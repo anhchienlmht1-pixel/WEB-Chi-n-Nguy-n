@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { fetchMarketOverview } from "../api/client";
+import { useLivePoll } from "../hooks/useMarketClock";
 import { usePolling } from "../hooks/usePolling";
 import CompanyLogo from "./CompanyLogo";
 
@@ -17,7 +18,7 @@ export default function StockHeaderInfo() {
 function StockChip({ symbol }: { symbol: string }) {
   // Fetch market data to get current stock info. The server refreshes the
   // board every 30s, so polling faster than this only repeats the same data.
-  const { data } = usePolling(fetchMarketOverview, [], 15000);
+  const { data } = usePolling(fetchMarketOverview, [], useLivePoll(30_000));
 
   // Find the current stock in market overview
   const stockInfo = useMemo(() => {

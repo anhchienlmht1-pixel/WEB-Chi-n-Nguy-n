@@ -61,11 +61,24 @@ export function usePolling<T>(
       }
     }
 
+    // Tab ẩn (chuyển tab, thu nhỏ trình duyệt) thì không gọi máy chủ; quay lại
+    // tab thì gọi ngay nếu dữ liệu đã cũ hơn một chu kỳ.
+    let last = Date.now();
+    const tick = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+      last = Date.now();
+      load();
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && intervalMs > 0 && Date.now() - last >= intervalMs) tick();
+    };
     load();
-    const id = intervalMs > 0 ? setInterval(load, intervalMs) : undefined;
+    const id = intervalMs > 0 ? setInterval(tick, intervalMs) : undefined;
+    if (intervalMs > 0) document.addEventListener("visibilitychange", onVisible);
     return () => {
       cancelled = true;
       if (id) clearInterval(id);
+      if (intervalMs > 0) document.removeEventListener("visibilitychange", onVisible);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...deps, reloadTick, intervalMs]);

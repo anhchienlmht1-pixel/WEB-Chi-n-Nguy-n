@@ -123,7 +123,7 @@ export default function TechnicalChartPanel({
   // (one of them re-downloading all ~30 years every 5s), but the server only
   // refreshes history every ~2 minutes, so the extra traffic bought nothing
   // and kept the main thread busy re-parsing and re-computing signals.
-  const historyState = usePolling(() => fetchHistory(symbol, "MAX", preferSource), [symbol, preferSource], 30000);
+  const historyState = usePolling(() => fetchHistory(symbol, "MAX", preferSource), [symbol, preferSource], 5 * 60 * 1000);
 
   const chartPoints = useMemo(
     () => (historyState.data ? aggregatePoints(historyState.data.points, resolution) : []),

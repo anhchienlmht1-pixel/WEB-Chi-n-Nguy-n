@@ -13,7 +13,7 @@ import UpdatedAgo from "./UpdatedAgo";
 const UP = "var(--ab-up)";
 const DOWN = "var(--ab-down)";
 const FLAT = "#e0b24a";
-const LIVE_MS = 15 * 1000;
+const LIVE_MS = 30 * 1000;
 
 // VN100 only comes from SSI FastConnect; without it the card falls back to HNX-Index.
 const INDICES: { symbol: string; label: string; fallback?: { symbol: string; label: string } }[] = [

@@ -14,6 +14,7 @@ import {
 } from "klinecharts";
 import { fetchHistory } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
+import { useLivePoll } from "../hooks/useMarketClock";
 import { useTheme } from "../hooks/useTheme";
 import { aggregatePoints, type ChartResolution } from "../utils/aggregate";
 import { computeTradingSignals } from "../utils/signals";
@@ -247,7 +248,7 @@ export default function KLinePanel({
   const [tool, setTool] = useState<string | null>(null);
   const [hover, setHover] = useState<{ bar: KLineData; prev?: KLineData } | null>(null);
 
-  const hist = usePolling(() => fetchHistory(symbol, "MAX"), [symbol], 60_000);
+  const hist = usePolling(() => fetchHistory(symbol, "MAX"), [symbol], useLivePoll(5 * 60_000, 0));
   const points = useMemo(() => (hist.data ? aggregatePoints(hist.data.points, res) : []), [hist.data, res]);
   const signals = useMemo(() => {
     const src = hist.data?.points;

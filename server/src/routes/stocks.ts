@@ -111,7 +111,7 @@ router.get(
   "/market/overview",
   asyncHandler(async (_req, res) => {
     const { quotes, source } = await cached("overview", 5, () => getMarketOverviewWithFallback());
-    edgeCache(res, 3, 10);
+    edgeCache(res, 10, 30);
     // gắn ngành để trang Toàn cảnh gom thay đổi giá theo ngành
     res.json({ provider: source, quotes: quotes.map((q) => (SECTOR_MAP[q.symbol] ? { ...q, sector: SECTOR_MAP[q.symbol] } : q)) });
   })
@@ -121,8 +121,8 @@ router.get(
 router.get(
   "/market/session-stats",
   asyncHandler(async (_req, res) => {
-    const data = await cached("session-stats", 15, () => getSessionStats(), { staleOnError: true });
-    edgeCache(res, 10, 30);
+    const data = await cached("session-stats", 30, () => getSessionStats(), { staleOnError: true });
+    edgeCache(res, 30, 60);
     res.json(data);
   })
 );
@@ -169,7 +169,7 @@ router.get(
     const { quote, source } =
       quoteFromOverview(symbol, preferSource) ??
       (await cached(`quote:${symbol}:${preferSource ?? ""}`, 5, () => getQuoteWithFallback(symbol, preferSource)));
-    edgeCache(res, 3, 10);
+    edgeCache(res, 10, 30);
     res.json({ ...quote, source, sector: SECTOR_MAP[symbol] ?? null });
   })
 );
@@ -180,7 +180,7 @@ router.get(
   asyncHandler(async (req, res) => {
     const symbol = String(req.params.symbol).toUpperCase();
     const book = await cached(`orderbook:${symbol}`, 3, () => getVpsOrderBook(symbol));
-    edgeCache(res, 2, 5);
+    edgeCache(res, 4, 10);
     res.json(book);
   })
 );
@@ -189,7 +189,7 @@ router.get(
   asyncHandler(async (req, res) => {
     const symbol = String(req.params.symbol).toUpperCase();
     const tape = await cached(`trades:${symbol}`, 3, () => getVpsTape(symbol, 150));
-    edgeCache(res, 2, 5);
+    edgeCache(res, 4, 10);
     res.json(tape);
   })
 );
@@ -204,10 +204,12 @@ router.get(
       return;
     }
     const preferSource = (req.query.preferSource as string) || undefined;
-    const { points, source } = await cached(`history:${symbol}:${range}:${preferSource ?? ""}`, 120, () =>
+    // lịch sử dài (nến ngày) chỉ đổi nến cuối: đệm lâu hơn để nhiều người xem dùng chung
+    const long = range === "MAX" || range === "5Y" || range === "1Y";
+    const { points, source } = await cached(`history:${symbol}:${range}:${preferSource ?? ""}`, long ? 300 : 120, () =>
       getHistoryWithFallback(symbol, range, preferSource)
     );
-    edgeCache(res, 60, 120);
+    edgeCache(res, long ? 300 : 60, long ? 3600 : 300);
     res.json({ symbol, range, points, source });
   })
 );
@@ -229,6 +231,7 @@ router.get(
     const data = await cached(`financials:${symbol}:${reportType}:${periodType}`, 3600, () =>
       fetchFinancialReport(symbol, reportType, periodType)
     );
+    edgeCache(res, 6 * 3600, 86400);
     res.json(data);
   })
 );
@@ -242,7 +245,8 @@ router.get(
       res.json({ results: [] });
       return;
     }
-    const data = await cached(`search:${q.toLowerCase()}`, 30, () => provider.search(q));
+    const data = await cached(`search:${q.toLowerCase()}`, 3600, () => provider.search(q));
+    edgeCache(res, 3600, 86400);
     res.json({ results: data });
   })
 );
@@ -253,6 +257,7 @@ router.get(
     const symbol = String(req.params.symbol).toUpperCase();
     const limit = Math.min(30, Math.max(1, Number(req.query.limit) || 10));
     const data = await cached(`news:${symbol}`, 600, () => fetchNewsForSymbol(symbol, limit));
+    edgeCache(res, 600, 3600);
     res.json({ symbol, ...data });
   })
 );
@@ -267,6 +272,7 @@ router.get(
     const data = await cached(`investment-outlook:${gid ?? "default"}`, 300, () => fetchInvestmentOutlook(gid), {
       staleOnError: true,
     });
+    edgeCache(res, 300, 3600);
     res.json(data);
   })
 );
@@ -362,6 +368,7 @@ router.get(
       },
       { staleOnError: true }
     );
+    edgeCache(res, 6 * 3600, 86400);
     res.json(data);
   })
 );
@@ -374,6 +381,7 @@ router.get(
     // shareholders...) barely changes day to day, unlike price/financials
     // — a long 6h TTL avoids hammering KBS/VCI on every page view.
     const data = await cached(`company-profile:${symbol}`, 6 * 60 * 60, () => getCompanyProfileWithFallback(symbol));
+    edgeCache(res, 6 * 3600, 86400);
     res.json(data);
   })
 );
@@ -425,6 +433,8 @@ router.get(
   "/trend-signals",
   asyncHandler(async (_req, res) => {
     const { items, sessionDate } = await loadTrendSignals();
+    // danh sách chỉ đổi sau 15:00: CDN trả chung cho mọi người, 5 phút hỏi lại máy chủ một lần
+    edgeCache(res, 300, 86400);
     // Ngành (theo SECTOR_MAP) cho cột "Ngành" trong bảng tín hiệu.
     res.json({ items: items.map((h) => ({ ...h, sector: SECTOR_MAP[h.symbol] ?? null })), sessionDate });
   })
@@ -496,6 +506,7 @@ router.get(
     // JOURNAL_START_DATE onward, not a backtest over historical prices.
     // A short TTL is fine: the journal itself only re-scans once a day.
     const data = await cached("trend-signals-journal", 5 * 60, () => getTradeJournal(), { staleOnError: true });
+    edgeCache(res, 300, 86400);
     res.json(data);
   })
 );
@@ -509,6 +520,7 @@ router.get(
     // without a fresh scan, cached for an hour since this only moves once
     // per trading day.
     const data = await cached("ma-scan", 60 * 60, () => scanMovingAverages(), { staleOnError: true });
+    edgeCache(res, 3600, 86400);
     res.json({ items: data });
   })
 );
@@ -521,6 +533,7 @@ router.get(
     // build fans out over ~40 fund detail calls plus a history scan, so a 1h
     // TTL with staleOnError keeps it cheap and resilient to a Fmarket blip.
     const data = await cached("fund-insight", 60 * 60, () => buildFundInsight(), { staleOnError: true });
+    edgeCache(res, 3600, 86400);
     res.json(data);
   })
 );
