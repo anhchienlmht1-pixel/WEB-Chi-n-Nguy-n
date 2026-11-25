@@ -1,16 +1,14 @@
 import { Link } from "react-router-dom";
 import HeroSignals from "../components/HeroSignals";
 import PriceBoard from "../components/PriceBoardBg";
-import { useSignalData } from "../components/SonMaiHome";
 import { AdvisorAndAccount, HomePillars, MethodSteps, SectionHead } from "../components/HomeSections";
 
 // Trang Giới thiệu (trang chủ) — bố cục trang giới thiệu sản phẩm:
 //  1. Mở đầu: thông điệp + 2 nút hành động, bên phải là "hôm nay" (chỉ số + phiên vừa chốt)
-//  2. Dữ liệu → Sóng ngành → Tín hiệu: mỗi mảng một dòng insight và 4 thẻ số liệu sống
+//  2. Dữ liệu → Sóng ngành → Tín hiệu: mỗi mảng một thông điệp và 3 thẻ dẫn sang trang chi tiết
 //  4. Phương pháp: 3 bước
 //  5. Người phụ trách + mở tài khoản
 export default function About() {
-  const { scan, journal } = useSignalData();
 
   return (
     <div className="text-[var(--sm-egg)]">
@@ -59,7 +57,7 @@ export default function About() {
       <div className="gutter-x mx-auto max-w-[1920px] pb-20">
         {/* 2. Dữ liệu → Sóng ngành → Tín hiệu, mỗi mảng kèm insight sống */}
         <div className="pt-6">
-          <HomePillars scan={scan} journal={journal} />
+          <HomePillars />
         </div>
 
         {/* 4. Phương pháp */}
