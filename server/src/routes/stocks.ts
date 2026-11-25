@@ -21,6 +21,7 @@ import { getCafefLogo, debugCafefLogo, isValidLogoSymbol } from "../providers/ca
 import { COMPANY_DOMAINS } from "../data/companyDomains.js";
 import { SECTOR_MAP } from "../data/sectorMap.js";
 import { getSessionStats } from "../signals/sessionStats.js";
+import { loadPrecomputed } from "../signals/precomputed.js";
 import { buildFundInsight } from "../signals/fundInsight.js";
 import inspectFmarketApi from "../providers/fmarketInspect.js";
 
@@ -402,6 +403,12 @@ async function loadTrendSignals(): Promise<TrendScanResult> {
   const key = `trend-signals:${closed}`;
   const hit = cache.get<TrendScanResult>(key);
   if (hit) return hit;
+  // bản tính sẵn hằng ngày (GitHub Actions) — không phải tự quét toàn bộ mã
+  const pre = await loadPrecomputed<TrendScanResult>("trend-signals");
+  if (pre) {
+    cache.set(key, pre, pre.sessionDate >= closed ? 6 * 60 * 60 : 10 * 60);
+    return pre;
+  }
   if (trendInFlight) return trendInFlight;
 
   trendInFlight = (async () => {
@@ -479,7 +486,9 @@ router.get(
     // (progress), sau đó mỗi phiên chỉ cập nhật tuần mới; lưu Vercel Blob.
     const closed = lastClosedSessionDate();
     const key = `sector-waves:${closed}`;
-    const hit = cache.get<SectorWavesResult>(key);
+    const pre = cache.get<SectorWavesResult>(key) ?? (await loadPrecomputed<SectorWavesResult>("sector-waves"));
+    if (pre && !cache.get(key)) cache.set(key, pre, pre.sessionDate >= closed ? 60 * 60 : 10 * 60);
+    const hit = pre;
     if (hit) {
       edgeCache(res, 600, 3600);
       res.json(hit);
@@ -505,7 +514,12 @@ router.get(
     // ever records what the Mua/Bán combo actually signals from
     // JOURNAL_START_DATE onward, not a backtest over historical prices.
     // A short TTL is fine: the journal itself only re-scans once a day.
-    const data = await cached("trend-signals-journal", 5 * 60, () => getTradeJournal(), { staleOnError: true });
+    const data = await cached(
+      "trend-signals-journal",
+      5 * 60,
+      async () => (await loadPrecomputed<Awaited<ReturnType<typeof getTradeJournal>>>("trade-journal")) ?? getTradeJournal(),
+      { staleOnError: true }
+    );
     edgeCache(res, 300, 86400);
     res.json(data);
   })
@@ -519,7 +533,12 @@ router.get(
     // computed in one pass per symbol so the client can switch periods
     // without a fresh scan, cached for an hour since this only moves once
     // per trading day.
-    const data = await cached("ma-scan", 60 * 60, () => scanMovingAverages(), { staleOnError: true });
+    const data = await cached(
+      "ma-scan",
+      60 * 60,
+      async () => (await loadPrecomputed<Awaited<ReturnType<typeof scanMovingAverages>>>("ma-scan")) ?? scanMovingAverages(),
+      { staleOnError: true }
+    );
     edgeCache(res, 3600, 86400);
     res.json({ items: data });
   })
@@ -532,7 +551,12 @@ router.get(
     // our own price strength. Fund holdings update at most daily and the
     // build fans out over ~40 fund detail calls plus a history scan, so a 1h
     // TTL with staleOnError keeps it cheap and resilient to a Fmarket blip.
-    const data = await cached("fund-insight", 60 * 60, () => buildFundInsight(), { staleOnError: true });
+    const data = await cached(
+      "fund-insight",
+      60 * 60,
+      async () => (await loadPrecomputed<Awaited<ReturnType<typeof buildFundInsight>>>("fund-insight")) ?? buildFundInsight(),
+      { staleOnError: true }
+    );
     edgeCache(res, 3600, 86400);
     res.json(data);
   })

@@ -1,0 +1,43 @@
+# Tính sẵn tín hiệu, nhật ký lệnh, sóng ngành, quét MA, quỹ mở mỗi ngày giao dịch
+# sau 15:00 (giờ VN) và lưu lên Vercel Blob — web chỉ đọc kết quả, không tự
+# quét toàn bộ mã (đỡ tốn CPU Vercel). Xem server/src/jobs/precompute.ts.
+#
+# Cần secret BLOB_READ_WRITE_TOKEN (Settings → Secrets and variables → Actions),
+# lấy từ Vercel → Storage → Blob → .env.local.
+name: Tính sẵn dữ liệu hằng ngày
+
+on:
+  schedule:
+    # 15:40 và 17:10 giờ VN, thứ 2–6 (lần 2 phòng khi nguồn dữ liệu chậm)
+    - cron: "40 8 * * 1-5"
+    - cron: "10 10 * * 1-5"
+  workflow_dispatch:
+  push:
+    # chạy thử trên nhánh xem thử khi sửa job (ghi vào thư mục preview)
+    branches: [sonmai]
+    paths: ["server/src/jobs/**", ".github/workflows/precompute.yml"]
+
+concurrency:
+  group: precompute-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  precompute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci
+        working-directory: server
+      - name: Tính sẵn
+        working-directory: server
+        env:
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+          VERCEL_ENV: ${{ github.ref == 'refs/heads/sonmai' && 'preview' || 'production' }}
+          TZ: Asia/Ho_Chi_Minh
+        run: npx tsx src/jobs/precompute.ts
