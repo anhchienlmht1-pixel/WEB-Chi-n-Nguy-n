@@ -430,7 +430,7 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
           )}
         </div>
       </div>
-      {!isIndexOrFutures && <OrderBookPanel symbol={symbol} fmt={fmt} />}
+      {!isIndexOrFutures && <OrderBookPanel symbol={symbol} fmt={(n) => n.toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} />}
     </div>
   );
 }
