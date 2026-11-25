@@ -162,21 +162,23 @@ async function scanCurrentSignals(): Promise<CurrentSignals> {
 // persists the result. Same rule as the chart: open on a MUA bar when flat,
 // close on a BÁN bar (SMA20 < SMA50 or Supertrend down); neutral bars hold.
 // buyDate / sellDate / lastRunDate are that session's Vietnam date.
+let note = "";
 async function updateTradeJournal(): Promise<JournalState> {
   const saved = await readState();
+  note = `rule ${saved.rule ?? "-"} lastRun ${saved.lastRunDate ?? "-"}`;
   const rebuild = saved.rule !== RULE_VERSION;
   const state: JournalState = rebuild ? { rule: RULE_VERSION, lastRunDate: null, open: [], closed: [] } : saved;
   const expected = lastClosedSessionDate();
-  if (expected < JOURNAL_START_DATE) return saved;
-  if (!rebuild && state.lastRunDate !== null && state.lastRunDate >= expected) return saved;
-  if (Date.now() - lastAttemptMs < RETRY_AFTER_MS) return saved;
+  if (expected < JOURNAL_START_DATE) return (note += " | trước ngày bắt đầu"), saved;
+  if (!rebuild && state.lastRunDate !== null && state.lastRunDate >= expected) return (note += " | đã cập nhật"), saved;
+  if (Date.now() - lastAttemptMs < RETRY_AFTER_MS) return (note += " | chờ thử lại"), saved;
   lastAttemptMs = Date.now();
 
   const { symbols, dataDate } = await scanCurrentSignals();
-  if (symbols.size === 0 || dataDate === null) return saved; // scan failed entirely — don't touch positions on bad data
+  if (symbols.size === 0 || dataDate === null) return (note += ` | quét lỗi (${symbols.size} mã)`), saved; // scan failed entirely — don't touch positions on bad data
   // The closed session's bar isn't published yet (provider lag) or it was a
   // holiday — nothing new to conclude; try again later.
-  if (dataDate < expected) return saved;
+  if (dataDate < expected) return (note += ` | dữ liệu ${dataDate} < ${expected}`), saved;
 
   // Sessions to replay: a rebuild covers every session since JOURNAL_START_DATE;
   // otherwise every session after the last run.
@@ -218,16 +220,19 @@ async function updateTradeJournal(): Promise<JournalState> {
     closed: [...newlyClosed, ...state.closed].slice(0, MAX_CLOSED_ENTRIES),
   };
   await writeState(next);
+  note += ` | ${rebuild ? "dựng lại" : "cập nhật"} tới ${dataDate}: ${symbols.size} mã, ${next.open.length} mở, ${next.closed.length} đóng`;
   return next;
 }
 
 export interface TradeJournal {
   startDate: string;
+  /** trạng thái lần cập nhật gần nhất (chẩn đoán) */
+  note?: string;
   open: JournalPosition[];
   closed: JournalClosedTrade[];
 }
 
 export async function getTradeJournal(): Promise<TradeJournal> {
   const state = await updateTradeJournal();
-  return { startDate: JOURNAL_START_DATE, open: state.open, closed: state.closed };
+  return { startDate: JOURNAL_START_DATE, open: state.open, closed: state.closed, note };
 }
