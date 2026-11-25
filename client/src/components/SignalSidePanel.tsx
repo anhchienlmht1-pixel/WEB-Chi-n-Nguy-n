@@ -41,7 +41,7 @@ export default function SignalSidePanel({
   ];
 
   return (
-    <div className="flex min-w-0 flex-col overflow-hidden rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] max-lg:h-[640px] lg:h-full">
+    <div className="flex min-w-0 flex-col overflow-hidden rounded-[18px] border border-[var(--sm-line)] bg-[var(--sm-chart)] shadow-[0_1px_2px_rgba(31,43,29,0.04),0_8px_24px_-12px_rgba(31,43,29,0.12)] max-lg:h-[640px] lg:h-full">
       <div role="tablist" aria-label="Tín hiệu" className="flex shrink-0 border-b border-[var(--sm-line)]">
         {tabs.map((x) => (
           <button
@@ -79,7 +79,7 @@ export default function SignalSidePanel({
           </div>
           <div className="mt-2 min-h-0 flex-1 overflow-y-auto">
             <table className="w-full text-[0.86rem] tabular-nums">
-              <thead className="sticky top-0 z-[1] bg-[var(--sm-panel)]">
+              <thead className="sticky top-0 z-[1] bg-[var(--sm-chart)]">
                 <tr>
                   <th className={`${TH} text-left`}>Mã</th>
                   <th className={`${TH} text-right`}>Ngày mua</th>
@@ -137,7 +137,7 @@ export default function SignalSidePanel({
           {journal && <p className="text-[0.78rem] text-[var(--sm-mut)]">Công khai mọi lệnh từ {dmy(journal.startDate)}, không chỉnh sửa về sau.</p>}
           <div className="mt-2 min-h-0 flex-1 overflow-y-auto">
             <table className="w-full text-[0.86rem] tabular-nums">
-              <thead className="sticky top-0 z-[1] bg-[var(--sm-panel)]">
+              <thead className="sticky top-0 z-[1] bg-[var(--sm-chart)]">
                 <tr>
                   <th className={`${TH} text-left`}>Mã</th>
                   <th className={`${TH} text-right`}>Mua</th>

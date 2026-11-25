@@ -24,7 +24,8 @@ export default function TrendSignals() {
   // VNINDEX không có điểm Mua/Bán: khi có danh mục thì mặc định mở mã đầu tiên.
   useEffect(() => {
     if (watchlist.length > 0 || chartSymbol !== DEFAULT_SYMBOL) return;
-    const first = scan?.items[0]?.symbol;
+    // mở mã mua mới nhất
+    const first = [...(scan?.items ?? [])].sort((a, b) => (a.buyDate < b.buyDate ? 1 : -1))[0]?.symbol;
     if (first) setChartSymbol(first);
   }, [scan, watchlist, chartSymbol]);
 
@@ -35,6 +36,14 @@ export default function TrendSignals() {
   };
 
   const held = scan?.items.length ?? null;
+  // lệnh mua gần nhất của mã đang xem: đang giữ trong danh mục, nếu không thì lệnh đã đóng gần nhất
+  const holding = scan?.items.find((i) => i.symbol === chartSymbol);
+  const lastClosed = [...(journal?.closed ?? [])].filter((t) => t.symbol === chartSymbol).sort((a, b) => (a.buyDate < b.buyDate ? 1 : -1))[0];
+  const lastBuy = holding
+    ? { date: holding.buyDate, price: holding.buyPrice, ret: holding.signalReturnPercent, open: true }
+    : lastClosed
+      ? { date: lastClosed.buyDate, price: lastClosed.buyPrice, ret: lastClosed.returnPercent, open: false }
+      : null;
   const fresh = scan ? scan.items.filter((i) => i.buyDate.slice(0, 10) === scan.sessionDate.slice(0, 10)).length : null;
 
   return (
@@ -76,8 +85,24 @@ export default function TrendSignals() {
         {/* 3. Biểu đồ | Danh mục, nhật ký, sổ lệnh */}
         <section ref={chartRef} id="danh-muc" aria-label="Biểu đồ và danh mục" className="mt-10 scroll-mt-28">
           <span id="nhat-ky" className="block scroll-mt-28" aria-hidden="true" />
-          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="text-[1.5rem] leading-tight text-[var(--sm-egg)]">Biểu đồ {chartSymbol}</h2>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <h2 className="text-[1.5rem] leading-tight text-[var(--sm-egg)]">Biểu đồ {chartSymbol}</h2>
+              {lastBuy && (
+                <span className="inline-flex flex-wrap items-center gap-x-2 rounded-full border border-[rgba(201,162,74,0.5)] bg-[var(--sm-chart)] px-3 py-1 text-[0.85rem] tabular-nums">
+                  <i className="inline-block h-0 w-0 border-x-[5px] border-b-[7px] border-x-transparent border-b-[#12a150]" aria-hidden="true" />
+                  <span className="text-[var(--sm-mut)]">Mua gần nhất</span>
+                  <b className="text-[var(--sm-egg)]">{dmy(lastBuy.date)}</b>
+                  <span className="text-[var(--sm-mut)]">giá</span>
+                  <b className="text-[var(--sm-egg)]">{(lastBuy.price < 1000 ? lastBuy.price : lastBuy.price / 1000).toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
+                  <b className={lastBuy.ret > 0 ? "up" : lastBuy.ret < 0 ? "down" : ""}>
+                    {lastBuy.ret > 0 ? "+" : ""}
+                    {lastBuy.ret.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%
+                  </b>
+                  <span className="text-[var(--sm-mut)]">{lastBuy.open ? "đang giữ" : "đã đóng"}</span>
+                </span>
+              )}
+            </div>
             {chartSymbol !== "VNINDEX" && (
               <Link to={`/stock/${chartSymbol}`} className="text-[0.92rem] font-semibold text-[var(--sm-gold2)] hover:underline">
                 Thông tin cơ bản của {chartSymbol}
@@ -87,13 +112,13 @@ export default function TrendSignals() {
           {/* biểu đồ và cột phải cùng mép trên, cùng chiều cao */}
           <div className="grid items-stretch gap-4 lg:h-[760px] lg:grid-cols-12">
             <div className="min-h-[480px] min-w-0 lg:col-span-8 lg:min-h-0">
-              <KLinePanel symbol={chartSymbol} height={560} fill />
+              <KLinePanel symbol={chartSymbol} height={560} fill soft focusBuy={lastBuy?.date} />
             </div>
             <div className="min-w-0 lg:col-span-4 lg:min-h-0">
               <SignalSidePanel scan={scan} journal={journal} symbol={chartSymbol} onPick={pick} />
             </div>
           </div>
-          <p className="mt-2 text-[0.8rem] text-[var(--sm-mut)]">Tam giác xanh là điểm mua, đỏ là điểm đóng lệnh của hệ thống. Bấm mã ở cột phải để đổi biểu đồ.</p>
+          <p className="mt-2 text-[0.8rem] text-[var(--sm-mut)]">Tam giác xanh là điểm mua, đỏ là điểm đóng lệnh của hệ thống; thẻ viền vàng là điểm mua gần nhất. Bấm mã ở cột phải để đổi biểu đồ.</p>
         </section>
 
         {/* 5. Phương pháp */}

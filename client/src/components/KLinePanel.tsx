@@ -70,6 +70,49 @@ registerOverlay({
   },
 });
 
+// Điểm mua gần nhất của mã đang xem: vòng vàng quanh đáy nến + thẻ lớn hơn.
+registerOverlay({
+  name: "bsFocus",
+  totalStep: 1,
+  lock: true,
+  needDefaultPointFigure: false,
+  needDefaultXAxisFigure: false,
+  needDefaultYAxisFigure: false,
+  createPointFigures: ({ overlay, coordinates }) => {
+    const { text } = overlay.extendData as { text: string };
+    const { x, y } = coordinates[0];
+    const tip = y + 5;
+    return [
+      { type: "circle", attrs: { x, y: tip + 4, r: 11 }, styles: { style: "fill", color: "rgba(201,162,74,0.22)" }, ignoreEvent: true },
+      {
+        type: "polygon",
+        attrs: { coordinates: [{ x, y: tip }, { x: x - 6, y: tip + 9 }, { x: x + 6, y: tip + 9 }] },
+        styles: { style: "fill", color: UP },
+        ignoreEvent: true,
+      },
+      {
+        type: "text",
+        attrs: { x, y: tip + 14, text, align: "center", baseline: "top" },
+        styles: {
+          color: "#ffffff",
+          size: 11,
+          weight: 700,
+          family: FONT,
+          backgroundColor: UP,
+          borderColor: "#c9a24a",
+          borderSize: 1.5,
+          borderRadius: 6,
+          paddingLeft: 7,
+          paddingRight: 7,
+          paddingTop: 4,
+          paddingBottom: 4,
+        },
+        ignoreEvent: true,
+      },
+    ];
+  },
+});
+
 type Ind = "MA" | "BOLL" | "MACD" | "RSI";
 const MAIN_INDS: Ind[] = ["MA", "BOLL"];
 
@@ -173,7 +216,21 @@ const iconBtn = (on = false) =>
     on ? "bg-[rgba(201,162,74,0.18)] text-[var(--sm-gold2)]" : "text-[var(--sm-mut)] hover:bg-[rgba(127,120,90,0.12)] hover:text-[var(--sm-egg)]"
   }`;
 
-export default function KLinePanel({ symbol, height = 400, fill = false }: { symbol: string; height?: number; fill?: boolean }) {
+export default function KLinePanel({
+  symbol,
+  height = 400,
+  fill = false,
+  focusBuy,
+  soft = false,
+}: {
+  symbol: string;
+  height?: number;
+  fill?: boolean;
+  // ngày mua gần nhất (YYYY-MM-DD…) cần làm nổi bật và cuộn tới
+  focusBuy?: string | null;
+  // nền trắng, khung bo cong lớn
+  soft?: boolean;
+}) {
   const { theme } = useTheme();
   const boxRef = useRef<HTMLDivElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -252,13 +309,19 @@ export default function KLinePanel({ symbol, height = 400, fill = false }: { sym
     );
     chart.setBarSpace(res === "D" ? 7 : 10);
     chart.removeOverlay({ name: "bsSignal" });
+    chart.removeOverlay({ name: "bsFocus" });
     if (!showSignals) return;
     const byTs = new Map(points.map((p) => [new Date(p.time).getTime(), p]));
     const byDay = new Map(points.map((p) => [p.time.slice(0, 10), p]));
+    // Nến chứa ngày mua gần nhất (khung tuần/tháng: nến cuối cùng bắt đầu trước hoặc đúng ngày mua).
+    const fDay = focusBuy?.slice(0, 10);
+    let fIdx = -1;
+    if (fDay) for (let i = 0; i < points.length; i++) if (points[i].time.slice(0, 10) <= fDay) fIdx = i;
+    const fBar = fIdx >= 0 ? points[fIdx] : undefined;
     for (const sg of signals) {
       const ts = sg.time * 1000;
       const bar = byTs.get(ts) ?? byDay.get(new Date(ts + 7 * 3600_000).toISOString().slice(0, 10));
-      if (!bar) continue;
+      if (!bar || bar === fBar) continue;
       const buy = sg.type === "buy";
       chart.createOverlay({
         name: "bsSignal",
@@ -266,7 +329,16 @@ export default function KLinePanel({ symbol, height = 400, fill = false }: { sym
         extendData: { buy, text: sg.note ?? (buy ? "Mua" : "Đóng lệnh") },
       });
     }
-  }, [points, signals, showSignals, res]);
+    if (fBar && fDay) {
+      chart.createOverlay({
+        name: "bsFocus",
+        points: [{ timestamp: new Date(fBar.time).getTime(), value: fBar.low }],
+        extendData: { text: `Mua gần nhất ${fDay.slice(8, 10)}/${fDay.slice(5, 7)}` },
+      });
+      // điểm mua nằm quá xa bên trái: cuộn để nó hiện ở khoảng giữa màn hình
+      if (points.length - 1 - fIdx > 70) chart.scrollToDataIndex(Math.min(points.length - 1, fIdx + 50), 0);
+    }
+  }, [points, signals, showSignals, res, focusBuy]);
 
   // Chỉ báo: MA/BOLL chồng trên nến, MACD/RSI có khung riêng bên dưới.
   useEffect(() => {
@@ -312,7 +384,9 @@ export default function KLinePanel({ symbol, height = 400, fill = false }: { sym
   return (
     <div
       ref={wrapRef}
-      className={`flex flex-col overflow-hidden rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] ${fill ? "lg:h-full" : ""}`}
+      className={`flex flex-col overflow-hidden border ${
+        soft ? "rounded-[18px] border-[var(--sm-line)] bg-[var(--sm-chart)] shadow-[0_1px_2px_rgba(31,43,29,0.04),0_8px_24px_-12px_rgba(31,43,29,0.12)]" : "rounded-md border-[var(--sm-line)] bg-[var(--sm-panel)]"
+      } ${fill ? "lg:h-full" : ""}`}
     >
       <div className="flex flex-wrap items-center gap-2 border-b border-[var(--sm-line2)] px-3 py-2">
         <Seg
