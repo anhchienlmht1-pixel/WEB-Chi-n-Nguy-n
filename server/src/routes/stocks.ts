@@ -20,6 +20,7 @@ import { fetchDomainFavicons, debugFaviconForDomain } from "../providers/domainF
 import { getCafefLogo, debugCafefLogo, isValidLogoSymbol } from "../providers/cafefLogos.js";
 import { COMPANY_DOMAINS } from "../data/companyDomains.js";
 import { SECTOR_MAP } from "../data/sectorMap.js";
+import { getSessionStats } from "../signals/sessionStats.js";
 import { buildFundInsight } from "../signals/fundInsight.js";
 import inspectFmarketApi from "../providers/fmarketInspect.js";
 
@@ -113,6 +114,16 @@ router.get(
     edgeCache(res, 3, 10);
     // gắn ngành để trang Toàn cảnh gom thay đổi giá theo ngành
     res.json({ provider: source, quotes: quotes.map((q) => (SECTOR_MAP[q.symbol] ? { ...q, sector: SECTOR_MAP[q.symbol] } : q)) });
+  })
+);
+
+// Thống kê phiên HOSE: tác động lên VN-Index, độ rộng, thanh khoản, khối ngoại.
+router.get(
+  "/market/session-stats",
+  asyncHandler(async (_req, res) => {
+    const data = await cached("session-stats", 15, () => getSessionStats(), { staleOnError: true });
+    edgeCache(res, 10, 30);
+    res.json(data);
   })
 );
 

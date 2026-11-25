@@ -145,6 +145,50 @@ async function fetchStocks(symbols: string[]): Promise<Quote[]> {
   return out;
 }
 
+/** Dòng bảng giá thô của VPS (giá nghìn đồng, khối lượng lô 10 cp) — cho thống kê phiên. */
+export interface VpsRawStock {
+  symbol: string;
+  ref: number;
+  last: number;
+  ceiling?: number;
+  floor?: number;
+  volume: number;
+  foreignBuy: number;
+  foreignSell: number;
+}
+export async function getVpsRawStocks(symbols: string[]): Promise<VpsRawStock[]> {
+  const batches: string[][] = [];
+  for (let i = 0; i < symbols.length; i += BATCH) batches.push(symbols.slice(i, i + BATCH));
+  const res = await Promise.all(batches.map((b) => getJson<VpsStock[]>(`/getliststockdata/${b.join(",")}`).catch(() => [] as VpsStock[])));
+  const out: VpsRawStock[] = [];
+  for (const arr of res) for (const x of Array.isArray(arr) ? arr : []) {
+    const ref = n(x.r);
+    if (!x.sym || !ref) continue;
+    out.push({
+      symbol: String(x.sym).toUpperCase(),
+      ref,
+      last: n(x.lastPrice) || ref,
+      ceiling: n(x.c),
+      floor: n(x.f),
+      volume: (n(x.lot) ?? 0) * VOL_UNIT,
+      foreignBuy: (n(x.fBVol) ?? 0) * VOL_UNIT,
+      foreignSell: (n(x.fSVolume) ?? 0) * VOL_UNIT,
+    });
+  }
+  return out;
+}
+
+/** Danh sách mã của một sàn trên datafeed VPS (vd. "hose"); rỗng nếu VPS không trả. */
+export async function getVpsExchangeSymbols(exchange: string): Promise<string[]> {
+  const arr = await getJson<unknown>(`/getlistckindex/${exchange}`);
+  const xs = Array.isArray(arr) ? arr : [];
+  return xs.map((x) => String(typeof x === "string" ? x : (x as { sym?: string; code?: string })?.sym ?? (x as { code?: string })?.code ?? "").toUpperCase()).filter((s) => /^[A-Z0-9]{3}$/.test(s));
+}
+
+export async function getVpsIndexRaw(symbol: string): Promise<Quote | null> {
+  return (await fetchIndices([symbol]))[0] ?? null;
+}
+
 async function fetchIndices(symbols: string[]): Promise<Quote[]> {
   const codes = symbols.map((s) => INDEX_CODES[s]).filter(Boolean);
   if (!codes.length) return [];

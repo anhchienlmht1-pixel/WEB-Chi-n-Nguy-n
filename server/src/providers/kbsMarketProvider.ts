@@ -84,6 +84,21 @@ async function fetchPriceBoard(symbols: string[]): Promise<any[]> {
   return list;
 }
 
+/** Số cổ phiếu niêm yết (LS) theo mã, từ bảng giá KBS; theo lô 100 mã. */
+export async function getKbsListedShares(symbols: string[]): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  const batches: string[][] = [];
+  for (let i = 0; i < symbols.length; i += 100) batches.push(symbols.slice(i, i + 100));
+  const res = await Promise.all(batches.map((b) => fetchPriceBoard(b).catch(() => [] as any[])));
+  for (const list of res)
+    for (const item of list) {
+      const sym = String(item?.SB ?? "").toUpperCase();
+      const ls = num(item?.LS);
+      if (sym && ls && ls > 0) out.set(sym, ls);
+    }
+  return out;
+}
+
 function foreignOwnershipPercent(item: any): number | undefined {
   const foreignShares = num(item?.FO);
   const listedShares = num(item?.LS);
