@@ -64,7 +64,7 @@ const MSTATE: Record<1 | 2 | 3, { label: string; fill: string; text: string; wha
 // Câu hỏi thường gặp cuối trang (giải thích các biểu đồ)
 const FAQ: { q: string; a: (threshold: number, minStocks: number) => ReactNode }[] = [
   {
-    q: "Biểu đồ Trạng thái thị trường và biểu đồ VN-Index khác nhau thế nào?",
+    q: "Biểu đồ Nhịp thị trường và Chu kỳ VN-Index khác nhau thế nào?",
     a: () => (
       <>
         <div className="overflow-x-auto">
@@ -72,8 +72,8 @@ const FAQ: { q: string; a: (threshold: number, minStocks: number) => ReactNode }
             <thead>
               <tr className="border-b border-[var(--sm-line)] text-left text-[var(--sm-mut)]">
                 <th className="py-1.5 pr-3 font-normal" />
-                <th className="py-1.5 pr-3 font-semibold text-[var(--sm-egg)]">Trạng thái thị trường</th>
-                <th className="py-1.5 font-semibold text-[var(--sm-egg)]">VN-Index và giai đoạn</th>
+                <th className="py-1.5 pr-3 font-semibold text-[var(--sm-egg)]">Nhịp thị trường</th>
+                <th className="py-1.5 font-semibold text-[var(--sm-egg)]">Chu kỳ VN-Index</th>
               </tr>
             </thead>
             <tbody className="align-top">
@@ -121,7 +121,7 @@ const FAQ: { q: string; a: (threshold: number, minStocks: number) => ReactNode }
     ),
   },
   {
-    q: "Trạng thái thị trường được xác định thế nào?",
+    q: "Nhịp thị trường (Tích cực, Quan sát, Thận trọng) được xác định thế nào?",
     a: (t) => (
       <ul className="list-disc space-y-1 pl-5">
         <li>
@@ -155,7 +155,7 @@ const FAQ: { q: string; a: (threshold: number, minStocks: number) => ReactNode }
     ),
   },
   {
-    q: "Giai đoạn VN-Index được tính thế nào?",
+    q: "Chu kỳ VN-Index (giai đoạn) được tính thế nào?",
     a: () => (
       <p>
         Xét theo độ dốc MA150 trong 20 phiên: đi lên là Tăng (kể cả nhịp điều chỉnh xuống dưới MA150), đi xuống và giá dưới MA150 là Giảm, đi ngang là Phân phối nếu trước đó tăng hoặc Tích lũy nếu
@@ -534,11 +534,11 @@ export default function SectorWavesPage() {
             </section>
 
             {/* Trạng thái thị trường (chỉ số cân bằng) */}
-            <section aria-label="Trạng thái thị trường" className="mt-10">
+            <section aria-label="Nhịp thị trường" className="mt-10">
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
-                  <h2 className="text-[1.6rem] leading-tight">Trạng thái thị trường</h2>
-                  <p className="mt-1 text-[0.92rem] text-[var(--sm-egg2)]">Chỉ số cân bằng của Bull Stock, nền màu là trạng thái thị trường.</p>
+                  <h2 className="text-[1.6rem] leading-tight">Nhịp thị trường</h2>
+                  <p className="mt-1 text-[0.92rem] text-[var(--sm-egg2)]">Chỉ số cân bằng của Bull Stock (cổ phiếu trung bình), nền màu là nhịp Tích cực / Thận trọng.</p>
                 </div>
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-[0.8rem] text-[var(--sm-egg2)]">
                   {([1, 3] as const).map((k) => (
@@ -691,10 +691,10 @@ export default function SectorWavesPage() {
             </section>
 
             {/* VN-Index + giai đoạn */}
-            <section aria-label="VN-Index và giai đoạn thị trường" className="mt-10">
+            <section aria-label="Chu kỳ VN-Index" className="mt-10">
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
-                  <h2 className="text-[1.6rem] leading-tight">VN-Index và giai đoạn thị trường</h2>
+                  <h2 className="text-[1.6rem] leading-tight">Chu kỳ VN-Index</h2>
                   <p className="mt-1 text-[0.92rem] text-[var(--sm-egg2)]">
                     {range === "all" ? "Mỗi điểm một tháng" : "Mỗi điểm một tuần"}, {my(d.weeks[0])} – {my(d.weeks[view.last])}
                     {range === "all" ? " (thang logarit)" : ""}. Nền màu là giai đoạn Tăng / Giảm.
@@ -821,7 +821,7 @@ export default function SectorWavesPage() {
                       <div className="mt-2 space-y-0.5 border-t border-[var(--sm-line2)] pt-2 text-[var(--sm-egg2)]">
                         {c?.mState && (
                           <p>
-                            Thị trường: <b style={{ color: MSTATE[c.mState].text }}>{MSTATE[c.mState].label}</b>
+                            Nhịp thị trường: <b style={{ color: MSTATE[c.mState].text }}>{MSTATE[c.mState].label}</b>
                           </p>
                         )}
                         {stg && (
