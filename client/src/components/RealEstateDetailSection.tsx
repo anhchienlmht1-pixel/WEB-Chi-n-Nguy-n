@@ -30,7 +30,7 @@ function Card({ title, children, note, span }: { title: string; children: ReactN
       <h4 className="text-[0.88rem] font-semibold text-[var(--sm-egg)]" style={{ fontFamily: "var(--font-sans)" }}>
         {title}
       </h4>
-      <div className={`mt-1 ${span ? "h-64" : "h-48"}`}>{children}</div>
+      <div className={`mt-1 ${span ? "h-72" : "h-56"}`}>{children}</div>
     </div>
   );
 }

@@ -39,7 +39,7 @@ function Card({ title, children, note }: { title: string; children: ReactNode; n
       <h4 className="text-[0.88rem] font-semibold text-[var(--sm-egg)]" style={{ fontFamily: "var(--font-sans)" }}>
         {title}
       </h4>
-      <div className="mt-1 h-48">{children}</div>
+      <div className="mt-1 h-56">{children}</div>
     </div>
   );
 }
