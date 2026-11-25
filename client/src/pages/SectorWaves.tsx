@@ -212,6 +212,14 @@ export default function SectorWavesPage() {
   const [raw, setRaw] = useState<SectorWaves | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [hover, setHover] = useState<number | null>(null);
+  // chú thích khi rê chuột lên ô bản đồ nhiệt
+  const [tip, setTip] = useState<{ sector: string; w: number; x: number; y: number } | null>(null);
+  useEffect(() => {
+    if (!tip) return;
+    const off = () => setTip(null);
+    window.addEventListener("scroll", off, { passive: true });
+    return () => window.removeEventListener("scroll", off);
+  }, [tip]);
   const [range, setRange] = useState<Range>("all");
 
   // Lịch sử từ năm 2000 được server dựng dần: gọi lại cho tới khi đủ mã.
@@ -720,6 +728,63 @@ export default function SectorWavesPage() {
 
             {/* Bản đồ nhiệt */}
             <section aria-label="Bản đồ sóng ngành" className="mt-10">
+              {tip &&
+                (() => {
+                  const row = view.rows.find((x) => x.sector === tip.sector);
+                  if (!row) return null;
+                  const p = row.pct[tip.w];
+                  const hi = row.highs[tip.w];
+                  const c = view.chart[tip.w];
+                  const stg = d.vnindex.stage[tip.w];
+                  const wave = p != null && p >= d.threshold;
+                  const right = tip.x > window.innerWidth - 300;
+                  return (
+                    <div
+                      role="tooltip"
+                      className="pointer-events-none fixed z-50 w-[17rem] rounded-md border border-[rgba(201,162,74,0.45)] bg-[var(--sm-pop)] px-3.5 py-3 text-[0.82rem] shadow-lg"
+                      style={{ left: right ? tip.x - 8 : tip.x + 8, top: tip.y - 8, transform: `translate(${right ? "-100%" : "0"}, -100%)` }}
+                    >
+                      <div className="flex items-baseline justify-between gap-2">
+                        <b className="text-[0.92rem] text-[var(--sm-egg)]">{row.sector}</b>
+                        <span className="text-[var(--sm-mut)]">{range === "all" ? `Tháng ${my(d.weeks[tip.w])}` : `Tuần ${dmy(d.weeks[tip.w])}`}</span>
+                      </div>
+                      {p == null ? (
+                        <p className="mt-1.5 text-[var(--sm-egg2)]">Chưa đủ dữ liệu (ngành chưa có 3 mã niêm yết đủ lịch sử).</p>
+                      ) : (
+                        <>
+                          <div className="mt-2 flex items-baseline gap-2">
+                            <span className={`font-display text-[1.6rem] leading-none ${wave ? "up" : "text-[var(--sm-egg)]"}`}>{vn(p, 0)}%</span>
+                            <span className="text-[var(--sm-egg2)]">mã đạt Trend Template</span>
+                          </div>
+                          <div className="relative mt-2 h-1.5 rounded-full bg-[var(--sm-line)]">
+                            <i className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${Math.min(100, p)}%`, background: wave ? "var(--sm-up)" : "var(--sm-gold)" }} />
+                            <i className="absolute -top-1 h-3.5 w-px bg-[var(--sm-egg2)]" style={{ left: `${d.threshold}%` }} title="Ngưỡng có sóng" />
+                          </div>
+                          <p className="mt-2">
+                            <span
+                              className={`inline-block rounded-sm px-1.5 py-0.5 text-[0.75rem] font-semibold ${wave ? "bg-[rgba(31,157,99,0.14)] up" : "bg-[rgba(127,120,90,0.12)] text-[var(--sm-egg2)]"}`}
+                            >
+                              {wave ? "Ngành có sóng" : `Chưa có sóng (cần từ ${d.threshold}%)`}
+                            </span>
+                          </p>
+                          {hi > 0 && <p className="mt-1.5 text-[var(--sm-egg2)]">{hi} mã lập đỉnh 52 tuần trong {range === "all" ? "tháng" : "tuần"} này</p>}
+                        </>
+                      )}
+                      <div className="mt-2 space-y-0.5 border-t border-[var(--sm-line2)] pt-2 text-[var(--sm-egg2)]">
+                        {c?.mState && (
+                          <p>
+                            Thị trường: <b style={{ color: MSTATE[c.mState].text }}>{MSTATE[c.mState].label}</b>
+                          </p>
+                        )}
+                        {stg && (
+                          <p>
+                            VN-Index: <b style={{ color: STAGE[stg].text }}>{STAGE[stg].short}</b>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
               <h2 className="text-[1.6rem] leading-tight">Bản đồ sóng ngành</h2>
               <p className="mt-1 text-[0.92rem] text-[var(--sm-egg2)]">
                 Mỗi ô là {range === "all" ? "một tháng" : "một tuần"}, màu càng đậm càng nhiều mã đạt Trend Template; viền vàng là ngành có sóng.
@@ -776,14 +841,22 @@ export default function SectorWavesPage() {
                           {s.pct.map((p, w) => (
                             <span
                               key={w}
-                              className={`h-full flex-1 ${range === "all" ? "" : "rounded-[1px]"}`}
+                              onMouseEnter={(e) => {
+                                const r = e.currentTarget.getBoundingClientRect();
+                                setTip({ sector: s.sector, w, x: r.left + r.width / 2, y: r.top });
+                                setHover(w);
+                              }}
+                              onMouseLeave={() => {
+                                setTip(null);
+                                setHover(null);
+                              }}
+                              className={`h-full flex-1 cursor-crosshair ${range === "all" ? "" : "rounded-[1px]"}`}
                               style={{
                                 background: cellColor(p),
                                 outline: p != null && p >= d.threshold ? "1px solid rgba(201,162,74,0.85)" : undefined,
                                 outlineOffset: -1,
                                 opacity: hover != null && hover !== w ? 0.75 : 1,
                               }}
-                              title={`${s.sector} · ${range === "all" ? "tháng" : "tuần"} ${range === "all" ? my(d.weeks[w]) : dmy(d.weeks[w])}: ${p == null ? "chưa đủ dữ liệu" : `${vn(p, 0)}% mã đạt Trend Template`}${s.highs[w] ? ` · ${s.highs[w]} mã lập đỉnh 52 tuần` : ""}`}
                             />
                           ))}
                         </div>
