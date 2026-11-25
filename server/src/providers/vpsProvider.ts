@@ -185,28 +185,56 @@ export async function getVpsOrderBook(symbol: string): Promise<OrderBook> {
 }
 
 interface VpsTrade {
+  sequence?: number;
   lastPrice?: number;
   lastVol?: number;
   time?: string;
   side?: string;
   change?: string;
-  changePc?: string;
 }
 
-/** Lệnh khớp gần nhất trong phiên (mới nhất trước). */
-export async function getVpsTrades(symbol: string, limit = 50) {
+export interface TapeTrade {
+  time: string;
+  price: number;
+  volume: number;
+  /** "B" mua chủ động, "S" bán chủ động, "" chưa xác định (ATO/ATC) */
+  side: "B" | "S" | "";
+  change: number;
+}
+
+/**
+ * Lệnh khớp trong phiên: `limit` lệnh mới nhất, tổng hợp mua/bán chủ động và
+ * khối lượng theo từng mức giá (tính trên toàn bộ lệnh trong phiên).
+ */
+export async function getVpsTape(symbol: string, limit = 150) {
   const arr = await getJson<VpsTrade[]>(`/getliststocktrade/${encodeURIComponent(symbol.toUpperCase())}`);
-  return (Array.isArray(arr) ? arr : [])
+  const all = (Array.isArray(arr) ? arr : [])
     .map((t) => ({
+      seq: n(t.sequence) ?? 0,
       time: t.time ?? "",
       price: n(t.lastPrice) ?? 0,
       volume: (n(t.lastVol) ?? 0) * VOL_UNIT,
-      // side: "B" mua chủ động, "S" bán chủ động, "" chưa xác định (ATO/ATC)
-      side: t.side === "B" || t.side === "S" ? t.side : "",
+      side: (t.side === "B" || t.side === "S" ? t.side : "") as TapeTrade["side"],
       change: n(t.change) ?? 0,
     }))
-    .sort((a, b) => (a.time < b.time ? 1 : a.time > b.time ? -1 : 0))
-    .slice(0, limit);
+    .filter((t) => t.price > 0 && t.volume > 0)
+    .sort((a, b) => (a.time !== b.time ? (a.time < b.time ? 1 : -1) : b.seq - a.seq));
+  let buy = 0, sell = 0, other = 0;
+  const lv = new Map<number, { price: number; buy: number; sell: number; other: number }>();
+  for (const t of all) {
+    const l = lv.get(t.price) ?? { price: t.price, buy: 0, sell: 0, other: 0 };
+    if (t.side === "B") (buy += t.volume), (l.buy += t.volume);
+    else if (t.side === "S") (sell += t.volume), (l.sell += t.volume);
+    else (other += t.volume), (l.other += t.volume);
+    lv.set(t.price, l);
+  }
+  const total = buy + sell + other;
+  return {
+    symbol: symbol.toUpperCase(),
+    trades: all.slice(0, limit).map(({ seq: _s, ...t }) => t) as TapeTrade[],
+    summary: { count: all.length, total, buy, sell, other, avg: all.length ? Math.round(total / all.length) : 0 },
+    levels: [...lv.values()].sort((a, b) => b.price - a.price).map((l) => ({ ...l, total: l.buy + l.sell + l.other })),
+  };
 }
 
 export const vpsProvider: StockProvider = {

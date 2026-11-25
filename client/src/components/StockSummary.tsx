@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import Flash from "./Flash";
-import OrderBookPanel from "./OrderBookPanel";
+import { OrderBookTab, PriceLevelsTab, inSession } from "./StockTapeTabs";
 import AnimatedNumber from "./AnimatedNumber";
 import { usePolling } from "../hooks/usePolling";
 import { useMemo, useState } from "react";
@@ -185,6 +185,13 @@ function AboutLine({ text }: { text: string }) {
 
 // Header card of the stock page: identity on the left, company figures in the
 // middle, live price and valuation on the right.
+type SideTab = "overview" | "book" | "levels";
+const SIDE_TABS: { v: SideTab; t: string }[] = [
+  { v: "overview", t: "Tổng quan" },
+  { v: "book", t: "Sổ lệnh" },
+  { v: "levels", t: "Mức giá" },
+];
+
 export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote; isIndexOrFutures: boolean }) {
   const symbol = quote.symbol;
 
@@ -224,6 +231,7 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
   const bvps = cstc ? findLatest(cstc, BVPS_MATCH) : null;
 
   // Index levels (1.650,32) need their decimals; share prices are whole dong.
+  const [side, setSide] = useState<SideTab>("overview");
   const fmt = (n: number) =>
     isIndexOrFutures
       ? n.toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -367,11 +375,42 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
       </header>
 
       <div className="mt-6 grid items-stretch gap-4 lg:grid-cols-12">
-        <div className="min-w-0 lg:col-span-7">
-          <KLinePanel symbol={symbol} height={400} fill />
+        <div className="min-w-0 lg:col-span-8">
+          <KLinePanel symbol={symbol} height={560} fill />
         </div>
 
-        <div className="flex min-w-0 flex-col rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-4 lg:col-span-5">
+        <div className="flex min-w-0 flex-col overflow-hidden rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] lg:col-span-4 lg:h-[760px]">
+          {!isIndexOrFutures && (
+            <div role="tablist" aria-label="Thông tin mã" className="flex shrink-0 border-b border-[var(--sm-line)]">
+              {SIDE_TABS.map((t) => (
+                <button
+                  key={t.v}
+                  type="button"
+                  role="tab"
+                  aria-selected={side === t.v}
+                  onClick={() => setSide(t.v)}
+                  className={`relative flex-1 px-2 py-3 text-[0.88rem] font-semibold ${side === t.v ? "text-[var(--sm-egg)]" : "text-[var(--sm-mut)] hover:text-[var(--sm-egg)]"}`}
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    {t.t}
+                    {t.v !== "overview" && inSession() && <i className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--sm-up)]" aria-hidden="true" />}
+                  </span>
+                  {side === t.v && <i className="absolute inset-x-3 bottom-0 h-[2px] rounded-full bg-[var(--sm-gold)]" aria-hidden="true" />}
+                </button>
+              ))}
+            </div>
+          )}
+          {!isIndexOrFutures && side === "book" && (
+            <div className="min-h-0 flex-1 p-4">
+              <OrderBookTab symbol={symbol} />
+            </div>
+          )}
+          {!isIndexOrFutures && side === "levels" && (
+            <div className="min-h-0 flex-1 p-4">
+              <PriceLevelsTab symbol={symbol} />
+            </div>
+          )}
+          <div className={`min-h-0 flex-1 flex-col overflow-y-auto p-4 ${isIndexOrFutures || side === "overview" ? "flex" : "hidden"}`}>
           {!isIndexOrFutures && <SignalCard signals={signals} cond={cond} price={quote.price} scale={histScale} fmt={fmt} closeAt={closeAt} />}
           <div className="grid grid-cols-2 gap-4 border-b border-[var(--sm-line2)] pb-4">
             {stat("Khối lượng", count(quote.volume, ""))}
@@ -428,9 +467,9 @@ export default function StockSummary({ quote, isIndexOrFutures }: { quote: Quote
           {!isIndexOrFutures && dataSources.length > 0 && (
             <p className="mt-auto pt-3 text-[0.75rem] text-[var(--sm-mut)]">Nguồn: {dataSources.join(" · ")}. P/E, P/B, EPS, BVPS theo báo cáo quý gần nhất.</p>
           )}
+          </div>
         </div>
       </div>
-      {!isIndexOrFutures && <OrderBookPanel symbol={symbol} fmt={(n) => n.toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} />}
     </div>
   );
 }

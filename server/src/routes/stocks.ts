@@ -6,7 +6,7 @@ import { HistoryRange, Quote } from "../providers/types.js";
 import { KbsPeriodType, KbsReportType } from "../providers/kbsFinancials.js";
 import { fetchFinancialReport } from "../providers/financials.js";
 import { getQuoteWithFallback, getHistoryWithFallback, getMarketOverviewWithFallback } from "../providers/fallback.js";
-import { getVpsOrderBook, getVpsTrades } from "../providers/vpsProvider.js";
+import { getVpsOrderBook, getVpsTape } from "../providers/vpsProvider.js";
 import { fetchInvestmentOutlook } from "../providers/googleSheet.js";
 import { fetchNewsForSymbol } from "../news/cafefNews.js";
 import { getCompanyProfileWithFallback } from "../providers/companyProfileFallback.js";
@@ -176,9 +176,9 @@ router.get(
   "/trades/:symbol",
   asyncHandler(async (req, res) => {
     const symbol = String(req.params.symbol).toUpperCase();
-    const trades = await cached(`trades:${symbol}`, 3, () => getVpsTrades(symbol, 60));
+    const tape = await cached(`trades:${symbol}`, 3, () => getVpsTape(symbol, 150));
     edgeCache(res, 2, 5);
-    res.json({ symbol, trades });
+    res.json(tape);
   })
 );
 

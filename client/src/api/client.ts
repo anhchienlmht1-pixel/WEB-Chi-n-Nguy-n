@@ -328,7 +328,13 @@ export interface MatchedTrade {
   side: "B" | "S" | "";
   change: number;
 }
-export async function fetchTrades(symbol: string): Promise<{ symbol: string; trades: MatchedTrade[] }> {
+export interface TradeTape {
+  symbol: string;
+  trades: MatchedTrade[];
+  summary: { count: number; total: number; buy: number; sell: number; other: number; avg: number };
+  levels: { price: number; buy: number; sell: number; other: number; total: number }[];
+}
+export async function fetchTrades(symbol: string): Promise<TradeTape> {
   const { data } = await api.get(`/trades/${encodeURIComponent(symbol)}`);
   return data;
 }
