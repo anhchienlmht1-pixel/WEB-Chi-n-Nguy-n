@@ -280,7 +280,7 @@ export function PriceLevelsTab({ symbol }: { symbol: string }) {
                   </div>
                 </td>
                 <td className="whitespace-nowrap py-1.5 text-right">{vol(l.total)}</td>
-                <td className="w-10 py-1.5 text-right text-[var(--sm-mut)]">{t ? pct(l.total, t.summary.total) : 0}%</td>
+                <td className="w-12 py-1.5 pl-2 text-right text-[var(--sm-mut)]">{t ? pct(l.total, t.summary.total) : 0}%</td>
               </tr>
             ))}
           </tbody>
