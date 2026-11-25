@@ -178,7 +178,8 @@ async function updateTradeJournal(): Promise<JournalState> {
   if (symbols.size === 0 || dataDate === null) return (note += ` | quét lỗi (${symbols.size} mã)`), saved; // scan failed entirely — don't touch positions on bad data
   // The closed session's bar isn't published yet (provider lag) or it was a
   // holiday — nothing new to conclude; try again later.
-  if (dataDate < expected) return (note += ` | dữ liệu ${dataDate} < ${expected}`), saved;
+  // Dựng lại thì không chờ: dùng tới phiên mới nhất đang có; lần sau cập nhật tiếp từ đó.
+  if (dataDate < expected && !rebuild) return (note += ` | dữ liệu ${dataDate} < ${expected}`), saved;
 
   // Sessions to replay: a rebuild covers every session since JOURNAL_START_DATE;
   // otherwise every session after the last run.
