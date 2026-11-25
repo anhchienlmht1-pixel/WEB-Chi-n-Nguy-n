@@ -123,6 +123,86 @@ const ICON: Record<string, ReactNode> = {
   book: <path d="M4 5h7v14H4zM13 5h7v14h-7zM6 9h3M6 13h3M15 9h3M15 13h3" />,
 };
 
+// Hình minh họa mờ phía sau thẻ Sóng ngành và Tín hiệu: tượng trưng, không phải số liệu thật.
+const UP = "#2f8a55";
+const DN = "#b3261e";
+const ART: Record<string, ReactNode> = {
+  pulse: (
+    <>
+      <rect x="0" y="0" width="46" height="110" fill={UP} opacity="0.35" />
+      <rect x="46" y="0" width="38" height="110" fill={DN} opacity="0.3" />
+      <rect x="84" y="0" width="70" height="110" fill={UP} opacity="0.35" />
+      <rect x="154" y="0" width="46" height="110" fill={DN} opacity="0.3" />
+      <path d="M0 80 L14 72 L26 76 L40 58 L52 64 L64 82 L78 74 L92 60 L106 52 L120 40 L134 46 L148 30 L162 44 L176 58 L190 50 L200 62" fill="none" stroke="currentColor" strokeWidth="3" strokeLinejoin="round" />
+      <circle cx="92" cy="60" r="4" fill={UP} />
+    </>
+  ),
+  cycle: (
+    <>
+      <path d="M4 82 C 30 82, 34 84, 54 80 C 80 74, 84 30, 108 26 C 128 24, 132 28, 150 34 C 170 42, 176 86, 198 90" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <g fontSize="11" fontWeight="700" fill="currentColor" fontFamily="inherit">
+        <text x="8" y="102">Tích lũy</text>
+        <text x="66" y="62">Tăng</text>
+        <text x="100" y="16">Phân phối</text>
+        <text x="164" y="104">Giảm</text>
+      </g>
+    </>
+  ),
+  heat: (
+    <>
+      {Array.from({ length: 28 }, (_, i) => {
+        const c = i % 7, r = Math.floor(i / 7);
+        const o = [0.15, 0.35, 0.6, 0.9, 0.5, 0.25, 0.75][(c * 3 + r * 5) % 7];
+        const wave = (c === 4 || c === 5) && r < 3;
+        return <rect key={i} x={6 + c * 27} y={6 + r * 26} width="23" height="22" rx="3" fill={UP} opacity={wave ? 0.95 : o} stroke={wave ? "#c9a24a" : "none"} strokeWidth="2" />;
+      })}
+    </>
+  ),
+  list: (
+    <>
+      {[0, 1, 2, 3, 4].map((r) => (
+        <g key={r}>
+          <rect x="6" y={8 + r * 21} width="34" height="9" rx="3" fill="currentColor" opacity="0.7" />
+          <rect x="50" y={8 + r * 21} width="70" height="9" rx="3" fill="currentColor" opacity="0.3" />
+          <rect x={r % 3 === 1 ? 162 : 140} y={8 + r * 21} width={r % 3 === 1 ? 32 : 54} height="9" rx="3" fill={r % 3 === 1 ? DN : UP} opacity="0.85" />
+        </g>
+      ))}
+    </>
+  ),
+  candles: (
+    <>
+      {[
+        [10, 80, 62, 1],
+        [30, 70, 58, 0],
+        [50, 66, 48, 1],
+        [70, 56, 44, 1],
+        [90, 50, 40, 0],
+        [110, 44, 30, 1],
+        [130, 36, 22, 1],
+        [150, 30, 18, 0],
+        [170, 26, 12, 1],
+      ].map(([x, o, c, up]) => (
+        <g key={x}>
+          <line x1={x + 6} x2={x + 6} y1={Math.min(o, c) - 8} y2={Math.max(o, c) + 8} stroke={up ? UP : DN} strokeWidth="2" />
+          <rect x={x} y={Math.min(o, c)} width="12" height={Math.abs(o - c) || 3} rx="1.5" fill={up ? UP : DN} />
+        </g>
+      ))}
+      <path d="M44 104 l10 -14 l10 14 z" fill={UP} />
+      <path d="M144 2 l10 14 l10 -14 z" fill={DN} />
+    </>
+  ),
+  book: (
+    <>
+      {[0, 1, 2, 3].map((r) => (
+        <g key={r}>
+          <rect x={96 - [70, 50, 84, 36][r]} y={8 + r * 25} width={[70, 50, 84, 36][r]} height="17" rx="3" fill={UP} opacity="0.8" />
+          <rect x="104" y={8 + r * 25} width={[40, 78, 56, 90][r]} height="17" rx="3" fill={DN} opacity="0.75" />
+        </g>
+      ))}
+    </>
+  ),
+};
+
 const PILLARS: {
   title: string;
   accent: string;
@@ -130,7 +210,7 @@ const PILLARS: {
   message: string;
   to: string;
   cta: string;
-  items: { title: string; text: string; to: string; icon: string; logos?: string[] }[];
+  items: { title: string; text: string; to: string; icon: string; logos?: string[]; art?: string }[];
 }[] = [
   {
     title: "Dữ liệu",
@@ -153,9 +233,9 @@ const PILLARS: {
     to: "/song-nganh",
     cta: "Xem sóng ngành",
     items: [
-      { title: "Nhịp thị trường", icon: "pulse", text: "Thời điểm thị trường đang tích cực, cần quan sát hay nên thận trọng, đo trên cổ phiếu trung bình.", to: "/song-nganh" },
-      { title: "Chu kỳ VN-Index", icon: "cycle", text: "Thị trường đang ở pha tích lũy, tăng, phân phối hay giảm của chu kỳ lớn.", to: "/song-nganh" },
-      { title: "Bản đồ 19 ngành", icon: "grid", text: "Ngành nào đang có sóng, ngành nào đang hình thành, nhìn ngược lại từ năm 2000.", to: "/song-nganh" },
+      { title: "Nhịp thị trường", icon: "pulse", art: "pulse", text: "Thời điểm thị trường đang tích cực, cần quan sát hay nên thận trọng, đo trên cổ phiếu trung bình.", to: "/song-nganh" },
+      { title: "Chu kỳ VN-Index", icon: "cycle", art: "cycle", text: "Thị trường đang ở pha tích lũy, tăng, phân phối hay giảm của chu kỳ lớn.", to: "/song-nganh" },
+      { title: "Bản đồ 19 ngành", icon: "grid", art: "heat", text: "Ngành nào đang có sóng, ngành nào đang hình thành, nhìn ngược lại từ năm 2000.", to: "/song-nganh" },
     ],
   },
   {
@@ -166,9 +246,9 @@ const PILLARS: {
     to: "/tin-hieu",
     cta: "Xem tín hiệu hôm nay",
     items: [
-      { title: "Danh mục và nhật ký", icon: "list", text: "Mã đang giữ, mã mua mới và toàn bộ lệnh đã đóng, ghi lại từ ngày bắt đầu, không sửa về sau.", to: "/tin-hieu" },
-      { title: "Biểu đồ có điểm mua bán", icon: "signal", text: "Mỗi mã kèm điểm mua từng phần và điểm đóng lệnh của hệ thống ngay trên biểu đồ nến.", to: "/tin-hieu" },
-      { title: "Sổ lệnh trực tiếp", icon: "book", text: "Bước giá, khớp lệnh, mua bán chủ động và khối lượng theo giá của từng mã trong phiên.", to: "/tin-hieu" },
+      { title: "Danh mục và nhật ký", icon: "list", art: "list", text: "Mã đang giữ, mã mua mới và toàn bộ lệnh đã đóng, ghi lại từ ngày bắt đầu, không sửa về sau.", to: "/tin-hieu" },
+      { title: "Biểu đồ có điểm mua bán", icon: "signal", art: "candles", text: "Mỗi mã kèm điểm mua từng phần và điểm đóng lệnh của hệ thống ngay trên biểu đồ nến.", to: "/tin-hieu" },
+      { title: "Sổ lệnh trực tiếp", icon: "book", art: "book", text: "Bước giá, khớp lệnh, mua bán chủ động và khối lượng theo giá của từng mã trong phiên.", to: "/tin-hieu" },
     ],
   },
 ];
@@ -204,9 +284,20 @@ export function HomePillars() {
               <Link
                 key={it.title}
                 to={it.to}
-                className={`group relative flex min-w-0 flex-col overflow-hidden rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-5 ${it.logos ? "min-h-[270px]" : ""}`}
+                className={`group relative flex min-w-0 flex-col overflow-hidden rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-5 ${it.logos || it.art ? "min-h-[270px]" : ""}`}
               >
                 <i className="absolute inset-x-0 top-0 h-[3px]" style={{ background: p.accent }} aria-hidden="true" />
+                {it.art && (
+                  // hình minh họa tượng trưng, mờ phía sau nội dung
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 200 110"
+                    className="pointer-events-none absolute right-3 bottom-3 h-[96px] w-[176px] opacity-[0.16] transition-opacity duration-300 group-hover:opacity-[0.32]"
+                    style={{ color: p.accent }}
+                  >
+                    {ART[it.art]}
+                  </svg>
+                )}
                 {it.logos && (
                   // logo các doanh nghiệp tiêu biểu, mờ phía sau nội dung
                   <span
