@@ -55,7 +55,7 @@ function Breadth() {
                   <>
                     <i className="block h-full bg-[var(--sm-up)]" style={{ width: `${(up / t) * 100}%` }} />
                     <i className="block h-full bg-[#e0b24a]" style={{ width: `${(fl / t) * 100}%` }} />
-                    <i className="block h-full bg-[var(--sm-down)]" style={{ width: `${(dn / t) * 100}%` }} />
+                    <i className="block h-full bg-[var(--sm-dn, #c0392b)]" style={{ width: `${(dn / t) * 100}%` }} />
                   </>
                 )}
               </div>
@@ -101,7 +101,7 @@ function SectorsToday() {
                 <span className="relative h-5">
                   <i
                     className="absolute top-0 h-full rounded-[4px]"
-                    style={{ left: p >= 0 ? "50%" : `${50 - (Math.abs(p) / max) * 50}%`, width: `${(Math.abs(p) / max) * 50}%`, background: p >= 0 ? "var(--sm-up)" : "var(--sm-down)", opacity: 0.75 }}
+                    style={{ left: p >= 0 ? "50%" : `${50 - (Math.abs(p) / max) * 50}%`, width: `${(Math.abs(p) / max) * 50}%`, background: p >= 0 ? "var(--sm-up)" : "var(--sm-dn, #c0392b)", opacity: 0.75 }}
                   />
                   <i className="absolute top-0 left-1/2 h-full w-px bg-[var(--sm-line)]" />
                   {s.leaders.length > 0 && (
