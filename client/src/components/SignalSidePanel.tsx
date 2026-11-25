@@ -190,7 +190,7 @@ export default function SignalSidePanel({
             <p className="mb-2 shrink-0 text-[0.8rem] text-[var(--sm-egg2)]">
               <b className="text-[var(--sm-egg)]">{symbol}</b> ·{" "}
               <Link to={`/stock/${symbol}`} className="text-[var(--sm-gold2)] hover:underline">
-                mở trang mã
+                thông tin cơ bản
               </Link>
             </p>
             <div className="min-h-0 flex-1">{tab === "book" ? <OrderBookTab symbol={symbol} /> : <PriceLevelsTab symbol={symbol} />}</div>

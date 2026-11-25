@@ -80,9 +80,11 @@ export default function TrendSignals() {
             <div className="flex min-w-0 flex-col gap-2 lg:col-span-8">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h2 className="text-[1.5rem] leading-tight text-[var(--sm-egg)]">Biểu đồ {chartSymbol}</h2>
-                <Link to={`/stock/${chartSymbol}`} className="text-[0.92rem] font-semibold text-[var(--sm-gold2)] hover:underline">
-                  Mở trang {chartSymbol}
-                </Link>
+                {chartSymbol !== "VNINDEX" && (
+                  <Link to={`/stock/${chartSymbol}`} className="text-[0.92rem] font-semibold text-[var(--sm-gold2)] hover:underline">
+                    Thông tin cơ bản của {chartSymbol}
+                  </Link>
+                )}
               </div>
               <div className="min-h-0 flex-1">
                 <KLinePanel symbol={chartSymbol} height={560} fill />
