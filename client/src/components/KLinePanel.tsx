@@ -515,7 +515,7 @@ export default function KLinePanel({
           <div className="relative min-h-0 flex-1" style={{ height: fill ? undefined : height, minHeight: height }}>
             {/* Watermark: con bò trong logo Chiến Nguyễn Invest, mờ, nằm dưới nến. */}
             <img
-              src="/watermark-bull.png"
+              src="/logo-cn-bull.png"
               alt=""
               aria-hidden="true"
               draggable={false}

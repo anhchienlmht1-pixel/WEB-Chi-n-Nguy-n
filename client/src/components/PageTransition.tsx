@@ -41,8 +41,7 @@ export default function PageTransition() {
       style={{ opacity: phase === "fade" ? 0 : 1, transition: `opacity ${FADE_MS}ms ease` }}
     >
       <div className="pt-logo flex flex-col items-center">
-        <img src="/logo-bullstock-light.svg" alt="" className="pt-light h-auto w-64 sm:w-80" />
-        <img src="/logo-bullstock-dark.svg" alt="" className="pt-dark h-auto w-64 sm:w-80" />
+        <img src="/logo-cn-bull.png" alt="" className="h-auto w-40 sm:w-48" />
         <span className="mt-6 block h-[3px] w-40 overflow-hidden rounded-full bg-[rgba(201,162,74,0.25)]">
           <i className="pt-bar block h-full w-1/2 rounded-full bg-[var(--sm-gold)]" />
         </span>
