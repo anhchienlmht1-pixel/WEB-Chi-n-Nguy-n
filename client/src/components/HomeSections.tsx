@@ -1,7 +1,7 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import type { Quote } from "../types";
-import type { TradeJournal, TrendBuyResult } from "../api/client";
+import { fetchSectorWaves, type SectorWaves, type TradeJournal, type TrendBuyResult } from "../api/client";
 import { BANKS } from "../data/bankSector";
 import { PROFIT } from "../data/bankValuation";
 import { useSecSector } from "../data/securities";
@@ -101,6 +101,219 @@ export function ProductGrid({ quotes, scan, journal }: { quotes?: Quote[]; scan?
         sub={re ? `Người mua trả trước ${num(rePre / 1000, 0)} nghìn tỷ, ${pct(reYoy)} so với cùng kỳ` : "Đang tải…"}
         foot="Sức khỏe tài chính, tồn kho, dự án bàn giao"
       />
+    </div>
+  );
+}
+
+/* ------------------------------------- Dữ liệu → Sóng ngành → Tín hiệu */
+
+const STAGE_LABEL: Record<1 | 2 | 3 | 4, string> = { 1: "Tích lũy", 2: "Tăng", 3: "Phân phối", 4: "Giảm" };
+const STATE_LABEL: Record<1 | 2 | 3, string> = { 1: "Tích cực", 2: "Quan sát", 3: "Thận trọng" };
+
+function Pillar({ step, title, lead, insight, to, cta, children }: { step: number; title: string; lead: string; insight: ReactNode; to: string; cta: string; children: ReactNode }) {
+  return (
+    <section aria-label={title} className="grid gap-x-10 gap-y-5 border-t border-[var(--sm-line)] py-10 lg:grid-cols-12">
+      <div className="lg:col-span-4">
+        <p className="text-[0.85rem] font-semibold text-[var(--sm-gold2)]">Bước {step}</p>
+        <h2 className="mt-1 text-[clamp(1.7rem,2.6vw,2.2rem)] leading-tight text-[var(--sm-egg)]">{title}</h2>
+        <p className="mt-2 text-[1rem] leading-relaxed text-[var(--sm-egg2)]">{lead}</p>
+        <div className="mt-4 rounded-md border-l-0 bg-[rgba(201,162,74,0.10)] px-4 py-3 text-[0.95rem] leading-relaxed text-[var(--sm-egg)]">
+          <span className="mb-1 block text-[0.78rem] font-semibold text-[var(--sm-gold2)]">Insight hôm nay</span>
+          {insight}
+        </div>
+        <Link to={to} className="sm-btn mt-5">
+          {cta}
+        </Link>
+      </div>
+      <div className="grid min-w-0 grid-cols-2 content-start gap-2.5 sm:gap-4 lg:col-span-8">{children}</div>
+    </section>
+  );
+}
+
+/** Trang chủ: ba mảng của Bull Stock theo thứ tự đọc thị trường — dữ liệu doanh nghiệp, sóng ngành, tín hiệu. */
+export function HomePillars({ scan, journal }: { scan?: TrendBuyResult | null; journal?: TradeJournal | null }) {
+  const { data: sec } = useSecSector();
+  const { data: re } = useReSector();
+  const [waves, setWaves] = useState<SectorWaves | null>(null);
+  useEffect(() => {
+    let alive = true;
+    fetchSectorWaves()
+      .then((w) => alive && setWaves(w))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // 1. Dữ liệu
+  const pbt = BANKS.map((b) => PROFIT[b.bank]).filter(Boolean);
+  const pbtNow = pbt.reduce((a, p) => a + p!.pbt, 0);
+  const pbtPrev = pbt.reduce((a, p) => a + p!.pbtPrev, 0);
+  const pbtYoy = pbtPrev ? (pbtNow / pbtPrev - 1) * 100 : 0;
+  const upBanks = pbt.filter((p) => p!.pbt > p!.pbtPrev).length;
+  const secPbt = sec?.scale.reduce((a, r) => a + (r.pbt ?? 0), 0) ?? 0;
+  const secPrev = sec?.scale.reduce((a, r) => a + (r.pbtPrev ?? 0), 0) ?? 0;
+  const secYoy = secPrev ? (secPbt / secPrev - 1) * 100 : 0;
+  const secMargin = sec?.scale.reduce((a, r) => a + (r.margin ?? 0), 0) ?? 0;
+  const reSafe = re ? re.rows.filter((r) => (r.score ?? -9) >= 2).length : 0;
+  const rePre = re ? re.rows.reduce((a, r) => a + (r.v.prepaid ?? 0), 0) : 0;
+  const rePrev = re ? re.rows.reduce((a, r) => a + (r.v.prepaidPrev ?? 0), 0) : 0;
+  const reYoy = rePrev ? (rePre / rePrev - 1) * 100 : 0;
+  const sample = scan?.items[0]?.symbol ?? "HPG";
+
+  // 2. Sóng ngành
+  const now = waves?.market?.now;
+  const L = waves ? waves.weeks.length - 1 : -1;
+  const hot = waves ? waves.sectors.filter((x) => (x.pct[L] ?? -1) >= waves.threshold) : [];
+  const best = waves ? [...waves.sectors].sort((a, b) => (b.pct[L] ?? -1) - (a.pct[L] ?? -1))[0] : undefined;
+  const stage = waves ? waves.vnindex.stage[L] : null;
+  const breadth = waves ? waves.breadth[L] : null;
+
+  // 3. Tín hiệu
+  const closed = journal?.closed ?? [];
+  const wins = closed.filter((x) => x.returnPercent > 0).length;
+  const avgRet = closed.length ? closed.reduce((a, x) => a + x.returnPercent, 0) / closed.length : 0;
+  const held = scan?.items.length ?? 0;
+  const fresh = scan ? scan.items.filter((i) => i.buyDate.slice(0, 10) === scan.sessionDate.slice(0, 10)).length : 0;
+  const winHeld = scan ? scan.items.filter((i) => i.signalReturnPercent > 0).length : 0;
+
+  return (
+    <div>
+      <Pillar
+        step={1}
+        title="Dữ liệu"
+        lead="Báo cáo tài chính từng quý của ngành ngân hàng, chứng khoán, bất động sản và từng doanh nghiệp, đọc thẳng từ số liệu gốc."
+        insight={
+          <>
+            Q3/2026: lợi nhuận trước thuế ngân hàng <b className={tone(pbtYoy)}>{pct(pbtYoy)}</b> ({upBanks}/{pbt.length} ngân hàng tăng)
+            {sec && (
+              <>
+                , chứng khoán <b className={tone(secYoy)}>{pct(secYoy)}</b>
+              </>
+            )}
+            {re && (
+              <>
+                ; {reSafe}/{re.rows.length} chủ đầu tư bất động sản đạt chuẩn an toàn tài chính
+              </>
+            )}
+            .
+          </>
+        }
+        to="/nganh-ngan-hang"
+        cta="Xem dữ liệu ngành"
+      >
+        <InsightCard to="/nganh-ngan-hang" label="Ngành ngân hàng Q3/2026" value={`LNTT ${pct(pbtYoy)}`} cls={tone(pbtYoy)} sub={`${num(pbtNow / 1000, 1)} nghìn tỷ · ${upBanks}/${pbt.length} ngân hàng tăng`} foot="16 ngân hàng: chỉ số, định giá, quy mô" />
+        <InsightCard
+          to="/nganh-chung-khoan"
+          label={`Ngành chứng khoán ${sec ? sec.period.replace(" ", "/") : ""}`}
+          value={sec ? `LNTT ${pct(secYoy)}` : "—"}
+          cls={sec ? tone(secYoy) : ""}
+          sub={sec ? `${num(secPbt / 1000, 1)} nghìn tỷ · margin ${num(secMargin / 1000, 0)} nghìn tỷ` : "Đang tải…"}
+          foot={`${sec?.rows.length ?? 18} CTCK: chỉ số, định giá P/B, thị phần`}
+        />
+        <InsightCard
+          to="/nganh-bat-dong-san"
+          label={`Ngành bất động sản ${re ? re.period.replace(" ", "/") : ""}`}
+          value={re ? `${reSafe}/${re.rows.length} CĐT an toàn` : "—"}
+          sub={re ? `Người mua trả trước ${pct(reYoy)} so với cùng kỳ` : "Đang tải…"}
+          foot="Sức khỏe tài chính, tồn kho, dự án bàn giao"
+        />
+        <InsightCard to={`/stock/${sample}`} label="Dữ liệu doanh nghiệp" value="Theo từng quý" sub="Giá, nến, sổ lệnh, khối ngoại, doanh thu, lợi nhuận, P/E, P/B" foot={`Xem ví dụ: ${sample}`} />
+      </Pillar>
+
+      <Pillar
+        step={2}
+        title="Sóng ngành"
+        lead="Dòng tiền đang ở ngành nào, và thị trường có đang thuận cho việc mua mới hay không."
+        insight={
+          !waves || !now ? (
+            "Đang tính sóng ngành…"
+          ) : (
+            <>
+              Nhịp thị trường <b className={now.state === 1 ? "up" : now.state === 3 ? "down" : ""}>{STATE_LABEL[now.state]}</b>
+              {stage ? (
+                <>
+                  , VN-Index ở giai đoạn <b>{STAGE_LABEL[stage]}</b>
+                </>
+              ) : null}
+              . {hot.length ? (
+                <>
+                  <b className="up">{hot.length}</b> ngành có sóng: {hot.map((x) => x.sector).join(", ")}.
+                </>
+              ) : (
+                <>
+                  <b className="down">Chưa ngành nào có sóng</b>
+                  {best && best.pct[L] != null ? `; mạnh nhất là ${best.sector} (${num(best.pct[L]!)}% mã đạt Trend Template).` : "."}
+                </>
+              )}
+            </>
+          )
+        }
+        to="/song-nganh"
+        cta="Xem sóng ngành"
+      >
+        <InsightCard
+          to="/song-nganh"
+          label="Nhịp thị trường"
+          value={now ? STATE_LABEL[now.state] : "—"}
+          cls={now ? (now.state === 1 ? "up" : now.state === 3 ? "down" : "") : ""}
+          sub={now ? `${now.dist} ngày phân phối · thanh khoản ${now.liq == null ? "—" : `${num(now.liq)}%`} bình thường` : "Đang tải…"}
+          foot="Chỉ số cân bằng gần 200 mã"
+        />
+        <InsightCard to="/song-nganh" label="Chu kỳ VN-Index" value={stage ? STAGE_LABEL[stage] : "—"} cls={stage === 2 ? "up" : stage === 4 ? "down" : ""} sub="Theo độ dốc MA150 (Weinstein)" foot="Giai đoạn Tích lũy, Tăng, Phân phối, Giảm" />
+        <InsightCard
+          to="/song-nganh"
+          label="Ngành có sóng"
+          value={waves ? `${hot.length}/${waves.sectors.length}` : "—"}
+          cls={waves ? (hot.length ? "up" : "down") : ""}
+          sub={breadth != null ? `${num(breadth, 1)}% toàn thị trường đạt Trend Template` : "Đang tải…"}
+          foot={`Ngành có sóng: từ ${waves?.threshold ?? 50}% mã đạt Trend Template`}
+        />
+        <InsightCard
+          to="/song-nganh"
+          label="Ngành mạnh nhất"
+          value={best ? best.sector : "—"}
+          sub={best && best.pct[L] != null ? `${num(best.pct[L]!)}% mã đạt · ${best.leaders.slice(0, 3).join(", ") || "—"}` : "Đang tải…"}
+          foot="Bản đồ nhiệt 19 ngành"
+        />
+      </Pillar>
+
+      <Pillar
+        step={3}
+        title="Tín hiệu"
+        lead="Hệ thống lọc mã đang đi lên sau mỗi phiên, vào lệnh từng phần và công khai mọi lệnh kèm lãi lỗ thật."
+        insight={
+          !scan && !journal ? (
+            "Đang tải tín hiệu…"
+          ) : (
+            <>
+              Đang giữ <b>{held}</b> mã ({winHeld} mã đang lãi)
+              {fresh ? (
+                <>
+                  , <b className="up">{fresh}</b> mã mua mới phiên gần nhất
+                </>
+              ) : null}
+              . {closed.length ? (
+                <>
+                  Đã đóng {closed.length} lệnh từ {journal ? dmy(journal.startDate) : ""}, thắng <b>{num((wins / closed.length) * 100)}%</b>, lãi/lỗ trung bình <b className={tone(avgRet)}>{pct(avgRet)}</b>.
+                </>
+              ) : (
+                "Chưa có lệnh nào đóng."
+              )}
+            </>
+          )
+        }
+        to="/tin-hieu"
+        cta="Xem tín hiệu hôm nay"
+      >
+        <InsightCard to="/tin-hieu" label="Tỷ lệ lệnh thắng" value={closed.length ? `${num((wins / closed.length) * 100)}%` : "—"} sub={`${wins}/${closed.length} lệnh đã đóng`} foot={journal ? `Công khai từ ${dmy(journal.startDate)}` : "Nhật ký lệnh"} />
+        <InsightCard to="/tin-hieu" label="Lãi/lỗ trung bình mỗi lệnh" value={closed.length ? pct(avgRet) : "—"} cls={closed.length ? tone(avgRet) : ""} sub="Giá đóng cửa, chưa trừ phí, thuế" foot="Xem nhật ký lệnh" />
+        <InsightCard to="/tin-hieu" label="Danh mục đang giữ" value={scan ? `${held} mã` : "—"} sub={scan ? `${winHeld} mã đang lãi · ${fresh} mua mới` : "Đang tải…"} foot={scan ? `Chốt phiên ${dmy(scan.sessionDate)}` : "Danh mục"} />
+        <InsightCard to="/tin-hieu" label="Sổ lệnh trực tiếp" value="Bước giá, khớp lệnh" sub="Mua/bán chủ động, khối lượng theo giá của từng mã" foot="Mở trang Tín hiệu" />
+      </Pillar>
+      <p className="border-t border-[var(--sm-line)] pt-3 text-[0.82rem] text-[var(--sm-mut)]">
+        Số liệu mô tả trạng thái đã và đang xảy ra, không dự báo. Kết quả quá khứ không bảo đảm kết quả tương lai; chỉ để tham khảo, không phải khuyến nghị mua bán.
+      </p>
     </div>
   );
 }

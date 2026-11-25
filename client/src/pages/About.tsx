@@ -1,19 +1,15 @@
 import { Link } from "react-router-dom";
-import { fetchMarketOverview } from "../api/client";
-import { usePolling } from "../hooks/usePolling";
 import HeroSignals from "../components/HeroSignals";
 import PriceBoard from "../components/PriceBoardBg";
-import { SonMaiKpis, useSignalData } from "../components/SonMaiHome";
-import { AdvisorAndAccount, MethodSteps, ProductGrid, SectionHead } from "../components/HomeSections";
+import { useSignalData } from "../components/SonMaiHome";
+import { AdvisorAndAccount, HomePillars, MethodSteps, SectionHead } from "../components/HomeSections";
 
 // Trang Giới thiệu (trang chủ) — bố cục trang giới thiệu sản phẩm:
 //  1. Mở đầu: thông điệp + 2 nút hành động, bên phải là "hôm nay" (chỉ số + phiên vừa chốt)
-//  2. Kết quả công khai: dải hiệu suất từ nhật ký lệnh thật
-//  3. Bull Stock có gì: các mảng dữ liệu, mỗi thẻ kèm số liệu sống
+//  2. Dữ liệu → Sóng ngành → Tín hiệu: mỗi mảng một dòng insight và 4 thẻ số liệu sống
 //  4. Phương pháp: 3 bước
 //  5. Người phụ trách + mở tài khoản
 export default function About() {
-  const { data } = usePolling(fetchMarketOverview, [], 10000);
   const { scan, journal } = useSignalData();
 
   return (
@@ -61,25 +57,10 @@ export default function About() {
       </section>
 
       <div className="gutter-x mx-auto max-w-[1920px] pb-20">
-        {/* 2. Kết quả công khai */}
-        <section aria-label="Kết quả công khai" className="pt-6">
-          <SectionHead
-            title="Kết quả công khai"
-            lead="Mọi lệnh của hệ thống đều được ghi lại từ ngày bắt đầu, không chỉnh sửa về sau: lệnh thắng, lệnh thua, thời gian giữ."
-            right={
-              <Link to="/tin-hieu#nhat-ky" className="text-[0.95rem] font-semibold text-[var(--sm-gold2)] hover:underline">
-                Xem nhật ký lệnh
-              </Link>
-            }
-          />
-          <SonMaiKpis journal={journal} />
-        </section>
-
-        {/* 3. Bull Stock có gì */}
-        <section aria-label="Bull Stock có gì" className="pt-16">
-          <SectionHead title="Bull Stock có gì" lead="Mỗi mục kèm số liệu mới nhất. Bấm để xem chi tiết." />
-          <ProductGrid quotes={data?.quotes} scan={scan} journal={journal} />
-        </section>
+        {/* 2. Dữ liệu → Sóng ngành → Tín hiệu, mỗi mảng kèm insight sống */}
+        <div className="pt-6">
+          <HomePillars scan={scan} journal={journal} />
+        </div>
 
         {/* 4. Phương pháp */}
         <section aria-label="Phương pháp" className="pt-16">
