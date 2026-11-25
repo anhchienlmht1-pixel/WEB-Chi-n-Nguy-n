@@ -190,8 +190,11 @@ export function OrderBookTab({ symbol }: { symbol: string }) {
                   {p2(x.price)}
                 </td>
                 <td className="py-1 text-right" style={{ color: color(x.price) }}>
-                  {x.change > 0 ? "+" : ""}
-                  {p2(x.change)}
+                  {(() => {
+                    // VPS trả +/- không dấu: tính lại theo giá tham chiếu
+                    const ch = b?.ref ? Math.round((x.price - b.ref) * 100) / 100 : x.change;
+                    return `${ch > 0 ? "+" : ch < 0 ? "−" : ""}${p2(Math.abs(ch))}`;
+                  })()}
                 </td>
                 <td className={`py-1 text-right ${x.volume >= bigMin ? "font-semibold text-[var(--sm-egg)]" : ""}`}>{vol(x.volume)}</td>
                 <td className={`py-1 text-right font-semibold ${x.side === "B" ? "up" : x.side === "S" ? "down" : "text-[var(--sm-mut)]"}`}>
