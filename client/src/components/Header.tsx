@@ -13,6 +13,7 @@ const NAV_IDLE = "border-transparent text-[var(--sm-egg2)] hover:text-[var(--sm-
 
 type Item = { to: string; label: string; sub: string };
 const MARKET: Item[] = [
+  { to: "/toan-canh-thi-truong", label: "Toàn cảnh thị trường", sub: "Chỉ số, độ rộng, ngành, khối ngoại" },
   { to: "/tin-hieu", label: "Tín hiệu", sub: "Danh mục theo xu hướng, nhật ký lệnh" },
   { to: "/song-nganh", label: "Sóng ngành", sub: "Nhịp thị trường, ngành nào đang lên" },
 ];

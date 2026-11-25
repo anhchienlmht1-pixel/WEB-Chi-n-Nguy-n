@@ -11,6 +11,7 @@ import BankSector from './pages/BankSector'
 import SecuritiesSector from './pages/SecuritiesSector'
 import RealEstateSector from './pages/RealEstateSector'
 import SectorWavesPage from './pages/SectorWaves'
+import MarketOverview from './pages/MarketOverview'
 
 function App() {
   const { pathname } = useLocation()
@@ -29,6 +30,7 @@ function App() {
           <Route path="/nganh-chung-khoan" element={<SecuritiesSector />} />
           <Route path="/nganh-bat-dong-san" element={<RealEstateSector />} />
           <Route path="/song-nganh" element={<SectorWavesPage />} />
+          <Route path="/toan-canh-thi-truong" element={<MarketOverview />} />
           <Route path="/gioi-thieu" element={<About />} />
           <Route path="*" element={<About />} />
         </Routes>
