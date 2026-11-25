@@ -54,7 +54,7 @@ function Breadth() {
                   <>
                     <i className="block h-full bg-[var(--sm-up)]" style={{ width: `${(up / t) * 100}%` }} />
                     <i className="block h-full bg-[#e0b24a]" style={{ width: `${(fl / t) * 100}%` }} />
-                    <i className="block h-full bg-[var(--sm-dn, #c0392b)]" style={{ width: `${(dn / t) * 100}%` }} />
+                    <i className="block h-full bg-[var(--sm-dn)]" style={{ width: `${(dn / t) * 100}%` }} />
                   </>
                 )}
               </div>
