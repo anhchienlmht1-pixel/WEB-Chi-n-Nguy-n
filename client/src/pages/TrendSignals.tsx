@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useWatchlist } from "../hooks/useWatchlist";
 import KLinePanel from "../components/KLinePanel";
-import { SonMaiHoldings, SonMaiJournal, SonMaiKpis, dmy, useMarketTrend, useSignalData } from "../components/SonMaiHome";
+import { SonMaiKpis, dmy, useMarketTrend, useSignalData } from "../components/SonMaiHome";
+import SignalSidePanel from "../components/SignalSidePanel";
 import { MethodSteps, SectionHead } from "../components/HomeSections";
 
 const DEFAULT_SYMBOL = "VNINDEX";
@@ -29,7 +30,8 @@ export default function TrendSignals() {
 
   const pick = (s: string) => {
     setChartSymbol(s);
-    chartRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    // trên điện thoại cột phải nằm dưới biểu đồ: cuộn lên cho thấy biểu đồ vừa đổi
+    if (window.innerWidth < 1024) chartRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const held = scan?.items.length ?? null;
@@ -71,28 +73,26 @@ export default function TrendSignals() {
           <SonMaiKpis journal={journal} />
         </section>
 
-        {/* 3. Danh mục + nhật ký */}
-        <div className="mt-12 grid gap-x-6 gap-y-12 lg:grid-cols-12">
-          <div className="min-w-0 lg:col-span-8">
-            <SonMaiHoldings scan={scan} onPick={pick} />
+        {/* 3. Biểu đồ | Danh mục, nhật ký, sổ lệnh */}
+        <section ref={chartRef} id="danh-muc" aria-label="Biểu đồ và danh mục" className="mt-10 scroll-mt-28">
+          <span id="nhat-ky" className="block scroll-mt-28" aria-hidden="true" />
+          <div className="grid items-stretch gap-4 lg:grid-cols-12">
+            <div className="flex min-w-0 flex-col gap-2 lg:col-span-8">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h2 className="text-[1.5rem] leading-tight text-[var(--sm-egg)]">Biểu đồ {chartSymbol}</h2>
+                <Link to={`/stock/${chartSymbol}`} className="text-[0.92rem] font-semibold text-[var(--sm-gold2)] hover:underline">
+                  Mở trang {chartSymbol}
+                </Link>
+              </div>
+              <div className="min-h-0 flex-1">
+                <KLinePanel symbol={chartSymbol} height={560} fill />
+              </div>
+              <p className="text-[0.8rem] text-[var(--sm-mut)]">Tam giác xanh là điểm mua, đỏ là điểm đóng lệnh của hệ thống. Bấm mã ở cột phải để đổi biểu đồ.</p>
+            </div>
+            <div className="min-w-0 lg:col-span-4">
+              <SignalSidePanel scan={scan} journal={journal} symbol={chartSymbol} onPick={pick} />
+            </div>
           </div>
-          <div className="min-w-0 lg:col-span-4">
-            <SonMaiJournal journal={journal} />
-          </div>
-        </div>
-
-        {/* 4. Biểu đồ */}
-        <section ref={chartRef} aria-label="Biểu đồ" className="mt-14 scroll-mt-28">
-          <SectionHead
-            title={`Biểu đồ ${chartSymbol}`}
-            lead="Bấm mã trong danh mục để đổi biểu đồ. Tam giác xanh là điểm mua, đỏ là điểm đóng lệnh của hệ thống."
-            right={
-              <Link to={`/stock/${chartSymbol}`} className="text-[0.95rem] font-semibold text-[var(--sm-gold2)] hover:underline">
-                Mở trang {chartSymbol}
-              </Link>
-            }
-          />
-          <KLinePanel symbol={chartSymbol} height={500} />
         </section>
 
         {/* 5. Phương pháp */}
