@@ -98,7 +98,7 @@ function OverviewTab({ d, group }: { d: SecSector; group: SecGroupFilter }) {
               <th className="px-2 py-2.5 font-bold">CTCK</th>
               {TABLE.map((m) => (
                 <th key={m.key} title={m.what} className="px-1.5 py-2.5 text-center text-[0.82rem] font-bold leading-tight">
-                  {m.label} {m.unit === "%" ? "(%)" : "(lần)"}
+                  {m.label}{m.unit === "%" ? "" : " (lần)"}
                 </th>
               ))}
             </tr>
@@ -251,6 +251,7 @@ function Cell({ m, r, st }: { m: Metric; r: SecRow; st: { m: number; sd: number 
     <td title={title} className="px-1.5 py-1.5 text-center tabular-nums" style={style}>
       {est && <span className="mr-px opacity-70">≈</span>}
       {vn(v, m.digits)}
+      {m.unit === "%" ? "%" : "x"}
       {arrow && (
         <span aria-hidden="true" className="ml-1 text-[0.6rem] opacity-80" style={{ color: arrowColor }}>
           {arrow}

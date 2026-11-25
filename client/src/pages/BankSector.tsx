@@ -82,7 +82,7 @@ function OverviewTab({ group }: { group: GroupFilter }) {
               <th className="px-2 py-2.5 font-bold">Ngân hàng</th>
               {METRICS.map((m) => (
                 <th key={m.key} title={m.what} className="px-2 py-2.5 text-center font-bold leading-tight">
-                  {m.label} (%)
+                  {m.label}
                 </th>
               ))}
             </tr>
