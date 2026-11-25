@@ -64,6 +64,54 @@ const MSTATE: Record<1 | 2 | 3, { label: string; fill: string; text: string; wha
 // Câu hỏi thường gặp cuối trang (giải thích các biểu đồ)
 const FAQ: { q: string; a: (threshold: number, minStocks: number) => ReactNode }[] = [
   {
+    q: "Biểu đồ Trạng thái thị trường và biểu đồ VN-Index khác nhau thế nào?",
+    a: () => (
+      <>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[30rem] text-[0.88rem]">
+            <thead>
+              <tr className="border-b border-[var(--sm-line)] text-left text-[var(--sm-mut)]">
+                <th className="py-1.5 pr-3 font-normal" />
+                <th className="py-1.5 pr-3 font-semibold text-[var(--sm-egg)]">Trạng thái thị trường</th>
+                <th className="py-1.5 font-semibold text-[var(--sm-egg)]">VN-Index và giai đoạn</th>
+              </tr>
+            </thead>
+            <tbody className="align-top">
+              {[
+                ["Đường giá", "Chỉ số cân bằng: gần 200 mã, mỗi mã tỷ trọng như nhau", "VN-Index: tính theo vốn hóa, mã lớn chiếm tỷ trọng lớn"],
+                ["Phản ánh", "Cổ phiếu trung bình", "Các mã vốn hóa lớn"],
+                ["Phương pháp", "O'Neil (chữ M trong CAN SLIM): ngày phân phối, phiên xác nhận, MA50", "Weinstein: độ dốc MA150"],
+                ["Tốc độ", "Nhanh, đổi theo từng nhịp vài tuần", "Chậm, đổi khi xu hướng lớn đổi, thường vài tháng"],
+                ["Trả lời", "Lúc này có nên mạnh tay không (thời điểm)", "Thị trường đang ở pha nào của chu kỳ (bức tranh lớn)"],
+              ].map(([k, a1, a2]) => (
+                <tr key={k} className="border-b border-[var(--sm-line2)] last:border-0">
+                  <td className="py-1.5 pr-3 text-[var(--sm-mut)]">{k}</td>
+                  <td className="py-1.5 pr-3">{a1}</td>
+                  <td className="py-1.5">{a2}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-2">
+          Hai biểu đồ có thể nói khác nhau, và chỗ khác nhau đó chính là thông tin. Ví dụ VN-Index vẫn ở giai đoạn Tăng nhờ vài mã vốn hóa lớn kéo lên, trong khi chỉ số cân bằng đi ngang rồi giảm và
+          trạng thái là Thận trọng: chỉ số đẹp nhưng đa số cổ phiếu không đi lên, tức thị trường “lệch”.
+        </p>
+        <ul className="mt-1.5 list-disc space-y-0.5 pl-5">
+          <li>
+            <b className="up">Cả hai cùng xanh</b> (Tích cực và Tăng): thị trường khỏe và lan tỏa.
+          </li>
+          <li>
+            <b className="text-[var(--sm-egg)]">VN-Index xanh, trạng thái đỏ</b>: vài mã lớn kéo chỉ số, cổ phiếu trung bình yếu.
+          </li>
+          <li>
+            <b className="down">Cả hai cùng đỏ</b>: thị trường giảm diện rộng.
+          </li>
+        </ul>
+      </>
+    ),
+  },
+  {
     q: "Chỉ số cân bằng của Bull Stock là gì?",
     a: (_t, minStocks) => (
       <p>
