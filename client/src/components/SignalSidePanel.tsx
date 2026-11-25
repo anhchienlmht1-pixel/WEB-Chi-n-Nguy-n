@@ -84,7 +84,7 @@ export default function SignalSidePanel({
                   <th className={`${TH} text-left`}>Mã</th>
                   <th className={`${TH} text-right`}>Ngày mua</th>
                   <th className={`${TH} text-right`}>Giá hiện tại</th>
-                  <th className={`${TH} text-right`}>Lãi/lỗ</th>
+                  <th className={`${TH} pr-1 text-right`}>Lãi/lỗ</th>
                 </tr>
               </thead>
               <tbody>
@@ -119,8 +119,8 @@ export default function SignalSidePanel({
                           <span className="block max-w-[9rem] truncate text-[0.72rem] text-[var(--sm-mut)]">{h.sector ?? h.exchange}</span>
                         </td>
                         <td className="py-1.5 text-right text-[var(--sm-egg2)]">{dm(h.buyDate)}</td>
-                        <td className="py-1.5 text-right">{formatPrice(h.price, h.currency)}</td>
-                        <td className={`py-1.5 text-right font-semibold ${tone(h.signalReturnPercent)}`}>{pct(h.signalReturnPercent)}</td>
+                        <td className="py-1.5 text-right">{h.price < 1000 ? h.price.toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : formatPrice(h.price, h.currency)}</td>
+                        <td className={`py-1.5 pr-1 text-right font-semibold ${tone(h.signalReturnPercent)}`}>{pct(h.signalReturnPercent)}</td>
                       </tr>
                     );
                   })
