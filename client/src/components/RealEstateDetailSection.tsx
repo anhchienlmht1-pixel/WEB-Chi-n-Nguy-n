@@ -7,6 +7,9 @@ import { CRIT_LABEL, median, useReSector, type ReCrit, type ReDetail } from "../
 // và đường trung vị ngành tính từ /data/realestate/sector.json.
 
 const C = {
+  stock: "var(--sm-stock)",
+  stock2: "var(--sm-stock2)",
+  ind: "var(--sm-ind)",
   gold: "#d9b155",
   egg: "#cbbf9f",
   moss: "#6f8f63",
@@ -26,7 +29,7 @@ const legendStyle = { fontSize: 11, color: C.axis, paddingTop: 2, lineHeight: "1
 
 function Card({ title, children, note, span }: { title: string; children: ReactNode; note?: string; span?: string }) {
   return (
-    <div className={`flex min-w-0 flex-col rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] px-3 pt-2.5 pb-2 ${span ?? ""}`} title={note}>
+    <div className={`flex min-w-0 flex-col rounded-md border border-[var(--sm-line)] bg-[var(--sm-chart)] px-3 pt-2.5 pb-2 ${span ?? ""}`} title={note}>
       <h4 className="text-[0.88rem] font-semibold text-[var(--sm-egg)]" style={{ fontFamily: "var(--font-sans)" }}>
         {title}
       </h4>
@@ -122,8 +125,8 @@ export default function RealEstateDetailSection({ symbol }: { symbol: string }) 
             <Tooltip cursor={lineCursor} content={<Tip dflt={pct} />} />
             {legend}
             {THRESH[c] != null && <ReferenceLine y={THRESH[c]} stroke={C.rose} strokeDasharray="3 3" />}
-            <Line dataKey={k} name={`${symbol}${f ? (f > 0 ? " ✓" : " ✗") : ""}`} stroke={C.gold} strokeWidth={2.25} dot={false} connectNulls />
-            <Line dataKey={`${k}Ind`} name="Trung vị 13 CĐT" stroke={C.egg} strokeWidth={1.5} strokeDasharray="5 4" dot={false} connectNulls />
+            <Line type="monotone" dataKey={k} name={`${symbol}${f ? (f > 0 ? " ✓" : " ✗") : ""}`} stroke={C.stock} strokeWidth={2.25} dot={false} connectNulls />
+            <Line type="monotone" dataKey={`${k}Ind`} name="Trung vị 13 CĐT" stroke={C.ind} strokeWidth={1.5} strokeDasharray="5 4" dot={false} connectNulls />
           </ComposedChart>
         </ResponsiveContainer>
       </Card>
@@ -241,7 +244,7 @@ export default function RealEstateDetailSection({ symbol }: { symbol: string }) 
                 <YAxis tick={axisTick} tickLine={false} axisLine={false} width={40} tickFormatter={pctAxis} domain={["auto", "auto"]} />
                 <Tooltip cursor={lineCursor} content={<Tip dflt={pct} />} />
                 {legend}
-                <Line dataKey="grossMargin" name="Biên gộp" stroke={C.gold} strokeWidth={2.25} dot={{ r: 2 }} connectNulls />
+                <Line type="monotone" dataKey="grossMargin" name="Biên gộp" stroke={C.gold} strokeWidth={2.25} dot={{ r: 2 }} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </Card>

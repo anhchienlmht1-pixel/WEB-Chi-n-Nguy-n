@@ -26,13 +26,16 @@ interface Detail {
 export const DETAIL_BANKS = new Set(["VCB", "BID", "CTG", "TCB", "VPB", "MBB", "ACB", "HDB", "STB", "SHB", "LPB", "VIB", "TPB", "EIB", "MSB", "OCB"]);
 
 const C = {
+  stock: "var(--sm-stock)",
+  stock2: "var(--sm-stock2)",
+  ind: "var(--sm-ind)",
   gold: "#d9b155",
   egg: "#cbbf9f",
   moss: "#6f8f63",
   mossDark: "#3f5739",
   sky: "#7fb3c8",
   rose: "#e08a7a",
-  grid: "rgba(239,231,212,0.07)",
+  grid: "var(--sm-chart-grid)",
   axis: "#8f9a84",
 };
 
@@ -46,7 +49,7 @@ const at = (arr: (number | null)[] | undefined, i: number) => (arr && i >= 0 && 
 
 function Card({ title, children, note }: { title: string; children: ReactNode; note?: string }) {
   return (
-    <div className="flex min-w-0 flex-col rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] px-3 pt-2.5 pb-2" title={note}>
+    <div className="flex min-w-0 flex-col rounded-md border border-[var(--sm-line)] bg-[var(--sm-chart)] px-3 pt-2.5 pb-2" title={note}>
       <h4 className="text-[0.88rem] font-semibold text-[var(--sm-egg)]" style={{ fontFamily: "var(--font-sans)" }}>
         {title}
       </h4>
@@ -143,8 +146,8 @@ export default function BankDetailSection({ symbol }: { symbol: string }) {
           {yPct(44, digits)}
           <Tooltip cursor={lineCursor} content={<Tip fmts={{ [k]: digits > 1 ? pct2 : pct, [`${k}Ind`]: digits > 1 ? pct2 : pct }} />} />
           {legend}
-          <Line dataKey={k} name={symbol} stroke={C.gold} strokeWidth={2.25} dot={false} connectNulls />
-          <Line dataKey={`${k}Ind`} name="TB ngành" stroke={C.egg} strokeWidth={1.5} strokeDasharray="5 4" dot={false} connectNulls />
+          <Line type="monotone" dataKey={k} name={symbol} stroke={C.stock} strokeWidth={2.25} dot={false} connectNulls />
+          <Line type="monotone" dataKey={`${k}Ind`} name="TB ngành" stroke={C.ind} strokeWidth={1.5} strokeDasharray="5 4" dot={false} connectNulls />
         </ComposedChart>
       </ResponsiveContainer>
     </Card>
@@ -194,7 +197,7 @@ export default function BankDetailSection({ symbol }: { symbol: string }) {
                 <Bar yAxisId="a" dataKey="deposits" name="Tiền gửi KH" stackId="h" fill={C.moss} />
                 <Bar yAxisId="a" dataKey="interbank" name="Tiền gửi TCTD khác" stackId="h" fill={C.mossDark} />
                 <Bar yAxisId="a" dataKey="papers" name="Giấy tờ có giá" stackId="h" fill={C.egg} fillOpacity={0.7} radius={[2, 2, 0, 0]} />
-                <Line yAxisId="p" dataKey="depositYtd" name="Tăng trưởng YTD" stroke={C.gold} strokeWidth={2} dot={false} connectNulls />
+                <Line type="monotone" yAxisId="p" dataKey="depositYtd" name="Tăng trưởng YTD" stroke={C.gold} strokeWidth={2} dot={false} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </Card>
@@ -208,7 +211,7 @@ export default function BankDetailSection({ symbol }: { symbol: string }) {
                 <Tooltip cursor={cursor} content={<Tip fmts={{ loans: amt, creditYtd: pct }} />} />
                 {legend}
                 <Bar yAxisId="a" dataKey="loans" name="Cho vay KH" fill={C.moss} radius={[2, 2, 0, 0]} />
-                <Line yAxisId="p" dataKey="creditYtd" name="Tăng trưởng YTD" stroke={C.gold} strokeWidth={2} dot={false} connectNulls />
+                <Line type="monotone" yAxisId="p" dataKey="creditYtd" name="Tăng trưởng YTD" stroke={C.gold} strokeWidth={2} dot={false} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </Card>
@@ -220,8 +223,8 @@ export default function BankDetailSection({ symbol }: { symbol: string }) {
                 {yPct()}
                 <Tooltip cursor={lineCursor} content={<Tip fmts={{ creditYtd: pct, depositYtd: pct }} />} />
                 {legend}
-                <Line dataKey="creditYtd" name="Tín dụng" stroke={C.gold} strokeWidth={2.25} dot={false} connectNulls />
-                <Line dataKey="depositYtd" name="Tiền gửi" stroke={C.egg} strokeWidth={1.75} dot={false} connectNulls />
+                <Line type="monotone" dataKey="creditYtd" name="Tín dụng" stroke={C.gold} strokeWidth={2.25} dot={false} connectNulls />
+                <Line type="monotone" dataKey="depositYtd" name="Tiền gửi" stroke={C.egg} strokeWidth={1.75} dot={false} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </Card>
@@ -297,9 +300,9 @@ export default function BankDetailSection({ symbol }: { symbol: string }) {
                 {yPct(44, 1)}
                 <Tooltip cursor={lineCursor} content={<Tip fmts={{ yoea: pct, yoeaInd: pct, cof: pct }} />} />
                 {legend}
-                <Line dataKey="yoea" name={`YOEA ${symbol}`} stroke={C.gold} strokeWidth={2.25} dot={false} connectNulls />
-                <Line dataKey="cof" name={`COF ${symbol}`} stroke={C.rose} strokeWidth={1.75} dot={false} connectNulls />
-                <Line dataKey="yoeaInd" name="YOEA ngành" stroke={C.egg} strokeWidth={1.5} strokeDasharray="5 4" dot={false} connectNulls />
+                <Line type="monotone" dataKey="yoea" name={`YOEA ${symbol}`} stroke={C.stock} strokeWidth={2.25} dot={false} connectNulls />
+                <Line type="monotone" dataKey="cof" name={`COF ${symbol}`} stroke={C.stock2} strokeWidth={1.75} dot={false} connectNulls />
+                <Line type="monotone" dataKey="yoeaInd" name="YOEA ngành" stroke={C.ind} strokeWidth={1.5} strokeDasharray="5 4" dot={false} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </Card>
@@ -320,7 +323,7 @@ export default function BankDetailSection({ symbol }: { symbol: string }) {
                 {legend}
                 <Bar dataKey="nii" name="Thu nhập lãi thuần" stackId="i" fill={C.moss} />
                 <Bar dataKey="nonii" name="Ngoài lãi" stackId="i" fill={C.egg} fillOpacity={0.7} radius={[2, 2, 0, 0]} />
-                <Line dataKey="pbt" name="LNTT" stroke={C.gold} strokeWidth={2} dot={false} connectNulls />
+                <Line type="monotone" dataKey="pbt" name="LNTT" stroke={C.gold} strokeWidth={2} dot={false} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </Card>
@@ -359,8 +362,8 @@ export default function BankDetailSection({ symbol }: { symbol: string }) {
                 <Tooltip cursor={cursor} content={<Tip fmts={{ g2: pct2, npl: pct2, nplInd: pct2 }} />} />
                 {legend}
                 <Bar dataKey="g2" name="Nợ nhóm 2" fill={C.egg} fillOpacity={0.35} radius={[2, 2, 0, 0]} />
-                <Line dataKey="npl" name={`NPL ${symbol}`} stroke={C.rose} strokeWidth={2.25} dot={false} connectNulls />
-                <Line dataKey="nplInd" name="NPL ngành" stroke={C.egg} strokeWidth={1.5} strokeDasharray="5 4" dot={false} connectNulls />
+                <Line type="monotone" dataKey="npl" name={`NPL ${symbol}`} stroke={C.stock} strokeWidth={2.25} dot={false} connectNulls />
+                <Line type="monotone" dataKey="nplInd" name="NPL ngành" stroke={C.ind} strokeWidth={1.5} strokeDasharray="5 4" dot={false} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </Card>
@@ -375,7 +378,7 @@ export default function BankDetailSection({ symbol }: { symbol: string }) {
                 <Tooltip cursor={cursor} content={<Tip fmts={{ pat: amt, patInd: amt }} />} />
                 {legend}
                 <Bar dataKey="pat" name={`LNST ${symbol}`} fill={C.gold} radius={[2, 2, 0, 0]} />
-                <Line dataKey="patInd" name="TB ngành" stroke={C.egg} strokeWidth={1.5} strokeDasharray="5 4" dot={false} connectNulls />
+                <Line type="monotone" dataKey="patInd" name="TB ngành" stroke={C.ind} strokeWidth={1.5} strokeDasharray="5 4" dot={false} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </Card>

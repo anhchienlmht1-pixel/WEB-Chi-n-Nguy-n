@@ -645,3 +645,7 @@ details[open] > summary + * { animation: sm-reveal var(--motion-200) var(--ease-
   --sm-panel: rgba(26, 36, 24, 0.72);
   --sm-pop: #1a2418;
 }
+
+/* Biểu đồ trang ngành: nền trắng, đường cổ phiếu xanh rêu, đường ngành đỏ đô */
+:root { --sm-chart-grid: #eceee6; --sm-chart: #ffffff; --sm-stock: #3f6b3a; --sm-ind: #8b1e2d; --sm-stock2: #8aa67a; }
+.theme-dark { --sm-chart-grid: rgba(239,231,212,0.07); --sm-chart: var(--sm-panel); --sm-stock: #8fc27f; --sm-ind: #e0707f; --sm-stock2: #5f8a55; }

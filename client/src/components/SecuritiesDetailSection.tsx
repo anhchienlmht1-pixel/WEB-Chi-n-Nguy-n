@@ -18,6 +18,9 @@ interface Detail {
 }
 
 const C = {
+  stock: "var(--sm-stock)",
+  stock2: "var(--sm-stock2)",
+  ind: "var(--sm-ind)",
   gold: "#d9b155",
   egg: "#cbbf9f",
   moss: "#6f8f63",
@@ -35,7 +38,7 @@ const at = (a: Arr | undefined, i: number) => (a && i < a.length ? a[i] : null);
 
 function Card({ title, children, note }: { title: string; children: ReactNode; note?: string }) {
   return (
-    <div className="flex min-w-0 flex-col rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] px-3 pt-2.5 pb-2" title={note}>
+    <div className="flex min-w-0 flex-col rounded-md border border-[var(--sm-line)] bg-[var(--sm-chart)] px-3 pt-2.5 pb-2" title={note}>
       <h4 className="text-[0.88rem] font-semibold text-[var(--sm-egg)]" style={{ fontFamily: "var(--font-sans)" }}>
         {title}
       </h4>
@@ -139,8 +142,8 @@ export default function SecuritiesDetailSection({ symbol }: { symbol: string }) 
             />
             <Tooltip cursor={lineCursor} content={<Tip fmts={{ [k]: f, [`${k}Ind`]: f }} />} />
             {legend}
-            <Line dataKey={k} name={symbol} stroke={C.gold} strokeWidth={2.25} dot={false} connectNulls />
-            <Line dataKey={`${k}Ind`} name="Trung vị ngành" stroke={C.egg} strokeWidth={1.5} strokeDasharray="5 4" dot={false} connectNulls />
+            <Line type="monotone" dataKey={k} name={symbol} stroke={C.stock} strokeWidth={2.25} dot={false} connectNulls />
+            <Line type="monotone" dataKey={`${k}Ind`} name="Trung vị ngành" stroke={C.ind} strokeWidth={1.5} strokeDasharray="5 4" dot={false} connectNulls />
           </ComposedChart>
         </ResponsiveContainer>
       </Card>
@@ -230,7 +233,7 @@ export default function SecuritiesDetailSection({ symbol }: { symbol: string }) 
                 <Tooltip cursor={cursor} content={<Tip fmts={{ pbt: amt, pbtMargin: pct }} />} />
                 {legend}
                 <Bar yAxisId="a" dataKey="pbt" name="LNTT" fill={C.moss} radius={[2, 2, 0, 0]} />
-                <Line yAxisId="p" dataKey="pbtMargin" name="Biên LNTT" stroke={C.gold} strokeWidth={2} dot={false} connectNulls />
+                <Line type="monotone" yAxisId="p" dataKey="pbtMargin" name="Biên LNTT" stroke={C.gold} strokeWidth={2} dot={false} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </Card>
@@ -242,8 +245,8 @@ export default function SecuritiesDetailSection({ symbol }: { symbol: string }) 
                 <YAxis tick={axisTick} tickLine={false} axisLine={false} width={44} tickFormatter={pctAxis} />
                 <Tooltip cursor={lineCursor} content={<Tip fmts={{ revYoy: pct, pbtYoy: pct }} />} />
                 {legend}
-                <Line dataKey="revYoy" name="Doanh thu" stroke={C.egg} strokeWidth={1.75} dot={false} connectNulls />
-                <Line dataKey="pbtYoy" name="LNTT" stroke={C.gold} strokeWidth={2.25} dot={false} connectNulls />
+                <Line type="monotone" dataKey="revYoy" name="Doanh thu" stroke={C.egg} strokeWidth={1.75} dot={false} connectNulls />
+                <Line type="monotone" dataKey="pbtYoy" name="LNTT" stroke={C.gold} strokeWidth={2.25} dot={false} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </Card>
@@ -265,7 +268,7 @@ export default function SecuritiesDetailSection({ symbol }: { symbol: string }) 
                 {legend}
                 <Bar yAxisId="a" dataKey="revBroker" name="DT môi giới" fill={C.sky} fillOpacity={0.8} />
                 <Bar yAxisId="a" dataKey="brokerProfit" name="LN môi giới" fill={C.moss} />
-                <Line yAxisId="p" dataKey="brokerMargin" name="Biên" stroke={C.gold} strokeWidth={2} dot={false} connectNulls />
+                <Line type="monotone" yAxisId="p" dataKey="brokerMargin" name="Biên" stroke={C.gold} strokeWidth={2} dot={false} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </Card>
@@ -278,7 +281,7 @@ export default function SecuritiesDetailSection({ symbol }: { symbol: string }) 
                   <YAxis tick={axisTick} tickLine={false} axisLine={false} width={40} domain={["auto", "auto"]} tickFormatter={(v) => `${vn(v, 0)}%`} />
                   <Tooltip cursor={lineCursor} content={<Tip fmts={{ share: (v) => `${vn(v, 2)}%` }} />} />
                   {legend}
-                  <Line dataKey="share" name={`Thị phần ${symbol}`} stroke={C.gold} strokeWidth={2.25} dot={{ r: 2 }} connectNulls={false} />
+                  <Line type="monotone" dataKey="share" name={`Thị phần ${symbol}`} stroke={C.stock} strokeWidth={2.25} dot={{ r: 2 }} connectNulls={false} />
                 </ComposedChart>
               </ResponsiveContainer>
             </Card>
@@ -295,7 +298,7 @@ export default function SecuritiesDetailSection({ symbol }: { symbol: string }) 
                 <Tooltip cursor={cursor} content={<Tip fmts={{ margin: amt, loans: amt, marginToEq: times }} />} />
                 {legend}
                 <Bar yAxisId="a" dataKey={hasMargin ? "margin" : "loans"} name={hasMargin ? "Dư nợ margin" : "Các khoản cho vay"} fill={C.moss} radius={[2, 2, 0, 0]} />
-                <Line yAxisId="t" dataKey="marginToEq" name="Cho vay / VCSH" stroke={C.gold} strokeWidth={2} dot={false} connectNulls />
+                <Line type="monotone" yAxisId="t" dataKey="marginToEq" name="Cho vay / VCSH" stroke={C.gold} strokeWidth={2} dot={false} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </Card>
@@ -307,10 +310,10 @@ export default function SecuritiesDetailSection({ symbol }: { symbol: string }) 
                 <YAxis tick={axisTick} tickLine={false} axisLine={false} width={40} domain={["auto", "auto"]} tickFormatter={pctAxis} />
                 <Tooltip cursor={lineCursor} content={<Tip fmts={{ marginYield: pct, fundingCost: pct, marginYieldInd: pct, fundingCostInd: pct }} />} />
                 {legend}
-                <Line dataKey="marginYield" name="Lãi suất margin" stroke={C.gold} strokeWidth={2.25} dot={false} connectNulls />
-                <Line dataKey="fundingCost" name="Chi phí vốn" stroke={C.rose} strokeWidth={2} dot={false} connectNulls />
-                <Line dataKey="marginYieldInd" name="Margin trung vị" stroke={C.egg} strokeWidth={1.25} strokeDasharray="5 4" dot={false} connectNulls />
-                <Line dataKey="fundingCostInd" name="Chi phí vốn trung vị" stroke={C.rose} strokeOpacity={0.55} strokeWidth={1.25} strokeDasharray="5 4" dot={false} connectNulls />
+                <Line type="monotone" dataKey="marginYield" name="Lãi suất margin" stroke={C.stock} strokeWidth={2.25} dot={false} connectNulls />
+                <Line type="monotone" dataKey="fundingCost" name="Chi phí vốn" stroke={C.stock2} strokeWidth={2} dot={false} connectNulls />
+                <Line type="monotone" dataKey="marginYieldInd" name="Margin trung vị" stroke={C.ind} strokeWidth={1.25} strokeDasharray="5 4" dot={false} connectNulls />
+                <Line type="monotone" dataKey="fundingCostInd" name="Chi phí vốn trung vị" stroke={C.ind} strokeOpacity={0.55} strokeWidth={1.25} strokeDasharray="5 4" dot={false} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </Card>
@@ -333,7 +336,7 @@ export default function SecuritiesDetailSection({ symbol }: { symbol: string }) 
                 <Bar yAxisId="a" dataKey="fvtpl" name="FVTPL" stackId="t" fill={C.gold} />
                 <Bar yAxisId="a" dataKey="htm" name="HTM" stackId="t" fill={C.mossDark} />
                 <Bar yAxisId="a" dataKey="afs" name="AFS" stackId="t" fill={C.plum} radius={[2, 2, 0, 0]} />
-                <Line yAxisId="t" dataKey="propToEq" name="Tự doanh / VCSH" stroke={C.egg} strokeWidth={2} dot={false} connectNulls />
+                <Line type="monotone" yAxisId="t" dataKey="propToEq" name="Tự doanh / VCSH" stroke={C.egg} strokeWidth={2} dot={false} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </Card>
@@ -361,7 +364,7 @@ export default function SecuritiesDetailSection({ symbol }: { symbol: string }) 
                 <Tooltip cursor={cursor} content={<Tip fmts={{ borrow: amt, interestCost: amt }} />} />
                 {legend}
                 <Bar yAxisId="a" dataKey="borrow" name="Nợ vay" fill={C.mossDark} radius={[2, 2, 0, 0]} />
-                <Line yAxisId="c" dataKey="interestCost" name="Chi phí lãi vay (tỷ)" stroke={C.rose} strokeWidth={2} dot={false} connectNulls />
+                <Line type="monotone" yAxisId="c" dataKey="interestCost" name="Chi phí lãi vay (tỷ)" stroke={C.rose} strokeWidth={2} dot={false} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </Card>
@@ -391,7 +394,7 @@ export default function SecuritiesDetailSection({ symbol }: { symbol: string }) 
               {vn(pbStat.pct, 0)}% số phiên trong lịch sử. Vùng vàng là trung bình ± 1 độ lệch chuẩn. Nguồn: {val?.source[symbol] === "ssi" ? "SSI" : 'sheet "Data P/B Chứng"'}. P/B thấp so với lịch sử cần xem cùng ROE, không tự nó là rẻ.
             </p>
           </div>
-          <div className="rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] px-3 pt-2.5 pb-2">
+          <div className="rounded-md border border-[var(--sm-line)] bg-[var(--sm-chart)] px-3 pt-2.5 pb-2">
             <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={pb} margin={{ top: 6, right: 8, bottom: 0, left: -6 }}>
@@ -401,7 +404,7 @@ export default function SecuritiesDetailSection({ symbol }: { symbol: string }) 
                   <Tooltip cursor={lineCursor} content={<Tip fmts={{ pb: (v) => vn(v, 2) }} />} labelFormatter={(t) => dLabel(String(t))} />
                   <Area dataKey="band" stroke="none" fill="rgba(201,162,74,0.16)" isAnimationActive={false} activeDot={false} />
                   <ReferenceLine y={pbStat.avg} stroke={C.gold} strokeDasharray="5 4" />
-                  <Line dataKey="pb" name="P/B" stroke="var(--sm-egg)" strokeWidth={2} dot={false} isAnimationActive={false} />
+                  <Line type="monotone" dataKey="pb" name="P/B" stroke="var(--sm-egg)" strokeWidth={2} dot={false} isAnimationActive={false} />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
