@@ -771,7 +771,8 @@ function summarize(st: State): SectorWavesResult {
 }
 
 // ----------------------------------------------------------------- lưu trữ
-const BLOB_PATHNAME = "sector-waves/state-v2.json";
+// bản xem thử dùng file riêng để không ghi đè dữ liệu của web chính
+const BLOB_PATHNAME = process.env.VERCEL_ENV === "preview" ? "sector-waves/preview-state-v2.json" : "sector-waves/state-v2.json";
 const blobConfigured = () => Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 let memState: State | null = null;
 

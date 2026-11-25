@@ -16,7 +16,9 @@ import { barDateICT, dropUnclosedBars, lastClosedSessionDate } from "./sessionCl
 // session's Vietnam date — never from a half-formed bar mid-session.
 export const JOURNAL_START_DATE = "2026-09-24";
 
-const BLOB_PATHNAME = "trade-journal/state.json";
+// Mỗi môi trường một file: bản xem thử (preview) không bao giờ ghi đè nhật ký của web chính.
+// (25/11/2026: một bản xem thử thử quy tắc khác đã ghi đè file chung "trade-journal/state.json".)
+const BLOB_PATHNAME = process.env.VERCEL_ENV === "production" ? "trade-journal/prod-state.json" : "trade-journal/preview-state.json";
 
 export interface JournalPosition {
   symbol: string;
@@ -38,7 +40,8 @@ export interface JournalClosedTrade extends JournalPosition {
 // from JOURNAL_START_DATE under the new rule (forward-only, closed sessions).
 //  v2 (18/11/2026): exits only on SMA20 < SMA50 or Supertrend down — ADX ≤ 25
 //  alone no longer closes a position (same rule as the chart).
-const RULE_VERSION = 2;
+//  v4 (25/11/2026): cùng quy tắc v2; chỉ để dựng lại nhật ký từ JOURNAL_START_DATE vào file riêng của web chính.
+const RULE_VERSION = 4;
 
 interface JournalState {
   rule?: number;
