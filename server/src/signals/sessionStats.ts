@@ -19,6 +19,8 @@ export interface SessionStats {
   impactSum: number | null;
   breadth: { up: number; down: number; flat: number; ceiling: number; floor: number };
   value: number | null;
+  /** giá trị khớp lệnh (Σ khối lượng khớp × giá bình quân); thỏa thuận = value − matched */
+  matched: number | null;
   /** khối lượng khớp phiên này so với TB 20 phiên trước (lấy từ lịch sử VN-Index), null nếu chưa có */
   vsAvg20: { today: number; avg20: number; pct: number } | null;
   foreign: { buy: number; sell: number; net: number };
@@ -57,8 +59,9 @@ export async function getSessionStats(): Promise<SessionStats> {
   const [rows, shares] = await Promise.all([getVpsRawStocks(syms), listedShares(syms)]);
 
   const breadth = { up: 0, down: 0, flat: 0, ceiling: 0, floor: 0 };
-  let fb = 0, fs = 0;
+  let fb = 0, fs = 0, matched = 0;
   for (const r of rows) {
+    matched += r.volume * (r.avg || r.last) * 1000;
     if (r.last > r.ref) breadth.up++;
     else if (r.last < r.ref) breadth.down++;
     else breadth.flat++;
@@ -121,6 +124,7 @@ export async function getSessionStats(): Promise<SessionStats> {
     impactSum,
     breadth,
     value: idx?.value ?? null,
+    matched: matched > 0 ? Math.round(matched) : null,
     vsAvg20,
     foreign: { buy: Math.round(fb), sell: Math.round(fs), net: Math.round(fb - fs) },
   };

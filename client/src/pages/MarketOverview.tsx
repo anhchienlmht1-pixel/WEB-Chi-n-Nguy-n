@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { fetchMarketOverview, fetchQuote } from "../api/client";
+import { fetchMaScan, fetchMarketOverview, fetchQuote, fetchSessionStats, type SessionStats } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { useLivePoll } from "../hooks/useMarketClock";
 import KLinePanel from "../components/KLinePanel";
@@ -21,14 +21,193 @@ const EXCHANGES = [
   { symbol: "UPCOMINDEX", label: "UPCOM" },
 ];
 
+// Tác động lên VN-Index: 10 mã kéo giảm mạnh nhất bên trái, 10 mã đỡ chỉ số nhiều nhất bên phải.
+function ImpactChart({ st }: { st: SessionStats | null }) {
+  const neg = (st?.impact ?? []).filter((x) => x.points < 0).slice(0, 10);
+  const pos = (st?.impact ?? []).filter((x) => x.points > 0).slice(-10);
+  const bars = [...neg, ...pos];
+  const max = Math.max(0.01, ...bars.map((b) => Math.abs(b.points)));
+  const H = 92; // nửa chiều cao vùng cột (px)
+  return (
+    <section className={`${CARD} p-5`} aria-label="Tác động lên VN-Index">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-[1.2rem] text-[var(--sm-egg)]">
+          Tác động <span className="text-[0.9rem] font-normal text-[var(--sm-mut)]">lên VN-Index</span>
+        </h2>
+        {st?.impactSum != null && (
+          <p className="text-[0.9rem] tabular-nums text-[var(--sm-egg2)]">
+            Ròng{" "}
+            <b className={tone(st.impactSum)}>
+              {sign(st.impactSum)}
+              {vn(Math.abs(st.impactSum))} điểm
+            </b>
+          </p>
+        )}
+      </div>
+      {bars.length === 0 ? (
+        <p className="py-12 text-center text-[0.9rem] text-[var(--sm-mut)]">{st ? "Chưa có biến động trong phiên." : "Đang tính…"}</p>
+      ) : (
+        <div className="mt-3 overflow-x-auto">
+          <div className="flex min-w-[720px] items-stretch gap-1.5">
+            {bars.map((b, i) => {
+              const h = Math.max(3, (Math.abs(b.points) / max) * H);
+              const up = b.points > 0;
+              return (
+                <Link
+                  key={b.symbol}
+                  to={`/stock/${b.symbol}`}
+                  className={`group flex min-w-0 flex-1 flex-col items-center ${i === neg.length && neg.length ? "ml-4" : ""}`}
+                  title={`${b.symbol}: ${sign(b.points)}${vn(Math.abs(b.points))} điểm, giá ${sign(b.changePercent)}${vn(Math.abs(b.changePercent))}%`}
+                >
+                  <div className="relative w-full" style={{ height: H * 2 }}>
+                    <i className="absolute inset-x-0 top-1/2 h-px bg-[var(--sm-line)]" />
+                    <i
+                      className="absolute inset-x-[14%] rounded-[3px] transition-opacity group-hover:opacity-80"
+                      style={{ background: up ? "var(--sm-up)" : "var(--sm-dn)", height: h, ...(up ? { bottom: H } : { top: H }) }}
+                    />
+                    <span
+                      className={`absolute inset-x-0 text-center text-[0.72rem] font-semibold tabular-nums ${up ? "up" : "down"}`}
+                      style={up ? { bottom: H + h + 2 } : { top: H + h + 2 }}
+                    >
+                      {sign(b.points)}
+                      {vn(Math.abs(b.points))}
+                    </span>
+                  </div>
+                  <b className="mt-1 text-[0.8rem] text-[var(--sm-egg)]">{b.symbol}</b>
+                  <span className={`text-[0.72rem] tabular-nums ${tone(b.changePercent)}`}>
+                    {sign(b.changePercent)}
+                    {vn(Math.abs(b.changePercent))}%
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      <p className="mt-3 border-t border-[var(--sm-line2)] pt-2 text-[0.75rem] text-[var(--sm-mut)]">
+        Ước tính theo vốn hóa niêm yết của {st?.coverage.used ?? "—"} mã trên HOSE (điểm = thay đổi vốn hóa ÷ hệ số chia của chỉ số), không gồm mã thiếu số liệu.
+      </p>
+    </section>
+  );
+}
+
+function Row({ title, sub, right, children }: { title: string; sub?: string; right?: React.ReactNode; children?: React.ReactNode }) {
+  return (
+    <div className="border-t border-[var(--sm-line2)] py-3 first:border-t-0 first:pt-0">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[0.92rem] text-[var(--sm-egg)]">{title}</p>
+          {sub && <p className="text-[0.75rem] text-[var(--sm-mut)]">{sub}</p>}
+        </div>
+        {right}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// Thống kê phiên HOSE: độ rộng (trần/sàn), thanh khoản khớp lệnh/thỏa thuận, khối ngoại, mã trên MA.
+function SessionPanel({ st }: { st: SessionStats | null }) {
+  const ma = usePolling(fetchMaScan, [], 0);
+  const b = st?.breadth;
+  const t = b ? b.up + b.down + b.flat : 0;
+  const deal = st?.value != null && st.matched != null ? Math.max(0, st.value - st.matched) : null;
+  const maPct = (p: 20 | 50 | 200) => {
+    const xs = (ma.data ?? []).filter((h) => h.ma[p] != null && h.price > 0);
+    return xs.length ? Math.round((xs.filter((h) => h.price > (h.ma[p] as number)).length / xs.length) * 100) : null;
+  };
+  return (
+    <section className={`${CARD} flex h-full flex-col p-5`} aria-label="Thống kê phiên HOSE">
+      <h2 className="text-[1.2rem] text-[var(--sm-egg)]">
+        Thống kê phiên <span className="text-[0.9rem] font-normal text-[var(--sm-mut)]">HOSE</span>
+      </h2>
+      <div className="mt-3 flex flex-1 flex-col justify-between">
+        <Row
+          title="Độ rộng"
+          right={
+            b && (
+              <span className="text-[0.78rem] tabular-nums">
+                <b className="text-[#a03cc9]">{b.ceiling} trần</b> · <b className="text-[#1e8fb8]">{b.floor} sàn</b>
+              </span>
+            )
+          }
+        >
+          <div className="mt-2 flex h-2.5 gap-[2px] overflow-hidden rounded-full bg-[rgba(127,120,90,0.15)]">
+            {t > 0 && b && (
+              <>
+                <i className="block h-full bg-[var(--sm-up)]" style={{ width: `${(b.up / t) * 100}%` }} />
+                <i className="block h-full bg-[#e0b24a]" style={{ width: `${(b.flat / t) * 100}%` }} />
+                <i className="block h-full bg-[var(--sm-dn)]" style={{ width: `${(b.down / t) * 100}%` }} />
+              </>
+            )}
+          </div>
+          <p className="mt-1.5 text-[0.8rem] tabular-nums">
+            <b className="up">{b?.up ?? "—"}</b> <span className="text-[var(--sm-mut)]">tăng</span> · <b className="text-[#b8862a]">{b?.flat ?? "—"}</b>{" "}
+            <span className="text-[var(--sm-mut)]">đứng giá</span> · <b className="down">{b?.down ?? "—"}</b> <span className="text-[var(--sm-mut)]">giảm</span>
+          </p>
+        </Row>
+
+        <Row
+          title="Thanh khoản khớp lệnh"
+          sub={st?.vsAvg20 ? `Khối lượng cả phiên ${sign(st.vsAvg20.pct)}${vn(Math.abs(st.vsAvg20.pct), 1)}% so với TB 20 phiên` : undefined}
+          right={
+            <span className="text-right tabular-nums">
+              <b className="block text-[1.05rem] text-[var(--sm-egg)]">{st?.matched != null ? ty(st.matched) : "—"}</b>
+              {deal != null && <span className="text-[0.75rem] text-[var(--sm-mut)]">thỏa thuận {ty(deal)}</span>}
+            </span>
+          }
+        >
+          {st?.vsAvg20 && (
+            <div className="relative mt-2 h-2 rounded-full bg-[rgba(127,120,90,0.15)]">
+              <i
+                className="absolute inset-y-0 left-0 rounded-full bg-[#1f3a5f]"
+                style={{ width: `${Math.min(100, (st.vsAvg20.today / (st.vsAvg20.avg20 * 1.5)) * 100)}%` }}
+              />
+              <i className="absolute -top-1 h-4 w-[2px] bg-[var(--sm-egg)]" style={{ left: `${100 / 1.5}%` }} title="Trung bình 20 phiên" />
+            </div>
+          )}
+        </Row>
+
+        <Row
+          title="Khối ngoại ròng"
+          sub={st ? `Mua ${ty(st.foreign.buy)} · bán ${ty(st.foreign.sell)} (khớp lệnh)` : undefined}
+          right={
+            <b className={`text-[1.05rem] tabular-nums ${tone(st?.foreign.net ?? 0)}`}>
+              {st ? `${sign(st.foreign.net)}${ty(st.foreign.net)}` : "—"}
+            </b>
+          }
+        />
+
+        <Row title="Mã trên đường trung bình" sub={ma.data ? `Trong ${ma.data.length} mã theo dõi, giá đóng cửa phiên gần nhất` : ma.loading ? "Đang tính…" : "Chưa có số liệu"}>
+          <div className="mt-2 grid grid-cols-3 gap-3">
+            {([20, 50, 200] as const).map((p) => {
+              const v = maPct(p);
+              return (
+                <div key={p}>
+                  <p className="text-[0.75rem] text-[var(--sm-mut)]">
+                    MA{p} <b className={v == null ? "" : v >= 50 ? "up" : "down"}>{v == null ? "—" : `${v}%`}</b>
+                  </p>
+                  <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[rgba(127,120,90,0.15)]">
+                    <i className="block h-full rounded-full" style={{ width: `${v ?? 0}%`, background: v != null && v >= 50 ? "var(--sm-up)" : "var(--sm-dn)" }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Row>
+      </div>
+    </section>
+  );
+}
+
 function Breadth() {
   const poll = useLivePoll(20_000);
   const qs = usePolling(() => Promise.all(EXCHANGES.map((e) => fetchQuote(e.symbol).catch(() => null))), [], poll);
   return (
     <section className={`${CARD} flex h-full flex-col p-5`} aria-label="Độ rộng thị trường">
-      <h2 className="text-[1.2rem] text-[var(--sm-egg)]">Độ rộng và thanh khoản</h2>
+      <h2 className="text-[1.2rem] text-[var(--sm-egg)]">Ba sàn trong phiên</h2>
       <p className="mt-0.5 text-[0.8rem] text-[var(--sm-mut)]">Số mã tăng, đứng giá, giảm và giá trị khớp lệnh từng sàn trong phiên.</p>
-      <ul className="mt-4 flex flex-1 flex-col justify-around gap-5">
+      <ul className="mt-4 grid gap-x-10 gap-y-5 md:grid-cols-3">
         {EXCHANGES.map((e, i) => {
           const q = qs.data?.[i];
           const up = q?.advances ?? 0, dn = q?.declines ?? 0, fl = q?.noChanges ?? 0;
@@ -245,6 +424,7 @@ export default function MarketOverview() {
   const board = usePolling(fetchMarketOverview, [], useLivePoll(15_000));
   const quotes = useMemo(() => (board.data?.quotes ?? []).filter((q) => q.price > 0 && q.volume > 0), [board.data]);
   const loading = board.loading && !board.data;
+  const stats = usePolling(fetchSessionStats, [], useLivePoll(20_000));
   return (
     <div className="text-[var(--sm-egg)]">
       <header className="border-b border-[var(--sm-line)] bg-[var(--sm-panel)]">
@@ -262,10 +442,12 @@ export default function MarketOverview() {
             <KLinePanel symbol="VNINDEX" height={460} fill soft />
           </div>
           <div className="min-w-0 lg:col-span-4">
-            <Breadth />
+            <SessionPanel st={stats.data} />
           </div>
         </div>
 
+        <ImpactChart st={stats.data} />
+        <Breadth />
         <SectorsToday quotes={quotes} loading={loading} />
         <TopStocks quotes={quotes} loading={loading} />
 

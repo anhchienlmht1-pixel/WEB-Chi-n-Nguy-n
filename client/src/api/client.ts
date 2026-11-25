@@ -338,3 +338,32 @@ export async function fetchTrades(symbol: string): Promise<TradeTape> {
   const { data } = await api.get(`/trades/${encodeURIComponent(symbol)}`);
   return data;
 }
+
+/** Thống kê phiên HOSE (server/src/signals/sessionStats.ts). Tiền tính bằng đồng. */
+export interface SessionStats {
+  asOf: string;
+  exchange: "HOSE";
+  coverage: { used: number; listed: number; fullList: boolean };
+  index: { price: number; prev: number; change: number } | null;
+  impact: { symbol: string; points: number; changePercent: number }[];
+  impactSum: number | null;
+  breadth: { up: number; down: number; flat: number; ceiling: number; floor: number };
+  value: number | null;
+  matched: number | null;
+  vsAvg20: { today: number; avg20: number; pct: number } | null;
+  foreign: { buy: number; sell: number; net: number };
+}
+export async function fetchSessionStats(): Promise<SessionStats> {
+  const { data } = await api.get("/market/session-stats", { timeout: 30_000 });
+  return data;
+}
+
+export interface MaScanHit {
+  symbol: string;
+  price: number;
+  ma: Partial<Record<10 | 20 | 50 | 100 | 200, number | null>>;
+}
+export async function fetchMaScan(): Promise<MaScanHit[]> {
+  const { data } = await api.get("/ma-scan", { timeout: 60_000 });
+  return data.items;
+}

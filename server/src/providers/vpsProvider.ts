@@ -153,6 +153,8 @@ export interface VpsRawStock {
   ceiling?: number;
   floor?: number;
   volume: number;
+  /** giá khớp bình quân (nghìn đồng) */
+  avg?: number;
   foreignBuy: number;
   foreignSell: number;
 }
@@ -171,6 +173,7 @@ export async function getVpsRawStocks(symbols: string[]): Promise<VpsRawStock[]>
       ceiling: n(x.c),
       floor: n(x.f),
       volume: (n(x.lot) ?? 0) * VOL_UNIT,
+      avg: n(x.avePrice),
       foreignBuy: (n(x.fBVol) ?? 0) * VOL_UNIT,
       foreignSell: (n(x.fSVolume) ?? 0) * VOL_UNIT,
     });
