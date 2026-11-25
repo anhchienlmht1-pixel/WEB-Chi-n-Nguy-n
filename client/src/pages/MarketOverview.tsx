@@ -1,9 +1,8 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { fetchMarketOverview, fetchQuote, fetchSectorWavesLive } from "../api/client";
+import { fetchMarketOverview, fetchQuote } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { useLivePoll } from "../hooks/useMarketClock";
-import MarketIndexCards from "../components/MarketIndexCards";
 import KLinePanel from "../components/KLinePanel";
 import type { Quote } from "../types";
 
@@ -74,9 +73,21 @@ function Breadth() {
   );
 }
 
-function SectorsToday() {
-  const live = usePolling(fetchSectorWavesLive, [], useLivePoll(60_000));
-  const rows = [...(live.data?.sectors ?? [])].filter((s) => s.pct != null).sort((a, b) => (b.pct ?? 0) - (a.pct ?? 0));
+function SectorsToday({ quotes, loading }: { quotes: Quote[]; loading: boolean }) {
+  // bình quân % thay đổi các mã trong ngành; mã dẫn dắt = 3 mã giá trị giao dịch lớn nhất
+  const rows = useMemo(() => {
+    const g = new Map<string, Quote[]>();
+    for (const q of quotes) if (q.sector) g.set(q.sector, [...(g.get(q.sector) ?? []), q]);
+    return [...g.entries()]
+      .filter(([, xs]) => xs.length >= 2)
+      .map(([sector, xs]) => ({
+        sector,
+        n: xs.length,
+        pct: xs.reduce((a, q) => a + q.changePercent, 0) / xs.length,
+        leaders: [...xs].sort((a, b) => b.price * b.volume - a.price * a.volume).slice(0, 3).map((q) => q.symbol),
+      }))
+      .sort((a, b) => b.pct - a.pct);
+  }, [quotes]);
   const max = Math.max(1, ...rows.map((r) => Math.abs(r.pct ?? 0)));
   return (
     <section className={`${CARD} p-5`} aria-label="Ngành hôm nay">
@@ -86,9 +97,9 @@ function SectorsToday() {
           Xem sóng ngành
         </Link>
       </div>
-      <p className="mt-0.5 text-[0.8rem] text-[var(--sm-mut)]">Thay đổi giá bình quân các mã trong ngành so với phiên trước, kèm các mã dẫn dắt.</p>
+      <p className="mt-0.5 text-[0.8rem] text-[var(--sm-mut)]">Thay đổi giá bình quân các mã trong ngành so với phiên trước. Chữ nhỏ là 3 mã có giá trị giao dịch lớn nhất ngành.</p>
       {rows.length === 0 ? (
-        <p className="py-10 text-center text-[0.9rem] text-[var(--sm-mut)]">{live.loading ? "Đang tải…" : "Chưa có số liệu ngành."}</p>
+        <p className="py-10 text-center text-[0.9rem] text-[var(--sm-mut)]">{loading ? "Đang tải…" : "Chưa có số liệu ngành."}</p>
       ) : (
         <ul className="mt-4 grid gap-x-8 gap-y-2.5 md:grid-cols-2">
           {rows.map((s) => {
@@ -132,10 +143,8 @@ const TABS: { v: TopTab; t: string }[] = [
 
 const fnet = (q: Quote) => ((q.foreignBuyVolume ?? 0) - (q.foreignSellVolume ?? 0)) * q.price;
 
-function TopStocks() {
-  const board = usePolling(fetchMarketOverview, [], useLivePoll(15_000));
+function TopStocks({ quotes, loading }: { quotes: Quote[]; loading: boolean }) {
   const [tab, setTab] = useState<TopTab>("up");
-  const quotes = useMemo(() => (board.data?.quotes ?? []).filter((q) => q.price > 0 && q.volume > 0), [board.data]);
   const totals = useMemo(() => {
     let fb = 0, fs = 0;
     for (const q of quotes) {
@@ -200,7 +209,7 @@ function TopStocks() {
             {list.length === 0 ? (
               <tr>
                 <td colSpan={5} className="py-8 text-center text-[var(--sm-mut)]">
-                  {board.loading ? "Đang tải bảng giá…" : "Không có mã phù hợp trong phiên."}
+                  {loading ? "Đang tải bảng giá…" : "Không có mã phù hợp trong phiên."}
                 </td>
               </tr>
             ) : (
@@ -233,6 +242,9 @@ function TopStocks() {
 }
 
 export default function MarketOverview() {
+  const board = usePolling(fetchMarketOverview, [], useLivePoll(15_000));
+  const quotes = useMemo(() => (board.data?.quotes ?? []).filter((q) => q.price > 0 && q.volume > 0), [board.data]);
+  const loading = board.loading && !board.data;
   return (
     <div className="text-[var(--sm-egg)]">
       <header className="border-b border-[var(--sm-line)] bg-[var(--sm-panel)]">
@@ -245,8 +257,6 @@ export default function MarketOverview() {
       </header>
 
       <div className="gutter-x mx-auto flex max-w-[1920px] flex-col gap-6 pt-8 pb-20">
-        <MarketIndexCards />
-
         <div className="grid items-stretch gap-6 lg:h-[640px] lg:grid-cols-12">
           <div className="min-h-[460px] min-w-0 lg:col-span-8 lg:min-h-0">
             <KLinePanel symbol="VNINDEX" height={460} fill soft />
@@ -256,8 +266,8 @@ export default function MarketOverview() {
           </div>
         </div>
 
-        <SectorsToday />
-        <TopStocks />
+        <SectorsToday quotes={quotes} loading={loading} />
+        <TopStocks quotes={quotes} loading={loading} />
 
         <p className="text-[0.78rem] text-[var(--sm-mut)]">Nguồn: bảng giá VPS, tổng hợp của Bull Stock. Số liệu chỉ để tham khảo, không phải khuyến nghị mua bán.</p>
       </div>

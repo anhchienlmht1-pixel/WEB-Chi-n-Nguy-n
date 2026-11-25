@@ -111,7 +111,8 @@ router.get(
   asyncHandler(async (_req, res) => {
     const { quotes, source } = await cached("overview", 5, () => getMarketOverviewWithFallback());
     edgeCache(res, 3, 10);
-    res.json({ provider: source, quotes });
+    // gắn ngành để trang Toàn cảnh gom thay đổi giá theo ngành
+    res.json({ provider: source, quotes: quotes.map((q) => (SECTOR_MAP[q.symbol] ? { ...q, sector: SECTOR_MAP[q.symbol] } : q)) });
   })
 );
 
