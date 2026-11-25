@@ -108,7 +108,7 @@ export function ProductGrid({ quotes, scan, journal }: { quotes?: Quote[]; scan?
 /* ------------------------------------- Dữ liệu → Sóng ngành → Tín hiệu */
 
 // Trang chủ: ba mảng theo thứ tự đọc thị trường. Chỉ có thông điệp, không đưa chỉ số.
-// Mỗi mảng một màu nhấn đi cùng xanh rêu + vàng Bull: Dữ liệu xanh lam đậm, Sóng ngành hổ phách, Tín hiệu xanh lá.
+// Mỗi mảng một màu nhấn: Dữ liệu xanh navy, Sóng ngành đỏ đô, Tín hiệu xanh rêu.
 
 const ICON: Record<string, ReactNode> = {
   bank: <path d="M3 10h18M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18M12 3l9 5H3l9-5z" />,
@@ -133,8 +133,8 @@ const PILLARS: {
 }[] = [
   {
     title: "Dữ liệu",
-    accent: "#1f6f8b",
-    tint: "rgba(31,111,139,0.07)",
+    accent: "#1f3a5f",
+    tint: "rgba(31,58,95,0.07)",
     message: "Nắm bắt kết quả kinh doanh, lợi nhuận, sức khỏe tài chính và định giá của từng doanh nghiệp, đọc thẳng từ báo cáo tài chính mỗi quý.",
     to: "/nganh-ngan-hang",
     cta: "Xem dữ liệu ngành",
@@ -146,8 +146,8 @@ const PILLARS: {
   },
   {
     title: "Sóng ngành",
-    accent: "#b7791f",
-    tint: "rgba(201,138,30,0.08)",
+    accent: "#8b1e2d",
+    tint: "rgba(139,30,45,0.06)",
     message: "Biết dòng tiền đang chảy vào ngành nào và thị trường có thuận lợi để mua mới hay không. Đi theo con sóng thay vì chèo ngược dòng.",
     to: "/song-nganh",
     cta: "Xem sóng ngành",
@@ -159,8 +159,8 @@ const PILLARS: {
   },
   {
     title: "Tín hiệu",
-    accent: "#2f8a55",
-    tint: "rgba(47,138,85,0.07)",
+    accent: "#3e5a32",
+    tint: "rgba(62,90,50,0.08)",
     message: "Hệ thống lọc mã đang đi lên sau mỗi phiên, vào lệnh từng phần, thoát khi xu hướng gãy, và công khai mọi lệnh dù lãi hay lỗ.",
     to: "/tin-hieu",
     cta: "Xem tín hiệu hôm nay",

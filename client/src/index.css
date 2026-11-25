@@ -651,4 +651,4 @@ details[open] > summary + * { animation: sm-reveal var(--motion-200) var(--ease-
 .theme-dark { --sm-chart-grid: rgba(239,231,212,0.07); --sm-chart: var(--sm-panel); --sm-stock: #8fc27f; --sm-ind: #e0707f; --sm-stock2: #5f8a55; }
 
 /* Màu nhấn của 3 mảng trang chủ: sáng hơn trên nền tối */
-.theme-dark .pl-accent { filter: brightness(1.6) saturate(1.1); }
+.theme-dark .pl-accent { filter: brightness(2) saturate(1.1); }
