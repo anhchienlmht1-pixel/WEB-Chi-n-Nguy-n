@@ -149,10 +149,27 @@ const FAQ: { q: string; a: (threshold: number, minStocks: number) => ReactNode }
   {
     q: "Chỉ số cân bằng của Bull Stock là gì?",
     a: (_t, minStocks) => (
-      <p>
-        Chỉ số tự dựng từ gần 200 mã trong danh sách theo dõi, mỗi mã một tỷ trọng như nhau, phiên đầu tiên đủ {minStocks} mã = 100. Nó phản ánh cổ phiếu trung bình, không bị vài mã vốn hóa lớn kéo
-        như VN-Index. Phiên tăng/giảm quá 15% của một mã (thường do chia tách, cổ tức) được loại khỏi chỉ số.
-      </p>
+      <>
+        <p>
+          Là một “VN-Index tự làm” của Bull Stock, nhưng <b className="text-[var(--sm-egg)]">mỗi cổ phiếu có tiếng nói ngang nhau</b>. VN-Index tính theo độ lớn công ty (vốn hóa): chỉ vài công ty
+          lớn tăng mạnh là VN-Index đã tăng, dù hàng trăm cổ phiếu khác đang giảm. Chỉ số cân bằng thì mỗi mã một phiếu bầu như nhau, dù là ngân hàng lớn hay công ty nhỏ.
+        </p>
+        <p className="mt-2 font-semibold text-[var(--sm-egg)]">Cách tính</p>
+        <ul className="mt-1 list-disc space-y-0.5 pl-5">
+          <li>Lấy gần 200 cổ phiếu trong danh sách theo dõi của Bull Stock.</li>
+          <li>Mỗi phiên, xem mỗi mã tăng hay giảm bao nhiêu %, rồi lấy trung bình cộng.</li>
+          <li>Cộng dồn từ phiên đầu tiên có đủ {minStocks} mã (cuối năm 2015), phiên đó tính là 100 điểm.</li>
+        </ul>
+        <p className="mt-1.5">Ví dụ một phiên có 3 mã: A +3%, B −1%, C +1% → chỉ số cân bằng tăng (3 − 1 + 1) ÷ 3 = +1%.</p>
+        <p className="mt-2">
+          <b className="text-[var(--sm-egg)]">Dễ hiểu hơn:</b> một lớp học 40 học sinh. VN-Index giống như chỉ nhìn điểm vài bạn học giỏi nhất; chỉ số cân bằng giống điểm trung bình cả lớp, cho biết
+          đa số học sinh thật sự học thế nào. Có giai đoạn VN-Index tăng nhưng chỉ số cân bằng đi ngang hoặc giảm: chỉ số đẹp, nhưng đa số cổ phiếu không đi lên.
+        </p>
+        <p className="mt-2 text-[0.85rem] text-[var(--sm-mut)]">
+          Phiên tăng/giảm quá 15% của một mã (thường do chia tách, cổ tức) được loại khỏi chỉ số. Chỉ số chỉ gồm các mã đang niêm yết hiện nay nên mức tăng dài hạn có phần cao hơn thực tế; phù hợp
+          để xem xu hướng hơn là đo chính xác lợi nhuận.
+        </p>
+      </>
     ),
   },
   {
