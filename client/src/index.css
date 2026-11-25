@@ -652,3 +652,17 @@ details[open] > summary + * { animation: sm-reveal var(--motion-200) var(--ease-
 
 /* Màu nhấn của 3 mảng trang chủ: sáng hơn trên nền tối */
 .theme-dark .pl-accent { filter: brightness(2) saturate(1.1); }
+
+/* Chuyển trang: logo ở giữa + trang mới trượt nhẹ lên */
+.pt-logo { animation: pt-logo-in 380ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+@keyframes pt-logo-in { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: none; } }
+.pt-bar { animation: pt-bar 700ms ease-in-out infinite; }
+@keyframes pt-bar { from { transform: translateX(-100%); } to { transform: translateX(200%); } }
+.pt-dark { display: none; }
+.theme-dark .pt-dark { display: block; }
+.theme-dark .pt-light { display: none; }
+.page-enter { animation: page-enter 520ms cubic-bezier(0.16, 1, 0.3, 1) 260ms both; }
+@keyframes page-enter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .page-enter, .pt-logo, .pt-bar { animation: none; }
+}

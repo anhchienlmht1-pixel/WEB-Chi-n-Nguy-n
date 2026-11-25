@@ -1,7 +1,8 @@
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, useLocation } from 'react-router-dom'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import ScrollToHash from './components/ScrollToHash'
+import PageTransition from './components/PageTransition'
 import TrendSignals from './pages/TrendSignals'
 import StockDetail from './pages/StockDetail'
 import AccountOpeningGuide from './pages/AccountOpeningGuide'
@@ -12,11 +13,13 @@ import RealEstateSector from './pages/RealEstateSector'
 import SectorWavesPage from './pages/SectorWaves'
 
 function App() {
+  const { pathname } = useLocation()
   return (
     <div className="flex min-h-svh flex-col bg-paper text-ink">
       <ScrollToHash />
+      <PageTransition />
       <Header />
-      <main className="flex-1">
+      <main key={pathname} className="page-enter flex-1">
         <Routes>
           <Route path="/" element={<About />} />
           <Route path="/tin-hieu" element={<TrendSignals />} />
