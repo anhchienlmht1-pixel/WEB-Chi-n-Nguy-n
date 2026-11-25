@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Bar, CartesianGrid, ComposedChart, Line, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { fetchSectorWaves, fetchSectorWavesLive, type SectorWaves, type SectorWavesLive } from "../api/client";
@@ -60,6 +61,133 @@ const MSTATE: Record<1 | 2 | 3, { label: string; fill: string; text: string; wha
     what: "Thị trường điều chỉnh: từ 6 ngày phân phối và chỉ số dưới MA50, hoặc chỉ số thủng đáy 50 phiên. Chờ phiên xác nhận mới, hoặc chỉ số trở lại trên MA50 đang đi lên.",
   },
 };
+// Câu hỏi thường gặp cuối trang (giải thích các biểu đồ)
+const FAQ: { q: string; a: (threshold: number, minStocks: number) => ReactNode }[] = [
+  {
+    q: "Chỉ số cân bằng của Bull Stock là gì?",
+    a: (_t, minStocks) => (
+      <p>
+        Chỉ số tự dựng từ gần 200 mã trong danh sách theo dõi, mỗi mã một tỷ trọng như nhau, phiên đầu tiên đủ {minStocks} mã = 100. Nó phản ánh cổ phiếu trung bình, không bị vài mã vốn hóa lớn kéo
+        như VN-Index. Phiên tăng/giảm quá 15% của một mã (thường do chia tách, cổ tức) được loại khỏi chỉ số.
+      </p>
+    ),
+  },
+  {
+    q: "Trạng thái thị trường được xác định thế nào?",
+    a: (t) => (
+      <ul className="list-disc space-y-1 pl-5">
+        <li>
+          <b className="text-[var(--sm-egg)]">Ngày phân phối:</b> chỉ số giảm từ 0,2% với thanh khoản cao hơn phiên trước. Hết tính sau 25 phiên, hoặc khi chỉ số đã vượt giá đóng cửa ngày đó 5%.
+        </li>
+        <li>
+          <b className="text-[var(--sm-egg)]">Phiên xác nhận</b> (chấm xanh): sau khi tạo đáy, từ ngày thứ 4 đến ngày thứ 10 của nhịp hồi có phiên tăng từ 1,5% với thanh khoản cao hơn phiên trước.
+          Thận trọng chuyển sang Tích cực. Nhịp hồi quá 10 phiên chưa có phiên xác nhận thì bỏ, chờ nhịp hồi mới.
+        </li>
+        <li>
+          <b style={{ color: MSTATE[2].text }}>Quan sát</b> khi có từ 4 ngày phân phối, hoặc chỉ số rơi xuống dưới MA50 sau khi đã vượt lên MA50; quay lại{" "}
+          <b style={{ color: MSTATE[1].text }}>Tích cực</b> khi dưới 4 ngày và trở lại trên MA50.
+        </li>
+        <li>
+          Đợt tăng đi từ từ, không có phiên tăng mạnh: khi chỉ số đứng trên MA50 và MA50 đi lên so với 10 phiên trước, Thận trọng chuyển sang Quan sát, rồi lên Tích cực theo quy tắc trên. Riêng
+          trường hợp này cần có ít nhất một ngành có sóng (từ {t}% mã trong ngành đạt Trend Template), chưa có thì giữ ở Quan sát.
+        </li>
+        <li>
+          <b style={{ color: MSTATE[3].text }}>Thận trọng</b> khi có từ 6 ngày phân phối và chỉ số đã rơi xuống dưới MA50, hoặc chỉ số thủng đáy thấp nhất 50 phiên trước đó.
+        </li>
+      </ul>
+    ),
+  },
+  {
+    q: "Thanh khoản so với bình thường đọc thế nào?",
+    a: () => (
+      <p>
+        Giá trị giao dịch trung bình 20 phiên chia cho trung bình 1 năm. Trên 120% là tiền vào mạnh, dưới 80% là tiền rút. Hai ngưỡng này chỉ để tham chiếu, không tham gia xác định trạng thái thị
+        trường.
+      </p>
+    ),
+  },
+  {
+    q: "Giai đoạn VN-Index được tính thế nào?",
+    a: () => (
+      <p>
+        Xét theo độ dốc MA150 trong 20 phiên: đi lên là Tăng (kể cả nhịp điều chỉnh xuống dưới MA150), đi xuống và giá dưới MA150 là Giảm, đi ngang là Phân phối nếu trước đó tăng hoặc Tích lũy nếu
+        trước đó giảm. Nền biểu đồ chỉ tô Tăng và Giảm. Biểu đồ phụ bên dưới: cột là số ngành có sóng, đường là % toàn thị trường đạt Trend Template.
+      </p>
+    ),
+  },
+  {
+    q: "4 giai đoạn của thị trường là gì?",
+    a: () => (
+      <>
+        <ul className="space-y-1.5">
+          {([1, 2, 3, 4] as const).map((k) => (
+            <li key={k} className="flex gap-2">
+              <i className="mt-1.5 inline-block h-3 w-3 shrink-0 rounded-sm border border-[var(--sm-line)]" style={{ background: STAGE[k].fill.replace(/0\.1\d?\)/, "0.5)") }} />
+              <span>
+                <b style={{ color: STAGE[k].text }}>{STAGE[k].label}.</b> {STAGE[k].what}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-2">
+          Chu kỳ đi theo thứ tự 1 → 2 → 3 → 4. Giai đoạn được xác định tại thời điểm đó, không nhìn lại sau: một vùng Phân phối vẫn có thể vượt lên quay lại Tăng.
+        </p>
+      </>
+    ),
+  },
+  {
+    q: "Trend Template là gì?",
+    a: () => (
+      <>
+        <p>Bộ lọc xu hướng của Mark Minervini. Một mã đạt khi đủ cả:</p>
+        <ul className="mt-1 list-disc space-y-0.5 pl-5">
+          <li>Giá &gt; MA50 &gt; MA150 &gt; MA200</li>
+          <li>MA200 đi lên so với 1 tháng trước</li>
+          <li>Giá cao hơn đáy 52 tuần ít nhất 30%</li>
+          <li>Giá cách đỉnh 52 tuần không quá 25%</li>
+        </ul>
+        <p className="mt-1.5">Bản trên web dùng giá đóng cửa, chưa xét tiêu chí sức mạnh tương đối (RS).</p>
+      </>
+    ),
+  },
+  {
+    q: "Bản đồ sóng ngành đọc thế nào?",
+    a: (t) => (
+      <ul className="list-disc space-y-1 pl-5">
+        <li>Mỗi ô là một tuần (hoặc một tháng ở chế độ “Từ 2000”): màu càng đậm thì càng nhiều mã trong ngành đạt Trend Template. Ô có viền vàng là ngành có sóng (từ {t}% mã đạt).</li>
+        <li>Dải ô đậm kéo dài theo chiều ngang là một con sóng ngành; nhiều dải cùng lúc là thị trường có sóng lan tỏa.</li>
+        <li>Ô trống là giai đoạn ngành chưa có đủ 3 mã niêm yết đủ dữ liệu (thường là những năm đầu thị trường).</li>
+      </ul>
+    ),
+  },
+  {
+    q: "Cột % đạt, Thay đổi, Mã đạt nghĩa là gì?",
+    a: () => (
+      <ul className="list-disc space-y-1 pl-5">
+        <li>
+          <b className="text-[var(--sm-egg)]">% đạt:</b> % mã trong ngành đang đạt Trend Template; trong phiên tính theo giá khớp, cập nhật 30 giây.
+        </li>
+        <li>
+          <b className="text-[var(--sm-egg)]">Thay đổi:</b> tính bằng điểm %, so với phiên trước (trong phiên) hoặc 4 tuần trước (ngoài giờ). Ví dụ −25 là giảm 25 điểm %.
+        </li>
+        <li>
+          <b className="text-[var(--sm-egg)]">Mã đạt:</b> các mã trong ngành đang đạt Trend Template.
+        </li>
+      </ul>
+    ),
+  },
+  {
+    q: "Khi nào thị trường có sóng ngành?",
+    a: () => (
+      <ul className="list-disc space-y-1 pl-5">
+        <li>Khi VN-Index ở giai đoạn 2 và có ít nhất một ngành vượt ngưỡng; càng nhiều ngành vượt ngưỡng cùng lúc thì sóng càng lan tỏa.</li>
+        <li>Sóng mới thường bắt đầu khi một ngành tăng nhanh % mã đạt (cột Thay đổi tăng mạnh) trong lúc thị trường còn ở giai đoạn 1.</li>
+        <li>Sóng yếu dần khi % mã đạt giảm liên tục dù chỉ số vẫn cao, thường đi kèm VN-Index chuyển sang giai đoạn 3.</li>
+      </ul>
+    ),
+  },
+];
+
 const pctS = (x: number | null) => (x == null ? "—" : `${x > 0 ? "+" : ""}${x.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}%`);
 
 const vn = (n: number, d = 0) => n.toLocaleString("vi-VN", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -251,7 +379,7 @@ export default function SectorWavesPage() {
             Theo cách nhìn của Mark Minervini: một ngành đang có sóng khi nhiều cổ phiếu trong ngành cùng lúc vào xu hướng tăng (đạt Trend Template). Biểu đồ VN-Index cho
             biết thị trường đang ở giai đoạn nào; bản đồ nhiệt bên dưới cho biết sóng đang nằm ở ngành nào.{" "}
             <a href="#giai-thich" className="text-[var(--sm-gold2)] hover:underline">
-              Xem giải thích cuối trang
+              Xem câu hỏi thường gặp cuối trang
             </a>
           </p>
         </div>
@@ -684,110 +812,33 @@ export default function SectorWavesPage() {
               </div>
             </section>
 
-            {/* Giải thích */}
-            <section id="giai-thich" aria-label="Giải thích" className="mt-14 scroll-mt-24">
-              <h2 className="text-[1.6rem] leading-tight">Giải thích</h2>
-              <div className="mt-3 grid gap-4 lg:grid-cols-2">
-                <div className="rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-5 text-[0.92rem] leading-relaxed text-[var(--sm-egg2)]">
-                  <h3 className="text-[1.15rem] text-[var(--sm-egg)]">Trạng thái thị trường</h3>
-                  <p className="mt-1.5">
-                    Đo trên chỉ số cân bằng của Bull Stock: gần 200 mã trong danh sách theo dõi, mỗi mã một tỷ trọng như nhau, phiên đầu tiên đủ {raw!.market?.minStocks ?? 30} mã = 100. Chỉ số này
-                    phản ánh cổ phiếu trung bình, không bị vài mã vốn hóa lớn kéo như VN-Index. Trạng thái xét theo ngày phân phối và phiên xác nhận (phần “M” trong CAN SLIM), kết hợp với sóng ngành.
-                    Chấm xanh là phiên xác nhận.
-                  </p>
-                  <ul className="mt-1.5 list-disc space-y-1 pl-5">
-                        <li>
-                          <b className="text-[var(--sm-egg)]">Ngày phân phối:</b> chỉ số giảm từ 0,2% với thanh khoản cao hơn phiên trước. Hết tính sau 25 phiên, hoặc khi chỉ số đã vượt giá đóng cửa ngày đó 5%.
-                        </li>
-                        <li>
-                          <b className="text-[var(--sm-egg)]">Phiên xác nhận:</b> sau khi tạo đáy, từ ngày thứ 4 đến ngày thứ 10 của nhịp hồi có phiên tăng từ 1,5% với thanh khoản cao hơn phiên trước. Thận trọng chuyển sang Tích cực. Nhịp hồi quá 10 phiên chưa có phiên xác nhận thì bỏ, chờ nhịp hồi mới.
-                        </li>
-                        <li>
-                          <b style={{ color: MSTATE[2].text }}>Quan sát</b> khi có từ 4 ngày phân phối, hoặc chỉ số rơi xuống dưới MA50 sau khi đã vượt lên MA50 (ngay sau phiên xác nhận, chỉ số dưới MA50 vẫn tính Tích cực); quay lại <b style={{ color: MSTATE[1].text }}>Tích cực</b> khi dưới 4 ngày và trở lại trên MA50.
-                        </li>
-                        <li>
-                          <b className="text-[var(--sm-egg)]">Kết hợp sóng ngành:</b> có phiên xác nhận thì Tích cực ngay. Nếu chỉ số đi lên từ từ mà không có phiên xác nhận, chỉ chuyển Tích cực khi đã có ít nhất một ngành có sóng (từ {d.threshold}% mã trong ngành đạt Trend Template), chưa có thì giữ ở <b style={{ color: MSTATE[2].text }}>Quan sát</b>. Sóng ngành xét theo tuần đã chốt gần nhất.
-                        </li>
-                        <li>
-                          Đợt tăng đi từ từ, không có phiên tăng mạnh: khi chỉ số đứng trên MA50 và MA50 đi lên so với 10 phiên trước, Thận trọng chuyển sang <b style={{ color: MSTATE[2].text }}>Quan sát</b>, rồi lên Tích cực theo quy tắc trên.
-                        </li>
-                        <li>
-                          <b style={{ color: MSTATE[3].text }}>Thận trọng</b> khi có từ 6 ngày phân phối và chỉ số đã rơi xuống dưới MA50, hoặc chỉ số thủng đáy thấp nhất 50 phiên trước đó. Nhiều ngày phân phối nhưng chỉ số vẫn trên MA50 thì chỉ dừng ở Quan sát.
-                        </li>
-                      </ul>
-                      <p className="mt-2 text-[0.82rem] text-[var(--sm-mut)]">
-                        Ngưỡng 120% / 80% của thanh khoản chỉ để tham chiếu, không tham gia xác định trạng thái. Phiên tăng/giảm quá 15% của một mã (thường do chia tách, cổ tức) được loại khỏi chỉ số.
-                      </p>
-                  <p className="mt-2">
-                    <b className="text-[var(--sm-egg)]">Thanh khoản so với bình thường:</b> giá trị giao dịch trung bình 20 phiên chia cho trung bình 1 năm. Trên 120% là tiền vào mạnh, dưới 80% là tiền rút.
-                  </p>
-                </div>
-                <div className="rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-5 text-[0.92rem] leading-relaxed text-[var(--sm-egg2)]">
-                  <h3 className="text-[1.15rem] text-[var(--sm-egg)]">Giai đoạn VN-Index</h3>
-                  <p className="mt-1.5">
-                    Xét theo độ dốc MA150 trong 20 phiên: đi lên là Tăng (kể cả nhịp điều chỉnh xuống dưới MA150), đi xuống và giá dưới MA150 là Giảm, đi ngang là Phân phối nếu trước đó tăng hoặc
-                    Tích lũy nếu trước đó giảm. Nền biểu đồ chỉ tô Tăng và Giảm.
-                  </p>
-                  <ul className="mt-2 space-y-1.5">
-                    {([1, 2, 3, 4] as const).map((k) => (
-                      <li key={k} className="flex gap-2">
-                        <i className="mt-1 inline-block h-3 w-3 shrink-0 rounded-sm border border-[var(--sm-line)]" style={{ background: STAGE[k].fill.replace(/0\.1\d?\)/, "0.5)") }} />
-                        <span>
-                          <b style={{ color: STAGE[k].text }}>{STAGE[k].label}.</b> {STAGE[k].what}
-                        </span>
-                      </li>
+            {/* Giải thích: dạng câu hỏi thường gặp, bấm để mở */}
+            <section id="giai-thich" aria-label="Câu hỏi thường gặp" className="mt-16 scroll-mt-24">
+              <h2 className="text-[clamp(1.6rem,2.4vw,2.1rem)] leading-tight">Câu hỏi thường gặp</h2>
+              <div className="mt-4 grid gap-x-10 lg:grid-cols-2">
+                {[0, 1].map((col) => (
+                  <div key={col} className="border-t border-[var(--sm-line)]">
+                    {FAQ.filter((_, i) => i % 2 === col).map((f) => (
+                      <details key={f.q} className="group border-b border-[var(--sm-line)]">
+                        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-[1.05rem] text-[var(--sm-egg)] hover:text-[var(--sm-gold2)] [&::-webkit-details-marker]:hidden">
+                          {f.q}
+                          <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4 shrink-0 text-[var(--sm-mut)] transition-transform group-open:rotate-90">
+                            <path d="M7 4l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </summary>
+                        <div className="pb-5 text-[0.94rem] leading-relaxed text-[var(--sm-egg2)]">{f.a(d.threshold, raw!.market?.minStocks ?? 30)}</div>
+                      </details>
                     ))}
-                  </ul>
-                  <p className="mt-2 text-[0.82rem] text-[var(--sm-mut)]">
-                    Chu kỳ đi theo thứ tự 1 → 2 → 3 → 4. Giai đoạn được xác định tại thời điểm đó, không nhìn lại sau: một vùng Phân phối vẫn có thể vượt lên quay lại Tăng.
-                  </p>
-                  <p className="mt-2">
-                    <b className="text-[var(--sm-egg)]">Biểu đồ phụ:</b> cột là số ngành có sóng, đường là % toàn thị trường đạt Trend Template.
-                  </p>
-                </div>
-                <div className="rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-5 text-[0.92rem] leading-relaxed text-[var(--sm-egg2)]">
-                  <h3 className="text-[1.15rem] text-[var(--sm-egg)]">Bản đồ sóng ngành</h3>
-                  <ul className="mt-1.5 list-disc space-y-1 pl-5">
-                    <li>
-                      Mỗi ô là một tuần (hoặc một tháng ở chế độ “Từ 2000”): màu càng đậm thì càng nhiều mã trong ngành đạt Trend Template. Ô có viền vàng là ngành có sóng (từ {d.threshold}% mã đạt).
-                    </li>
-                    <li>Dải ô đậm kéo dài theo chiều ngang là một con sóng ngành; nhiều dải cùng lúc là thị trường có sóng lan tỏa.</li>
-                    <li>Ô trống là giai đoạn ngành chưa có đủ 3 mã niêm yết đủ dữ liệu (thường là những năm đầu thị trường).</li>
-                    <li>
-                      <b className="text-[var(--sm-egg)]">Cột phải:</b> % đạt là % mã trong ngành đang đạt Trend Template (trong phiên tính theo giá khớp, cập nhật 30 giây). Thay đổi tính bằng điểm %, so với phiên
-                      trước (trong phiên) hoặc 4 tuần trước (ngoài giờ), ví dụ −25 là giảm 25 điểm %. Mã đạt là các mã đang đạt Trend Template.
-                    </li>
-                  </ul>
-                </div>
-  <div className="rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-5 text-[0.92rem] leading-relaxed text-[var(--sm-egg2)]">
-                  <h3 className="text-[1.15rem] text-[var(--sm-egg)]">Trend Template là gì</h3>
-                  <p className="mt-1.5">Bộ lọc xu hướng của Mark Minervini. Một mã đạt khi đủ cả:</p>
-                  <ul className="mt-1.5 list-disc space-y-0.5 pl-5">
-                    <li>Giá &gt; MA50 &gt; MA150 &gt; MA200</li>
-                    <li>MA200 đi lên so với 1 tháng trước</li>
-                    <li>Giá cao hơn đáy 52 tuần ít nhất 30%</li>
-                    <li>Giá cách đỉnh 52 tuần không quá 25%</li>
-                  </ul>
-                  <p className="mt-2 text-[0.82rem] text-[var(--sm-mut)]">Bản trên web dùng giá đóng cửa, chưa xét tiêu chí sức mạnh tương đối (RS).</p>
-                </div>
-  <div className="rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-5 text-[0.92rem] leading-relaxed text-[var(--sm-egg2)]">
-                  <h3 className="text-[1.15rem] text-[var(--sm-egg)]">Đọc thế nào</h3>
-                  <ul className="mt-1.5 list-disc space-y-1 pl-5">
-                    <li>
-                      <b className="text-[var(--sm-egg)]">Thị trường có sóng ngành</b> khi VN-Index ở giai đoạn 2 và có ít nhất một ngành vượt ngưỡng; càng nhiều ngành vượt ngưỡng
-                      cùng lúc thì sóng càng lan tỏa.
-                    </li>
-                    <li>Sóng mới thường bắt đầu khi một ngành tăng nhanh % mã đạt (mũi tên ▲ lớn) trong lúc thị trường còn ở giai đoạn 1.</li>
-                    <li>Sóng yếu dần khi % mã đạt giảm liên tục dù chỉ số vẫn cao, thường đi kèm VN-Index chuyển sang giai đoạn 3.</li>
-                  </ul>
-                  <p className="mt-2 text-[0.82rem] text-[var(--sm-mut)]">
-                    Mô tả trạng thái theo dữ liệu quá khứ, phiên đã đóng; không dự báo, không phải khuyến nghị mua bán. Phân ngành theo nhóm của Bull Stock, gần 200 mã đang niêm yết hiện nay (mã đã hủy niêm yết không có trong dữ liệu).{" "}
-                    <Link to="/tin-hieu" className="text-[var(--sm-gold2)] hover:underline">
-                      Xem tín hiệu từng mã
-                    </Link>
-                  </p>
-                </div>
+                  </div>
+                ))}
               </div>
+              <p className="mt-4 text-[0.82rem] text-[var(--sm-mut)]">
+                Mô tả trạng thái theo dữ liệu quá khứ, phiên đã đóng; không dự báo, không phải khuyến nghị mua bán. Phân ngành theo nhóm của Bull Stock, gần 200 mã đang niêm yết hiện nay (mã đã hủy niêm
+                yết không có trong dữ liệu).{" "}
+                <Link to="/tin-hieu" className="text-[var(--sm-gold2)] hover:underline">
+                  Xem tín hiệu từng mã
+                </Link>
+              </p>
             </section>
           </>
         )}
