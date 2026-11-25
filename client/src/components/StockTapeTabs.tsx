@@ -272,14 +272,14 @@ export function PriceLevelsTab({ symbol }: { symbol: string }) {
                 <td className="w-14 py-1.5 font-semibold" style={{ color: color(l.price) }}>
                   {p2(l.price)}
                 </td>
-                <td className="py-1.5 pr-2">
-                  <div className="flex h-3 overflow-hidden rounded-[3px]" style={{ width: `${(l.total / max) * 100}%` }} title={`Mua CĐ ${vol(l.buy)} · Bán CĐ ${vol(l.sell)}${l.other ? ` · ATO/ATC ${vol(l.other)}` : ""}`}>
+                <td className="w-full py-1.5 pr-3 pl-1">
+                  <div className="flex h-3.5 overflow-hidden rounded-[3px] transition-[width] duration-300" style={{ width: `${(l.total / max) * 100}%` }} title={`Mua CĐ ${vol(l.buy)} · Bán CĐ ${vol(l.sell)}${l.other ? ` · ATO/ATC ${vol(l.other)}` : ""}`}>
                     <i className="block h-full bg-[var(--sm-up)]" style={{ width: `${(l.buy / l.total) * 100}%` }} />
                     <i className="block h-full bg-[var(--sm-dn)]" style={{ width: `${(l.sell / l.total) * 100}%` }} />
                     <i className="block h-full flex-1 bg-[var(--sm-mut)] opacity-50" />
                   </div>
                 </td>
-                <td className="py-1.5 text-right">{vol(l.total)}</td>
+                <td className="whitespace-nowrap py-1.5 text-right">{vol(l.total)}</td>
                 <td className="w-10 py-1.5 text-right text-[var(--sm-mut)]">{t ? pct(l.total, t.summary.total) : 0}%</td>
               </tr>
             ))}
