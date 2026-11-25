@@ -78,10 +78,13 @@ registerOverlay({
   needDefaultPointFigure: false,
   needDefaultXAxisFigure: false,
   needDefaultYAxisFigure: false,
-  createPointFigures: ({ overlay, coordinates }) => {
+  createPointFigures: ({ overlay, coordinates, bounding }) => {
     const { text } = overlay.extendData as { text: string };
     const { x, y } = coordinates[0];
     const tip = y + 5;
+    // sát mép phải/trái thì neo nhãn vào trong để không bị cắt chữ
+    const align = x > bounding.width - 70 ? "right" : x < 70 ? "left" : "center";
+    const tx = align === "right" ? x + 12 : align === "left" ? x - 12 : x;
     return [
       { type: "circle", attrs: { x, y: tip + 4, r: 11 }, styles: { style: "fill", color: "rgba(201,162,74,0.22)" }, ignoreEvent: true },
       {
@@ -92,7 +95,7 @@ registerOverlay({
       },
       {
         type: "text",
-        attrs: { x, y: tip + 14, text, align: "center", baseline: "top" },
+        attrs: { x: tx, y: tip + 14, text, align, baseline: "top" },
         styles: {
           color: "#ffffff",
           size: 11,
