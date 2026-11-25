@@ -11,7 +11,7 @@ import { kbsMarketProvider } from "./kbsMarketProvider.js";
 //  - lỗi thì mọi nơi gọi tự rơi về nguồn kế tiếp (KBS) qua chuỗi fallback.
 // Lịch sử giá và tìm kiếm vẫn dùng KBS.
 //
-// Đơn vị của VPS: giá theo nghìn đồng (giống Quote.price của web), khối lượng
+// Đơn vị của VPS: giá theo nghìn đồng (Quote của web đổi sang đồng), khối lượng
 // theo lô 10 cổ phiếu (lot 525150 = 5.251.500 cp), giá trị chỉ số theo triệu đồng.
 
 const BASE = "https://bgapidatafeed.vps.com.vn";
@@ -83,18 +83,20 @@ function stockQuote(x: VpsStock): Quote | null {
   if (!symbol || !last || !ref) return null;
   const seed = findSeed(symbol);
   const vol = n(x.lot);
+  // Quote của web tính giá cổ phiếu theo đồng (như KBS): VPS trả nghìn đồng → ×1000
+  const k = (v: number) => Math.round(v * 1000);
   return {
     symbol,
     name: seed?.name ?? symbol,
     exchange: seed?.exchange ?? MARKET_TO_EXCHANGE[x.marketId ?? ""] ?? "",
     currency: "VND",
-    price: last,
-    change: Math.round((last - ref) * 100) / 100,
+    price: k(last),
+    change: k(last - ref),
     changePercent: Math.round(((last - ref) / ref) * 10000) / 100,
-    open: n(x.openPrice) || last,
-    high: n(x.highPrice) || last,
-    low: n(x.lowPrice) || last,
-    prevClose: ref,
+    open: k(n(x.openPrice) || last),
+    high: k(n(x.highPrice) || last),
+    low: k(n(x.lowPrice) || last),
+    prevClose: k(ref),
     volume: vol != null ? vol * VOL_UNIT : 0,
     updatedAt: new Date().toISOString(),
     foreignBuyVolume: n(x.fBVol) != null ? n(x.fBVol)! * VOL_UNIT : undefined,
