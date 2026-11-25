@@ -108,52 +108,93 @@ export function ProductGrid({ quotes, scan, journal }: { quotes?: Quote[]; scan?
 /* ------------------------------------- Dữ liệu → Sóng ngành → Tín hiệu */
 
 // Trang chủ: ba mảng theo thứ tự đọc thị trường. Chỉ có thông điệp, không đưa chỉ số.
-const PILLARS: { title: string; message: string; to: string; cta: string; items: { title: string; text: string; to: string }[] }[] = [
+// Mỗi mảng một màu nhấn đi cùng xanh rêu + vàng Bull: Dữ liệu xanh lam đậm, Sóng ngành hổ phách, Tín hiệu xanh lá.
+
+const ICON: Record<string, ReactNode> = {
+  bank: <path d="M3 10h18M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18M12 3l9 5H3l9-5z" />,
+  candles: <path d="M7 4v3M7 15v5M17 3v4M17 13v8M5 7h4v8H5zM15 7h4v6h-4z" />,
+  house: <path d="M3 11l9-7 9 7M5 10v10h14V10M10 20v-6h4v6" />,
+  pulse: <path d="M3 12h4l2-6 4 12 2-6h6" />,
+  cycle: <path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3M18 3v4h-4M6 21v-4h4" />,
+  grid: <path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" />,
+  list: <path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" />,
+  signal: <path d="M3 17l5-5 4 4 8-9M15 7h5v5" />,
+  book: <path d="M4 5h7v14H4zM13 5h7v14h-7zM6 9h3M6 13h3M15 9h3M15 13h3" />,
+};
+
+const PILLARS: {
+  title: string;
+  accent: string;
+  tint: string;
+  message: string;
+  to: string;
+  cta: string;
+  items: { title: string; text: string; to: string; icon: string }[];
+}[] = [
   {
     title: "Dữ liệu",
+    accent: "#1f6f8b",
+    tint: "rgba(31,111,139,0.07)",
     message: "Nắm bắt kết quả kinh doanh, lợi nhuận, sức khỏe tài chính và định giá của từng doanh nghiệp, đọc thẳng từ báo cáo tài chính mỗi quý.",
     to: "/nganh-ngan-hang",
     cta: "Xem dữ liệu ngành",
     items: [
-      { title: "Ngân hàng", text: "Tăng trưởng tín dụng và huy động, NIM, nợ xấu, CASA, lợi nhuận và định giá của từng ngân hàng.", to: "/nganh-ngan-hang" },
-      { title: "Chứng khoán", text: "Doanh thu từng mảng, dư nợ cho vay ký quỹ, thị phần môi giới và định giá của các công ty chứng khoán.", to: "/nganh-chung-khoan" },
-      { title: "Bất động sản", text: "Người mua trả trước, hàng tồn kho, nợ vay và dự án bàn giao để đánh giá sức khỏe chủ đầu tư.", to: "/nganh-bat-dong-san" },
+      { title: "Ngân hàng", icon: "bank", text: "Tăng trưởng tín dụng và huy động, NIM, nợ xấu, CASA, lợi nhuận và định giá của từng ngân hàng.", to: "/nganh-ngan-hang" },
+      { title: "Chứng khoán", icon: "candles", text: "Doanh thu từng mảng, dư nợ cho vay ký quỹ, thị phần môi giới và định giá của các công ty chứng khoán.", to: "/nganh-chung-khoan" },
+      { title: "Bất động sản", icon: "house", text: "Người mua trả trước, hàng tồn kho, nợ vay và dự án bàn giao để đánh giá sức khỏe chủ đầu tư.", to: "/nganh-bat-dong-san" },
     ],
   },
   {
     title: "Sóng ngành",
+    accent: "#b7791f",
+    tint: "rgba(201,138,30,0.08)",
     message: "Biết dòng tiền đang chảy vào ngành nào và thị trường có thuận lợi để mua mới hay không. Đi theo con sóng thay vì chèo ngược dòng.",
     to: "/song-nganh",
     cta: "Xem sóng ngành",
     items: [
-      { title: "Nhịp thị trường", text: "Thời điểm thị trường đang tích cực, cần quan sát hay nên thận trọng, đo trên cổ phiếu trung bình.", to: "/song-nganh" },
-      { title: "Chu kỳ VN-Index", text: "Thị trường đang ở pha tích lũy, tăng, phân phối hay giảm của chu kỳ lớn.", to: "/song-nganh" },
-      { title: "Bản đồ 19 ngành", text: "Ngành nào đang có sóng, ngành nào đang hình thành, nhìn ngược lại từ năm 2000.", to: "/song-nganh" },
+      { title: "Nhịp thị trường", icon: "pulse", text: "Thời điểm thị trường đang tích cực, cần quan sát hay nên thận trọng, đo trên cổ phiếu trung bình.", to: "/song-nganh" },
+      { title: "Chu kỳ VN-Index", icon: "cycle", text: "Thị trường đang ở pha tích lũy, tăng, phân phối hay giảm của chu kỳ lớn.", to: "/song-nganh" },
+      { title: "Bản đồ 19 ngành", icon: "grid", text: "Ngành nào đang có sóng, ngành nào đang hình thành, nhìn ngược lại từ năm 2000.", to: "/song-nganh" },
     ],
   },
   {
     title: "Tín hiệu",
+    accent: "#2f8a55",
+    tint: "rgba(47,138,85,0.07)",
     message: "Hệ thống lọc mã đang đi lên sau mỗi phiên, vào lệnh từng phần, thoát khi xu hướng gãy, và công khai mọi lệnh dù lãi hay lỗ.",
     to: "/tin-hieu",
     cta: "Xem tín hiệu hôm nay",
     items: [
-      { title: "Danh mục và nhật ký", text: "Mã đang giữ, mã mua mới và toàn bộ lệnh đã đóng, ghi lại từ ngày bắt đầu, không sửa về sau.", to: "/tin-hieu" },
-      { title: "Biểu đồ có điểm mua bán", text: "Mỗi mã kèm điểm mua từng phần và điểm đóng lệnh của hệ thống ngay trên biểu đồ nến.", to: "/tin-hieu" },
-      { title: "Sổ lệnh trực tiếp", text: "Bước giá, khớp lệnh, mua bán chủ động và khối lượng theo giá của từng mã trong phiên.", to: "/tin-hieu" },
+      { title: "Danh mục và nhật ký", icon: "list", text: "Mã đang giữ, mã mua mới và toàn bộ lệnh đã đóng, ghi lại từ ngày bắt đầu, không sửa về sau.", to: "/tin-hieu" },
+      { title: "Biểu đồ có điểm mua bán", icon: "signal", text: "Mỗi mã kèm điểm mua từng phần và điểm đóng lệnh của hệ thống ngay trên biểu đồ nến.", to: "/tin-hieu" },
+      { title: "Sổ lệnh trực tiếp", icon: "book", text: "Bước giá, khớp lệnh, mua bán chủ động và khối lượng theo giá của từng mã trong phiên.", to: "/tin-hieu" },
     ],
   },
 ];
 
 export function HomePillars() {
   return (
-    <div>
+    <div className="flex flex-col gap-5">
       {PILLARS.map((p, i) => (
-        <section key={p.title} aria-label={p.title} className="grid gap-x-10 gap-y-5 border-t border-[var(--sm-line)] py-10 lg:grid-cols-12">
+        <section
+          key={p.title}
+          aria-label={p.title}
+          className="grid gap-x-10 gap-y-6 rounded-2xl px-5 py-8 sm:px-8 lg:grid-cols-12 lg:py-10"
+          style={{ background: p.tint }}
+        >
           <div className="lg:col-span-4">
-            <p className="text-[0.85rem] font-semibold text-[var(--sm-gold2)]">Bước {i + 1}</p>
-            <h2 className="mt-1 text-[clamp(1.7rem,2.6vw,2.2rem)] leading-tight text-[var(--sm-egg)]">{p.title}</h2>
+            <span className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[0.8rem] font-semibold text-white" style={{ background: p.accent }}>
+              Bước {i + 1}
+            </span>
+            <h2 className="pl-accent mt-3 text-[clamp(1.8rem,2.8vw,2.4rem)] leading-tight" style={{ color: p.accent }}>
+              {p.title}
+            </h2>
             <p className="mt-3 text-[1.08rem] leading-relaxed text-[var(--sm-egg2)]">{p.message}</p>
-            <Link to={p.to} className="sm-btn mt-6">
+            <Link
+              to={p.to}
+              className="mt-6 inline-flex min-h-11 items-center rounded-[10px] px-5 font-semibold text-white shadow-[0_1px_2px_rgba(0,0,0,0.12)] transition-[transform,box-shadow,filter] hover:-translate-y-px hover:shadow-[0_8px_20px_-8px_rgba(0,0,0,0.35)] hover:brightness-110"
+              style={{ background: p.accent }}
+            >
               {p.cta}
             </Link>
           </div>
@@ -162,11 +203,22 @@ export function HomePillars() {
               <Link
                 key={it.title}
                 to={it.to}
-                className="group flex min-w-0 flex-col rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-5 hover:border-[rgba(201,162,74,0.55)]"
+                className="group relative flex min-w-0 flex-col overflow-hidden rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-5"
               >
-                <b className="font-display text-[1.35rem] leading-tight text-[var(--sm-egg)]">{it.title}</b>
+                <i className="absolute inset-x-0 top-0 h-[3px]" style={{ background: p.accent }} aria-hidden="true" />
+                <span className="pl-accent inline-flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: p.tint.replace(/0\.0\d\)/, "0.16)"), color: p.accent }}>
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    {ICON[it.icon]}
+                  </svg>
+                </span>
+                <b className="mt-4 font-display text-[1.3rem] leading-tight text-[var(--sm-egg)]">{it.title}</b>
                 <span className="mt-2 text-[0.95rem] leading-relaxed text-[var(--sm-egg2)]">{it.text}</span>
-                <span className="mt-auto pt-4 text-[0.85rem] font-semibold text-[var(--sm-mut)] group-hover:text-[var(--sm-gold2)]">Xem chi tiết</span>
+                <span className="pl-accent mt-auto inline-flex items-center gap-1 pt-4 text-[0.88rem] font-semibold" style={{ color: p.accent }}>
+                  Xem chi tiết
+                  <svg viewBox="0 0 20 20" width="14" height="14" className="transition-transform group-hover:translate-x-0.5" aria-hidden="true">
+                    <path d="M7 4l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
               </Link>
             ))}
           </div>
