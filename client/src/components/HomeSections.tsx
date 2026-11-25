@@ -7,6 +7,7 @@ import { PROFIT } from "../data/bankValuation";
 import { useSecSector } from "../data/securities";
 import { useReSector } from "../data/realestate";
 import { InsightCard, dmy, pct, useMarketTrend } from "./SonMaiHome";
+import CompanyLogo from "./CompanyLogo";
 
 // Các khối dùng chung cho trang Giới thiệu và trang Tín hiệu: tiêu đề mục,
 // lưới sản phẩm (kèm số liệu sống), phương pháp 3 bước, chuyên viên và mở tài khoản.
@@ -129,7 +130,7 @@ const PILLARS: {
   message: string;
   to: string;
   cta: string;
-  items: { title: string; text: string; to: string; icon: string }[];
+  items: { title: string; text: string; to: string; icon: string; logos?: string[] }[];
 }[] = [
   {
     title: "Dữ liệu",
@@ -139,9 +140,9 @@ const PILLARS: {
     to: "/nganh-ngan-hang",
     cta: "Xem dữ liệu ngành",
     items: [
-      { title: "Ngân hàng", icon: "bank", text: "Tăng trưởng tín dụng và huy động, NIM, nợ xấu, CASA, lợi nhuận và định giá của từng ngân hàng.", to: "/nganh-ngan-hang" },
-      { title: "Chứng khoán", icon: "candles", text: "Doanh thu từng mảng, dư nợ cho vay ký quỹ, thị phần môi giới và định giá của các công ty chứng khoán.", to: "/nganh-chung-khoan" },
-      { title: "Bất động sản", icon: "house", text: "Người mua trả trước, hàng tồn kho, nợ vay và dự án bàn giao để đánh giá sức khỏe chủ đầu tư.", to: "/nganh-bat-dong-san" },
+      { title: "Ngân hàng", icon: "bank", logos: ["VCB", "BID", "CTG", "TCB", "MBB", "ACB"], text: "Tăng trưởng tín dụng và huy động, NIM, nợ xấu, CASA, lợi nhuận và định giá của từng ngân hàng.", to: "/nganh-ngan-hang" },
+      { title: "Chứng khoán", icon: "candles", logos: ["SSI", "VND", "HCM", "VCI", "VIX", "SHS"], text: "Doanh thu từng mảng, dư nợ cho vay ký quỹ, thị phần môi giới và định giá của các công ty chứng khoán.", to: "/nganh-chung-khoan" },
+      { title: "Bất động sản", icon: "house", logos: ["VHM", "NVL", "KDH", "NLG", "DXG", "PDR"], text: "Người mua trả trước, hàng tồn kho, nợ vay và dự án bàn giao để đánh giá sức khỏe chủ đầu tư.", to: "/nganh-bat-dong-san" },
     ],
   },
   {
@@ -206,14 +207,25 @@ export function HomePillars() {
                 className="group relative flex min-w-0 flex-col overflow-hidden rounded-md border border-[var(--sm-line)] bg-[var(--sm-panel)] p-5"
               >
                 <i className="absolute inset-x-0 top-0 h-[3px]" style={{ background: p.accent }} aria-hidden="true" />
-                <span className="pl-accent inline-flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: p.tint.replace(/0\.0\d\)/, "0.16)"), color: p.accent }}>
+                {it.logos && (
+                  // logo các doanh nghiệp tiêu biểu, mờ phía sau nội dung
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute -right-3 -bottom-2 grid rotate-[-8deg] grid-cols-3 gap-x-5 gap-y-4 opacity-[0.13] grayscale transition-[opacity,filter] duration-300 group-hover:opacity-[0.28] group-hover:grayscale-[0.4]"
+                  >
+                    {it.logos.map((sym) => (
+                      <CompanyLogo key={sym} symbol={sym} size={30} width={64} fallback="space" />
+                    ))}
+                  </span>
+                )}
+                <span className="pl-accent relative inline-flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: p.tint.replace(/0\.0\d\)/, "0.16)"), color: p.accent }}>
                   <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     {ICON[it.icon]}
                   </svg>
                 </span>
-                <b className="mt-4 font-display text-[1.3rem] leading-tight text-[var(--sm-egg)]">{it.title}</b>
-                <span className="mt-2 text-[0.95rem] leading-relaxed text-[var(--sm-egg2)]">{it.text}</span>
-                <span className="pl-accent mt-auto inline-flex items-center gap-1 pt-4 text-[0.88rem] font-semibold" style={{ color: p.accent }}>
+                <b className="relative mt-4 font-display text-[1.3rem] leading-tight text-[var(--sm-egg)]">{it.title}</b>
+                <span className="relative mt-2 text-[0.95rem] leading-relaxed text-[var(--sm-egg2)]">{it.text}</span>
+                <span className="pl-accent relative mt-auto inline-flex items-center gap-1 pt-4 text-[0.88rem] font-semibold" style={{ color: p.accent }}>
                   Xem chi tiết
                   <svg viewBox="0 0 20 20" width="14" height="14" className="transition-transform group-hover:translate-x-0.5" aria-hidden="true">
                     <path d="M7 4l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
