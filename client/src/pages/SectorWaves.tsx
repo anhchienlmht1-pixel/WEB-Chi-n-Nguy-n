@@ -64,6 +64,41 @@ const MSTATE: Record<1 | 2 | 3, { label: string; fill: string; text: string; wha
 // Câu hỏi thường gặp cuối trang (giải thích các biểu đồ)
 const FAQ: { q: string; a: (threshold: number, minStocks: number) => ReactNode }[] = [
   {
+    q: "Sóng ngành là gì? (giải thích dễ hiểu)",
+    a: () => (
+      <>
+        <p>
+          Hãy tưởng tượng thị trường chứng khoán như một <b className="text-[var(--sm-egg)]">khu chợ lớn</b> có nhiều dãy hàng: dãy ngân hàng, dãy bất động sản, dãy thép, dãy công nghệ… Có những
+          lúc <b className="text-[var(--sm-egg)]">cả một dãy cùng đông khách</b>: gần như sạp nào trong dãy cũng bán chạy, giá cứ thế đi lên. Đó là <b className="text-[var(--sm-egg)]">sóng ngành</b>:
+          dòng tiền đổ vào cả một ngành, chứ không chỉ một vài cổ phiếu lẻ tẻ. Ví dụ khi lãi suất giảm, tiền đổ vào chứng khoán và nhiều cổ phiếu công ty chứng khoán cùng tăng một lúc.
+        </p>
+        <p className="mt-2">
+          Đi theo sóng ngành giống <b className="text-[var(--sm-egg)]">thả thuyền xuôi dòng</b>: chèo nhẹ cũng đi nhanh. Mua cổ phiếu ở ngành không có sóng thì giống chèo ngược dòng: mệt mà khó đi xa.
+        </p>
+        <p className="mt-2 font-semibold text-[var(--sm-egg)]">Trang này cho biết gì?</p>
+        <ul className="mt-1 list-disc space-y-0.5 pl-5">
+          <li>
+            <b className="text-[var(--sm-egg)]">Nhịp thị trường:</b> “thời tiết” chung của cả khu chợ. Xanh là trời đẹp, khách đông; đỏ là trời xấu, nên cẩn thận.
+          </li>
+          <li>
+            <b className="text-[var(--sm-egg)]">Chu kỳ VN-Index:</b> chợ đang ở mùa nào: mùa đông khách (Tăng) hay mùa vắng khách (Giảm). Mùa đổi chậm hơn thời tiết từng ngày.
+          </li>
+          <li>
+            <b className="text-[var(--sm-egg)]">Bản đồ sóng ngành:</b> mỗi hàng là một dãy hàng trong chợ. Ô càng xanh đậm thì dãy đó càng đông khách; ô có viền vàng là dãy đang có sóng (hơn một
+            nửa số sạp bán chạy).
+          </li>
+        </ul>
+        <p className="mt-2 font-semibold text-[var(--sm-egg)]">Đọc nhanh trong 5 giây</p>
+        <ul className="mt-1 list-disc space-y-0.5 pl-5">
+          <li>Nhiều hàng xanh đậm cùng lúc: thị trường sôi động, nhiều ngành có sóng.</li>
+          <li>Gần như toàn màu nhạt: thị trường ảm đạm, chưa có ngành nào dẫn dắt.</li>
+          <li>Một hàng bỗng đậm dần lên: một con sóng mới có thể đang hình thành ở ngành đó.</li>
+        </ul>
+        <p className="mt-2 text-[0.85rem] text-[var(--sm-mut)]">Trang chỉ cho biết chuyện đã và đang xảy ra, không đoán trước tương lai, không phải lời khuyên mua bán cổ phiếu nào.</p>
+      </>
+    ),
+  },
+  {
     q: "Biểu đồ Nhịp thị trường và Chu kỳ VN-Index khác nhau thế nào?",
     a: () => (
       <>
