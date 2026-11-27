@@ -1,9 +1,7 @@
 # Tính sẵn tín hiệu, nhật ký lệnh, sóng ngành, quét MA, quỹ mở mỗi ngày giao dịch
-# sau 15:00 (giờ VN) và lưu lên Vercel Blob — web chỉ đọc kết quả, không tự
-# quét toàn bộ mã (đỡ tốn CPU Vercel). Xem server/src/jobs/precompute.ts.
-#
-# Cần secret BLOB_READ_WRITE_TOKEN (Settings → Secrets and variables → Actions),
-# lấy từ Vercel → Storage → Blob → .env.local.
+# sau 15:00 (giờ VN) và lưu vào nhánh `precomputed-data` của repo này — web chỉ
+# đọc kết quả qua raw.githubusercontent.com, không tự quét toàn bộ mã (đỡ tốn CPU).
+# Không cần secret: dùng token có sẵn của GitHub Actions. Xem server/src/jobs/precompute.ts.
 name: Tính sẵn dữ liệu hằng ngày
 
 on:
@@ -15,11 +13,14 @@ on:
   push:
     # chạy thử trên nhánh xem thử khi sửa job (ghi vào thư mục preview)
     branches: [sonmai]
-    paths: ["server/src/jobs/**", ".github/workflows/precompute.yml"]
+    paths: ["server/src/jobs/**", "server/src/signals/precomputed.ts", ".github/workflows/precompute.yml"]
 
 concurrency:
-  group: precompute-${{ github.ref }}
+  group: precompute
   cancel-in-progress: false
+
+permissions:
+  contents: write
 
 jobs:
   precompute:
@@ -37,7 +38,24 @@ jobs:
       - name: Tính sẵn
         working-directory: server
         env:
-          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+          PRECOMPUTE_OUT_DIR: ${{ runner.temp }}/pre
           VERCEL_ENV: ${{ github.ref == 'refs/heads/sonmai' && 'preview' || 'production' }}
           TZ: Asia/Ho_Chi_Minh
         run: npx tsx src/jobs/precompute.ts
+      - name: Lưu vào nhánh precomputed-data
+        env:
+          REPO_URL: https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git
+        run: |
+          set -e
+          cd "$RUNNER_TEMP"
+          # giữ thư mục của môi trường kia (prod/preview), chỉ thay phần vừa tính
+          if git clone -q --depth 1 --branch precomputed-data "$REPO_URL" old; then rm -rf old/.git; else mkdir old; fi
+          mkdir data && cp -r old/. data/ && cp -r pre/. data/
+          cd data
+          git init -q -b precomputed-data
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Tính sẵn $(date +%F_%H%M)"
+          # một commit duy nhất, ghi đè: nhánh không phình theo thời gian
+          git push -q -f "$REPO_URL" precomputed-data

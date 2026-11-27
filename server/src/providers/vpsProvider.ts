@@ -3,6 +3,7 @@ import { STOCK_UNIVERSE, findSeed } from "./universe.js";
 import { findIndexSeed } from "./indices.js";
 import { fetchWithTimeout } from "./http.js";
 import { kbsMarketProvider } from "./kbsMarketProvider.js";
+import { SHARE_INFLIGHT } from "../utils/runtime.js";
 
 // Bảng giá thời gian thực từ datafeed công khai của bảng giá VPS
 // (bgapidatafeed.vps.com.vn — cùng nguồn trình duyệt của banggia.vps.com.vn gọi).
@@ -25,10 +26,13 @@ const INDEX_BY_CODE = Object.fromEntries(Object.entries(INDEX_CODES).map(([k, v]
 const EXCHANGE_BY_INDEX: Record<string, string> = { VNINDEX: "HOSE", VN30: "HOSE", HNXINDEX: "HNX", UPCOMINDEX: "UPCOM" };
 const MARKET_TO_EXCHANGE: Record<string, string> = { STO: "HOSE", STX: "HNX", UPX: "UPCOM" };
 
-const cache = new Map<string, { at: number; data: Promise<unknown> }>();
+const cache = new Map<string, { at: number; data: Promise<unknown>; done?: boolean; value?: unknown }>();
 async function getJson<T>(path: string): Promise<T> {
   const hit = cache.get(path);
-  if (hit && Date.now() - hit.at < CACHE_MS) return hit.data as Promise<T>;
+  if (hit && Date.now() - hit.at < CACHE_MS) {
+    if (hit.done) return hit.value as T;
+    if (SHARE_INFLIGHT) return hit.data as Promise<T>;
+  }
   const data = (async () => {
     const res = await fetchWithTimeout(`${BASE}${path}`, {
       headers: { Accept: "application/json", Referer: "https://banggia.vps.com.vn/", Origin: "https://banggia.vps.com.vn" },
@@ -36,8 +40,9 @@ async function getJson<T>(path: string): Promise<T> {
     if (!res.ok) throw Object.assign(new Error(`VPS ${res.status} ${path.slice(0, 60)}`), { status: 502 });
     return (await res.json()) as T;
   })();
-  cache.set(path, { at: Date.now(), data });
-  data.catch(() => cache.delete(path));
+  const entry: { at: number; data: Promise<unknown>; done?: boolean; value?: unknown } = { at: Date.now(), data };
+  cache.set(path, entry);
+  data.then((v) => { entry.done = true; entry.value = v; }, () => { if (cache.get(path) === entry) cache.delete(path); });
   if (cache.size > 500) for (const [k, v] of cache) if (Date.now() - v.at > 60_000) cache.delete(k);
   return data;
 }

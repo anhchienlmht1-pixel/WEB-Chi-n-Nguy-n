@@ -19,6 +19,7 @@
 // Only URLs matching LOGO_URL_RE are ever fetched, so a changed page layout (or
 // a hostile og:image) can't turn this into a fetch-anything proxy.
 import NodeCache from "node-cache";
+import { SHARE_INFLIGHT } from "../utils/runtime.js";
 
 const PAGE_BASE = "https://cafef.vn/du-lieu/hose";
 const LOGO_URL_RE = /^https:\/\/cafefnew\.mediacdn\.vn\/LOGO\/[A-Za-z0-9._-]+\.(png|jpe?g|gif|webp)$/i;
@@ -126,7 +127,7 @@ export function getCafefLogo(symbol: string): Promise<CafefLogo | null> {
   const hit = imageCache.get<CafefLogo>(key);
   if (hit) return Promise.resolve(hit);
 
-  const running = inflight.get(key);
+  const running = SHARE_INFLIGHT ? inflight.get(key) : undefined;
   if (running) return running;
 
   const job = (async () => {

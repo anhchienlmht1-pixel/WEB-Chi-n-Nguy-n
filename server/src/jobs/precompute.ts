@@ -1,8 +1,9 @@
 // Job tính sẵn chạy trên GitHub Actions (.github/workflows/precompute.yml) mỗi
-// ngày giao dịch sau 15:00, ghi kết quả lên Vercel Blob (signals/precomputed.ts).
+// ngày giao dịch sau 15:00, ghi kết quả ra PRECOMPUTE_OUT_DIR (workflow đẩy lên nhánh
+// precomputed-data) hoặc Vercel Blob (signals/precomputed.ts).
 // Máy chủ web chỉ đọc kết quả, không tự quét toàn bộ mã nữa.
 //
-// Chạy tay: cd server && VERCEL_ENV=production BLOB_READ_WRITE_TOKEN=... npx tsx src/jobs/precompute.ts
+// Chạy tay: cd server && VERCEL_ENV=production PRECOMPUTE_OUT_DIR=/tmp/pre npx tsx src/jobs/precompute.ts
 import { scanBuySignalsWithSession } from "../signals/trendScanner.js";
 import { getTradeJournal } from "../signals/tradeJournal.js";
 import { getSectorWaves, isComplete } from "../signals/sectorWaves.js";
@@ -11,8 +12,8 @@ import { buildFundInsight } from "../signals/fundInsight.js";
 import { lastClosedSessionDate } from "../signals/sessionClose.js";
 import { writePrecomputed as writeBlob, type PrecomputeMeta, type PrecomputedName } from "../signals/precomputed.js";
 
-// Chưa có BLOB_READ_WRITE_TOKEN: chạy thử, chỉ in kết quả (kiểm tra nguồn dữ liệu).
-const DRY = !process.env.BLOB_READ_WRITE_TOKEN;
+// Không có nơi ghi: chạy thử, chỉ in kết quả (kiểm tra nguồn dữ liệu).
+const DRY = !process.env.PRECOMPUTE_OUT_DIR && !process.env.BLOB_READ_WRITE_TOKEN;
 const writePrecomputed = (name: PrecomputedName, data: unknown) =>
   DRY ? Promise.resolve(console.log(`  (chạy thử) ${name}: ${JSON.stringify(data).length.toLocaleString()} ký tự`)) : writeBlob(name, data);
 

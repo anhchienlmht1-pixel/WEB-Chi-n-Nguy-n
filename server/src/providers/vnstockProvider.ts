@@ -10,6 +10,7 @@ import {
 import { STOCK_UNIVERSE, findSeed } from "./universe.js";
 import { INDEX_UNIVERSE, findIndexSeed } from "./indices.js";
 import { fetchWithTimeout } from "./http.js";
+import { SHARE_INFLIGHT } from "../utils/runtime.js";
 
 // Same data source as the vnstock library (vnstocks.com): VCI / Vietcap
 // Securities' trading API. Endpoints, payloads and response shapes below were
@@ -151,7 +152,7 @@ let groupInFlight: Promise<Map<string, string>> | null = null;
 
 async function fetchGroupSymbols(): Promise<Map<string, string>> {
   if (groupCache && Date.now() - groupCache.at < GROUP_TTL_MS) return groupCache.bySymbolExchange;
-  if (groupInFlight) return groupInFlight;
+  if (SHARE_INFLIGHT && groupInFlight) return groupInFlight;
   groupInFlight = (async () => {
     try {
       const bySymbolExchange = new Map<string, string>();
@@ -183,7 +184,7 @@ let boardInFlight: Promise<any[]> | null = null;
 
 async function fetchFullBoard(): Promise<any[]> {
   if (boardCache && Date.now() - boardCache.at < BOARD_TTL_MS) return boardCache.items;
-  if (boardInFlight) return boardInFlight;
+  if (SHARE_INFLIGHT && boardInFlight) return boardInFlight;
   boardInFlight = (async () => {
     try {
       const bySymbolExchange = await fetchGroupSymbols();

@@ -24,6 +24,7 @@ import { getSessionStats } from "../signals/sessionStats.js";
 import { loadPrecomputed } from "../signals/precomputed.js";
 import { buildFundInsight } from "../signals/fundInsight.js";
 import inspectFmarketApi from "../providers/fmarketInspect.js";
+import { SHARE_INFLIGHT } from "../utils/runtime.js";
 
 const router = Router();
 // checkperiod 0: Cloudflare Workers cấm hẹn giờ ở phạm vi toàn cục
@@ -58,7 +59,7 @@ function cached<T>(
 ): Promise<T> {
   const hit = cache.get<T>(key);
   if (hit !== undefined) return Promise.resolve(hit);
-  const pending = inflight.get(key);
+  const pending = SHARE_INFLIGHT ? inflight.get(key) : undefined;
   if (pending) return pending as Promise<T>;
 
   const run = Promise.resolve()
@@ -410,7 +411,7 @@ async function loadTrendSignals(): Promise<TrendScanResult> {
     cache.set(key, pre, pre.sessionDate >= closed ? 6 * 60 * 60 : 10 * 60);
     return pre;
   }
-  if (trendInFlight) return trendInFlight;
+  if (SHARE_INFLIGHT && trendInFlight) return trendInFlight;
 
   trendInFlight = (async () => {
     try {
@@ -495,6 +496,7 @@ router.get(
       res.json(hit);
       return;
     }
+    if (!SHARE_INFLIGHT) sectorWavesInFlight = null;
     sectorWavesInFlight ??= getSectorWaves(closed).finally(() => (sectorWavesInFlight = null));
     const data = await sectorWavesInFlight;
     const done = isComplete(data) && data.sessionDate >= closed;
