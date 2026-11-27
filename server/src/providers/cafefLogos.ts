@@ -44,8 +44,8 @@ export interface CafefLogo {
 
 // Value null = looked it up, nothing there. useClones: false so cached Buffers
 // aren't deep-copied on every hit.
-const urlCache = new NodeCache({ checkperiod: 600, maxKeys: 2000, useClones: false });
-const imageCache = new NodeCache({ stdTTL: DAY_S, checkperiod: 600, maxKeys: 600, useClones: false });
+const urlCache = new NodeCache({ checkperiod: 0, maxKeys: 2000, useClones: false });
+const imageCache = new NodeCache({ stdTTL: DAY_S, checkperiod: 0, maxKeys: 600, useClones: false });
 const inflight = new Map<string, Promise<CafefLogo | null>>();
 
 export function isValidLogoSymbol(symbol: string): boolean {

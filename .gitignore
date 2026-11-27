@@ -5,3 +5,6 @@ dist/
 npm-debug.log*
 .DS_Store
 *.tsbuildinfo
+
+.wrangler/
+.dev.vars
