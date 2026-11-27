@@ -2,7 +2,7 @@ import { STOCK_UNIVERSE } from "../providers/universe.js";
 import { getVpsExchangeSymbols, getVpsIndexRaw, getVpsRawStocks } from "../providers/vpsProvider.js";
 import { getKbsBoardRaw, kbsListedSharesFrom, kbsSessionRow } from "../providers/kbsMarketProvider.js";
 import { HOSE_SNAPSHOT } from "../providers/hoseList.js";
-import { getHistoryWithFallback } from "../providers/fallback.js";
+import { getHistoryWithFallback, getQuoteWithFallback } from "../providers/fallback.js";
 
 // Thống kê phiên sàn HOSE cho trang Toàn cảnh thị trường:
 //  - Tác động lên VN-Index của từng mã (ước tính theo vốn hóa niêm yết):
@@ -63,7 +63,9 @@ function listedShares(board: Map<string, any>): Map<string, number> {
 }
 
 export async function getSessionStats(): Promise<SessionStats> {
-  const [{ syms, full, error: listError }, idx] = await Promise.all([hoseSymbols(), getVpsIndexRaw("VNINDEX").catch(() => null)]);
+  const [{ syms, full, error: listError }, vpsIdx] = await Promise.all([hoseSymbols(), getVpsIndexRaw("VNINDEX").catch(() => null)]);
+  // VPS chậm thì lấy VN-Index từ nguồn khác (KBS…): đủ để tính tác động, thiếu độ rộng và giá trị
+  const idx = vpsIdx ?? (await getQuoteWithFallback("VNINDEX").then((r) => r.quote).catch(() => null));
   const [vpsRows, board] = await Promise.all([getVpsRawStocks(syms), getKbsBoardRaw(syms)]);
   const shares = listedShares(board);
   // mã VPS không trả giá thì lấy giá từ bảng KBS (trần/sàn ước theo biên ±7% HOSE, trừ hao bước giá)

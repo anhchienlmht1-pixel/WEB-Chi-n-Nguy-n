@@ -28,6 +28,8 @@ function ImpactChart({ st }: { st: SessionStats | null }) {
   const bars = [...neg, ...pos];
   const max = Math.max(0.01, ...bars.map((b) => Math.abs(b.points)));
   const H = 92; // nửa chiều cao vùng cột (px)
+  // đã tải xong mà không có số liệu (nguồn lỗi, chưa vào phiên) thì ẩn cả khung
+  if (st && bars.length === 0) return null;
   return (
     <section className={`${CARD} p-5`} aria-label="Tác động lên VN-Index">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -45,7 +47,7 @@ function ImpactChart({ st }: { st: SessionStats | null }) {
         )}
       </div>
       {bars.length === 0 ? (
-        <p className="py-12 text-center text-[0.9rem] text-[var(--sm-mut)]">{st ? "Chưa có biến động trong phiên." : "Đang tính…"}</p>
+        <p className="py-12 text-center text-[0.9rem] text-[var(--sm-mut)]">Đang tính…</p>
       ) : (
         <div className="mt-3 overflow-x-auto">
           <div className="flex min-w-[720px] items-stretch gap-1.5">
