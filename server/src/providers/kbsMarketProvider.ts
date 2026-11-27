@@ -84,12 +84,15 @@ async function fetchPriceBoard(symbols: string[]): Promise<any[]> {
   return list;
 }
 
-/** Số cổ phiếu niêm yết (LS) theo mã, từ bảng giá KBS; theo lô 100 mã. */
+/** Số cổ phiếu niêm yết (LS) theo mã, từ bảng giá KBS; theo lô 50 mã, lỗi thì thử lại. */
 export async function getKbsListedShares(symbols: string[]): Promise<Map<string, number>> {
   const out = new Map<string, number>();
   const batches: string[][] = [];
-  for (let i = 0; i < symbols.length; i += 100) batches.push(symbols.slice(i, i + 100));
-  const res = await Promise.all(batches.map((b) => fetchPriceBoard(b).catch(() => [] as any[])));
+  for (let i = 0; i < symbols.length; i += 50) batches.push(symbols.slice(i, i + 50));
+  // lô lỗi thì thử lại một lần (trên Cloudflare đôi khi một lô bị rớt)
+  const res = await Promise.all(
+    batches.map((b) => fetchPriceBoard(b).catch(() => fetchPriceBoard(b)).catch(() => [] as any[])),
+  );
   for (const list of res)
     for (const item of list) {
       const sym = String(item?.SB ?? "").toUpperCase();

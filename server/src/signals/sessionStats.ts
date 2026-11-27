@@ -13,7 +13,7 @@ export interface SessionStats {
   asOf: string;
   exchange: "HOSE";
   /** số mã dùng để tính / số mã của sàn */
-  coverage: { used: number; listed: number; fullList: boolean };
+  coverage: { used: number; listed: number; fullList: boolean; rows?: number; shares?: number; listError?: string };
   index: { price: number; prev: number; change: number } | null;
   impact: { symbol: string; points: number; changePercent: number }[];
   impactSum: number | null;
@@ -27,19 +27,26 @@ export interface SessionStats {
 }
 
 let sharesCache: { at: number; map: Map<string, number> } | null = null;
-let listCache: { at: number; syms: string[]; full: boolean } | null = null;
+let listCache: { at: number; syms: string[]; full: boolean; error?: string } | null = null;
 
-async function hoseSymbols(): Promise<{ syms: string[]; full: boolean }> {
-  if (listCache && Date.now() - listCache.at < 6 * 3600_000) return listCache;
+async function hoseSymbols(): Promise<{ syms: string[]; full: boolean; error?: string }> {
+  // danh sách đầy đủ giữ 6 giờ; danh sách dự phòng chỉ giữ 2 phút để sớm thử lại VPS
+  if (listCache && Date.now() - listCache.at < (listCache.full ? 6 * 3600_000 : 120_000)) return listCache;
   let syms: string[] = [];
-  try {
-    syms = await getVpsExchangeSymbols("hose");
-  } catch {
-    syms = [];
+  let error: string | undefined;
+  for (let attempt = 0; attempt < 2 && syms.length <= 250; attempt++) {
+    try {
+      syms = await getVpsExchangeSymbols("hose");
+      if (syms.length <= 250) error = `VPS trả ${syms.length} mã`;
+    } catch (e) {
+      error = String((e as Error)?.message ?? e).slice(0, 160);
+      syms = [];
+    }
   }
   const full = syms.length > 250;
-  if (!full) syms = STOCK_UNIVERSE.filter((s) => s.exchange === "HOSE").map((s) => s.symbol);
-  listCache = { at: Date.now(), syms, full };
+  if (full) error = undefined;
+  else syms = STOCK_UNIVERSE.filter((s) => s.exchange === "HOSE").map((s) => s.symbol);
+  listCache = { at: Date.now(), syms, full, error };
   return listCache;
 }
 
@@ -55,7 +62,7 @@ async function listedShares(syms: string[]): Promise<Map<string, number>> {
 }
 
 export async function getSessionStats(): Promise<SessionStats> {
-  const [{ syms, full }, idx] = await Promise.all([hoseSymbols(), getVpsIndexRaw("VNINDEX").catch(() => null)]);
+  const [{ syms, full, error: listError }, idx] = await Promise.all([hoseSymbols(), getVpsIndexRaw("VNINDEX").catch(() => null)]);
   const [rows, shares] = await Promise.all([getVpsRawStocks(syms), listedShares(syms)]);
 
   const breadth = { up: 0, down: 0, flat: 0, ceiling: 0, floor: 0 };
@@ -118,7 +125,7 @@ export async function getSessionStats(): Promise<SessionStats> {
   return {
     asOf: new Date().toISOString(),
     exchange: "HOSE",
-    coverage: { used, listed: syms.length, fullList: full },
+    coverage: { used, listed: syms.length, fullList: full, rows: rows.length, shares: shares.size, ...(listError ? { listError } : {}) },
     index: idx ? { price: idx.price, prev: idx.prevClose, change: idx.change } : null,
     impact,
     impactSum,

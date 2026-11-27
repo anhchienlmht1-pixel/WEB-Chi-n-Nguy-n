@@ -161,7 +161,8 @@ export interface VpsRawStock {
 export async function getVpsRawStocks(symbols: string[]): Promise<VpsRawStock[]> {
   const batches: string[][] = [];
   for (let i = 0; i < symbols.length; i += BATCH) batches.push(symbols.slice(i, i + BATCH));
-  const res = await Promise.all(batches.map((b) => getJson<VpsStock[]>(`/getliststockdata/${b.join(",")}`).catch(() => [] as VpsStock[])));
+  const one = (b: string[]) => getJson<VpsStock[]>(`/getliststockdata/${b.join(",")}`);
+  const res = await Promise.all(batches.map((b) => one(b).catch(() => one(b)).catch(() => [] as VpsStock[])));
   const out: VpsRawStock[] = [];
   for (const arr of res) for (const x of Array.isArray(arr) ? arr : []) {
     const ref = n(x.r);
