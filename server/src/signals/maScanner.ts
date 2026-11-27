@@ -10,7 +10,7 @@ import type { HistoryPoint } from "../providers/types.js";
 function dayKey(iso: string): string {
   return iso.slice(0, 10);
 }
-function dedupeSameDay(points: HistoryPoint[]): HistoryPoint[] {
+export function dedupeSameDay(points: HistoryPoint[]): HistoryPoint[] {
   const out: HistoryPoint[] = [];
   for (const p of points) {
     const prev = out[out.length - 1];
@@ -26,7 +26,7 @@ function dedupeSameDay(points: HistoryPoint[]): HistoryPoint[] {
 export const MA_PERIODS = [10, 20, 50, 100, 200] as const;
 export type MaPeriod = (typeof MA_PERIODS)[number];
 
-function latestSma(closes: number[], period: number): number | null {
+export function latestSma(closes: number[], period: number): number | null {
   if (closes.length < period) return null;
   const values = sma({ period, values: closes });
   const last = values[values.length - 1];
@@ -43,7 +43,7 @@ export interface MaScanHit {
   ma: Partial<Record<MaPeriod, number | null>>;
 }
 
-async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+export async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
   const results: R[] = new Array(items.length);
   let next = 0;
   async function worker() {

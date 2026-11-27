@@ -14,7 +14,7 @@ const PREFIX = `precomputed/${ENV}`;
 const FRESH_MS = 30 * 3600_000;
 const MEM_MS = 5 * 60_000;
 
-export type PrecomputedName = "meta" | "trend-signals" | "trade-journal" | "sector-waves" | "ma-scan" | "fund-insight";
+export type PrecomputedName = "meta" | "trend-signals" | "trade-journal" | "sector-waves" | "ma-scan" | "fund-insight" | "hose-breadth";
 export interface PrecomputeMeta {
   generatedAt: string;
   sessionDate: string;

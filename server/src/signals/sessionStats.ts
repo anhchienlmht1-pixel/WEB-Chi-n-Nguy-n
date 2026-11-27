@@ -2,6 +2,8 @@ import { STOCK_UNIVERSE } from "../providers/universe.js";
 import { getVpsExchangeSymbols, getVpsIndexRaw, getVpsRawStocks } from "../providers/vpsProvider.js";
 import { getKbsBoardRaw, kbsListedSharesFrom, kbsSessionRow } from "../providers/kbsMarketProvider.js";
 import { HOSE_SNAPSHOT } from "../providers/hoseList.js";
+import { readPrecomputed } from "./precomputed.js";
+import type { HoseBreadth } from "./hoseBreadth.js";
 import { getHistoryWithFallback, getQuoteWithFallback } from "../providers/fallback.js";
 
 // Thống kê phiên sàn HOSE cho trang Toàn cảnh thị trường:
@@ -23,7 +25,7 @@ export interface SessionStats {
   /** giá trị khớp lệnh (Σ khối lượng khớp × giá bình quân); thỏa thuận = value − matched */
   matched: number | null;
   /** khối lượng khớp phiên này so với TB 20 phiên trước (lấy từ lịch sử VN-Index), null nếu chưa có */
-  vsAvg20: { today: number; avg20: number; pct: number } | null;
+  vsAvg20: { today: number; avg20: number; pct: number; basis: "value" | "volume" } | null;
   foreign: { buy: number; sell: number; net: number };
 }
 
@@ -121,20 +123,29 @@ export async function getSessionStats(): Promise<SessionStats> {
     }
   }
 
-  // thanh khoản so với TB20: khối lượng phiên gần nhất trong lịch sử VN-Index
+  // thanh khoản so với TB20: ưu tiên theo GIÁ TRỊ (20 phiên trước hôm nay, từ job tính sẵn toàn sàn);
+  // chưa có bản tính sẵn thì so theo khối lượng trong lịch sử VN-Index
   let vsAvg20: SessionStats["vsAvg20"] = null;
-  try {
-    const h = await getHistoryWithFallback("VNINDEX", "3M");
-    const pts = h.points;
-    const today = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
-    const last = pts[pts.length - 1];
-    if (last && last.time.slice(0, 10) === today && pts.length > 21) {
-      const prev = pts.slice(-21, -1);
-      const avg = prev.reduce((a, p) => a + p.volume, 0) / prev.length;
-      if (avg > 0) vsAvg20 = { today: last.volume, avg20: avg, pct: Math.round((last.volume / avg - 1) * 1000) / 10 };
+  const today = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
+  const hb = await readPrecomputed<HoseBreadth>("hose-breadth").catch(() => null);
+  const prevDays = (hb?.days ?? []).filter((d) => d.date < today).slice(-20);
+  if (matched > 0 && prevDays.length >= 15) {
+    const avg = prevDays.reduce((a, d) => a + d.value, 0) / prevDays.length;
+    if (avg > 0) vsAvg20 = { today: matched, avg20: avg, pct: Math.round((matched / avg - 1) * 1000) / 10, basis: "value" };
+  }
+  if (!vsAvg20) {
+    try {
+      const h = await getHistoryWithFallback("VNINDEX", "3M");
+      const pts = h.points;
+      const last = pts[pts.length - 1];
+      if (last && last.time.slice(0, 10) === today && pts.length > 21) {
+        const prev = pts.slice(-21, -1);
+        const avg = prev.reduce((a, p) => a + p.volume, 0) / prev.length;
+        if (avg > 0) vsAvg20 = { today: last.volume, avg20: avg, pct: Math.round((last.volume / avg - 1) * 1000) / 10, basis: "volume" };
+      }
+    } catch {
+      vsAvg20 = null;
     }
-  } catch {
-    vsAvg20 = null;
   }
 
   return {

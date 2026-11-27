@@ -350,12 +350,26 @@ export interface SessionStats {
   breadth: { up: number; down: number; flat: number; ceiling: number; floor: number };
   value: number | null;
   matched: number | null;
-  vsAvg20: { today: number; avg20: number; pct: number } | null;
+  vsAvg20: { today: number; avg20: number; pct: number; basis?: "value" | "volume" } | null;
   foreign: { buy: number; sell: number; net: number };
 }
 export async function fetchSessionStats(): Promise<SessionStats> {
   const { data } = await api.get("/market/session-stats", { timeout: 30_000 });
   return data;
+}
+
+export interface HoseBreadth {
+  sessionDate: string;
+  symbols: number;
+  ma: Record<"20" | "50" | "200", { above: number; total: number }>;
+  high52: number;
+  low52: number;
+  days: { date: string; value: number }[];
+}
+
+export async function fetchHoseBreadth(): Promise<HoseBreadth | null> {
+  const { data } = await api.get("/market/hose-breadth", { timeout: 20_000 });
+  return data ?? null;
 }
 
 export interface MaScanHit {

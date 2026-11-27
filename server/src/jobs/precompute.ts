@@ -9,6 +9,7 @@ import { getTradeJournal } from "../signals/tradeJournal.js";
 import { getSectorWaves, isComplete } from "../signals/sectorWaves.js";
 import { scanMovingAverages } from "../signals/maScanner.js";
 import { buildFundInsight } from "../signals/fundInsight.js";
+import { buildHoseBreadth } from "../signals/hoseBreadth.js";
 import { lastClosedSessionDate } from "../signals/sessionClose.js";
 import { writePrecomputed as writeBlob, type PrecomputeMeta, type PrecomputedName } from "../signals/precomputed.js";
 
@@ -51,6 +52,7 @@ await run("sector-waves", async () => {
 });
 await run("ma-scan", () => scanMovingAverages());
 await run("fund-insight", () => buildFundInsight());
+await run("hose-breadth", () => buildHoseBreadth());
 
 const meta: PrecomputeMeta = { generatedAt: new Date().toISOString(), sessionDate: closed, durations, errors };
 await writePrecomputed("meta", meta);

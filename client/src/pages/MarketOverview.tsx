@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { fetchMaScan, fetchMarketOverview, fetchQuote, fetchSessionStats, type SessionStats } from "../api/client";
+import { fetchHoseBreadth, fetchMaScan, fetchMarketOverview, fetchQuote, fetchSessionStats, type SessionStats } from "../api/client";
 import { usePolling } from "../hooks/usePolling";
 import { useLivePoll } from "../hooks/useMarketClock";
 import KLinePanel from "../components/KLinePanel";
@@ -110,11 +110,14 @@ function Row({ title, sub, right, children }: { title: string; sub?: string; rig
 
 // Thống kê phiên HOSE: độ rộng (trần/sàn), thanh khoản khớp lệnh/thỏa thuận, khối ngoại, mã trên MA.
 function SessionPanel({ st }: { st: SessionStats | null }) {
+  const hb = usePolling(fetchHoseBreadth, [], 0);
   const ma = usePolling(fetchMaScan, [], 0);
   const b = st?.breadth;
   const t = b ? b.up + b.down + b.flat : 0;
   const deal = st?.value != null && st.matched != null ? Math.max(0, st.value - st.matched) : null;
   const maPct = (p: 20 | 50 | 200) => {
+    const full = hb.data?.ma[String(p) as "20" | "50" | "200"];
+    if (full && full.total > 0) return Math.round((full.above / full.total) * 100);
     const xs = (ma.data ?? []).filter((h) => h.ma[p] != null && h.price > 0);
     return xs.length ? Math.round((xs.filter((h) => h.price > (h.ma[p] as number)).length / xs.length) * 100) : null;
   };
@@ -151,7 +154,13 @@ function SessionPanel({ st }: { st: SessionStats | null }) {
 
         <Row
           title="Thanh khoản khớp lệnh"
-          sub={st?.vsAvg20 ? `Khối lượng cả phiên ${sign(st.vsAvg20.pct)}${vn(Math.abs(st.vsAvg20.pct), 1)}% so với TB 20 phiên` : undefined}
+          sub={
+            st?.vsAvg20
+              ? st.vsAvg20.basis === "value"
+                ? `Giá trị khớp ${sign(st.vsAvg20.pct)}${vn(Math.abs(st.vsAvg20.pct), 1)}% so với TB 20 phiên (${ty(st.vsAvg20.avg20)})`
+                : `Khối lượng cả phiên ${sign(st.vsAvg20.pct)}${vn(Math.abs(st.vsAvg20.pct), 1)}% so với TB 20 phiên`
+              : undefined
+          }
           right={
             <span className="text-right tabular-nums">
               <b className="block text-[1.05rem] text-[var(--sm-egg)]">{st?.matched != null ? ty(st.matched) : "—"}</b>
@@ -172,7 +181,7 @@ function SessionPanel({ st }: { st: SessionStats | null }) {
 
         <Row
           title="Khối ngoại ròng"
-          sub={st ? `Mua ${ty(st.foreign.buy)} · bán ${ty(st.foreign.sell)} (khớp lệnh)` : undefined}
+          sub={st ? `Mua ${ty(st.foreign.buy)} · bán ${ty(st.foreign.sell)} · ước tính theo giá khớp gần nhất` : undefined}
           right={
             <b className={`text-[1.05rem] tabular-nums ${tone(st?.foreign.net ?? 0)}`}>
               {st ? `${sign(st.foreign.net)}${ty(st.foreign.net)}` : "—"}
@@ -180,7 +189,15 @@ function SessionPanel({ st }: { st: SessionStats | null }) {
           }
         />
 
-        <Row title="Mã trên đường trung bình" sub={ma.data ? `Trong ${ma.data.length} mã theo dõi, giá đóng cửa phiên gần nhất` : ma.loading ? "Đang tính…" : "Chưa có số liệu"}>
+        <Row title="Mã trên đường trung bình" sub={
+            hb.data
+              ? `Toàn sàn HOSE (${hb.data.symbols} mã), đóng cửa ${hb.data.sessionDate.split("-").reverse().slice(0, 2).join("/")} · 52 tuần: ${hb.data.high52} vượt đỉnh · ${hb.data.low52} thủng đáy`
+              : ma.data
+                ? `Trong ${ma.data.length} mã theo dõi, giá đóng cửa phiên gần nhất`
+                : ma.loading || hb.loading
+                  ? "Đang tính…"
+                  : "Chưa có số liệu"
+          }>
           <div className="mt-2 grid grid-cols-3 gap-3">
             {([20, 50, 200] as const).map((p) => {
               const v = maPct(p);

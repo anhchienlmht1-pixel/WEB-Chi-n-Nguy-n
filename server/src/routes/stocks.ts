@@ -21,7 +21,8 @@ import { getCafefLogo, debugCafefLogo, isValidLogoSymbol } from "../providers/ca
 import { COMPANY_DOMAINS } from "../data/companyDomains.js";
 import { SECTOR_MAP } from "../data/sectorMap.js";
 import { getSessionStats } from "../signals/sessionStats.js";
-import { loadPrecomputed } from "../signals/precomputed.js";
+import { loadPrecomputed, readPrecomputed } from "../signals/precomputed.js";
+import type { HoseBreadth } from "../signals/hoseBreadth.js";
 import { buildFundInsight } from "../signals/fundInsight.js";
 import inspectFmarketApi from "../providers/fmarketInspect.js";
 import { SHARE_INFLIGHT } from "../utils/runtime.js";
@@ -544,6 +545,16 @@ router.get(
     );
     edgeCache(res, 3600, 86400);
     res.json({ items: data });
+  })
+);
+
+router.get(
+  "/market/hose-breadth",
+  asyncHandler(async (_req, res) => {
+    // MA20/50/200, đỉnh/đáy 52 tuần toàn sàn HOSE — chỉ đọc bản tính sẵn (job hằng ngày)
+    const data = await cached("hose-breadth", 30 * 60, async () => (await readPrecomputed<HoseBreadth>("hose-breadth")) ?? null);
+    edgeCache(res, 1800, 86400);
+    res.json(data);
   })
 );
 
