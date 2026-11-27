@@ -17,7 +17,7 @@ import { kbsMarketProvider } from "./kbsMarketProvider.js";
 const BASE = "https://bgapidatafeed.vps.com.vn";
 const CACHE_MS = Number(process.env.VPS_CACHE_MS) || 3000;
 const VOL_UNIT = 10;
-const BATCH = 100;
+const BATCH = 50; // lô nhỏ: trên Cloudflare lô 100 mã đôi khi bị rớt cả lô
 
 // Mã chỉ số trên datafeed VPS
 const INDEX_CODES: Record<string, string> = { VNINDEX: "10", VN30: "11", HNXINDEX: "02", UPCOMINDEX: "03" };
