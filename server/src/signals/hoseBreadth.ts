@@ -50,8 +50,9 @@ export async function buildHoseBreadth(): Promise<HoseBreadth> {
       }
       const prev = pts.slice(-251, -1);
       if (prev.length >= 200) {
-        if (last.high > Math.max(...prev.map((p) => p.high))) high52++;
-        if (last.low < Math.min(...prev.map((p) => p.low))) low52++;
+        // theo giá đóng cửa: đóng cửa cao/thấp nhất 52 tuần
+        if (last.close > Math.max(...prev.map((p) => p.close))) high52++;
+        if (last.close < Math.min(...prev.map((p) => p.close))) low52++;
       }
       // giá lịch sử theo nghìn đồng, khối lượng theo cổ phiếu
       for (const p of pts.slice(-30)) {
