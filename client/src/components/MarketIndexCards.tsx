@@ -13,7 +13,7 @@ import UpdatedAgo from "./UpdatedAgo";
 const UP = "var(--ab-up)";
 const DOWN = "var(--ab-down)";
 const FLAT = "#e0b24a";
-const LIVE_MS = 30 * 1000;
+const LIVE_MS = 5 * 1000;
 
 // VN100 only comes from SSI FastConnect; without it the card falls back to HNX-Index.
 const INDICES: { symbol: string; label: string; fallback?: { symbol: string; label: string } }[] = [
@@ -31,7 +31,7 @@ function vol(n: number): string {
 }
 
 function Intraday({ symbol, refPrice }: { symbol: string; refPrice: number }) {
-  const { data } = usePolling(() => fetchHistory(symbol, "1D"), [symbol], useLivePoll(60 * 1000));
+  const { data } = usePolling(() => fetchHistory(symbol, "1D"), [symbol], useLivePoll(20 * 1000));
   const all = data?.points ?? [];
   // The 1D range returns the last few sessions of 15-minute bars: keep the latest day.
   const lastDay = all.length ? all[all.length - 1].time.slice(0, 10) : "";

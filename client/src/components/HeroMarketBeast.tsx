@@ -13,7 +13,7 @@ import HeroBearCharge from "./HeroBearCharge";
 // doesn't flicker on a tie. Nothing is drawn until VN-Index is known — if it
 // can't be read, no animal is shown rather than a guess.
 
-const POLL_MS = 30 * 1000;
+const POLL_MS = 5 * 1000;
 type Kind = "bull" | "bear";
 
 export default function HeroMarketBeast() {

@@ -18,7 +18,7 @@ export default function StockHeaderInfo() {
 function StockChip({ symbol }: { symbol: string }) {
   // Fetch market data to get current stock info. The server refreshes the
   // board every 30s, so polling faster than this only repeats the same data.
-  const { data } = usePolling(fetchMarketOverview, [], useLivePoll(30_000));
+  const { data } = usePolling(fetchMarketOverview, [], useLivePoll(5_000));
 
   // Find the current stock in market overview
   const stockInfo = useMemo(() => {

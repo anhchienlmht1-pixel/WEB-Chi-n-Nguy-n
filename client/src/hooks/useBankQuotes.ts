@@ -18,7 +18,7 @@ export function useBankQuotes() {
       return out;
     },
     [],
-    useLivePoll(20 * 1000),
+    useLivePoll(5 * 1000),
   );
   return { quotes: data, updatedAt };
 }

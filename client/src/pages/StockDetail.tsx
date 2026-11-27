@@ -20,7 +20,7 @@ import StockSummary from "../components/StockSummary";
 
 export default function StockDetail() {
   const { symbol = "" } = useParams();
-  const quoteState = usePolling(() => fetchQuote(symbol), [symbol], useLivePoll(15000));
+  const quoteState = usePolling(() => fetchQuote(symbol), [symbol], useLivePoll(5000));
   const quote = quoteState.data;
   const isIndexOrFutures = quote?.exchange === "Chỉ số" || quote?.exchange === "Phái sinh";
 
