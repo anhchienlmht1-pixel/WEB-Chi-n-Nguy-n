@@ -84,22 +84,48 @@ async function fetchPriceBoard(symbols: string[]): Promise<any[]> {
   return list;
 }
 
-/** Số cổ phiếu niêm yết (LS) theo mã, từ bảng giá KBS; theo lô 50 mã, lỗi thì thử lại. */
-export async function getKbsListedShares(symbols: string[]): Promise<Map<string, number>> {
-  const out = new Map<string, number>();
+/** Dòng bảng giá KBS thô theo mã (lô 50 mã, lô lỗi thử lại một lần). */
+export async function getKbsBoardRaw(symbols: string[]): Promise<Map<string, any>> {
+  const out = new Map<string, any>();
   const batches: string[][] = [];
   for (let i = 0; i < symbols.length; i += 50) batches.push(symbols.slice(i, i + 50));
-  // lô lỗi thì thử lại một lần (trên Cloudflare đôi khi một lô bị rớt)
   const res = await Promise.all(
     batches.map((b) => fetchPriceBoard(b).catch(() => fetchPriceBoard(b)).catch(() => [] as any[])),
   );
   for (const list of res)
     for (const item of list) {
       const sym = String(item?.SB ?? "").toUpperCase();
-      const ls = num(item?.LS);
-      if (sym && ls && ls > 0) out.set(sym, ls);
+      if (sym) out.set(sym, item);
     }
   return out;
+}
+
+/** Số cổ phiếu niêm yết (LS) theo mã, từ bảng giá KBS. */
+export async function getKbsListedShares(symbols: string[]): Promise<Map<string, number>> {
+  return kbsListedSharesFrom(await getKbsBoardRaw(symbols));
+}
+
+export function kbsListedSharesFrom(board: Map<string, any>): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const [sym, item] of board) {
+    const ls = num(item?.LS);
+    if (ls && ls > 0) out.set(sym, ls);
+  }
+  return out;
+}
+
+/** Giá phiên từ dòng KBS, quy về nghìn đồng như VPS (dự phòng khi VPS không trả). */
+export function kbsSessionRow(item: any): { ref: number; last: number; volume: number; foreignBuy: number; foreignSell: number } | null {
+  const ref = num(item?.RE);
+  if (!ref || ref <= 0) return null;
+  const cp = num(item?.CP);
+  return {
+    ref: ref / 1000,
+    last: (cp && cp > 0 ? cp : ref) / 1000,
+    volume: num(item?.TT) ?? 0,
+    foreignBuy: num(item?.FB) ?? 0,
+    foreignSell: num(item?.FS) ?? 0,
+  };
 }
 
 function foreignOwnershipPercent(item: any): number | undefined {

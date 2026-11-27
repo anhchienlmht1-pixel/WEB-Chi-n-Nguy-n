@@ -1,6 +1,7 @@
 import { STOCK_UNIVERSE } from "../providers/universe.js";
 import { getVpsExchangeSymbols, getVpsIndexRaw, getVpsRawStocks } from "../providers/vpsProvider.js";
-import { getKbsListedShares } from "../providers/kbsMarketProvider.js";
+import { getKbsBoardRaw, kbsListedSharesFrom, kbsSessionRow } from "../providers/kbsMarketProvider.js";
+import { HOSE_SNAPSHOT } from "../providers/hoseList.js";
 import { getHistoryWithFallback } from "../providers/fallback.js";
 
 // Thống kê phiên sàn HOSE cho trang Toàn cảnh thị trường:
@@ -13,7 +14,7 @@ export interface SessionStats {
   asOf: string;
   exchange: "HOSE";
   /** số mã dùng để tính / số mã của sàn */
-  coverage: { used: number; listed: number; fullList: boolean; rows?: number; shares?: number; listError?: string };
+  coverage: { used: number; listed: number; fullList: boolean; rows?: number; fromKbs?: number; shares?: number; listError?: string };
   index: { price: number; prev: number; change: number } | null;
   impact: { symbol: string; points: number; changePercent: number }[];
   impactSum: number | null;
@@ -45,25 +46,37 @@ async function hoseSymbols(): Promise<{ syms: string[]; full: boolean; error?: s
   }
   const full = syms.length > 250;
   if (full) error = undefined;
-  else syms = STOCK_UNIVERSE.filter((s) => s.exchange === "HOSE").map((s) => s.symbol);
+  else syms = HOSE_SNAPSHOT.length > 250 ? HOSE_SNAPSHOT : STOCK_UNIVERSE.filter((s) => s.exchange === "HOSE").map((s) => s.symbol);
   listCache = { at: Date.now(), syms, full, error };
   return listCache;
 }
 
-async function listedShares(syms: string[]): Promise<Map<string, number>> {
-  // số cổ phiếu niêm yết ít đổi: giữ 12 giờ, chỉ gọi lại khi thiếu nhiều mã
-  if (sharesCache && Date.now() - sharesCache.at < 12 * 3600_000) {
-    const missing = syms.filter((s) => !sharesCache!.map.has(s)).length;
-    if (missing <= syms.length * 0.1) return sharesCache.map;
+function listedShares(board: Map<string, any>): Map<string, number> {
+  // số cổ phiếu niêm yết ít đổi: KBS lỗi thì dùng lại bản trong 12 giờ trước
+  const map = kbsListedSharesFrom(board);
+  if (map.size > 0) {
+    if (sharesCache && Date.now() - sharesCache.at < 12 * 3600_000) for (const [k, v] of sharesCache.map) if (!map.has(k)) map.set(k, v);
+    sharesCache = { at: Date.now(), map };
+    return map;
   }
-  const map = await getKbsListedShares(syms);
-  if (map.size > 0) sharesCache = { at: Date.now(), map };
-  return map.size > 0 ? map : (sharesCache?.map ?? map);
+  return sharesCache?.map ?? map;
 }
 
 export async function getSessionStats(): Promise<SessionStats> {
   const [{ syms, full, error: listError }, idx] = await Promise.all([hoseSymbols(), getVpsIndexRaw("VNINDEX").catch(() => null)]);
-  const [rows, shares] = await Promise.all([getVpsRawStocks(syms), listedShares(syms)]);
+  const [vpsRows, board] = await Promise.all([getVpsRawStocks(syms), getKbsBoardRaw(syms)]);
+  const shares = listedShares(board);
+  // mã VPS không trả giá thì lấy giá từ bảng KBS (trần/sàn ước theo biên ±7% HOSE, trừ hao bước giá)
+  const rows = [...vpsRows];
+  const have = new Set(vpsRows.map((r) => r.symbol));
+  let fromKbs = 0;
+  for (const sym of syms) {
+    if (have.has(sym)) continue;
+    const k = board.has(sym) ? kbsSessionRow(board.get(sym)) : null;
+    if (!k) continue;
+    rows.push({ symbol: sym, ...k, ceiling: k.ref * 1.068, floor: k.ref * 0.932 });
+    fromKbs++;
+  }
 
   const breadth = { up: 0, down: 0, flat: 0, ceiling: 0, floor: 0 };
   let fb = 0, fs = 0, matched = 0;
@@ -125,7 +138,7 @@ export async function getSessionStats(): Promise<SessionStats> {
   return {
     asOf: new Date().toISOString(),
     exchange: "HOSE",
-    coverage: { used, listed: syms.length, fullList: full, rows: rows.length, shares: shares.size, ...(listError ? { listError } : {}) },
+    coverage: { used, listed: syms.length, fullList: full, rows: rows.length, fromKbs, shares: shares.size, ...(listError ? { listError } : {}) },
     index: idx ? { price: idx.price, prev: idx.prevClose, change: idx.change } : null,
     impact,
     impactSum,
